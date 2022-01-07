@@ -2,10 +2,13 @@ import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
 import store from './store';
-// const Struct = require('./assets/js/struct.min.js')
+const host = process.env.NODE_ENV === 'production' ? window.location.host : process.env.PROXY
 
+// const Struct = require('./assets/js/main/struct')
+// Vue.prototype.$struct = require('./assets/js/app-struct')
+// console.log(Struct)
 import VueNativeSock from './assets/js/nativeWebSocket/Main';
-Vue.use(VueNativeSock, `ws://${window.location.host}/ws`, {
+Vue.use(VueNativeSock, `ws://${host}/ws`, {
   store: store,
   reconnection: true,
   reconnectionAttempts: 5, // (Number) number of reconnection attempts before giving up (Infinity),

@@ -2,6 +2,7 @@
 
 Vue + ESP = Vuesp
 
+Template for your projects with a web interface.
 
 ![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen1.png)
 
@@ -11,6 +12,19 @@ Vue + ESP = Vuesp
 JavaScript Framework     
 [AT-UI](https://at-ui.github.io/at-ui/#/en) - A Lightweight and Modular Front-End UI Library   
 
+
+## Project structure
+
+- /data/
+- /github/
+    - /images/
+- /src/
+    - main.cpp
+- /vue/
+    - /public/
+    - /src/
+    - vue.config.js
+- platformio.ini
 
 
 ## Front vue dev
