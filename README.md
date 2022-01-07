@@ -3,7 +3,7 @@
 Vue + ESP = Vuesp
 
 
-![image](https://raw.githubusercontent.com/bondrogeen/vuesp/main/github/images/screen1.png)
+![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen1.png)
 
 
 [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino   
