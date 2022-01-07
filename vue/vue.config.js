@@ -1,12 +1,13 @@
-const root = '../data';
 const RemovePlugin = require('remove-files-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
+const root = process.env.OUTPUT_DIR;
 
 module.exports = {
   outputDir: root,
   productionSourceMap: false,
   filenameHashing: false,
   devServer: {
-    proxy: 'http://192.168.1.59/'
+    proxy: `http://${process.env.PROXY}/`,
   },
   // configureWebpack: config => {
   //   if (process.env.NODE_ENV === 'production') {
@@ -30,14 +31,8 @@ module.exports = {
         },
       },
     },
-    // css: {
-    //   loaderOptions: {
-    //     scss: {
-
-    //     },
-    //   },
-    // },
     plugins: [
+      new Dotenv(),
       new RemovePlugin({
         after: {
           root: root,

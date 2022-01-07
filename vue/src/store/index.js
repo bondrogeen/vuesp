@@ -26,6 +26,7 @@ export default new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE(state, message) {
+      console.log(this)
       state.message = message;
     },
     // mutations for reconnect methods
