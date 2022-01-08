@@ -194,9 +194,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         Serial.println(data[0]);
         
         if (info->len == 1) {
-          if (data[0] == INFO) wsTask[INFO] = ON;
-          if (data[0] == SETTING) wsTask[SETTING] = ON;
-          if (data[0] == REBOOT) wsTask[REBOOT] = ON;
+          wsTask[data[0]] = ON;
         } else {
           if (data[0] == SETTING && info->len == sizeof(storage)) { 
             for (size_t i = 0; i < info->len; i++) {
