@@ -60,7 +60,7 @@ enum ws_comm {
   OFF,
   ON,
   ERASE,
-  SETTING,
+  SETTINGS,
   SAVE,
   REBOOT,
   INFO,
@@ -122,7 +122,7 @@ struct StoreStruct {
 
   char deviceName[12];
 } storage = {
-    SETTING,
+    SETTINGS,
     CONFIG_VERSION,
     DEF_SERVER_URL,
     DEF_SERVER_PORT,
@@ -196,7 +196,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
         if (info->len == 1) {
           wsTask[data[0]] = ON;
         } else {
-          if (data[0] == SETTING && info->len == sizeof(storage)) { 
+          if (data[0] == SETTINGS && info->len == sizeof(storage)) { 
             for (size_t i = 0; i < info->len; i++) {
               *((char *)&storage + i) = data[i];
             }
@@ -346,7 +346,7 @@ void setup () {
   if (storage.httpMode) {
     server.serveStatic("/", SPIFFS, "/")
       .setDefaultFile("index.html")
-      // .setCacheControl("max-age=600")
+      .setCacheControl("max-age=600")
       .setAuthentication(storage.httpLogin, storage.httpPass);
   } else {
     server.serveStatic("/", SPIFFS, "/")
@@ -417,9 +417,9 @@ void loop() {
   
   if(wsConnected) {
     wsTime = now;
-    if (wsTask[SETTING]) {
+    if (wsTask[SETTINGS]) {
       ws.binary(wsClient, (uint8_t *)&storage, sizeof(storage));
-      wsTask[SETTING] = OFF;
+      wsTask[SETTINGS] = OFF;
       return;
     }
     // if (wsTask[INFO]) {

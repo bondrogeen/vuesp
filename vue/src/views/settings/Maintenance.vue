@@ -58,7 +58,7 @@ export default {
       this.loading.reboot = false;
     },
     onReset() {
-      this.$store.dispatch('sendStruct', { comm: 'REBOOT', data: {} })
+      this.$store.dispatch('socket/sendStruct', { comm: 'SETTINGS' });
     },
     onChange({ target }) {
       this.fileFirmware = target.files[0];
@@ -92,7 +92,7 @@ export default {
   &__item {
     margin-bottom: 20px;
     .label {
-      margin: 20px 0 10px 0;
+      margin: 10px 0;
       user-select: none;
     }
   }

@@ -6,7 +6,7 @@ class Struct {
       'OFF',
       'LOAD',
       'ERASE',
-      'SETTING',
+      'SETTINGS',
       'SAVE',
       'REBOOT',
       'INFO',
@@ -16,7 +16,7 @@ class Struct {
   }
 
   getCommand (command) {
-    return this.keys.findIndex(i => i === command)
+    return (typeof (command) === 'string') ? this.keys.findIndex(i => i === command) : this.keys[command]
   }
 
   cleanString (data) {
@@ -30,11 +30,13 @@ class Struct {
 
   get (data) {
     if (data instanceof ArrayBuffer) {
-      const comm = this.keys[new Uint8Array(data)[0]]
+      const comm = this.getCommand(new Uint8Array(data)[0])
       if (comm) {
         const struct = structs[comm]
         if (struct) {
-          return this.cleanString(new struct(data))
+          const obj = this.cleanString(new struct(data))
+          obj['key'] = comm
+          return obj
         }
       }
     }
@@ -44,13 +46,15 @@ class Struct {
 
   set (comm, data) {
     if (comm) {
-      const struct = structs[comm] || structs['COMMAND']
+      const struct = data ? structs[comm] : structs['COMMAND']
       const command = this.getCommand(comm)
       if (struct && command !== -1) {
         const bufferObject = new struct(new ArrayBuffer(struct.byteLength))
         if (bufferObject) {
-          for (const key in bufferObject) {
-            bufferObject[key] = data[key]
+          if (data) {
+            for (const key in bufferObject) {
+              bufferObject[key] = data[key]
+            }
           }
           bufferObject['key'] = command
           return bufferObject
