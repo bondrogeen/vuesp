@@ -57,7 +57,9 @@ export default {
       await fetch('/reboot');
       this.loading.reboot = false;
     },
-    onReset() {},
+    onReset() {
+      this.$store.dispatch('sendStruct', { comm: 'REBOOT', data: {} })
+    },
     onChange({ target }) {
       this.fileFirmware = target.files[0];
     },

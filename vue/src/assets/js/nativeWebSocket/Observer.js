@@ -35,7 +35,7 @@ export default class {
         this.WebSocket.sendObj = (obj) => this.WebSocket.send(JSON.stringify(obj))
       }
     }
-
+    this.WebSocket.binaryType = 'arraybuffer';
     return this.WebSocket
   }
 

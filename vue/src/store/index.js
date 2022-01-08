@@ -1,46 +1,54 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import { struct } from '../assets/js/struct/';
 Vue.use(Vuex);
 
 import app from './modules/app';
+import settings from './modules/settings';
 
 export default new Vuex.Store({
   modules: {
     app,
+    settings
   },
   state: {
     isConnected: false,
     message: '',
     reconnectError: false,
+    struct: struct
   },
   mutations: {
-    SOCKET_ONOPEN(state) {
-      // Vue.prototype.$socket = event.currentTarget;
+    SOCKET_ONOPEN (state) {
       state.isConnected = true;
     },
-    SOCKET_ONCLOSE(state) {
+    SOCKET_ONCLOSE (state) {
       state.isConnected = false;
     },
-    SOCKET_ONERROR(state, event) {
+    SOCKET_ONERROR (state, event) {
       console.error(state, event);
     },
-    // default handler called for all methods
-    SOCKET_ONMESSAGE(state, message) {
-      console.log(this)
+    SOCKET_ONMESSAGE (state, message) {
+      if (message.data instanceof ArrayBuffer) {
+        console.log(state.struct.get(message.data))
+      }
       state.message = message;
     },
-    // mutations for reconnect methods
-    SOCKET_RECONNECT(state, count) {
+    SOCKET_RECONNECT (state, count) {
       console.log(state, count);
     },
-    SOCKET_RECONNECT_ERROR(state) {
+    SOCKET_RECONNECT_ERROR (state) {
       state.reconnectError = true;
     },
   },
   actions: {
-    sendMessage: function (context, message) {
-      console.log(context);
+    sendMessage (context, message) {
       Vue.prototype.$socket.send(message);
+    },
+    sendStruct ({ dispatch, state: { struct } }, { comm, data }) {
+      const buffer = struct.set(comm, data)
+      if (buffer) {
+        dispatch('sendMessage', buffer)
+      }
     },
   },
 });
