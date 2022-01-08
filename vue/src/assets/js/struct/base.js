@@ -52,7 +52,7 @@ const structs = {
     { name: 'usedBytes', type: Struct.types.Uint32LE }
   ),
 
-  SETTING: Struct.extend(
+  SETTINGS: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'version', type: Version },
     { name: 'serverUrl', type: 'String', byteLength: 32 },

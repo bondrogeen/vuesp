@@ -1,6 +1,6 @@
 <template>
   <div class="row v-settings mb-4">
-    <div class="col-24 mb-4">
+    <div class="col-24">
       <h1>{{ $route.name }}</h1>
     </div>
 
@@ -109,7 +109,7 @@
           </div>
         </at-tab-pane>
         <at-tab-pane class="v-settings__tab" label="Server" name="name3" icon="icon-server">
-          <div class="row">
+          <div class="row v-settings__item">
             <div class="col-24 flex flex-middle">
               <h3>Server</h3>
             </div>
@@ -133,6 +133,7 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 export default {
   data: () => ({
     showPass: false,
@@ -155,6 +156,7 @@ export default {
     },
   }),
   computed: {
+    ...mapGetters('app', ['getSettings']),
     isWifiDHCP() {
       return Boolean(this.settings.wifiDhcp || !this.settings.wifiMode);
     },
@@ -166,8 +168,21 @@ export default {
     },
   },
   methods: {
+    ...mapActions('socket', ['onSend']),
     onSave() {
       console.log('onSave');
+      const settings = {...this.getSettings, ...this.settings}
+      this.onSend({ comm: 'SETTINGS', data: settings});
+    },
+  },
+  mounted() {
+    console.log('mounted');
+    this.onSend({ comm: 'SETTINGS' });
+  },
+  watch: {
+    getSettings(value) {
+      this.settings = { ...value };
+      console.log(value);
     },
   },
 };
@@ -178,7 +193,7 @@ export default {
   &__item {
     margin-bottom: 20px;
     .label {
-      margin: 20px 0 10px 0;
+      margin: 10px 0;
       user-select: none;
     }
   }

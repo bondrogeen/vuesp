@@ -1,7 +1,7 @@
 import Emitter from './Emitter'
 
 export default class {
-  constructor (connectionUrl, opts = {}) {
+  constructor(connectionUrl, opts = {}) {
     this.format = opts.format && opts.format.toLowerCase()
 
     if (connectionUrl.startsWith('//')) {
@@ -97,6 +97,7 @@ export default class {
     if (this.mutations) {
       target = this.mutations[target] || target
     }
-    this.store[method](target, msg)
+    this.store[method](`socket/${target}`, msg)
+    this.store['dispatch']('socket/onMessage', msg)
   }
 }

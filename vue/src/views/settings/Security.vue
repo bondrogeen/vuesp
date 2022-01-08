@@ -1,6 +1,6 @@
 <template>
   <div class="row v-settings">
-    <div class="col-24 mb-4">
+    <div class="col-24">
       <h1>{{ $route.name }}</h1>
     </div>
     <div class="col-24">
@@ -18,7 +18,7 @@
             v-model="settings.httpPass"
             placeholder="Password"
             :type="showPass ? 'text' : 'password'"
-            :append-button="!isWifi"
+            append-button
           >
             <template slot="append">
               <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`" @click="showPass = !showPass"></i>
@@ -27,10 +27,14 @@
         </div>
       </div>
     </div>
+    <div class="col-24 flex flex-end v-settings__btn">
+      <at-button type="primary" @click="onSave">Save</at-button>
+    </div>
   </div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 export default {
   data: () => ({
     showPass: false,
@@ -40,14 +44,21 @@ export default {
     },
   }),
   computed: {
-    isWifiDHCP() {
-      return Boolean(this.settings.wifiDhcp || !this.settings.wifiMode);
+    ...mapGetters('app', ['getSettings']),
+  },
+  methods: {
+    ...mapActions('socket', ['onSend']),
+    onSave() {
+      const settings = { ...this.getSettings, ...this.settings };
+      this.onSend({ comm: 'SETTINGS', data: settings });
     },
-    isWifi() {
-      return Boolean(!this.settings.wifiMode);
-    },
-    isEthernetDHCP() {
-      return Boolean(this.settings.ethDhcp);
+  },
+  mounted() {
+    this.onSend({ comm: 'SETTINGS' });
+  },
+  watch: {
+    getSettings(value) {
+      this.settings = { ...value };
     },
   },
 };
@@ -58,7 +69,7 @@ export default {
   &__item {
     margin-bottom: 20px;
     .label {
-      margin: 20px 0 10px 0;
+      margin: 10px 0;
       user-select: none;
     }
   }
