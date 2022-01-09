@@ -6,7 +6,8 @@ export default {
     settings: {},
     ping: 0,
     connected: false,
-    overlay: false
+    overlay: false,
+    scanList: {}
   }),
   mutations: {
     SET_CONNECT: (state, value) => {
@@ -17,6 +18,9 @@ export default {
     },
     SET_INFO: (state, info) => {
       state.info = info;
+    },
+    SET_SCAN: (state, { id, name, clean }) => {
+      state.scanList = clean ? {} : { ...state.scanList, [id]: name };
     },
     SET_SETTINGS: (state, value) => {
       state.settings = value;
@@ -32,6 +36,9 @@ export default {
     setConnect: ({ commit }, value) => {
       commit('SET_CONNECT', value);
     },
+    clearScanList: ({ commit }) => {
+      commit('SET_SCAN', { clean: true });
+    },
   },
   getters: {
     getName: ({ name }) => name,
@@ -40,5 +47,6 @@ export default {
     getSettings: ({ settings }) => settings,
     getPing: ({ ping }) => ping,
     isConnect: ({ connected }) => connected,
+    getScanList: ({ scanList }) => scanList,
   },
 };

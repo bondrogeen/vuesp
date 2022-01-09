@@ -35,7 +35,7 @@ export default {
   },
   actions: {
     onMessage ({ state, commit }, message) {
-      // console.log(message.data)
+      console.log(message.data)
       if (message.data instanceof ArrayBuffer) {
         const obj = state.struct.get(message.data)
         console.log(obj)

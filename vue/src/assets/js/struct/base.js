@@ -45,6 +45,12 @@ const structs = {
     type: Struct.types.Uint8
   }),
 
+  SCAN: Struct.extend(
+    { name: 'key', type: Struct.types.Uint8 },
+    { name: 'id', type: Struct.types.Uint8 },
+    { name: 'name', type: 'String', byteLength: 32 },
+  ),
+
   INFO: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'frimware', type: Version },
