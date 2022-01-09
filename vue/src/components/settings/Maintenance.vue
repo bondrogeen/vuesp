@@ -1,22 +1,26 @@
 <template>
-  <div class="row v-settings">
+  <div class="row v-settings__item">
     <div class="col-24">
-      <h1>{{ $route.name }}</h1>
-    </div>
-    <div class="col-24 v-settings__item">
-      <div class="label">Reboot</div>
-      <at-button class="mr-2" type="primary" :loading="loading.reboot" @click="modalReboot">Reboot</at-button>
-      <span>Reboot the device.</span>
-    </div>
-    <div class="col-24 v-settings__item">
-      <div class="label">Default</div>
-      <at-button class="mr-2" type="primary" @click="onReset">Restor</at-button>
-      <span>Reset all the parameters, to the default settings.</span>
+      <h3>Maintenance</h3>
     </div>
     <div class="col-24">
-      <div class="row v-settings__item">
+      <p class="label">Reboot</p>
+      <div class="flex flex-middle">
+        <at-button class="mr-2" type="primary" :loading="loading.reboot" @click="modalReboot">Reboot</at-button>
+        <p>Reboot the device.</p>
+      </div>
+    </div>
+    <div class="col-24">
+      <p class="label">Default</p>
+      <div class="flex flex-middle">
+        <at-button class="mr-2" type="primary" @click="onReset">Restor</at-button>
+        <p>Reset all the parameters, to the default settings.</p>
+      </div>
+    </div>
+    <div class="col-24">
+      <div class="row">
         <div class="col-24 col-md-12 col-lg-8">
-          <div class="label">Upgrade</div>
+          <p class="label">Upgrade</p>
           <at-input :value="fileFirmware.name" placeholder="Firmware" append-button @focus="onUploadFirmware">
             <template slot="append">
               <span>Upgrade</span>
@@ -27,9 +31,9 @@
       </div>
     </div>
     <div class="col-24">
-      <div class="row v-settings__item">
+      <div class="row">
         <div class="col-24 col-md-12 col-lg-8">
-          <div class="label">Upload</div>
+          <p class="label">Upload</p>
           <at-input placeholder="Files" append-button>
             <template slot="append">
               <span>Upload</span>
