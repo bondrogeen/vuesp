@@ -29,35 +29,35 @@ const routes = [
       icon: 'icon-settings',
       text: ''
     },
-    children: [
-      {
-        path: 'network',
-        name: 'Network',
-        component: () => import('@/views/settings/Network'),
-        meta: {
-          title: 'Network',
-          access: true,
-        },
-      },
-      {
-        path: 'security',
-        name: 'Security',
-        component: () => import('@/views/settings/Security'),
-        meta: {
-          title: 'Security',
-          access: true,
-        },
-      },
-      {
-        path: 'maintenance',
-        name: 'Maintenance',
-        component: () => import('@/views/settings/Maintenance'),
-        meta: {
-          title: 'Maintenance',
-          access: true,
-        },
-      },
-    ]
+    // children: [
+    //   {
+    //     path: 'network',
+    //     name: 'Network',
+    //     component: () => import('@/views/settings/Network'),
+    //     meta: {
+    //       title: 'Network',
+    //       access: true,
+    //     },
+    //   },
+    //   {
+    //     path: 'security',
+    //     name: 'Security',
+    //     component: () => import('@/views/settings/Security'),
+    //     meta: {
+    //       title: 'Security',
+    //       access: true,
+    //     },
+    //   },
+    //   {
+    //     path: 'maintenance',
+    //     name: 'Maintenance',
+    //     component: () => import('@/views/settings/Maintenance'),
+    //     meta: {
+    //       title: 'Maintenance',
+    //       access: true,
+    //     },
+    //   },
+    // ]
   },
   {
     path: "*",
