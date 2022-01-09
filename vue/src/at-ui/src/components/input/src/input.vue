@@ -13,7 +13,7 @@
       }
     ]">
     <!-- S prepend element -->
-    <div class="at-input-group__prepend" :class="{ 'at-input-group--button': prependButton }" v-if="$slots.prepend">
+    <div class="at-input-group__prepend" :class="{ 'at-input-group--button': prependButton }" v-if="$slots.prepend"  @click="$emit('onPrepend', $event)">
       <slot name="prepend"></slot>
     </div>
     <!-- E prepend element -->
@@ -42,7 +42,7 @@
     <!-- E icon -->
 
     <!-- S append element -->
-    <div class="at-input-group__append" :class="{ 'at-input-group--button': appendButton }" v-if="$slots.append">
+    <div class="at-input-group__append" :class="{ 'at-input-group--button': appendButton }" v-if="$slots.append" @click="$emit('onAppend', $event)">
       <slot name="append"></slot>
     </div>
     <!-- E append element -->

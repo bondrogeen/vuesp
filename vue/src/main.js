@@ -8,19 +8,16 @@ import VueNativeSock from './assets/js/nativeWebSocket/Main';
 Vue.use(VueNativeSock, `ws://${host}/ws`, {
   store: store,
   reconnection: true,
-  reconnectionAttempts: 5, // (Number) number of reconnection attempts before giving up (Infinity),
-  reconnectionDelay: 3000, // (Number) how long to initially wait before attempting a new (1000)
+  reconnectionAttempts: 5,
+  reconnectionDelay: 3000,
 });
 
-
-// import AtComponents from 'at-ui'
-// import '../src/at-ui/scss/index.scss'    // Import CSS
 import AtComponents from '@/at-ui/src'
 import '@/at-ui/scss/index.scss'
-import '@/assets/scss/main.scss'
-// import 'at-ui-style/src/index.scss'      // Or import the unbuilt version of SCSS
 
 Vue.use(AtComponents)
+
+import '@/assets/scss/main.scss'
 
 Vue.config.productionTip = false;
 
