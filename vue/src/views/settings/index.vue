@@ -75,9 +75,10 @@
                       :append-button="!isWifi"
                       :minlength="8"
                       :maxlength="32"
+                      @onAppend="showPass = !showPass"
                     >
                       <template slot="append">
-                        <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`" @click="showPass = !showPass"></i>
+                        <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`"></i>
                       </template>
                     </at-input>
                   </div>
@@ -139,9 +140,10 @@
                 placeholder="Password"
                 :type="showPass ? 'text' : 'password'"
                 append-button
+                @onAppend="showPass = !showPass"
               >
                 <template slot="append">
-                  <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`" @click="showPass = !showPass"></i>
+                  <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`"></i>
                 </template>
               </at-input>
             </div>

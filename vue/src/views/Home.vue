@@ -1,15 +1,18 @@
 <template>
-  <h1 class="greeting">{{$route.name}}</h1>
+  <div>
+    <h1 class="greeting">{{ $route.name }}</h1>
+  </div>
 </template>
 
 <script>
 export default {
+  computed: {
+  },
   mounted() {
-    console.log(this.$route.name)
-  }
-}
+    console.log(this.$route.name);
+  },
+};
 </script>
 
 <style>
-
 </style>
