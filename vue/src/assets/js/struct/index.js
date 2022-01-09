@@ -11,6 +11,7 @@ class Struct {
       'REBOOT',
       'INFO',
       'PING',
+      'SCAN',
       'TEST'
     ]
   }

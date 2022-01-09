@@ -3,7 +3,6 @@
     <div class="col-24">
       <h1>{{ $route.name }}</h1>
     </div>
-
     <div class="col-24">
       <at-tabs type="card">
         <at-tab-pane class="v-settings__tab" label="Ethernet" icon="icon-inbox">
@@ -59,6 +58,7 @@
                       :disabled="isWifi"
                       :append-button="!isWifi"
                       :maxlength="32"
+                      @onAppend="onScan"
                     >
                       <template slot="append">
                         <span>Search</span>
@@ -111,7 +111,7 @@
         </at-tab-pane>
         <at-tab-pane class="v-settings__tab" label="Server" icon="icon-server">
           <div class="row v-settings__item">
-            <div class="col-24 flex flex-middle">
+            <div class="col-24">
               <h3>Server</h3>
             </div>
             <div class="col-24 col-md-12 col-lg-8">
@@ -119,7 +119,7 @@
               <at-input v-model="settings.serverUrl" placeholder="192.168.4.1"></at-input>
             </div>
             <div class="col-24 col-md-12 col-lg-8">
-              <p pclass="label">Port</p>
+              <p class="label">Port</p>
               <at-input v-model.number="settings.serverPort" placeholder="8080"></at-input>
             </div>
           </div>
@@ -155,20 +155,24 @@
       </at-tabs>
     </div>
     <div class="col-24 flex flex-end v-settings__btn">
-      <at-button type="primary" @click="onSave">Save</at-button>
+      <at-button type="primary" :disabled="!isConnect" @click="onSave">Save</at-button>
     </div>
+    <DialogScan v-model="dialogScan" @click="onSelect" @scan="onScan" />
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import Maintenance from '@/components/settings/Maintenance.vue';
+import DialogScan from '../../components/settings/dialogs/DialogScan.vue';
 
 export default {
   components: {
     Maintenance,
+    DialogScan,
   },
   data: () => ({
+    dialogScan: false,
     showPass: false,
     settings: {
       wifiDhcp: 0,
@@ -191,7 +195,7 @@ export default {
     },
   }),
   computed: {
-    ...mapGetters('app', ['getSettings']),
+    ...mapGetters('app', ['getSettings', 'isConnect']),
     isWifiDHCP() {
       return Boolean(this.settings.wifiDhcp || !this.settings.wifiMode);
     },
@@ -203,21 +207,34 @@ export default {
     },
   },
   methods: {
-    ...mapActions('socket', ['onSend']),
+    ...mapActions({
+      onSend: 'socket/onSend',
+      clearScanList: 'app/clearScanList',
+    }),
     onSave() {
-      console.log('onSave');
       const settings = { ...this.getSettings, ...this.settings };
       this.onSend({ comm: 'SETTINGS', data: settings });
     },
+    onScan() {
+      this.clearScanList();
+      this.onSend({ comm: 'SCAN' });
+      this.dialogScan = true;
+    },
+    onSelect(value) {
+      this.dialogScan = false;
+      this.settings.wifiSsid = value;
+    },
   },
   mounted() {
-    console.log('mounted');
     this.onSend({ comm: 'SETTINGS' });
   },
   watch: {
     getSettings(value) {
       this.settings = { ...value };
-      console.log(value);
+    },
+    isConnect(value) {
+      console.log('isConnect: ' + value);
+      if (value) this.onSend({ comm: 'SETTINGS' });
     },
   },
 };

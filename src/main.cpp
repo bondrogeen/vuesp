@@ -20,7 +20,7 @@
 #define INDEX_START_ADRESS 0
 
 // Default struct settings
-#define CONFIG_VERSION { 15,50,21 }
+#define CONFIG_VERSION { 15,1,21 }
 
 #define DEF_SERVER_URL "192.168.0.1"
 #define DEF_SERVER_PORT 3001
@@ -39,7 +39,7 @@
 
 // #define DEF_WIFI_MODE WIFI_STA
 #define DEF_WIFI_MODE WIFI_AP
-#define DEF_WIFI_SSID ""
+#define DEF_WIFI_SSID "ESP-8266"
 #define DEF_WIFI_PASS ""
 
 #define DEF_HTTP_MODE 1
@@ -65,6 +65,7 @@ enum ws_comm {
   REBOOT,
   INFO,
   PING,
+  SCAN,
   TEST
 };
 
@@ -92,6 +93,16 @@ struct Ping {
   uint8_t init;
 } ping = {
   PING
+};
+
+struct Scan {
+  uint8_t init;
+  uint8_t id;
+  char name[32];
+} scan = {
+  SCAN,
+  0,
+  "",
 };
 
 struct StoreStruct {
@@ -440,5 +451,17 @@ void loop() {
     delay(100);
     ESP.restart();
   }
+  if (wsTask[SCAN]) {
+    int n = WiFi.scanNetworks();
+    Serial.print(n);
+    Serial.println(" network(s) found");
 
+    for (int i = 0; i < n; i++) {
+      scan.id = i;
+      memset(scan.name, 0, sizeof(scan.name));
+      WiFi.SSID(i).toCharArray(scan.name, 32);
+      ws.binary(wsClient, (uint8_t *)&scan, sizeof(scan));
+    };
+    wsTask[SCAN] = OFF;
+  }
 }
