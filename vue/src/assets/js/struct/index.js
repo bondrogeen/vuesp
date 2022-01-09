@@ -12,6 +12,7 @@ class Struct {
       'INFO',
       'PING',
       'SCAN',
+      'PROGRESS',
       'TEST'
     ]
   }

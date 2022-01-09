@@ -21,11 +21,18 @@
       <div class="row">
         <div class="col-24 col-md-12 col-lg-8">
           <p class="label">Upgrade</p>
-          <at-input :value="fileFirmware.name" placeholder="Firmware" append-button @focus="onUploadFirmware">
+          <at-input
+            :value="fileFirmware.name"
+            placeholder="Firmware"
+            append-button
+            @focus="onUploadFirmware"
+            @onAppend="onUpdate"
+          >
             <template slot="append">
               <span>Upgrade</span>
             </template>
           </at-input>
+          "
           <input ref="upgrade" type="file" class="d-none" @change="onChange" />
         </div>
       </div>
@@ -52,6 +59,7 @@ export default {
     fileFirmware: {},
     loading: {
       reboot: false,
+      update: false,
     },
   }),
   computed: {},
@@ -83,6 +91,26 @@ export default {
         if (get) {
           this.onReboot();
         }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async onFirmware() {
+      const formData = new FormData();
+      formData.append('update', this.fileFirmware);
+      const response = await fetch('/update', {
+        method: 'POST',
+        body: formData,
+      });
+      console.log(response);
+    },
+    async onUpdate() {
+      try {
+        await this.$Modal.confirm({
+          title: 'Update',
+          content: 'Do you want to update device?',
+        });
+        this.onFirmware();
       } catch (error) {
         console.log(error);
       }

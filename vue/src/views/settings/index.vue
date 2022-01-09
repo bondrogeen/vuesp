@@ -214,6 +214,7 @@ export default {
     onSave() {
       const settings = { ...this.getSettings, ...this.settings };
       this.onSend({ comm: 'SETTINGS', data: settings });
+      this.onReboot()
     },
     onScan() {
       this.clearScanList();
@@ -223,6 +224,17 @@ export default {
     onSelect(value) {
       this.dialogScan = false;
       this.settings.wifiSsid = value;
+    },
+    async onReboot() {
+      try {
+        await this.$Modal.confirm({
+          title: 'Reboot',
+          content: 'Do you want to reboot the unit?',
+        });
+        this.onSend({ comm: 'REBOOT' });
+      } catch (error) {
+        console.log(error);
+      }
     },
   },
   mounted() {

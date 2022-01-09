@@ -51,6 +51,12 @@ const structs = {
     { name: 'name', type: 'String', byteLength: 32 },
   ),
 
+  PROGRESS: Struct.extend(
+    { name: 'key', type: Struct.types.Uint8 },
+    { name: 'empty', type: 'String', byteLength: 3 },
+    { name: 'size', type: Struct.types.Uint32LE },
+  ),
+
   INFO: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'frimware', type: Version },

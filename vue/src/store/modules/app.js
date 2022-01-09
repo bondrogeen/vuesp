@@ -5,6 +5,7 @@ export default {
     info: {},
     settings: {},
     ping: 0,
+    progress: 0,
     connected: false,
     overlay: false,
     scanList: {}
@@ -27,6 +28,9 @@ export default {
     },
     SET_OVERLAY: (state, value) => {
       state.overlay = value;
+    },
+    SET_PROGRESS: (state, value) => {
+      state.progress = value;
     },
   },
   actions: {

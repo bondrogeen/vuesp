@@ -35,11 +35,14 @@ export default {
   },
   actions: {
     onMessage ({ state, commit }, message) {
-      console.log(message.data)
       if (message.data instanceof ArrayBuffer) {
         const obj = state.struct.get(message.data)
         console.log(obj)
-        commit(`app/SET_${obj['key']}`, JSON.parse(JSON.stringify(obj)), { root: true })
+        if (obj) {
+          commit(`app/SET_${obj['key']}`, JSON.parse(JSON.stringify(obj)), { root: true })
+        } else {
+          console.log(message.data)
+        }
       }
     },
     sendMessage ({ state: { isConnected } }, message) {

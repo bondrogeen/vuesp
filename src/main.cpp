@@ -66,6 +66,7 @@ enum ws_comm {
   INFO,
   PING,
   SCAN,
+  PROGRESS,
   TEST
 };
 
@@ -103,6 +104,16 @@ struct Scan {
   SCAN,
   0,
   "",
+};
+
+struct Progress {
+  uint8_t init;
+  char empty[3];
+  uint32_t size;
+} progress = {
+  PROGRESS,
+  "",
+  0
 };
 
 struct StoreStruct {
@@ -391,30 +402,32 @@ void setup () {
     }
     AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot?"OK":"FAIL");
     response->addHeader("Connection", "close");
-    request->send(response); }, [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-      if(!index){
-        Serial.printf("Update Start: %s\n", filename.c_str());
-        ws.text(wsClient, "Update Start");
-        // Update.runAsync(true);
-        if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
-          Update.printError(Serial);
-        }
+    request->send(response);
+  },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+    if(!index){
+      progress.size = index;
+      ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+      Update.runAsync(true);
+      if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+        Update.printError(Serial);
       }
-      if(!Update.hasError()){
-        if(Update.write(data, len) != len){
-          Update.printError(Serial);
-        }
-        Serial.printf("Update Success: %uB\n", index+len);
+    }
+    if(!Update.hasError()){
+      if(Update.write(data, len) != len){
+        Update.printError(Serial);
       }
-      if(final){
-        if(Update.end(true)){
-          ws.text(wsClient, "Update Success");
-          Serial.printf("Update Success: %uB\n", index+len);
-        } else {
-          Update.printError(Serial);
-        }
-      } 
-    });
+      progress.size = index;
+      ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+    }
+    if(final){
+      if(Update.end(true)){
+        progress.size = index+len;
+        ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+      } else {
+        Update.printError(Serial);
+      }
+    }
+  });
 
   server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request){
     request->redirect("/");
@@ -453,9 +466,6 @@ void loop() {
   }
   if (wsTask[SCAN]) {
     int n = WiFi.scanNetworks();
-    Serial.print(n);
-    Serial.println(" network(s) found");
-
     for (int i = 0; i < n; i++) {
       scan.id = i;
       memset(scan.name, 0, sizeof(scan.name));
