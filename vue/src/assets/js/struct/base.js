@@ -51,6 +51,12 @@ const structs = {
     { name: 'name', type: 'String', byteLength: 32 },
   ),
 
+  FILES: Struct.extend(
+    { name: 'key', type: Struct.types.Uint8 },
+    { name: 'name', type: 'String', byteLength: 103 },
+    { name: 'size', type: Struct.types.Uint32LE },
+  ),
+
   PROGRESS: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'empty', type: 'String', byteLength: 3 },

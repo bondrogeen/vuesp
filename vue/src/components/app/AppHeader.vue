@@ -1,5 +1,5 @@
 <template>
-  <div class="v-header flex">
+  <div class="v-header flex container">
     <div class="v-header__nav">
       <at-menu mode="horizontal" :activeName="getPath" @on-select="onRoute">
         <template v-for="{ title, path, icon, children } of menus">
@@ -55,6 +55,7 @@ export default {
 </script>
 <style lang="scss">
 .v-header {
+  background-color: #fff;
   &__end {
     padding: 0 20px;
   }

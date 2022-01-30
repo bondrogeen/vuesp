@@ -59,6 +59,12 @@ npm run build
 platformio run --target uploadfs --environment nodemcuv2
 
 
+### 0.0.3 (2022-01-30)
+* (bondrogeen) add read FS
+
+### 0.0.2 (2022-01-15)
+* (bondrogeen) update firmware
+
 ### 0.0.1 (2022-01-07)
 * (bondrogeen) init
 

@@ -13,6 +13,7 @@ class Struct {
       'PING',
       'SCAN',
       'PROGRESS',
+      'FILES',
       'TEST'
     ]
   }
