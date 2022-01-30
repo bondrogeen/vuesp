@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="app">
     <AppOverlay v-if="overlay" />
-    <header class="container">
+    <header>
       <AppHeader />
     </header>
     <main class="container">
@@ -67,7 +67,7 @@ export default {
   height: 100%;
   background-color: #f7f7f7;
   header {
-    background-color: #fff;
+    background-color: #d7e4fe;
     flex: 0 0 50px;
   }
   main {

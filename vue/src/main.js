@@ -12,6 +12,8 @@ Vue.use(VueNativeSock, `ws://${host}/ws`, {
   reconnectionDelay: 3000,
 });
 
+import '@/utils/filters/index';
+
 import AtComponents from '@/at-ui/src'
 import '@/at-ui/scss/index.scss'
 

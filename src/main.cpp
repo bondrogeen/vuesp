@@ -1,13 +1,13 @@
 #include <ArduinoOTA.h>
 #ifdef ESP32
-#include <FS.h>
-#include <SPIFFS.h>
-#include <WiFi.h>
-#include <AsyncTCP.h>
+  #include <FS.h>
+  #include <SPIFFS.h>
+  #include <WiFi.h>
+  #include <AsyncTCP.h>
 #elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESP8266mDNS.h>
+  #include <ESP8266WiFi.h>
+  #include <ESPAsyncTCP.h>
+  #include <ESP8266mDNS.h>
 #endif
 #include <EEPROM.h>
 #include <ESPAsyncWebServer.h>
@@ -67,33 +67,45 @@ enum ws_comm {
   PING,
   SCAN,
   PROGRESS,
-  TEST
+  FILES,
 };
 
 uint8_t wsClient = 0;
 uint8_t wsTask[16];
 uint8_t wsConnected = false;
-uint32_t wsTime = 0;
+
 
 uint32_t now;
 uint32_t lastTime = 0;
 
-// struct Info {
-//   uint8_t init;
-//   uint8_t firmware[3];
-//   uint32_t totalBytes;
-//   uint32_t usedBytes;
-// } info = {
-//   INFO,
-//   DEF_DEVICE_FIRMWARE,
-//   0,
-//   0
-// };
+struct Info {
+  uint8_t init;
+  uint8_t firmware[3];
+  uint32_t totalBytes;
+  uint32_t usedBytes;
+} info_fs = {
+  INFO,
+  DEF_DEVICE_FIRMWARE,
+  0,
+  0
+};
+
+FSInfo fs_info;
 
 struct Ping {
   uint8_t init;
 } ping = {
   PING
+};
+
+struct Files {
+  uint8_t init;
+  char name[103];
+  uint32_t size;
+} files = {
+  FILES,
+  "",
+  0
 };
 
 struct Scan {
@@ -167,6 +179,48 @@ struct StoreStruct {
     DEF_DEVICE_NAME
     };
 
+
+void getFile() {
+  Dir dir = SPIFFS.openDir("/");
+  while(dir.next()){
+    Serial.print("FILE: ");
+    Serial.println(dir.fileName());
+    Serial.println(dir.fileSize());
+    memset(files.name, 0, sizeof(files.name));
+    dir.fileName().toCharArray(files.name, 103);
+    files.size = dir.fileSize();
+    ws.binary(wsClient, (uint8_t *)&files, sizeof(files));
+  }
+  wsTask[FILES] = OFF;
+}
+
+void reboot() {
+  Serial.println("Rebooting...");
+  delay(100);
+  ESP.restart();
+}
+
+void getInfoFS() {
+  // info.totalBytes = SPIFFS.totalBytes();
+  // info.usedBytes = SPIFFS.usedBytes();
+  SPIFFS.info(fs_info);
+  info_fs.totalBytes = fs_info.totalBytes;
+  info_fs.usedBytes = fs_info.usedBytes;
+  ws.binary(wsClient, (uint8_t *)&info_fs, sizeof(info_fs));
+  wsTask[INFO] = OFF;
+  return;
+}
+
+void scanWiFi() {
+  int n = WiFi.scanNetworks();
+  for (int i = 0; i < n; i++) {
+    scan.id = i;
+    memset(scan.name, 0, sizeof(scan.name));
+    WiFi.SSID(i).toCharArray(scan.name, 32);
+    ws.binary(wsClient, (uint8_t *)&scan, sizeof(scan));
+  };
+  wsTask[SCAN] = OFF;
+}
 
 void saveConfig() {
   for (unsigned int t = 0; t < sizeof(storage); t++) {
@@ -438,40 +492,28 @@ void setup () {
 
 void loop() {
   now = millis();
-  
   if(wsConnected) {
-    wsTime = now;
-    if (wsTask[SETTINGS]) {
-      ws.binary(wsClient, (uint8_t *)&storage, sizeof(storage));
-      wsTask[SETTINGS] = OFF;
-      return;
-    }
-    // if (wsTask[INFO]) {
-    //   info.totalBytes = SPIFFS.totalBytes();
-    //   info.usedBytes = SPIFFS.usedBytes();
-    //   ws.binary(wsClient, (uint8_t *)&info, sizeof(info));
-    //   wsTask[INFO] = OFF;
-    //   return;
-    // }
     if (now - lastTime > 1000) {
       lastTime = now;
       ws.binaryAll((uint8_t *)&ping, sizeof(ping));
       ws.cleanupClients();
     }
   }
+  if (wsTask[SETTINGS]) {
+    ws.binary(wsClient, (uint8_t *)&storage, sizeof(storage));
+    wsTask[SETTINGS] = OFF;
+    return;
+  }
+  if (wsTask[INFO]) {
+    getInfoFS();
+  }
+  if (wsTask[FILES]) {
+    getFile();
+  }
   if (wsTask[REBOOT]) {
-    Serial.println("Rebooting...");
-    delay(100);
-    ESP.restart();
+    reboot();
   }
   if (wsTask[SCAN]) {
-    int n = WiFi.scanNetworks();
-    for (int i = 0; i < n; i++) {
-      scan.id = i;
-      memset(scan.name, 0, sizeof(scan.name));
-      WiFi.SSID(i).toCharArray(scan.name, 32);
-      ws.binary(wsClient, (uint8_t *)&scan, sizeof(scan));
-    };
-    wsTask[SCAN] = OFF;
+    scanWiFi();
   }
 }

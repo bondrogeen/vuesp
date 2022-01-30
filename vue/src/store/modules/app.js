@@ -8,7 +8,9 @@ export default {
     progress: 0,
     connected: false,
     overlay: false,
-    scanList: {}
+    scanList: {},
+    fileList: [],
+
   }),
   mutations: {
     SET_CONNECT: (state, value) => {
@@ -22,6 +24,9 @@ export default {
     },
     SET_SCAN: (state, { id, name, clean }) => {
       state.scanList = clean ? {} : { ...state.scanList, [id]: name };
+    },
+    SET_FILES: (state, { size, name, clean }) => {
+      state.fileList = clean ? [] : [ ...state.fileList, { name, size }];
     },
     SET_SETTINGS: (state, value) => {
       state.settings = value;
@@ -43,6 +48,9 @@ export default {
     clearScanList: ({ commit }) => {
       commit('SET_SCAN', { clean: true });
     },
+    clearFileList: ({ commit }) => {
+      commit('SET_FILES', { clean: true });
+    },
   },
   getters: {
     getName: ({ name }) => name,
@@ -52,5 +60,6 @@ export default {
     getPing: ({ ping }) => ping,
     isConnect: ({ connected }) => connected,
     getScanList: ({ scanList }) => scanList,
+    getFileList: ({ fileList }) => fileList,
   },
 };
