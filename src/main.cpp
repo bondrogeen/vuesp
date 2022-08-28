@@ -1,194 +1,55 @@
 #include <ArduinoOTA.h>
 #ifdef ESP32
   #include <FS.h>
-  #include <SPIFFS.h>
   #include <WiFi.h>
   #include <AsyncTCP.h>
 #elif defined(ESP8266)
   #include <ESP8266WiFi.h>
   #include <ESPAsyncTCP.h>
-  #include <ESP8266mDNS.h>
+  // #include <ESP8266mDNS.h>
 #endif
 #include <EEPROM.h>
 #include <ESPAsyncWebServer.h>
-#include <SPIFFSEditor.h>
+#include "LittleFS.h"
 
-#define DEF_EEPROM_WRITE_TIME 30
-#define DEF_EEPROM_SIZE 4096
 
-#define CONFIG_START 32
-#define INDEX_START_ADRESS 0
+#define RES_TYPE_JSON "application/json"
 
-// Default struct settings
-#define CONFIG_VERSION { 15,1,21 }
-
-#define DEF_SERVER_URL "192.168.0.1"
-#define DEF_SERVER_PORT 3001
-
-#define DEF_ETH_DHCP 1
-#define DEF_ETH_IP { 192,168,1,11 }
-#define DEF_ETH_SUBNET { 255,255,255,0 }
-#define DEF_ETH_GETEWAY { 192,168,1,1 }
-#define DEF_ETH_DNS { 8,8,8,8 }
-
-#define DEF_WIFI_DHCP 1
-#define DEF_WIFI_IP { 192,168,1,12 }
-#define DEF_WIFI_SUBNET { 255,255,255,0 }
-#define DEF_WIFI_GETEWAY { 192,168,1,1 }
-#define DEF_WIFI_DNS { 8,8,8,8 }
-
-// #define DEF_WIFI_MODE WIFI_STA
-#define DEF_WIFI_MODE WIFI_AP
-#define DEF_WIFI_SSID "ESP-8266"
-#define DEF_WIFI_PASS ""
-
-#define DEF_HTTP_MODE 1
-#define DEF_HTTP_LOGIN "admin"
-#define DEF_HTTP_PASS "admin"
-
-#define DEF_DEVICE_NAME "esp-1"
-
-#define DEF_DEVICE_FIRMWARE {0,0,6}
-
+#include "./const/service_page.h"
+#include "./const/struct.h"
 
 WiFiClient WiFIclient;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncWebSocketClient *client;
 
-enum ws_comm {
-  OFF,
-  ON,
-  ERASE,
-  SETTINGS,
-  SAVE,
-  REBOOT,
-  INFO,
-  PING,
-  SCAN,
-  PROGRESS,
-  FILES,
-};
+#if defined(ESP8266)
+uint32_t id = ESP.getChipId();
+#elif defined(ESP32)
+uint32_t id =  = ESP.getEfuseMac();
+#endif
 
 uint8_t wsClient = 0;
 uint8_t wsTask[16];
 uint8_t wsConnected = false;
 
-
 uint32_t now;
 uint32_t lastTime = 0;
-
-struct Info {
-  uint8_t init;
-  uint8_t firmware[3];
-  uint32_t totalBytes;
-  uint32_t usedBytes;
-} info_fs = {
-  INFO,
-  DEF_DEVICE_FIRMWARE,
-  0,
-  0
-};
-
 FSInfo fs_info;
 
-struct Ping {
-  uint8_t init;
-} ping = {
-  PING
-};
 
-struct Files {
-  uint8_t init;
-  char name[103];
-  uint32_t size;
-} files = {
-  FILES,
-  "",
-  0
-};
+String status (uint8_t state) {
+  return (state) ? "{\"state\":true}" : "{\"state\":false}";
+}
 
-struct Scan {
-  uint8_t init;
-  uint8_t id;
-  char name[32];
-} scan = {
-  SCAN,
-  0,
-  "",
-};
-
-struct Progress {
-  uint8_t init;
-  char empty[3];
-  uint32_t size;
-} progress = {
-  PROGRESS,
-  "",
-  0
-};
-
-struct StoreStruct {
-  uint8_t init;
-  uint8_t version[3];
-  char serverUrl[32];
-  uint16_t serverPort;
-
-  uint8_t ethDhcp;
-  uint8_t ethIp[4];
-  uint8_t ethSubnet[4];
-  uint8_t ethGeteway[4];
-  uint8_t ethDns[4];
-
-  uint8_t wifiDhcp;
-  uint8_t wifiIp[4];
-  uint8_t wifiSubnet[4];
-  uint8_t wifiGeteway[4];
-  uint8_t wifiDns[4];
-
-  uint8_t wifiMode;
-  char wifiSsid[32];
-  char wifiPass[32];
-
-  uint8_t httpMode;
-  char httpLogin[12];
-  char httpPass[12];
-
-  char deviceName[12];
-} storage = {
-    SETTINGS,
-    CONFIG_VERSION,
-    DEF_SERVER_URL,
-    DEF_SERVER_PORT,
-    DEF_ETH_DHCP,
-    DEF_ETH_IP,
-    DEF_ETH_SUBNET,
-    DEF_ETH_GETEWAY,
-    DEF_ETH_DNS,
-    DEF_WIFI_DHCP,
-    DEF_WIFI_IP,
-    DEF_WIFI_SUBNET,
-    DEF_WIFI_GETEWAY,
-    DEF_WIFI_DNS,
-    DEF_WIFI_MODE,
-    DEF_WIFI_SSID,
-    DEF_WIFI_PASS,
-    DEF_HTTP_MODE,
-    DEF_HTTP_LOGIN,
-    DEF_HTTP_PASS,
-    DEF_DEVICE_NAME
-    };
-
-
-void getFile() {
-  Dir dir = SPIFFS.openDir("/");
+void getFile(char* name) {
+  Dir dir = LittleFS.openDir(name);
   while(dir.next()){
-    Serial.print("FILE: ");
-    Serial.println(dir.fileName());
-    Serial.println(dir.fileSize());
     memset(files.name, 0, sizeof(files.name));
-    dir.fileName().toCharArray(files.name, 103);
+    dir.fileName().toCharArray(files.name, 32);
     files.size = dir.fileSize();
+    files.isFile = dir.isFile();
+    files.isDir = dir.isDirectory();
     ws.binary(wsClient, (uint8_t *)&files, sizeof(files));
   }
   wsTask[FILES] = OFF;
@@ -203,7 +64,7 @@ void reboot() {
 void getInfoFS() {
   // info.totalBytes = SPIFFS.totalBytes();
   // info.usedBytes = SPIFFS.usedBytes();
-  SPIFFS.info(fs_info);
+  LittleFS.info(fs_info);
   info_fs.totalBytes = fs_info.totalBytes;
   info_fs.usedBytes = fs_info.usedBytes;
   ws.binary(wsClient, (uint8_t *)&info_fs, sizeof(info_fs));
@@ -278,6 +139,12 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             }
             saveConfig();
           }
+          if (data[0] == FILES && info->len == sizeof(files)) { 
+            for (size_t i = 0; i < info->len; i++) {
+              *((char *)&files + i) = data[i];
+            }
+            wsTask[data[0]] = ON;
+          }
         }
       }
     } else {
@@ -313,63 +180,55 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   }
 }
 
-
-
-// uint8_t send(uint8_t data) {
-//   if (WiFIclient.connect(storage.serverUrl, storage.serverPort)) {
-//     Serial.println("connection");
-//     // while (client.available()) {
-//     // char line = client.read();
-//     // }
-
-//     Serial.print("Requesting POST: ");
-//     // Send request to the server:
-//     WiFIclient.println("POST /api/v1/card HTTP/1.1");
-//     WiFIclient.print("Host: ");
-//     WiFIclient.println(storage.serverUrl);
-//     WiFIclient.println("Accept: */*");
-//     WiFIclient.println("Content-Type: application/json");
-//     WiFIclient.print("Content-Length: ");
-//     WiFIclient.println(data.length());
-//     WiFIclient.println();
-//     WiFIclient.print(data);
-//     delay(100); // Can be changed
-//     while (WiFIclient.available()) {
-//       char line = WiFIclient.read();
-//       Serial.print(line);
-//     }
-//     Serial.println(data);
-//     if (WiFIclient.connected()) {
-//       WiFIclient.stop(); // DISCONNECT FROM THE SERVER
-//     }
-//     return 1;
-//   }
-//   else {
-//     Serial.println("not connection");
-//     return 0;
-//   }
-// }
-
-
 void WiFiEvent(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
-  // switch (event) {
-  // case SYSTEM_EVENT_STA_GOT_IP:
-  //   Serial.print("Obtained IP address: ");
-  //   Serial.println(WiFi.localIP());
-  //   break;
-  // default:
-  //   break;
-  // }
 }
 
 void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  if (!index) {
-    request->_tempFile = SPIFFS.open("/" + filename, "w");
-  }
+  if (!index) request->_tempFile = LittleFS.open("/" + filename, "w");
   if (len) request->_tempFile.write(data, len);
   if (final) {
     request->_tempFile.close();
+    request->send(200, RES_TYPE_JSON, status(1));
+  }
+}
+
+void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  if(!index){
+    progress.size = index;
+    ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+    Update.runAsync(true);
+
+    int cmd = (filename == "littlefs.bin") ? U_FS : U_FLASH;
+    size_t fsSize = ((size_t) &_FS_end - (size_t) &_FS_start);
+    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    if (!Update.begin((cmd == U_FS) ? fsSize : maxSketchSpace, cmd)){
+      Update.printError(Serial);
+      return request->send(400, RES_TYPE_JSON, status(0));
+    }
+  }
+  if(!Update.hasError()){
+    if(Update.write(data, len) != len){
+      Update.printError(Serial);
+    }
+    progress.size = index;
+    ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+  }
+  if(final){
+    if(Update.end(true)){
+      progress.size = index+len;
+      ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+    } else {
+      Update.printError(Serial);
+    }
+  }
+}
+
+void initLittleFS() {
+  if (!LittleFS.begin()) {
+    if (LittleFS.format()) {
+      Serial.println(F("Filesystem formatted!"));
+    }
   }
 }
 
@@ -378,16 +237,7 @@ void setup () {
   WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
-
-  if (!SPIFFS.begin()) {
-    Serial.print(F("[ WARN ] Formatting filesystem..."));
-    if (SPIFFS.format()) {
-      Serial.println(F("Filesystem formatted!"));
-    } else {
-      Serial.println(F(" failed!"));
-      Serial.println(F("[ WARN ] Could not format filesystem!"));
-    }
-  }
+  initLittleFS();
 
   if (storage.wifiMode) {
     if (!storage.wifiDhcp) {
@@ -405,86 +255,47 @@ void setup () {
     Serial.println("END");
   }
 
-  Serial.println("Start...");
-
-  // pinMode(READ_LED_PIN, OUTPUT);
-  // digitalWrite(READ_LED_PIN, LOW);
-
   ws.onEvent(onWsEvent);
+
   server.addHandler(&ws);
 
-  #ifdef ESP32
-    server.addHandler(new SPIFFSEditor(SPIFFS, storage.httpLogin, storage.httpPass));
-  #elif defined(ESP8266)
-    server.addHandler(new SPIFFSEditor(storage.httpLogin, storage.httpPass));
-  #endif
+  // #ifdef ESP32
+  //   server.addHandler(new SPIFFSEditor(SPIFFS, storage.httpLogin, storage.httpPass));
+  // #elif defined(ESP8266)
+  //   server.addHandler(new SPIFFSEditor(storage.httpLogin, storage.httpPass));
+  // #endif
 
   if (storage.httpMode) {
-    server.serveStatic("/", SPIFFS, "/")
-      .setDefaultFile("index.html")
-      .setCacheControl("max-age=600")
-      .setAuthentication(storage.httpLogin, storage.httpPass);
+    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html").setCacheControl("max-age=600").setAuthentication(storage.httpLogin, storage.httpPass);
   } else {
-    server.serveStatic("/", SPIFFS, "/")
-      // .setCacheControl("max-age=600")
-      .setDefaultFile("index.html");
+    server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=600").setDefaultFile("index.html");
   }
   
-  server.onNotFound([](AsyncWebServerRequest *request) {
-    request->send(404);
-  });
-
-  server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) { request->send(200); },onUpload);
-
-  server.on("/upload", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/html", "<form method='POST' action='/upload' enctype='multipart/form-data'><input type='file' name='upload'><input type='submit' value='Upload'></form>");
-  });
-
-  server.on("/reboot", HTTP_ANY, [](AsyncWebServerRequest *request) {
-    request->send(200, "application/json", "{\"state\":true}");
-    wsTask[REBOOT] = ON;
-  });
-
-  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/html", "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>");
-  });
+  server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) { 
+    request->send(200); 
+  }, onUpload);
 
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {
-    uint8_t shouldReboot = !Update.hasError();
-    if (shouldReboot) {
-      wsTask[REBOOT] = ON;
-    }
-    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot?"OK":"FAIL");
+    uint8_t isReboot = !Update.hasError();
+    if (isReboot) wsTask[REBOOT] = ON;
+    AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
     response->addHeader("Connection", "close");
     request->send(response);
-  },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-    if(!index){
-      progress.size = index;
-      ws.binaryAll((uint8_t *)&progress, sizeof(progress));
-      Update.runAsync(true);
-      if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
-        Update.printError(Serial);
-      }
-    }
-    if(!Update.hasError()){
-      if(Update.write(data, len) != len){
-        Update.printError(Serial);
-      }
-      progress.size = index;
-      ws.binaryAll((uint8_t *)&progress, sizeof(progress));
-    }
-    if(final){
-      if(Update.end(true)){
-        progress.size = index+len;
-        ws.binaryAll((uint8_t *)&progress, sizeof(progress));
-      } else {
-        Update.printError(Serial);
-      }
-    }
+  },onUpdate);
+
+  server.on("/service", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if(!request->authenticate(storage.httpLogin, storage.httpPass)) return request->requestAuthentication();
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", service_gz, sizeof(service_gz));
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->redirect("/service");
   });
 
   server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request){
-    request->redirect("/");
+      request->redirect("/");
   });
 
   server.begin();
@@ -508,7 +319,7 @@ void loop() {
     getInfoFS();
   }
   if (wsTask[FILES]) {
-    getFile();
+    getFile(files.name);
   }
   if (wsTask[REBOOT]) {
     reboot();
