@@ -2,21 +2,30 @@
   <div>
     <h1 class="greeting">{{ $route.name }}</h1>
     <div class="files">
-      <div class="files__title">FS</div>
+      <div class="files__title">FS {{ getFullPath }}</div>
       <div class="files__list">
         <ul class="list">
-          <li class="list__item" v-for="{ name, size } of files" :key="`file_${name}`">
-            <span class="name">{{ name }}</span>
-            <span class="size">{{ size | toByte }} ({{ size }})</span>
-          </li>
           <li class="list__item">
+            <span class="name">Name</span>
+            <span class="size">Size</span>
+          </li>
+          <li v-if="path.length" class="list__item" @click="onPrev">
+            <span class="name">../</span>
+          </li>
+          <li
+            class="list__item"
+            v-for="{ name, size, isDir, isFile } of sortFiles"
+            :key="`file_${name}`"
+            @click="onNext(isDir, '/' + name)"
+          >
+            <span class="">{{ isDir ? `/${name}` : name }}</span>
+            <span v-if="isFile" class="size">{{ size | toByte }} ({{ size }})</span>
+          </li>
+          <li class="list__item list__item--total">
             <span class="name">Total</span>
             <span class="size">{{ total | toByte }} ({{ total }})</span>
           </li>
         </ul>
-      </div>
-      <div class="files__btn col-24 flex flex-end">
-        <at-button type="primary" @click="onTest">Update FS</at-button>
       </div>
     </div>
   </div>
@@ -25,27 +34,48 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 export default {
-  data: () => ({}),
+  data: () => ({
+    path: [],
+    history: {},
+  }),
   computed: {
     ...mapGetters({
       files: 'app/getFileList',
     }),
+    sortFiles() {
+      const arr = JSON.parse(JSON.stringify(this.files));
+      return arr.sort((a, b) => {
+        return a.isFile > b.isFile ? 1 : -1;
+      });
+    },
     total() {
-      return this.files.reduce((acc, el) => (acc + el.size), 0)
-    }
+      return this.files.reduce((acc, el) => acc + el.size, 0);
+    },
+    getFullPath() {
+      return `/${this.path.join('/')}`;
+    },
   },
   mounted() {
-    console.log(this.$route.name);
+    this.onUpdate();
   },
   methods: {
     ...mapActions({
       onSend: 'socket/onSend',
       clearFileList: 'app/clearFileList',
     }),
-    onTest() {
-      console.log('onTest');
+    onPrev() {
+      this.path = this.path.filter((_, i) => i < this.path.length - 1);
+      this.onUpdate();
+    },
+    onNext(isDir, path) {
+      if (isDir && path) {
+        this.path.push(path);
+        this.onUpdate();
+      }
+    },
+    onUpdate() {
       this.clearFileList();
-      this.onSend({ comm: 'FILES' });
+      this.onSend({ comm: 'FILES', data: { name: this.getFullPath } });
     },
   },
 };
@@ -72,6 +102,9 @@ export default {
     }
     .name {
       font-weight: bold;
+    }
+    &--total {
+      border-top: 1px solid grey;
     }
   }
 }

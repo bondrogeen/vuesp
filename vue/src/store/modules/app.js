@@ -25,8 +25,8 @@ export default {
     SET_SCAN: (state, { id, name, clean }) => {
       state.scanList = clean ? {} : { ...state.scanList, [id]: name };
     },
-    SET_FILES: (state, { size, name, clean }) => {
-      state.fileList = clean ? [] : [ ...state.fileList, { name, size }];
+    SET_FILES: (state, data) => {
+      state.fileList = data.clean ? [] : [ ...state.fileList, data];
     },
     SET_SETTINGS: (state, value) => {
       state.settings = value;
