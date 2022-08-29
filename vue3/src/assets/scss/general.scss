@@ -1,0 +1,90 @@
+body {
+	font-size: $font-size-root;
+	font-family: $body-font-family;
+	line-height: 150%;
+}
+.b-divider {
+	height: 1px;
+	width: calc(100% - 20px);
+	background-color: map-get($grey, 'lighten-2');
+	margin: 0 10px;
+}
+
+a {
+	text-decoration: none;
+	color: $black;
+}
+
+.scroll-none {
+	overflow-x: auto;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.fw-500 {
+	font-weight: 500 !important;
+}
+.fw-600 {
+	font-weight: 600 !important;
+}
+.fw-700 {
+	font-weight: 700 !important;
+}
+.fw-800 {
+	font-weight: 800 !important;
+}
+
+.text {
+	@each $key, $value in $headings {
+		&-#{$key} {
+			font-size: map-get($value, 'size');
+			font-weight: map-get($value, 'weight');
+			line-height: map-get($value, 'line-height');
+			letter-spacing: map-get($value, 'letter-spacing');
+			font-family: map-get($value, 'font-family');
+			text-transform: none;
+		}
+	}
+}
+
+.mb {
+	@each $size in $sizes {
+		&-#{$size} {
+			margin-bottom: $size * 5px;
+		}
+	}
+}
+
+.mr {
+	@each $size in $sizes {
+		&-#{$size} {
+			margin-right: $size * 5px;
+		}
+	}
+}
+
+.ml {
+	@each $size in $sizes {
+		&-#{$size} {
+			margin-left: $size * 5px;
+		}
+	}
+}
+
+.mt {
+	@each $size in $sizes {
+		&-#{$size} {
+			margin-top: $size * 5px;
+		}
+	}
+}
+
+ul{
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
