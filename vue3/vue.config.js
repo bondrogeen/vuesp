@@ -8,15 +8,18 @@ module.exports = defineConfig({
   outputDir: root,
   productionSourceMap: false,
   filenameHashing: false,
+  css: {
+		loaderOptions: {
+			sass: {
+				additionalData: `@import "@/assets/scss/variables.scss";`,
+			},
+		},
+	},
   devServer: {
+    host: '0.0.0.0',
     port: 3000,
     proxy: `http://${process.env.PROXY}/`,
   },
-  // configureWebpack: config => {
-  //   if (process.env.NODE_ENV === 'production') {
-  //   } else {
-  //   }
-  // },
   chainWebpack: () => {},
   configureWebpack: {
     optimization: {

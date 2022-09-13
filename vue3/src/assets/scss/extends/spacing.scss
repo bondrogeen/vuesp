@@ -1,0 +1,31 @@
+.mb {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin-bottom: $size * 5px;
+    }
+  }
+}
+
+.mr {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin-right: $size * 5px;
+    }
+  }
+}
+
+.ml {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin-left: $size * 5px;
+    }
+  }
+}
+
+.mt {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin-top: $size * 5px;
+    }
+  }
+}

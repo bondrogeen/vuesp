@@ -1,90 +1,81 @@
-body {
-	font-size: $font-size-root;
-	font-family: $body-font-family;
-	line-height: 150%;
+html {
+  --var-bg-1: #{$light-bg-1};
+  --var-bg-2: #{$light-bg-2};
+  --var-text-1: #{$light-text};
 }
+
+html[data-theme='dark'] {
+  --var-bg-1: #{$dark-bg-1};
+  --var-bg-2: #{$dark-bg-2};
+  --var-text-1: #{$dark-text};
+}
+
+html {
+  font-size: $font-size-root;
+  font-family: $body-font-family;
+  line-height: $line-height-root;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  background-color: var(--var-bg-1);
+  color: var(--var-text-1);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html.overflow-y-hidden {
+  overflow-y: hidden !important;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+@supports (-webkit-touch-callout: none) {
+  body {
+    cursor: pointer;
+  }
+}
+
 .b-divider {
-	height: 1px;
-	width: calc(100% - 20px);
-	background-color: map-get($grey, 'lighten-2');
-	margin: 0 10px;
+  height: 1px;
+  width: calc(100% - 20px);
+  background-color: map-get($grey, 'lighten-2');
+  margin: 0 10px;
 }
 
 a {
-	text-decoration: none;
-	color: $black;
+  text-decoration: none;
+  color: var(--var-text-1);
+  transition: all 0.25s ease-out;
+  &:hover {
+    color: $primary;
+  }
 }
 
 .scroll-none {
-	overflow-x: auto;
-	-ms-overflow-style: none;
-	scrollbar-width: none;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 
-	&::-webkit-scrollbar {
-		display: none;
-	}
-}
-
-.fw-500 {
-	font-weight: 500 !important;
-}
-.fw-600 {
-	font-weight: 600 !important;
-}
-.fw-700 {
-	font-weight: 700 !important;
-}
-.fw-800 {
-	font-weight: 800 !important;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.text {
-	@each $key, $value in $headings {
-		&-#{$key} {
-			font-size: map-get($value, 'size');
-			font-weight: map-get($value, 'weight');
-			line-height: map-get($value, 'line-height');
-			letter-spacing: map-get($value, 'letter-spacing');
-			font-family: map-get($value, 'font-family');
-			text-transform: none;
-		}
-	}
+ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
 }
 
-.mb {
-	@each $size in $sizes {
-		&-#{$size} {
-			margin-bottom: $size * 5px;
-		}
-	}
-}
-
-.mr {
-	@each $size in $sizes {
-		&-#{$size} {
-			margin-right: $size * 5px;
-		}
-	}
-}
-
-.ml {
-	@each $size in $sizes {
-		&-#{$size} {
-			margin-left: $size * 5px;
-		}
-	}
-}
-
-.mt {
-	@each $size in $sizes {
-		&-#{$size} {
-			margin-top: $size * 5px;
-		}
-	}
-}
-
-ul{
-	padding: 0;
-	margin: 0;
-	list-style: none;
+.v-spacer {
+  flex: 1 1;
 }

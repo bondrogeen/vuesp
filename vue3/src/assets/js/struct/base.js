@@ -1,4 +1,4 @@
-import Struct from 'c-struct-js'
+import Struct from './lib/index'
 
 class Version extends Struct.extend(
   { name: 'one', type: 'Uint8' },
