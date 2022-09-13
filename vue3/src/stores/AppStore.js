@@ -9,7 +9,7 @@ export const useAppStore = defineStore('app', {
     },
   }),
   actions: {
-    async setDialog(data) {
+    setDialog(data) {
       this.dialog = true;
       this.content = data;
       this.content.message = data?.message || '';

@@ -11,6 +11,9 @@ export const useWebSocket = defineStore('websocket', {
   actions: {
     onopen(data) {
       console.log(data);
+      this.pingDevice = Date.now();
+      this.pingClient = Date.now();
+      this.onSend('SETTINGS');
     },
     onmessage(message) {
       this.pingDevice = Date.now();

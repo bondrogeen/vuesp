@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { useWebSocket } from '@/stores/WebSocket';
 
 export const useWebSocketStore = defineStore('websocketstore', {
   state: () => ({
@@ -24,10 +25,9 @@ export const useWebSocketStore = defineStore('websocketstore', {
     SET_UNKNOWN(value) {
       this.unknown = value;
     },
-  },
-  getters: {
-    isConnect(state) {
-      return state.pingClient - state.pingDevice < 2000;
+    onSend(comm, data) {
+      const store = useWebSocket();
+      store.onSend(comm, data);
     },
-  },
+  }
 });
