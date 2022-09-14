@@ -1,0 +1,13 @@
+.test-11 {
+  position: relative;
+}
+
+@each $color, $values in $colors {
+  .#{$color} {
+    @each $tone, $value in $values {
+      &-#{$tone} {
+        color: $value;
+      }
+    }
+  }
+}

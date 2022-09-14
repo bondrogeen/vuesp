@@ -185,6 +185,9 @@ void WiFiEvent(WiFiEvent_t event) {
 }
 
 void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  progress.size = index + len;
+  ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+
   if (!index) request->_tempFile = LittleFS.open("/" + filename, "w");
   if (len) request->_tempFile.write(data, len);
   if (final) {

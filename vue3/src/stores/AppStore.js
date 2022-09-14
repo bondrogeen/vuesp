@@ -3,16 +3,15 @@ import { defineStore } from 'pinia';
 export const useAppStore = defineStore('app', {
   state: () => ({
     isLoading: false,
-    dialog: false,
-    content: {
-      message: '',
+    dialog: {
+      value: false,
+      content: {},
     },
   }),
   actions: {
     setDialog(data) {
-      this.dialog = true;
-      this.content = data;
-      this.content.message = data?.message || '';
+      this.dialog = data;
+      this.dialog.value = true;
     },
   },
 });

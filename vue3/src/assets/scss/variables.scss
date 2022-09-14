@@ -19,36 +19,34 @@ $spacer: 5px;
 
 $sizes: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16;
 
-$grey: (
-  'base': #cccccc,
-  'lighten-1': #f0f0f0,
-  'lighten-2': #fafafa,
-  'darken-1': #c2c8cc,
-  'darken-2': #747474,
-);
-
-$blue: (
-  'base': #3f51b5,
-  'lighten-1': #ced5ff,
-  'lighten-2': #b2bdff,
-);
-
-$red: (
-  'base': #f44336,
-  'lighten-1': #f9d0cd,
-  'lighten-2': #f1aeb5,
-);
-
-$green: (
-  'base': #008a00,
-  'lighten-1': #b8ffb8,
-  'lighten-2': #8bff8b,
-);
-
-$yellow: (
-  'base': #f3b91a,
-  'lighten-1': #fff3cd,
-  'lighten-2': #ffe69c,
+$colors: (
+  'grey': (
+    'base': #6B7280,
+    'lighten-1': #f0f0f0,
+    'lighten-2': #fafafa,
+    'darken-1': #c2c8cc,
+    'darken-2': #747474,
+  ),
+  'blue': (
+    'base': #3f51b5,
+    'lighten-1': #ced5ff,
+    'lighten-2': #b2bdff,
+  ),
+  'red': (
+    'base': #f44336,
+    'lighten-1': #f9d0cd,
+    'lighten-2': #f1aeb5,
+  ),
+  'green': (
+    'base': #008a00,
+    'lighten-1': #b8ffb8,
+    'lighten-2': #8bff8b,
+  ),
+  'yellow': (
+    'base': #f3b91a,
+    'lighten-1': #fff3cd,
+    'lighten-2': #ffe69c,
+  ),
 );
 
 $primary: #24c0eb;
@@ -58,7 +56,7 @@ $black: #000;
 $white: #fff;
 
 $light-bg-1: $white;
-$light-bg-2: #f8fbff;
+$light-bg-2: #f1f5f9;
 $light-text: $black;
 
 $dark-bg-1: #313135;
@@ -69,7 +67,7 @@ $headings: (
   'h1': (
     'size': 40px,
     'weight': 600,
-    'line-height': 48px,
+    'line-height': 140%,
     'letter-spacing': 0,
     'font-family': $heading-font-family,
     'text-transform': false,
@@ -93,7 +91,15 @@ $headings: (
   'h4': (
     'size': 24px,
     'weight': 600,
-    'line-height': 29px,
+    'line-height': 140%,
+    'letter-spacing': 0,
+    'font-family': $heading-font-family,
+    'text-transform': false,
+  ),
+  'h5': (
+    'size': 20px,
+    'weight': 600,
+    'line-height': 140%,
     'letter-spacing': 0,
     'font-family': $heading-font-family,
     'text-transform': false,
@@ -101,7 +107,7 @@ $headings: (
   'h6': (
     'size': 16px,
     'weight': 600,
-    'line-height': 19px,
+    'line-height': 140%,
     'letter-spacing': 0,
     'font-family': $heading-font-family,
     'text-transform': false,

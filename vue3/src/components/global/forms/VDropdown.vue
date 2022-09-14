@@ -1,10 +1,10 @@
 <template>
-	<div v-outside="outside" class="b-dropdown" :class="{ 'b-dropdown--opened': isShown }">
-		<div class="b-dropdown__activator">
+	<div v-outside="outside" class="v-dropdown" :class="{ 'v-dropdown--opened': isShown }">
+		<div class="v-dropdown__activator">
 			<slot name="activator" :on="on" :value="isShown"></slot>
 		</div>
 		<transition name="slide-up">
-			<div v-if="isShown" class="b-dropdown__content" :style="getStyle" @click="click">
+			<div v-if="isShown" class="v-dropdown__content" :style="getStyle" @click="click">
 				<slot :show="show" :hide="hide" :is-shown="isShown"></slot>
 			</div>
 		</transition>
@@ -20,11 +20,11 @@ export default {
 		},
 		left: {
 			type: String,
-			default: '0',
+			default: '',
 		},
 		right: {
 			type: String,
-			default: '',
+			default: '0',
 		},
 		hideOnClick: {
 			type: Boolean,
@@ -73,7 +73,7 @@ export default {
 </script>
 
 <style lang="scss">
-.b-dropdown {
+.v-dropdown {
 	position: relative;
 	&__activator {
 		display: flex;
@@ -94,13 +94,13 @@ export default {
 		z-index: 2;
 		max-height: 200px;
 		transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-		background-color: $white;
+		background-color: var(--var-bg-1);
 	}
 	&--opened {
-		.b-dropdown__content {
+		.v-dropdown__content {
 			// height: 200px;
 		}
-		.b-dropdown__activator::before {
+		.v-dropdown__activator::before {
 			transform: rotate(180deg);
 		}
 	}

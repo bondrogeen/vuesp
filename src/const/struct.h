@@ -124,7 +124,7 @@ struct Files {
   uint8_t init;
   uint8_t isDir;
   uint8_t isFile;
-  uint8_t empty;
+  uint8_t command;
   char name[32];
   uint32_t size;
 } files = {

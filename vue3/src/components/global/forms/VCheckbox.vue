@@ -37,7 +37,7 @@ $size: 16px;
     display: block;
     height: $size;
     width: $size;
-    border: 1px solid map-get($grey, 'base');
+    border: 1px solid color('grey', 'base');
     border-radius: $borderRadius;
     margin-right: 5px;
     &::after {
