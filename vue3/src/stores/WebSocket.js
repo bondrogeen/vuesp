@@ -13,6 +13,7 @@ export const useWebSocket = defineStore('websocket', {
       console.log(data);
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
+      this.onSend('INFO');
       this.onSend('SETTINGS');
     },
     onmessage(message) {
@@ -50,7 +51,7 @@ export const useWebSocket = defineStore('websocket', {
   },
   getters: {
     isConnect(state) {
-      return state.pingClient - state.pingDevice < 2000;
+      return state.pingClient - state.pingDevice < 4000;
     },
   },
 });

@@ -55,7 +55,7 @@ const structs = {
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'isDir', type: Struct.types.Uint8 },
     { name: 'isFile', type: Struct.types.Uint8 },
-    { name: 'empty', type: Struct.types.Uint8 },
+    { name: 'command', type: Struct.types.Uint8 },
     { name: 'name', type: 'String', byteLength: 32 },
     { name: 'size', type: Struct.types.Uint32LE },
   ),

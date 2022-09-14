@@ -18,7 +18,7 @@
 	position: relative;
 	height: 40px;
 	width: 100%;
-	border: 1px solid map-get($grey, 'base');
+	border: 1px solid color('grey', 'base');
 	border-radius: 4px;
 	box-sizing: border-box;
 	display: flex;
@@ -34,7 +34,7 @@
 		overflow: hidden;
 		flex: 1 1 auto;
 		&::placeholder {
-			color: map-get($grey, 'darken-3');
+			color: color('grey', 'darken-3');
 		}
 		&:focus {
 			outline: none !important;
@@ -42,7 +42,7 @@
 	}
 	&:hover {
 		@media (hover: hover) {
-			border-color: map-get($grey, 'base');
+			border-color: color('grey', 'base');
 		}
 	}
 	&__icon {

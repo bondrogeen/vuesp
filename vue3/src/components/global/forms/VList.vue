@@ -18,7 +18,7 @@ const onClick = e => emit('click', e);
 
 <style lang="scss">
 .v-list {
-  background: #fff;
+  // background: var(--var-bg-2);
   border-radius: 0;
   list-style-type: none;
   padding: 0;
@@ -31,7 +31,7 @@ const onClick = e => emit('click', e);
     cursor: pointer;
     &:hover {
       @media (hover: hover) {
-        background-color: map-get($grey, 'lighten-1');
+        // background-color: color('grey', 'lighten-1');
       }
     }
 

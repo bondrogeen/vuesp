@@ -8,6 +8,40 @@
   display: flex !important;
 }
 
+.gap {
+  @each $size in $sizes {
+    &-#{$size} {
+      gap: $size * 5px;
+    }
+  }
+}
+
+.justify-start {
+  justify-content: flex-start;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-around {
+  justify-content: space-around;
+}
+
+.align-start {
+  align-items: flex-start;
+}
+.align-end {
+  align-items: flex-end;
+}
+.align-center {
+  align-items: center;
+}
+
 .d-md-none {
   @media #{$medium-and-up} {
     display: none !important;
@@ -59,4 +93,3 @@
     display: flex !important;
   }
 }
-

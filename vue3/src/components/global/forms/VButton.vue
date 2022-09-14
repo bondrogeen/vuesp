@@ -18,7 +18,7 @@ defineProps({
   height: 40px;
   padding: 0 15px;
   border-radius: 4px;
-  border: 1px solid map-get($grey, 'lighten-2');
+  border: 1px solid color('grey', 'lighten-2');
   color: var(--var-text-1);
   background: var(--var-bg-1);
 
@@ -26,7 +26,7 @@ defineProps({
     cursor: pointer;
   }
   &:disabled {
-    background: map-get($grey, 'darken-2');
+    background: color('grey', 'darken-2');
   }
   &--primary {
     border: 1px solid $primary;

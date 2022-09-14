@@ -9,7 +9,6 @@
 <script setup>
 import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const webSocketStore = useWebSocketStore();

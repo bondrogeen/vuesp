@@ -1,3 +1,27 @@
+.ma {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin: $size * 5px;
+    }
+  }
+}
+
+.my {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin: $size * 5px 0;
+    }
+  }
+}
+
+.mx {
+  @each $size in $sizes {
+    &-#{$size} {
+      margin: 0 $size * 5px;
+    }
+  }
+}
+
 .mb {
   @each $size in $sizes {
     &-#{$size} {
