@@ -62,8 +62,10 @@ const structs = {
 
   PROGRESS: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
-    { name: 'empty', type: 'String', byteLength: 3 },
+    { name: 'status', type: Struct.types.Uint8 },
+    { name: 'empty', type: Struct.types.Uint16LE },
     { name: 'size', type: Struct.types.Uint32LE },
+    { name: 'length', type: Struct.types.Uint32LE },
   ),
 
   INFO: Struct.extend(

@@ -3,11 +3,13 @@
     <div v-if="value" class="app-dialog">
       <div class="app-dialog__overlay" @click="onClose"></div>
       <div class="app-dialog__card">
-        <div class="app-dialog__header text-h6">
-          <slot name="header">Attention !</slot>
+        <div class="app-dialog__header text-h4">
+          <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
+          <slot name="header">{{ title }}</slot>
         </div>
-        <div class="app-dialog__body">
-          <slot></slot>
+        <div class="app-dialog__body text-title-1">
+          <v-progressbar v-if="isProgress" :value="procent" />
+          <slot>{{ message }}</slot>
         </div>
         <div class="app-dialog__footer">
           <slot name="footer">
@@ -20,12 +22,20 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue';
 const emit = defineEmits(['close']);
-defineProps({
+const props = defineProps({
   value: { type: Boolean, default: false },
-  content: { type: Boolean, default: true },
+  title: { type: String, default: 'Attention !' },
+  message: { type: String, default: '' },
+  content: { type: Object, default: () => ({}) },
+  progress: { type: Object, default: () => ({}) },
+  isProgress: { type: Boolean, default: false },
 });
+
+const procent = computed(() =>
+  props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100
+);
 
 const onClose = e => emit('close', e);
 </script>
@@ -39,6 +49,16 @@ const onClose = e => emit('close', e);
   width: 100%;
   //   background-color: #5c575740;
   z-index: 5;
+  &__close {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translate(0, -50%);
+    svg {
+      height: 20px;
+    }
+  }
   &__overlay {
     position: absolute;
     background-color: #5c575740;
@@ -52,22 +72,23 @@ const onClose = e => emit('close', e);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    min-height: 200px;
+    min-height: 100px;
     min-width: 280px;
-    border: 1px solid #dee2e6;
+    // border: 1px solid #888888;
     border-radius: 4px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-color: white;
+    background-color: var(--var-bg-1);
   }
   &__header {
-    padding: 10px 15px;
-    border-bottom: 1px solid #dee2e6;
+    position: relative;
+    padding: 10px 20px;
+    // border-bottom: 1px solid #888888;
   }
   &__body {
     flex: 1 1 auto;
-    padding: 10px 15px;
+    padding: 10px 20px;
   }
   &__footer {
     text-align: end;

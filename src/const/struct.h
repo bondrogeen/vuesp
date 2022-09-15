@@ -148,10 +148,14 @@ struct Scan {
 
 struct Progress {
   uint8_t init;
-  char empty[3];
+  uint8_t status;
+  uint16_t empty;
   uint32_t size;
+  uint32_t length;
 } progress = {
   PROGRESS,
-  "",
+  0,
+  0,
+  0,
   0
 };

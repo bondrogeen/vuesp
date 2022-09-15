@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket';
+import { useAppStore } from '@/stores/AppStore';
 
 export const useWebSocketStore = defineStore('websocketstore', {
   state: () => ({
@@ -24,6 +25,10 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.settings = value;
     },
     SET_PROGRESS(value) {
+      if (value.status === 1) {
+        const app = useAppStore();
+        app.setDialog({ title: 'Progress', value: true, isProgress: true });
+      }
       this.progress = value;
     },
     SET_UNKNOWN(value) {
@@ -33,5 +38,5 @@ export const useWebSocketStore = defineStore('websocketstore', {
       const store = useWebSocket();
       store.onSend(comm, data);
     },
-  }
+  },
 });

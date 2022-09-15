@@ -3,19 +3,19 @@
     <div>Disconnected</div>
     <v-loader></v-loader>
   </v-overlay>
-  <AppDialog v-bind="dialog" @close="dialog = {}"/>
+  <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
   <AppDrawer :value="drawer" @close="drawer = false">
     <component :is="DrawerMain" :isConnect="isConnect" @close="drawer = false" />
   </AppDrawer>
   <AppHeader :isConnect="isConnect" @drawer="drawer = !drawer" />
   <main class="v-spacer mt-12">
-    <router-view />
+    <router-view v-bind="bindView" />
   </main>
   <AppFooter v-bind="info" />
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/AppStore';
 import { useWebSocket } from '@/stores/WebSocket';
@@ -30,10 +30,14 @@ import AppDrawer from '@/components/app/AppDrawer';
 const drawer = ref(false);
 
 const webSocketStore = useWebSocketStore();
-const { info } = storeToRefs(webSocketStore);
+const { info, progress } = storeToRefs(webSocketStore);
 
 const appStore = useAppStore();
 const { dialog } = storeToRefs(appStore);
+
+const bindView = computed(() => {
+  return { setDialog: appStore.setDialog };
+});
 
 const webSocket = useWebSocket();
 const { socket, isConnect } = storeToRefs(webSocket);
@@ -65,5 +69,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>
