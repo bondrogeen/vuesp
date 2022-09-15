@@ -5,7 +5,6 @@ export const useAppStore = defineStore('app', {
     isLoading: false,
     dialog: {
       value: false,
-      content: {},
     },
   }),
   actions: {

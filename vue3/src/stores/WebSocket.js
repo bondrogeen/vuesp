@@ -21,7 +21,7 @@ export const useWebSocket = defineStore('websocket', {
       // console.log(message);
       if (message.data instanceof ArrayBuffer) {
         const obj = struct.get(message.data);
-        console.log(obj);
+        if (obj.key !== "PING") console.log(obj);
         if (obj) {
           const store = useWebSocketStore();
           const nameAction = `SET_${obj['key']}`;
@@ -51,7 +51,7 @@ export const useWebSocket = defineStore('websocket', {
   },
   getters: {
     isConnect(state) {
-      return state.pingClient - state.pingDevice < 4000;
+      return state.pingClient - state.pingDevice < 2000;
     },
   },
 });

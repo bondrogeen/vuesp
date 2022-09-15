@@ -6,7 +6,7 @@
     <span class="progress-right">
       <span class="progress-bar" :style="styleRight"></span>
     </span>
-    <div class="progress-value text-h4">{{ value }}%</div>
+    <div class="progress-value text-h4">{{ getValue }}%</div>
   </div>
 </template>
 
@@ -18,15 +18,17 @@ const props = defineProps({
   size: { type: String, default: 'normal' },
 });
 
+const getValue = computed(() => props.value > 100 ? 100 : props.value)
+
 const styleRight = computed(() => {
-  const value = props.value;
+  const value = getValue.value;
   let deg = value * 3.6;
   if (deg > 180) deg = 180;
   return { transform: `rotate(${deg}deg)` };
 });
 
 const styleLeft = computed(() => {
-  const value = (props.value - 50 < 0) ? 0 : props.value - 50;
+  const value = (getValue.value - 50 < 0) ? 0 : getValue.value - 50;
   let deg = value * 3.6;
   if (deg > 180) deg = 180;
   return { transform: `rotate(${deg}deg)` };

@@ -2,7 +2,7 @@
   <div class="files">
     <div class="d-flex align-center mb-6">
       <div class="text-h4 v-spacer">File system</div>
-      <v-input-file @result="onResult">
+      <v-input-file :info="info" @result="onResult" @message="onMessage">
         <v-icons icon="plus" class="mr-4"></v-icons>
       </v-input-file>
       <v-dropdown>
@@ -23,6 +23,7 @@
       </div>
     </div>
     <div class="files__list">
+      <v-loader v-if="isLoading" />
       <ul class="list">
         <li
           v-for="{ name, size, isDir, isFile } of sortFiles"
@@ -42,7 +43,7 @@
               <template #activator="{ on }">
                 <v-icons icon="menu" @click="on.click"></v-icons>
               </template>
-              <v-list :list="listMenu"></v-list>
+              <v-list :list="getListMenu(isDir)" @click="onDownload(name)"></v-list>
             </v-dropdown>
           </div>
         </li>
@@ -55,26 +56,32 @@
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed } from 'vue';
 import { toByte, debounce } from '@/utils/func/';
 
-const emit = defineEmits(['send', 'clear']);
+const emit = defineEmits(['send', 'clear', 'message']);
 
 const props = defineProps({
   files: { type: Array, default: () => [] },
+  info: { type: Object, default: () => ({}) },
   progress: { type: Object, default: () => ({}) },
 });
 
-const listMenu = [{ name: 'Download' }, { name: 'Remove' }];
+const getListMenu = isDir =>
+  [{ name: 'Download' }, { name: 'Remove' }].filter(i => (isDir ? i.name !== 'Download' : true));
+
 const mainMenu = [{ name: 'Format' }];
 
 const path = ref([]);
 const filesTemp = ref([]);
+const isLoading = ref(false);
 
 const onUpdate = e => {
+  isLoading.value = true;
   emit('clear', e);
   emit('send', { comm: 'FILES', data: { name: getFullPath.value } });
 };
 
 const onLoad = debounce(() => {
   filesTemp.value = props.files;
+  isLoading.value = false;
 }, 200);
 
 const onPrev = index => {
@@ -85,15 +92,25 @@ const onPrev = index => {
 };
 
 const onNext = (isDir, value, e) => {
-  if (e?.target?.nodeName === 'svg') return;
+  if (isLoading.value || e?.target?.nodeName === 'svg') return;
   if (isDir && path) {
     path.value.push(value);
     onUpdate();
   }
 };
 
+const onDownload = name => {
+  const url = path.value.length ? `/${path.value.join('/')}/${name}` : `/${name}`;
+  const link = document.createElement('a');
+  console.log(url);
+  link.setAttribute('download', name);
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
 const onResult = e => {
-  console.log(e);
   if (e.ok) {
     emit('clear', e);
     emit('send', { comm: 'FILES', data: { name: '/' } });
@@ -108,8 +125,7 @@ const sortFiles = computed(() => {
   });
 });
 
-// const total = computed(() => props.files.reduce((acc, el) => acc + el.size, 0));
-
+const onMessage = e => emit('message', e);
 const getFullPath = computed(() => `/${path.value.join('/')}`);
 
 watchEffect(() => {
@@ -139,6 +155,7 @@ onMounted(() => {
     }
   }
   &__list {
+    position: relative;
     margin: 0 0 20px 0;
   }
 }

@@ -61,6 +61,10 @@ void reboot() {
   ESP.restart();
 }
 
+void sendProgress() {
+  ws.binary(wsClient, (uint8_t *)&progress, sizeof(progress));
+}
+
 void getInfoFS() {
   // info.totalBytes = SPIFFS.totalBytes();
   // info.usedBytes = SPIFFS.usedBytes();
@@ -83,10 +87,13 @@ void scanWiFi() {
   wsTask[SCAN] = OFF;
 }
 
+void sendSettings() {
+  ws.binary(wsClient, (uint8_t *)&storage, sizeof(storage));
+  wsTask[SETTINGS] = OFF;
+}
+
 void saveConfig() {
-  for (unsigned int t = 0; t < sizeof(storage); t++) {
-    EEPROM.write(CONFIG_START + t, *((char *)&storage + t));
-  }
+  for (unsigned int t = 0; t < sizeof(storage); t++) EEPROM.write(CONFIG_START + t, *((char *)&storage + t));
   Serial.print("Save config");
   EEPROM.commit();
 }
@@ -185,23 +192,28 @@ void WiFiEvent(WiFiEvent_t event) {
 }
 
 void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  progress.size = index + len;
-  ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+  progress.size += len;
+  progress.status = !index ? 1 : 2;
 
-  if (!index) request->_tempFile = LittleFS.open("/" + filename, "w");
+  if (!index) { 
+    progress.length = request->contentLength() - 500;
+    request->_tempFile = LittleFS.open("/" + filename, "w");
+  }
   if (len) request->_tempFile.write(data, len);
   if (final) {
     request->_tempFile.close();
     request->send(200, RES_TYPE_JSON, status(1));
   }
+  sendProgress();
 }
 
 void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  if(!index){
-    progress.size = index;
-    ws.binaryAll((uint8_t *)&progress, sizeof(progress));
-    Update.runAsync(true);
+  progress.size += len;
+  progress.status = !index ? 1 : 2;
 
+  if(!index){
+    progress.length = request->contentLength() - 500;
+    Update.runAsync(true);
     int cmd = (filename == "littlefs.bin") ? U_FS : U_FLASH;
     size_t fsSize = ((size_t) &_FS_end - (size_t) &_FS_start);
     uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
@@ -214,21 +226,18 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
     if(Update.write(data, len) != len){
       Update.printError(Serial);
     }
-    progress.size = index;
-    ws.binaryAll((uint8_t *)&progress, sizeof(progress));
   }
   if(final){
     if(Update.end(true)){
-      progress.size = index+len;
-      ws.binaryAll((uint8_t *)&progress, sizeof(progress));
     } else {
       Update.printError(Serial);
     }
   }
+  sendProgress();
 }
 
-void initLittleFS() {
-  if (!LittleFS.begin()) {
+void initLittleFS(bool format) {
+  if (format || !LittleFS.begin()) {
     if (LittleFS.format()) {
       Serial.println(F("Filesystem formatted!"));
     }
@@ -240,7 +249,7 @@ void setup () {
   WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
-  initLittleFS();
+  initLittleFS(false);
 
   if (storage.wifiMode) {
     if (!storage.wifiDhcp) {
@@ -269,12 +278,14 @@ void setup () {
   // #endif
 
   if (storage.httpMode) {
-    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html").setCacheControl("max-age=600").setAuthentication(storage.httpLogin, storage.httpPass);
+    server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=600").setDefaultFile("index.html").setAuthentication(storage.httpLogin, storage.httpPass);
   } else {
     server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=600").setDefaultFile("index.html");
   }
   
   server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) { 
+    progress.size = 0;
+    progress.status = 0;
     request->send(200); 
   }, onUpload);
 
@@ -298,7 +309,7 @@ void setup () {
   });
 
   server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request){
-      request->redirect("/");
+    request->redirect("/");
   });
 
   server.begin();
@@ -309,13 +320,17 @@ void loop() {
   if(wsConnected) {
     if (now - lastTime > 1000) {
       lastTime = now;
-      ws.binaryAll((uint8_t *)&ping, sizeof(ping));
-      ws.cleanupClients();
+      if (progress.status == 0) {
+        sendProgress();
+        progress.status = 5;
+      } else {
+        ws.binaryAll((uint8_t *)&ping, sizeof(ping));
+      }
+      // ws.cleanupClients();
     }
   }
   if (wsTask[SETTINGS]) {
-    ws.binary(wsClient, (uint8_t *)&storage, sizeof(storage));
-    wsTask[SETTINGS] = OFF;
+    sendSettings();
     return;
   }
   if (wsTask[INFO]) {
