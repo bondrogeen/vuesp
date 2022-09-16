@@ -20,8 +20,8 @@
 
 WiFiClient WiFIclient;
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
-AsyncWebSocketClient *client;
+AsyncWebSocket ws("/esp");
+// AsyncWebSocketClient *client;
 
 #if defined(ESP8266)
 uint32_t id = ESP.getChipId();
@@ -66,8 +66,6 @@ void sendProgress() {
 }
 
 void getInfoFS() {
-  // info.totalBytes = SPIFFS.totalBytes();
-  // info.usedBytes = SPIFFS.usedBytes();
   LittleFS.info(fs_info);
   info_fs.totalBytes = fs_info.totalBytes;
   info_fs.usedBytes = fs_info.usedBytes;
@@ -196,14 +194,11 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.status = !index ? 1 : 2;
 
   if (!index) { 
-    progress.length = request->contentLength() - 500;
-    request->_tempFile = LittleFS.open("/" + filename, "w");
+    progress.length = request->contentLength();
+    request->_tempFile = LittleFS.open(filename, "w");
   }
   if (len) request->_tempFile.write(data, len);
-  if (final) {
-    request->_tempFile.close();
-    request->send(200, RES_TYPE_JSON, status(1));
-  }
+  if (final) request->_tempFile.close();
   sendProgress();
 }
 
@@ -212,11 +207,11 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.status = !index ? 1 : 2;
 
   if(!index){
-    progress.length = request->contentLength() - 500;
+    progress.length = request->contentLength();
     Update.runAsync(true);
     int cmd = (filename == "littlefs.bin") ? U_FS : U_FLASH;
     size_t fsSize = ((size_t) &_FS_end - (size_t) &_FS_start);
-    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
     if (!Update.begin((cmd == U_FS) ? fsSize : maxSketchSpace, cmd)){
       Update.printError(Serial);
       return request->send(400, RES_TYPE_JSON, status(0));
@@ -236,8 +231,8 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
   sendProgress();
 }
 
-void initLittleFS(bool format) {
-  if (format || !LittleFS.begin()) {
+void initLittleFS() {
+  if (!LittleFS.begin()) {
     if (LittleFS.format()) {
       Serial.println(F("Filesystem formatted!"));
     }
@@ -249,7 +244,7 @@ void setup () {
   WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
-  initLittleFS(false);
+  initLittleFS();
 
   if (storage.wifiMode) {
     if (!storage.wifiDhcp) {
@@ -268,25 +263,29 @@ void setup () {
   }
 
   ws.onEvent(onWsEvent);
-
   server.addHandler(&ws);
 
-  // #ifdef ESP32
-  //   server.addHandler(new SPIFFSEditor(SPIFFS, storage.httpLogin, storage.httpPass));
-  // #elif defined(ESP8266)
-  //   server.addHandler(new SPIFFSEditor(storage.httpLogin, storage.httpPass));
-  // #endif
-
   if (storage.httpMode) {
-    server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=600").setDefaultFile("index.html").setAuthentication(storage.httpLogin, storage.httpPass);
+    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html"); // .setAuthentication(storage.httpLogin, storage.httpPass);
   } else {
-    server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=600").setDefaultFile("index.html");
+    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
   }
   
-  server.on("/upload", HTTP_POST, [](AsyncWebServerRequest *request) { 
-    progress.size = 0;
-    progress.status = 0;
-    request->send(200); 
+  server.on("/fs", HTTP_ANY, [](AsyncWebServerRequest *request) { 
+    uint8_t method = request->method();
+    if(request->hasParam("file")) {
+      AsyncWebParameter* p = request->getParam("file");
+      if (method == HTTP_GET) if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
+      if (method == HTTP_DELETE) if (LittleFS.exists(p->value()) && ( LittleFS.remove(p->value()) || LittleFS.rmdir(p->value()))) return request->send(200, RES_TYPE_JSON, status(1));;
+    }
+    if(method == HTTP_POST && request->hasParam("format")) if (LittleFS.format()) return request->send(200, RES_TYPE_JSON, status(1)); 
+
+    if (method == HTTP_POST) {
+      progress.size = 0;
+      progress.status = 0;
+      return request->send(200, RES_TYPE_JSON, status(1)); 
+    }
+    request->send(404, RES_TYPE_JSON, status(0));
   }, onUpload);
 
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -295,7 +294,7 @@ void setup () {
     AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
     response->addHeader("Connection", "close");
     request->send(response);
-  },onUpdate);
+  }, onUpdate);
 
   server.on("/service", HTTP_GET, [](AsyncWebServerRequest *request) {
     if(!request->authenticate(storage.httpLogin, storage.httpPass)) return request->requestAuthentication();

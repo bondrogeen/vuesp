@@ -6,19 +6,35 @@ const root = process.env.OUTPUT_DIR;
 module.exports = defineConfig({
   transpileDependencies: true,
   outputDir: root,
+  // assetsDir: root,
   productionSourceMap: false,
   filenameHashing: false,
   css: {
-		loaderOptions: {
-			sass: {
-				additionalData: `@import "@/assets/scss/variables.scss";`,
-			},
-		},
-	},
+    loaderOptions: {
+      sass: {
+        additionalData: `@import "@/assets/scss/variables.scss";`,
+      },
+    },
+  },
   devServer: {
     host: '0.0.0.0',
     port: 3000,
-    proxy: `http://${process.env.PROXY}/`,
+    // proxy: `http://${process.env.PROXY}`,
+    proxy: {
+      '/esp': {
+        target: `ws://${process.env.PROXY}`,
+        ws: true,
+      },
+      '/fs': {
+        target: `http://${process.env.PROXY}`,
+      },
+      '/upload': {
+        target: `http://${process.env.PROXY}`,
+      },
+      '/update': {
+        target: `http://${process.env.PROXY}`,
+      },
+    },
   },
   chainWebpack: () => {},
   configureWebpack: {

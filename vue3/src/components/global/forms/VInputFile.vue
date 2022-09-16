@@ -7,32 +7,31 @@
 
 <script setup>
 import { computed, defineProps, defineEmits } from 'vue';
-const emit = defineEmits(['result', 'message']);
+const emit = defineEmits(['submit', 'error']);
 const props = defineProps({
   value: { type: String, default: '' },
-  path: { type: String, default: '/upload' },
+  path: { type: String, default: '/' },
   info: { type: Object, default: () => ({}) },
 });
 
 const availableByte = computed(() => props.info.totalBytes - props.info.usedBytes);
 
-const onUpload = async formData => await fetch(props.path, { method: 'POST', body: formData });
-
-const onChange = e => {
+const onChange = async e => {
   const formData = new FormData();
   const files = e.target.files;
   let totalSize = 0;
+
   for (let i = 0; i < files.length; i++) {
     const file = files.item(i);
     totalSize += file.size;
-    formData.append(`file[${i}]`, file);
+    const fileName = `${props.path}${file.name}`;
+    formData.append(`file[${i}]`, file, fileName);
   }
   if (!files.length) return;
   if (totalSize < availableByte.value) {
-    const res = onUpload(formData);
-    setTimeout(() => emit('result', res), 1000);
+    emit('submit', formData);
   } else {
-    emit('message', { value: true, message: 'No free space on filesystem' });
+    emit('error', { value: true, message: 'No free space on filesystem' });
   }
 };
 </script>
