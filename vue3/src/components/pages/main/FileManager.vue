@@ -2,14 +2,14 @@
   <div class="files">
     <div class="d-flex align-center mb-6">
       <div class="text-h4 v-spacer">File system</div>
-      <v-input-file :info="info" @result="onResult" @message="onMessage">
+      <v-input-file :info="info" :path="getFullPath" @submit="onUpload" @error="onMessage">
         <v-icons icon="plus" class="mr-4"></v-icons>
       </v-input-file>
       <v-dropdown>
         <template #activator="{ on }">
           <v-icons icon="menu" @click="on.click"></v-icons>
         </template>
-        <v-list :list="mainMenu"></v-list>
+        <v-list :list="mainMenu" @click="onEventServise"></v-list>
       </v-dropdown>
     </div>
     <div class="files__route d-flex gap-4 align-center text-h5 fw-600 grey-base">
@@ -25,27 +25,22 @@
     <div class="files__list">
       <v-loader v-if="isLoading" />
       <ul class="list">
-        <li
-          v-for="{ name, size, isDir, isFile } of sortFiles"
-          :key="`file_${name}`"
-          class="list__item"
-          @click="onNext(isDir, name, $event)"
-        >
-          <div class="mr-4">
-            <v-icons :icon="isDir ? `folder` : 'file'"></v-icons>
+        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="list__item">
+          <div class="list__inner" @click="onNext(isDir, name)">
+            <div class="mr-4">
+              <v-icons :icon="isDir ? `folder` : 'file'"></v-icons>
+            </div>
+            <div class="v-spacer">
+              <div class="text-body-1 fw-600">{{ isDir ? `${name}` : name }}</div>
+              <div v-if="isFile" class="text-body-2 grey-base">{{ toByte(size) }} ({{ size }})</div>
+            </div>
           </div>
-          <div class="v-spacer">
-            <div class="text-body-1 fw-600">{{ isDir ? `${name}` : name }}</div>
-            <div v-if="isFile" class="text-body-2 grey-base">{{ size }} ({{ toByte(size) }})</div>
-          </div>
-          <div>
-            <v-dropdown>
-              <template #activator="{ on }">
-                <v-icons icon="menu" @click="on.click"></v-icons>
-              </template>
-              <v-list :list="getListMenu(isDir)" @click="onDownload(name)"></v-list>
-            </v-dropdown>
-          </div>
+          <v-dropdown>
+            <template #activator="{ on }">
+              <v-icons icon="menu" @click="on.click"></v-icons>
+            </template>
+            <v-list :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
+          </v-dropdown>
         </li>
       </ul>
     </div>
@@ -62,27 +57,36 @@ const props = defineProps({
   files: { type: Array, default: () => [] },
   info: { type: Object, default: () => ({}) },
   progress: { type: Object, default: () => ({}) },
+  url: { type: String, default: '/fs' },
 });
 
-const getListMenu = isDir =>
-  [{ name: 'Download' }, { name: 'Remove' }].filter(i => (isDir ? i.name !== 'Download' : true));
-
-const mainMenu = [{ name: 'Format' }];
+const mainMenu = [
+  { id: 1, name: 'Create directory' },
+  { id: 2, name: 'Upload files' },
+  { id: 3, name: 'Format' }
+  ];
+const listMenu = [
+  { id: 1, name: 'Download' },
+  { id: 2, name: 'Remove' },
+];
 
 const path = ref([]);
 const filesTemp = ref([]);
 const isLoading = ref(false);
 
+const getListMenu = isDir => listMenu.filter(i => (isDir ? i.id !== 1 : true));
+
 const onUpdate = e => {
   isLoading.value = true;
   emit('clear', e);
   emit('send', { comm: 'FILES', data: { name: getFullPath.value } });
+  emit('send', { comm: 'INFO' });
 };
 
 const onLoad = debounce(() => {
   filesTemp.value = props.files;
   isLoading.value = false;
-}, 200);
+}, 300);
 
 const onPrev = index => {
   if (path.value.length > index) {
@@ -91,31 +95,48 @@ const onPrev = index => {
   }
 };
 
-const onNext = (isDir, value, e) => {
-  if (isLoading.value || e?.target?.nodeName === 'svg') return;
+const onNext = (isDir, value) => {
   if (isDir && path) {
     path.value.push(value);
     onUpdate();
   }
 };
 
+const fileName = name => `${getFullPath.value}${name}`;
+
+const onEventServise = ({ id }) => {
+  if (id === 3) onFormat();
+};
+
+const onEventList = (name, { id }) => {
+  if (id === 1) onDownload(name);
+  if (id === 2) onDelete(name);
+};
+
+const onFormat = async () => {
+  const res = await (await fetch(`${props.url}?format=true`, { method: 'POST' })).json();
+  if (res?.state) onUpdate();
+  else onMessage({ message: 'Directory is not empty' });
+};
+
+const onUpload = async formData => {
+  const res = await (await fetch(props.url, { method: 'POST', body: formData })).json();
+  if (res?.state) onUpdate();
+};
+
+const onDelete = async name => {
+  const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
+  if (res?.state) onUpdate();
+  else onMessage({ message: 'Directory is not empty' });
+};
+
 const onDownload = name => {
-  const url = path.value.length ? `/${path.value.join('/')}/${name}` : `/${name}`;
   const link = document.createElement('a');
-  console.log(url);
   link.setAttribute('download', name);
-  link.href = url;
+  link.href = `${props.url}?file=${fileName(name)}`;
   document.body.appendChild(link);
   link.click();
   link.remove();
-};
-
-const onResult = e => {
-  if (e.ok) {
-    emit('clear', e);
-    emit('send', { comm: 'FILES', data: { name: '/' } });
-    emit('send', { comm: 'INFO' });
-  }
 };
 
 const sortFiles = computed(() => {
@@ -126,7 +147,7 @@ const sortFiles = computed(() => {
 });
 
 const onMessage = e => emit('message', e);
-const getFullPath = computed(() => `/${path.value.join('/')}`);
+const getFullPath = computed(() => (path.value.length ? `/${path.value.join('/')}/` : '/'));
 
 watchEffect(() => {
   onLoad(props.files);
@@ -160,6 +181,12 @@ onMounted(() => {
   }
 }
 .list {
+  &__inner {
+    flex: 1 1;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
   &__item {
     display: flex;
     align-items: center;

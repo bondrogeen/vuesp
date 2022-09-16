@@ -46,7 +46,7 @@ const host = process.env.NODE_ENV === 'production' ? window.location.host : proc
 let ping = null;
 
 const connect = () => {
-  const instance = new WebSocket(`ws://${host}/ws`);
+  const instance = new WebSocket(`ws://${host}/esp`);
   instance.binaryType = 'arraybuffer';
   instance.onopen = webSocket.onopen;
   instance.onmessage = webSocket.onmessage;
