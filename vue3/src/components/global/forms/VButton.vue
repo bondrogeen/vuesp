@@ -29,7 +29,7 @@ defineProps({
     background: color('grey', 'darken-2');
   }
   &--primary {
-    border: 1px solid $primary;
+    border: 1px solid color('app', 'primary');
   }
   &--small {
 	font-size: 16px;

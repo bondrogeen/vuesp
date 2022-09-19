@@ -21,12 +21,12 @@ defineProps({
   transform: translate(-50%, -50%);
   &--white {
     div {
-      border-color: $white transparent transparent transparent !important;
+      border-color: color('app', 'white') transparent transparent transparent !important;
     }
   }
   &--primary {
     div {
-      border-color: $primary transparent transparent transparent !important;
+      border-color: color('app', 'primary') transparent transparent transparent !important;
     }
   }
   div {

@@ -56,7 +56,7 @@ a {
   color: var(--var-text-1);
   transition: all 0.25s ease-out;
   &:hover {
-    color: $primary;
+    color: color('app', 'primary');
   }
 }
 
