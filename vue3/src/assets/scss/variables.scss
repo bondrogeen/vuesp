@@ -21,7 +21,7 @@ $sizes: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16;
 
 $colors: (
   'grey': (
-    'base': #6B7280,
+    'base': #6b7280,
     'lighten-1': #f0f0f0,
     'lighten-2': #fafafa,
     'darken-1': #c2c8cc,
@@ -47,21 +47,21 @@ $colors: (
     'lighten-1': #fff3cd,
     'lighten-2': #ffe69c,
   ),
+  'app': (
+    'primary': #24c0eb,
+    'secondary': #66d3f1,
+    'black': #000,
+    'white': #fff,
+  ),
 );
 
-$primary: #24c0eb;
-$secondary: #66d3f1;
-
-$black: #000;
-$white: #fff;
-
-$light-bg-1: $white;
+$light-bg-1: color('app', 'white');
 $light-bg-2: #f1f5f9;
-$light-text: $black;
+$light-text: color('app', 'black');
 
 $dark-bg-1: #313135;
 $dark-bg-2: #212024;
-$dark-text: $white;
+$dark-text: color('app', 'white');
 
 $headings: (
   'h1': (

@@ -3,8 +3,8 @@
     <div class="row">
       {{ settings }}
       <v-tabs type="card">
-        <v-tab class="v-settings__tab" label="Ethernet" icon="icon-inbox">
-          <div class="row v-settings__item">
+        <v-tab class="" label="Ethernet">
+          <div class="row ">
             <div class="col sm12 flex flex-middle">
               <h3>Ethernet</h3>
             </div>
@@ -32,9 +32,9 @@
             </div>
           </div>
         </v-tab>
-        <v-tab class="v-settings__tab" label="Wi-Fi" icon="icon-wifi">
+        <v-tab class="" label="Wi-Fi">
           <div class="col sm12">
-            <div class="row v-settings__item">
+            <div class="row ">
               <div class="col sm12 flex flex-middle">
                 <h3>Wi-Fi</h3>
                 <div class="spacer" />
@@ -47,7 +47,7 @@
                 </v-select>
               </div>
               <div class="col sm12">
-                <div class="row v-settings__item">
+                <div class="row ">
                   <div class="col sm12 md12 lg8">
                     <p class="label">SSID</p>
                     <v-input
@@ -107,8 +107,8 @@
             </div>
           </div>
         </v-tab>
-        <v-tab class="v-settings__tab" label="Server" icon="icon-server">
-          <div class="row v-settings__item">
+        <v-tab class="" label="Server">
+          <div class="row ">
             <div class="col sm12">
               <h3>Server</h3>
             </div>
@@ -122,8 +122,8 @@
             </div>
           </div>
         </v-tab>
-        <v-tab class="v-settings__tab" label="Authentication" icon="icon-lock">
-          <div class="row v-settings__item">
+        <v-tab class="" label="Authentication" icon="icon-lock">
+          <div class="row ">
             <div class="col sm12 flex flex-middle">
               <h3>Authentication</h3>
             </div>
@@ -147,12 +147,12 @@
             </div>
           </div>
         </v-tab>
-        <v-tab class="v-settings__tab" label="Maintenance" icon="icon-refresh-ccw">
+        <v-tab class="" label="Maintenance">
           <!-- <Maintenance /> -->
         </v-tab>
       </v-tabs>
     </div>
-    <div class="col sm12 flex flex-end v-settings__btn">
+    <div class="col sm12 flex flex-end">
       <v-button @click="onSave">Save</v-button>
     </div>
     <!-- <DialogScan v-model="dialogScan" @click="onSelect" @scan="onScan" /> -->

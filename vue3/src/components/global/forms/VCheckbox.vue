@@ -49,12 +49,12 @@ $size: 16px;
       height: calc(60%);
       width: calc(30%);
       transform: translate(-50%, -50%) rotate(43deg);
-      border-right: 2px solid $white;
-      border-bottom: 2px solid $white;
+      border-right: 2px solid color('app', 'white');
+      border-bottom: 2px solid color('app', 'white');
     }
   }
   &__input:checked ~ &__mark {
-    background-color: $primary;
+    background-color: color('app', 'primary');
   }
 }
 </style>
