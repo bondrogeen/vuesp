@@ -32,11 +32,11 @@ defineProps({
     border: 1px solid color('app', 'primary');
   }
   &--small {
-	font-size: 16px;
-	height: 30px;
+    font-size: 16px;
+    height: 30px;
   }
   &--large {
-	height: 50px;
+    height: 50px;
   }
 }
 </style>

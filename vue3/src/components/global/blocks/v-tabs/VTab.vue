@@ -1,15 +1,15 @@
 <template>
-  <div v-show="isActive">
+  <div v-if="isActive">
     <slot></slot>
   </div>
 </template>
 <script setup>
-import { ref, defineProps } from 'vue';
-// const emit = defineEmits(['close']);
-defineProps({
+import { defineProps, inject, computed } from 'vue';
+const props = defineProps({
   type: { type: String, default: 'VTab' },
-  title: { type: String, default: 'Attention !' },
+  label: { type: String, default: '' },
 });
 
-const isActive = ref(false);
+const selected = inject('selected');
+const isActive = computed(() => props.label === selected.value);
 </script>
