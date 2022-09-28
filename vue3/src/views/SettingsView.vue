@@ -1,42 +1,37 @@
 <template>
   <div class="page-settings container">
     <div class="row">
-      {{ settings }}
-      <v-tabs type="card">
-        <v-tab class="" label="Ethernet">
-          <div class="row ">
-            <div class="col sm12 flex flex-middle">
-              <h3>Ethernet</h3>
-            </div>
-            <div class="col sm12">
-              <p class="label">DHCP</p>
+      <v-tabs>
+        <v-tab label="Ethernet">
+          <div class="row">
+            <div class="col sm12 mb-4">
+              <p>DHCP</p>
               <v-checkbox v-model="settings.ethDhcp" label="DHCP">
                 {{ settings.ethDhcp ? 'ON' : 'OFF' }}
               </v-checkbox>
+              {{settings.ethSubnet}}
             </div>
-            <div class="col sm12 md12 lg8">
-              <p class="label">IP</p>
-              <v-input v-model="settings.ethIp" placeholder="192.168.1.10" :disabled="isEthernetDHCP" />
+            <div class="col sm12 md12 lg8 mb-4">
+              <v-input v-model="settings.ethIp" label="IP" :disabled="true" />
             </div>
-            <div class="col sm12 md12 lg8">
-              <p class="label">Subnet</p>
-              <v-input v-model="settings.ethSubnet" placeholder="255.255.255.0" :disabled="isEthernetDHCP"></v-input>
+            <div class="col sm12 md12 lg8 mb-4">
+              <v-input v-model="settings.ethSubnet" label="Subnet" :disabled="isEthernetDHCP" :rules="[rules.required, rules.ip]">
+              </v-input>
             </div>
-            <div class="col sm12 md12 lg8">
-              <p class="label">Geteway</p>
+            <div class="col sm12 md12 lg8 mb-4">
+              <p>Geteway</p>
               <v-input v-model="settings.ethGeteway" placeholder="192.168.1.1" :disabled="isEthernetDHCP"></v-input>
             </div>
-            <div class="col sm12 md12 lg8">
-              <p class="label">DNS</p>
+            <div class="col sm12 md12 lg8 mb-4">
+              <p>DNS</p>
               <v-input v-model="settings.ethDns" placeholder="8.8.8.8" :disabled="isEthernetDHCP"></v-input>
             </div>
           </div>
         </v-tab>
-        <v-tab class="" label="Wi-Fi">
+        <v-tab label="Wi-Fi">
           <div class="col sm12">
-            <div class="row ">
-              <div class="col sm12 flex flex-middle">
-                <h3>Wi-Fi</h3>
+            <div class="row">
+              <div class="col sm12">
                 <div class="spacer" />
                 <p class="mr-4">Mode</p>
                 <v-select v-model="settings.wifiMode" style="width: 150px">
@@ -47,9 +42,9 @@
                 </v-select>
               </div>
               <div class="col sm12">
-                <div class="row ">
+                <div class="row">
                   <div class="col sm12 md12 lg8">
-                    <p class="label">SSID</p>
+                    <p>SSID</p>
                     <v-input
                       v-model="settings.wifiSsid"
                       placeholder="SSID"
@@ -64,7 +59,7 @@
                     </v-input>
                   </div>
                   <div class="col sm12 md12 lg8">
-                    <p class="label">Password</p>
+                    <p>Password</p>
                     <v-input
                       v-model="settings.wifiPass"
                       placeholder="Password"
@@ -83,56 +78,56 @@
                 </div>
               </div>
               <div class="col sm12">
-                <p class="label">DHCP</p>
+                <p>DHCP</p>
                 <v-checkbox v-model="settings.wifiDhcp" label="DHCP" :disabled="!settings.wifiMode">
                   {{ settings.wifiDhcp ? 'ON' : 'OFF' }}
                 </v-checkbox>
               </div>
               <div class="col sm12 md12 lg8">
-                <p class="label">IP</p>
+                <p>IP</p>
                 <v-input v-model="settings.wifiIp" placeholder="192.168.1.10" :disabled="isWifiDHCP" />
               </div>
               <div class="col sm12 md12 lg8">
-                <p class="label">Subnet</p>
+                <p>Subnet</p>
                 <v-input v-model="settings.wifiSubnet" placeholder="255.255.255.0" :disabled="isWifiDHCP"></v-input>
               </div>
               <div class="col sm12 md12 lg8">
-                <p class="label">Geteway</p>
+                <p>Geteway</p>
                 <v-input v-model="settings.wifiGeteway" placeholder="192.168.1.1" :disabled="isWifiDHCP"></v-input>
               </div>
               <div class="col sm12 md12 lg8">
-                <p class="label">DNS</p>
+                <p>DNS</p>
                 <v-input v-model="settings.wifiDns" placeholder="8.8.8.8" :disabled="isWifiDHCP"></v-input>
               </div>
             </div>
           </div>
         </v-tab>
-        <v-tab class="" label="Server">
-          <div class="row ">
+        <v-tab label="Server">
+          <div class="row">
             <div class="col sm12">
               <h3>Server</h3>
             </div>
             <div class="col sm12 md12 lg8">
-              <p class="label">IP</p>
-              <v-input v-model="settings.serverUrl" placeholder="192.168.4.1"></v-input>
+              <p>IP</p>
+              <v-input v-model="settings.serverUrl" label="IP" placeholder="192.168.4.1"></v-input>
             </div>
             <div class="col sm12 md12 lg8">
-              <p class="label">Port</p>
+              <p>Port</p>
               <v-input v-model.number="settings.serverPort" placeholder="8080"></v-input>
             </div>
           </div>
         </v-tab>
-        <v-tab class="" label="Authentication" icon="icon-lock">
-          <div class="row ">
-            <div class="col sm12 flex flex-middle">
+        <v-tab label="Authentication" icon="icon-lock">
+          <div class="row">
+            <div class="col sm12">
               <h3>Authentication</h3>
             </div>
             <div class="col sm12 md12 lg8">
-              <p class="label">Login</p>
+              <p>Login</p>
               <v-input v-model="settings.httpLogin" placeholder="admin"></v-input>
             </div>
             <div class="col sm12 md12 lg8">
-              <p class="label">Password</p>
+              <p>Password</p>
               <v-input
                 v-model="settings.httpPass"
                 placeholder="Password"
@@ -147,7 +142,7 @@
             </div>
           </div>
         </v-tab>
-        <v-tab class="" label="Maintenance">
+        <v-tab label="Maintenance">
           <!-- <Maintenance /> -->
         </v-tab>
       </v-tabs>
@@ -160,21 +155,27 @@
 </template>
 
 <script setup>
-// import Maintenance from '@/components/settings/Maintenance.vue';
-// import DialogScan from '../../components/settings/dialogs/DialogScan.vue';
-
 import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
+import { validateIP } from '@/utils/validate/';
+
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const webSocketStore = useWebSocketStore();
 const { settings } = storeToRefs(webSocketStore);
 
-const showPass =ref(false)
+const showPass = ref(false);
+
+const rules = {
+  required: value => !!value || 'Required.',
+  ip: v => validateIP(v) || 'Invalid ip address',
+  min: v => v.length >= 8 || 'Min 8 characters',
+};
+
 
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
-const isEthernetDHCP = computed(() => Boolean(settings.value.ethDhcp));
+const isEthernetDHCP = computed(() => Boolean(false));
 
 const onSave = () => {
   // const settings = { ...this.getSettings, ...this.settings };
@@ -187,8 +188,8 @@ const onScan = () => {
 };
 
 // const onSelect = () => {
-  // dialogScan = false;
-  // settings.wifiSsid = value;
+// dialogScan = false;
+// settings.wifiSsid = value;
 // };
 // const onReboot = async () => {
 //   try {
