@@ -5,23 +5,24 @@ import { useWebSocketStore } from './WebSocketStore';
 export const useWebSocket = defineStore('websocket', {
   state: () => ({
     socket: null,
-    pingClient: 4000,
+    pingClient: 5000,
     pingDevice: 0,
   }),
   actions: {
     onopen(data) {
+      console.log(this.isConnect);
       console.log(data);
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
+      console.log(this.isConnect);
       this.onSend('INFO');
-      // this.onSend('SETTINGS');
     },
     onmessage(message) {
       this.pingDevice = Date.now();
       // console.log(message);
       if (message.data instanceof ArrayBuffer) {
         const obj = struct.get(message.data);
-        if (obj.key !== "PING") console.log(obj);
+        if (obj.key !== 'PING') console.log(obj);
         if (obj) {
           const store = useWebSocketStore();
           const nameAction = `SET_${obj['key']}`;

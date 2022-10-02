@@ -24,12 +24,12 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
-const emit = defineEmits(['close']);
 defineProps({
   value: { type: Boolean, default: false },
   position: { type: Boolean, default: true },
 });
 
+const emit = defineEmits(['close']);
 const onClose = e => emit('close', e);
 </script>
 

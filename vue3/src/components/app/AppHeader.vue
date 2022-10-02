@@ -23,10 +23,10 @@
 
 <script setup>
 import { defineEmits, defineProps } from 'vue';
-const emit = defineEmits(['drawer']);
 defineProps({
   isConnect: { type: Boolean, default: false },
 });
+const emit = defineEmits(['drawer']);
 const onDrawer = e => emit('drawer', e);
 </script>
 

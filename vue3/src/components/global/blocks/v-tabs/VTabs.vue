@@ -18,11 +18,12 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, onBeforeMount, useSlots, provide } from 'vue';
-const slots = useSlots();
-const emit = defineEmits(['change']);
 defineProps({
   value: { type: Boolean, default: false },
 });
+const emit = defineEmits(['change']);
+
+const slots = useSlots();
 
 const selectedIndex = ref(0);
 const tabs = ref([]);

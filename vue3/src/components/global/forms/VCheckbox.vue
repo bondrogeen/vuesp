@@ -1,26 +1,24 @@
 <template>
-  <label class="b-checkbox">
-    <input :checked="value" class="b-checkbox__input" type="checkbox" @change="onChange" />
-    <span class="b-checkbox__mark"></span>
+  <label class="v-checkbox">
+    <input :checked="modelValue" class="v-checkbox__input" type="checkbox" @change="onChange" />
+    <span class="v-checkbox__mark"></span>
     <slot></slot>
   </label>
 </template>
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
-const emit = defineEmits(['input']);
 defineProps({
-  value: { type: Boolean, default: false },
+  modelValue: { type: [Boolean, Number], default: false },
 });
-const onChange = ({ target }) => {
-  emit('input', target.checked);
-};
+const emit = defineEmits(['update:modelValue']);
+const onChange = ({ target }) => emit('update:modelValue', target.checked);
 </script>
 
 <style lang="scss">
 $borderRadius: 4px;
-$size: 16px;
-.b-checkbox {
+$size: 18px;
+.v-checkbox {
   position: relative;
   display: flex;
   align-items: center;

@@ -48,9 +48,13 @@ const structs = {
   SCAN: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'id', type: Struct.types.Uint8 },
-    { name: 'name', type: 'String', byteLength: 32 },
-  ),
-
+    { name: 'isHidden', type: Struct.types.Uint8 },
+    { name: 'encryptionType', type: Struct.types.Uint8 },
+    { name: 'channel', type: Struct.types.Int32LE },
+    { name: 'rssi', type: Struct.types.Int32LE },
+    { name: 'ssid', type: 'String', byteLength: 32 },
+  ), 
+  
   FILES: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'isDir', type: Struct.types.Uint8 },

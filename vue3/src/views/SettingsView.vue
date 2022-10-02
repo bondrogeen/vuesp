@@ -1,215 +1,216 @@
 <template>
   <div class="page-settings container">
     <div class="row">
-      <v-tabs>
-        <v-tab label="Ethernet">
-          <div class="row">
-            <div class="col sm12 mb-4">
-              <p>DHCP</p>
-              <v-checkbox v-model="settings.ethDhcp" label="DHCP">
-                {{ settings.ethDhcp ? 'ON' : 'OFF' }}
-              </v-checkbox>
-              {{settings.ethSubnet}}
-            </div>
-            <div class="col sm12 md12 lg8 mb-4">
-              <v-input v-model="settings.ethIp" label="IP" :disabled="true" />
-            </div>
-            <div class="col sm12 md12 lg8 mb-4">
-              <v-input v-model="settings.ethSubnet" label="Subnet" :disabled="isEthernetDHCP" :rules="[rules.required, rules.ip]">
-              </v-input>
-            </div>
-            <div class="col sm12 md12 lg8 mb-4">
-              <p>Geteway</p>
-              <v-input v-model="settings.ethGeteway" placeholder="192.168.1.1" :disabled="isEthernetDHCP"></v-input>
-            </div>
-            <div class="col sm12 md12 lg8 mb-4">
-              <p>DNS</p>
-              <v-input v-model="settings.ethDns" placeholder="8.8.8.8" :disabled="isEthernetDHCP"></v-input>
-            </div>
-          </div>
-        </v-tab>
-        <v-tab label="Wi-Fi">
-          <div class="col sm12">
+      <div class="col sm12">
+        <v-tabs>
+          <v-tab label="Ethernet">
             <div class="row">
-              <div class="col sm12">
-                <div class="spacer" />
-                <p class="mr-4">Mode</p>
-                <v-select v-model="settings.wifiMode" style="width: 150px">
-                  <!-- <at-option :value="0">OFF</at-option>
-                  <at-option :value="1">STA</at-option>
-                  <at-option :value="2">AP</at-option>
-                  <at-option :value="3">STA + AP</at-option> -->
-                </v-select>
+              <div class="col sm12 mb-6">
+                <v-checkbox v-model="settings.ethDhcp">DHCP</v-checkbox>
               </div>
-              <div class="col sm12">
-                <div class="row">
-                  <div class="col sm12 md12 lg8">
-                    <p>SSID</p>
-                    <v-input
-                      v-model="settings.wifiSsid"
-                      placeholder="SSID"
-                      :disabled="isWifi"
-                      :append-button="!isWifi"
-                      :maxlength="32"
-                      @onAppend="onScan"
-                    >
-                      <template #append>
-                        <span>Search</span>
-                      </template>
-                    </v-input>
-                  </div>
-                  <div class="col sm12 md12 lg8">
-                    <p>Password</p>
-                    <v-input
-                      v-model="settings.wifiPass"
-                      placeholder="Password"
-                      :disabled="isWifi"
-                      :type="showPass ? 'text' : 'password'"
-                      :append-button="!isWifi"
-                      :minlength="8"
-                      :maxlength="32"
-                      @onAppend="showPass = !showPass"
-                    >
-                      <template #append>
-                        <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`"></i>
-                      </template>
-                    </v-input>
+              <div class="col sm12 md7">
+                <v-input v-model="settings.ethIp" label="IP" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+              <div class="col sm12 md7">
+                <v-input v-model="settings.ethSubnet" label="Subnet" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+              <div class="col sm12 md7">
+                <v-input v-model="settings.ethGeteway" label="Geteway" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+              <div class="col sm12 md7">
+                <v-input v-model="settings.ethDns" label="DNS" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+            </div>
+          </v-tab>
+          <v-tab label="Wi-Fi">
+            <div class="col sm12">
+              <div class="row">
+                <div class="col sm12 md7">
+                  <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onChange"></v-select>
+                </div>
+                <div class="col sm12">
+                  <div class="row">
+                    <div class="col sm12 md7">
+                      <v-input v-model="settings.wifiSsid" label="SSID" :disabled="isWifi" :append-button="!isWifi" :rules="[rules.required, rules.max]" @on-icon="onScan">
+                        <template #icon>
+                          <v-icons icon="search"></v-icons>
+                        </template>
+                      </v-input>
+                    </div>
+                    <div class="col sm12 md7">
+                      <v-input
+                        id="wifiPass"
+                        v-model="settings.wifiPass"
+                        label="Password"
+                        :disabled="isWifi"
+                        :type="showPass ? 'text' : 'password'"
+                        :rules="[rules.min, rules.max]"
+                        @on-icon="showPass = !showPass"
+                      >
+                        <template #icon>
+                          <v-icons :icon="`${showPass ? 'eye-open' : 'eye-close'}`"></v-icons>
+                        </template>
+                      </v-input>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="col sm12">
-                <p>DHCP</p>
-                <v-checkbox v-model="settings.wifiDhcp" label="DHCP" :disabled="!settings.wifiMode">
-                  {{ settings.wifiDhcp ? 'ON' : 'OFF' }}
-                </v-checkbox>
-              </div>
-              <div class="col sm12 md12 lg8">
-                <p>IP</p>
-                <v-input v-model="settings.wifiIp" placeholder="192.168.1.10" :disabled="isWifiDHCP" />
-              </div>
-              <div class="col sm12 md12 lg8">
-                <p>Subnet</p>
-                <v-input v-model="settings.wifiSubnet" placeholder="255.255.255.0" :disabled="isWifiDHCP"></v-input>
-              </div>
-              <div class="col sm12 md12 lg8">
-                <p>Geteway</p>
-                <v-input v-model="settings.wifiGeteway" placeholder="192.168.1.1" :disabled="isWifiDHCP"></v-input>
-              </div>
-              <div class="col sm12 md12 lg8">
-                <p>DNS</p>
-                <v-input v-model="settings.wifiDns" placeholder="8.8.8.8" :disabled="isWifiDHCP"></v-input>
+                <div class="col sm12 mb-4">
+                  <v-checkbox v-model="settings.wifiDhcp" :disabled="!settings.wifiMode">DHCP</v-checkbox>
+                </div>
+                <div class="col sm12 md7">
+                  <v-input v-model="settings.wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+                </div>
+                <div class="col sm12 md7">
+                  <v-input v-model="settings.wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+                </div>
+                <div class="col sm12 md7">
+                  <v-input v-model="settings.wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+                </div>
+                <div class="col sm12 md7">
+                  <v-input v-model="settings.wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+                </div>
               </div>
             </div>
-          </div>
-        </v-tab>
-        <v-tab label="Server">
-          <div class="row">
-            <div class="col sm12">
-              <h3>Server</h3>
+          </v-tab>
+          <v-tab label="Server">
+            <div class="row">
+              <div class="col sm12 md7">
+                <v-input v-model="settings.serverUrl" label="IP" :rules="[rules.required, rules.max]" />
+              </div>
+              <div class="col sm12 md7">
+                <v-input v-model.number="settings.serverPort" label="Port" :rules="[rules.required, rules.isPort]" />
+              </div>
             </div>
-            <div class="col sm12 md12 lg8">
-              <p>IP</p>
-              <v-input v-model="settings.serverUrl" label="IP" placeholder="192.168.4.1"></v-input>
+          </v-tab>
+          <v-tab label="Authentication" icon="icon-lock">
+            <div class="row">
+              <div class="col sm12 mb-6">
+                <v-checkbox v-model="settings.httpMode">AUTHENTICATION</v-checkbox>
+              </div>
+              <div class="col sm12 md7">
+                <v-input v-model="settings.httpLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
+              </div>
+              <div class="col sm12 md7">
+                <v-input v-model="settings.httpPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
+                  <template #icon>
+                    <v-icons :icon="`${showPass ? 'eye-open' : 'eye-close'}`"></v-icons>
+                  </template>
+                </v-input>
+              </div>
             </div>
-            <div class="col sm12 md12 lg8">
-              <p>Port</p>
-              <v-input v-model.number="settings.serverPort" placeholder="8080"></v-input>
-            </div>
-          </div>
-        </v-tab>
-        <v-tab label="Authentication" icon="icon-lock">
-          <div class="row">
-            <div class="col sm12">
-              <h3>Authentication</h3>
-            </div>
-            <div class="col sm12 md12 lg8">
-              <p>Login</p>
-              <v-input v-model="settings.httpLogin" placeholder="admin"></v-input>
-            </div>
-            <div class="col sm12 md12 lg8">
-              <p>Password</p>
-              <v-input
-                v-model="settings.httpPass"
-                placeholder="Password"
-                :type="showPass ? 'text' : 'password'"
-                append-button
-                @onAppend="showPass = !showPass"
-              >
-                <template #append>
-                  <i :class="`icon ${showPass ? 'icon-eye' : 'icon-eye-off'}`"></i>
-                </template>
-              </v-input>
-            </div>
-          </div>
-        </v-tab>
-        <v-tab label="Maintenance">
-          <!-- <Maintenance /> -->
-        </v-tab>
-      </v-tabs>
+          </v-tab>
+          <v-tab label="Maintenance">
+            <!-- <Maintenance /> -->
+          </v-tab>
+        </v-tabs>
+      </div>
+      <div class="col sm12">
+        <v-button @click="onSave">Save</v-button>
+      </div>
     </div>
-    <div class="col sm12 flex flex-end">
-      <v-button @click="onSave">Save</v-button>
-    </div>
-    <!-- <DialogScan v-model="dialogScan" @click="onSelect" @scan="onScan" /> -->
+    <AppDialog title="SCAN" :value="showDialog" @close="showDialog = false">
+      <v-list v-slot="{ item }" :list="scanList">
+        <div class="list-wifi d-flex" @click="onSelectSsid(item)">
+          <div class="py-2">
+            <div class="text-title1">{{ item.ssid }}</div>
+            <div class="text-body-2 grey-base">Channel: {{ item.channel }}, rssi: {{ item.rssi }}</div>
+            <div class="text-body-2 grey-base">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+          </div>
+          <div></div>
+        </div>
+      </v-list>
+      <div v-if="!scanList.length">
+        <v-loader></v-loader>
+      </div>
+      <template #footer>
+        <v-button @click="onScanDialog">Scan</v-button>
+      </template>
+    </AppDialog>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { validateIP } from '@/utils/validate/';
+import { validateIP, min, max } from '@/utils/validate/';
+
+import AppDialog from '@/components/app/AppDialog';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const webSocketStore = useWebSocketStore();
-const { settings } = storeToRefs(webSocketStore);
+const { settings, scanList, isConnect } = storeToRefs(webSocketStore);
 
 const showPass = ref(false);
+const showDialog = ref(false);
 
 const rules = {
   required: value => !!value || 'Required.',
   ip: v => validateIP(v) || 'Invalid ip address',
-  min: v => v.length >= 8 || 'Min 8 characters',
+  min: v => min(8, v) || 'Min 8 characters',
+  max: v => max(32, v) || 'Max 32 characters',
+  max12: v => max(12, v) || 'Max 12 characters',
+  isPort: v => (typeof +v === 'number' && !isNaN(+v) && +v < 65536) || 'Invalid port',
 };
 
+const listWiFi = [
+  { name: 'OFF', value: 0 },
+  { name: 'STA', value: 1 },
+  { name: 'AP', value: 2 },
+  { name: 'STA + AP', value: 3 },
+];
 
+const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
+
+const getMode = computed(() => listWiFi.find(i => i.value === settings.value.wifiMode)?.name || '');
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
+const isEthernetDHCP = computed(() => Boolean(settings.value.ethDhcp));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
-const isEthernetDHCP = computed(() => Boolean(false));
+const isAuth = computed(() => Boolean(!settings.value.httpMode));
+
+// const onReboot = async () => webSocketStore.onSend('REBOOT');
 
 const onSave = () => {
-  // const settings = { ...this.getSettings, ...this.settings };
-  // onSend({ comm: 'SETTINGS', data: settings });
+  webSocketStore.onSend('SETTINGS', settings.value);
   // onReboot();
 };
+const onSelectSsid = ({ ssid }) => {
+  settings.value.wifiMode = 1;
+  settings.value.wifiSsid = ssid;
+  const input = document.querySelector('#wifiPass input');
+  input.select();
+  input.focus();
+  showDialog.value = false;
+};
 const onScan = () => {
-  // clearScanList();
-  // onSend({ comm: 'SCAN' });
+  showDialog.value = true;
+  if (!scanList.value.length) webSocketStore.onSend('SCAN');
 };
 
-// const onSelect = () => {
-// dialogScan = false;
-// settings.wifiSsid = value;
-// };
-// const onReboot = async () => {
-//   try {
-//     await this.$Modal.confirm({
-//       title: 'Reboot',
-//       content: 'Do you want to reboot the unit?',
-//     });
-//     this.onSend({ comm: 'REBOOT' });
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
+const onScanDialog = () => {
+  scanList.value = [];
+  if (!scanList.value.length) webSocketStore.onSend('SCAN');
+};
+
+const onChange = ({ value }) => {
+  console.log(value);
+  settings.value.wifiMode = value;
+};
 
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
+});
+watch(isConnect, isConnect => {
+  console.log(isConnect);
+  if (!settings?.key && isConnect) webSocketStore.onSend('SETTINGS');
 });
 </script>
 
 <style lang="scss">
 .page-settings {
   position: relative;
+}
+.list-wifi {
+  border-bottom: 1px solid color('grey', 'lighten-1');
 }
 </style>

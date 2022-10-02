@@ -78,8 +78,12 @@ void scanWiFi() {
   int n = WiFi.scanNetworks();
   for (int i = 0; i < n; i++) {
     scan.id = i;
-    memset(scan.name, 0, sizeof(scan.name));
-    WiFi.SSID(i).toCharArray(scan.name, 32);
+    memset(scan.ssid, 0, sizeof(scan.ssid));
+    WiFi.SSID(i).toCharArray(scan.ssid, 32);
+    scan.channel = WiFi.channel(i);
+    scan.rssi = WiFi.RSSI(i);
+    scan.encryptionType = WiFi.encryptionType(i);
+    scan.isHidden = WiFi.isHidden(i);
     ws.binary(wsClient, (uint8_t *)&scan, sizeof(scan));
   };
   wsTask[SCAN] = OFF;
@@ -91,18 +95,16 @@ void sendSettings() {
 }
 
 void saveConfig() {
-  for (unsigned int t = 0; t < sizeof(storage); t++) EEPROM.write(CONFIG_START + t, *((char *)&storage + t));
+  EEPROM.put(CONFIG_START, storage);
   Serial.print("Save config");
   EEPROM.commit();
 }
 
 void loadConfig() {
-  if (EEPROM.read(CONFIG_START + 1) == storage.version[0] &&
-      EEPROM.read(CONFIG_START + 2) == storage.version[1] &&
-      EEPROM.read(CONFIG_START + 3) == storage.version[2])
-  {
-    for (unsigned int t = 0; t < sizeof(storage); t++)
-      *((char *)&storage + t) = EEPROM.read(CONFIG_START + t);
+  uint8_t ver[3] = { 0,0,0 };
+  EEPROM.get(CONFIG_START + 1, ver);
+  if (ver[0] == storage.version[0] && ver[1] == storage.version[1] && ver[2] == storage.version[2]) {
+    EEPROM.get(CONFIG_START, storage);
     Serial.print("Load config");
   } else {
     saveConfig();
@@ -246,6 +248,8 @@ void setup () {
   loadConfig();
   initLittleFS();
 
+Serial.println(storage.wifiMode);
+
   if (storage.wifiMode) {
     if (!storage.wifiDhcp) {
       WiFi.config(storage.wifiIp, storage.wifiGeteway, storage.wifiSubnet, storage.wifiDns);
@@ -265,13 +269,14 @@ void setup () {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
-  if (storage.httpMode) {
-    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html"); // .setAuthentication(storage.httpLogin, storage.httpPass);
+  if (storage.authMode) {
+    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html").setAuthentication(storage.authLogin, storage.authPass);
   } else {
     server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
   }
   
   server.on("/fs", HTTP_ANY, [](AsyncWebServerRequest *request) { 
+    if(!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
     uint8_t method = request->method();
     if(request->hasParam("file")) {
       AsyncWebParameter* p = request->getParam("file");
@@ -297,7 +302,7 @@ void setup () {
   }, onUpdate);
 
   server.on("/service", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if(!request->authenticate(storage.httpLogin, storage.httpPass)) return request->requestAuthentication();
+    if(!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", service_gz, sizeof(service_gz));
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);

@@ -1,7 +1,7 @@
 .ma {
   @each $size in $sizes {
     &-#{$size} {
-      margin: $size * 5px;
+      margin: $size * $spacer;
     }
   }
 }
@@ -9,7 +9,7 @@
 .my {
   @each $size in $sizes {
     &-#{$size} {
-      margin: $size * 5px 0;
+      margin: $size * $spacer 0;
     }
   }
 }
@@ -17,7 +17,7 @@
 .mx {
   @each $size in $sizes {
     &-#{$size} {
-      margin: 0 $size * 5px;
+      margin: 0 $size * $spacer;
     }
   }
 }
@@ -25,7 +25,7 @@
 .mb {
   @each $size in $sizes {
     &-#{$size} {
-      margin-bottom: $size * 5px;
+      margin-bottom: $size * $spacer;
     }
   }
 }
@@ -33,7 +33,7 @@
 .mr {
   @each $size in $sizes {
     &-#{$size} {
-      margin-right: $size * 5px;
+      margin-right: $size * $spacer;
     }
   }
 }
@@ -41,7 +41,7 @@
 .ml {
   @each $size in $sizes {
     &-#{$size} {
-      margin-left: $size * 5px;
+      margin-left: $size * $spacer;
     }
   }
 }
@@ -49,7 +49,63 @@
 .mt {
   @each $size in $sizes {
     &-#{$size} {
-      margin-top: $size * 5px;
+      margin-top: $size * $spacer;
+    }
+  }
+}
+
+.pa {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding: $size * $spacer;
+    }
+  }
+}
+
+.py {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding: $size * $spacer 0;
+    }
+  }
+}
+
+.px {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding: 0 $size * $spacer;
+    }
+  }
+}
+
+.pb {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding-bottom: $size * $spacer;
+    }
+  }
+}
+
+.pr {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding-right: $size * $spacer;
+    }
+  }
+}
+
+.pl {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding-left: $size * $spacer;
+    }
+  }
+}
+
+.pt {
+  @each $size in $sizes {
+    &-#{$size} {
+      padding-top: $size * $spacer;
     }
   }
 }

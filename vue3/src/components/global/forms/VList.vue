@@ -8,11 +8,11 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
-const emit = defineEmits(['click']);
 defineProps({
   list: { type: Array, default: () => [] },
 });
 
+const emit = defineEmits(['click']);
 const onClick = e => emit('click', e);
 </script>
 
@@ -24,7 +24,7 @@ const onClick = e => emit('click', e);
   padding: 0;
   margin: 0;
   &__item {
-    height: 30px;
+    min-height: 30px;
     padding: 0 15px;
     display: flex;
     align-items: center;

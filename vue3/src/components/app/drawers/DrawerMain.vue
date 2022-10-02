@@ -12,10 +12,10 @@
 
 <script setup>
 import { defineEmits, defineProps } from 'vue';
-const emit = defineEmits(['close']);
 defineProps({
   isConnect: { type: Boolean, default: false },
 });
+const emit = defineEmits(['close']);
 const onClose = value => emit('close', value);
 </script>
 
