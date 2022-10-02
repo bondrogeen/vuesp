@@ -6,17 +6,18 @@ export const useWebSocketStore = defineStore('websocketstore', {
   state: () => ({
     info: {},
     progress: {},
-    scanList: {},
+    scanList: [],
     fileList: [],
     settings: {},
     unknown: null,
+    isConnect: false,
   }),
   actions: {
     SET_INFO(info) {
       this.info = info;
     },
-    SET_SCAN({ id, name, clean }) {
-      this.scanList = clean ? {} : { ...this.scanList, [id]: name };
+    SET_SCAN(data) {
+      this.scanList = [...this.scanList, data];
     },
     SET_FILES(data) {
       this.fileList = [...this.fileList, data];
@@ -37,6 +38,15 @@ export const useWebSocketStore = defineStore('websocketstore', {
     onSend(comm, data) {
       const store = useWebSocket();
       store.onSend(comm, data);
+    },
+    onConnent(isConnect) {
+      this.isConnect = isConnect;
+    },
+  },
+  getters: {
+    isConnect() {
+      const webSocket = useWebSocket();
+      return webSocket.isConnect;
     },
   },
 });

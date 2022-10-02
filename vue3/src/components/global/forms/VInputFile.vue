@@ -7,12 +7,13 @@
 
 <script setup>
 import { computed, defineProps, defineEmits } from 'vue';
-const emit = defineEmits(['submit', 'error']);
 const props = defineProps({
   value: { type: String, default: '' },
   path: { type: String, default: '/' },
   info: { type: Object, default: () => ({}) },
 });
+
+const emit = defineEmits(['submit', 'error']);
 
 const availableByte = computed(() => props.info.totalBytes - props.info.usedBytes);
 

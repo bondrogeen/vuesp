@@ -5,7 +5,7 @@
 #define INDEX_START_ADRESS 0
 
 // Default struct settings
-#define CONFIG_VERSION { 15,1,20 }
+#define CONFIG_VERSION { 15,8,20 }
 
 #define DEF_SERVER_URL "192.168.0.1"
 #define DEF_SERVER_PORT 3001
@@ -22,14 +22,13 @@
 #define DEF_WIFI_GETEWAY { 192,168,1,1 }
 #define DEF_WIFI_DNS { 8,8,8,8 }
 
-// #define DEF_WIFI_MODE WIFI_STA
 #define DEF_WIFI_MODE WIFI_AP
 #define DEF_WIFI_SSID "ESP-8266"
 #define DEF_WIFI_PASS ""
 
-#define DEF_HTTP_MODE 1
-#define DEF_HTTP_LOGIN "admin"
-#define DEF_HTTP_PASS "admin"
+#define DEF_AUTH_MODE 1
+#define DEF_AUTH_LOGIN "admin"
+#define DEF_AUTH_PASS "admin"
 
 #define DEF_DEVICE_NAME "esp-1"
 
@@ -72,9 +71,9 @@ struct StoreStruct {
   char wifiSsid[32];
   char wifiPass[32];
 
-  uint8_t httpMode;
-  char httpLogin[12];
-  char httpPass[12];
+  uint8_t authMode;
+  char authLogin[12];
+  char authPass[12];
 
   char deviceName[12];
 } storage = {
@@ -95,9 +94,9 @@ struct StoreStruct {
     DEF_WIFI_MODE,
     DEF_WIFI_SSID,
     DEF_WIFI_PASS,
-    DEF_HTTP_MODE,
-    DEF_HTTP_LOGIN,
-    DEF_HTTP_PASS,
+    DEF_AUTH_MODE,
+    DEF_AUTH_LOGIN,
+    DEF_AUTH_PASS,
     DEF_DEVICE_NAME
     };
 
@@ -139,11 +138,19 @@ struct Files {
 struct Scan {
   uint8_t init;
   uint8_t id;
-  char name[32];
+  uint8_t isHidden;
+  uint8_t encryptionType;
+  int32_t channel;
+  int32_t rssi;
+  char ssid[32];
 } scan = {
   SCAN,
   0,
-  "",
+  0,
+  0,
+  0,
+  0,
+  ""
 };
 
 struct Progress {

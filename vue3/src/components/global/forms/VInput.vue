@@ -4,21 +4,12 @@
       <span class="v-text-field__label">
         {{ label }}
       </span>
-      <input
-        v-bind="$attrs"
-        :value="value"
-        :disabled="disabled"
-        class="v-text-field__input"
-        type="text"
-        @focus="onFocus"
-        @blur="onBlur"
-        @input="onInput"
-      />
-      <div class="v-text-field__icon">
+      <input v-bind="$attrs" :value="modelValue" :disabled="disabled" :type="type" class="v-text-field__input" @focus="onFocus" @blur="onBlur" @input="onInput" @click="onClick" />
+      <div v-if="$slots.icon" class="v-text-field__icon" @click="onIcon">
         <slot name="icon"></slot>
       </div>
     </div>
-    <div class="v-text-field__message">
+    <div v-if="!hideMessage" class="v-text-field__message">
       <slot name="message">
         {{ isDirty ? error : '' }}
       </slot>
@@ -27,19 +18,25 @@
 </template>
 <script setup>
 import { ref, defineProps, defineEmits, computed } from 'vue';
-const emit = defineEmits(['update:modelValue']);
 const props = defineProps({
-  modelValue: { type: String, default: '' },
+  modelValue: { type: [String, Number], default: '' },
   label: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
+  type: { type: String, default: 'text' },
+  active: { type: Boolean, default: false },
+  hideMessage: { type: Boolean, default: false },
   rules: { type: Array, default: () => [] },
 });
 
-const value = ref(props.modelValue);
+const emit = defineEmits(['update:modelValue', 'click', 'on-icon']);
+
+// const value = ref(props.modelValue);
 const error = ref('');
 const isError = computed(() => isDirty.value && error.value);
 const isDirty = ref(false);
 const isFocus = ref(false);
+
+const getClass = computed(() => [{ 'v-text-field--disabled': props.disabled }, { 'v-text-field--focus': isFocus.value || props.modelValue || props.active }, { 'v-text-field--error': isError.value }]);
 
 const onRules = value => {
   const errors = props.rules
@@ -53,7 +50,7 @@ const onRules = value => {
 
 const onInput = ({ target }) => {
   emit('update:modelValue', target.value);
-  value.value = target.value;
+  // value.value = target.value;
   onRules(target.value);
 };
 
@@ -63,18 +60,18 @@ const onBlur = () => {
 };
 
 const onFocus = () => (isFocus.value = true);
-
-const getClass = computed(() => [
-  { 'v-text-field--disabled': props.disabled },
-  { 'v-text-field--focus': isFocus.value || value.value },
-  { 'v-text-field--error': isError.value },
-]);
+const onClick = e => emit('click', e);
+const onIcon = e => {
+  if (props.disabled) return;
+  emit('on-icon', e);
+};
 </script>
 
 <style lang="scss">
 .v-text-field {
   position: relative;
   box-sizing: border-box;
+  width: 100%;
   &__slot {
     position: relative;
     height: 50px;
@@ -85,7 +82,7 @@ const getClass = computed(() => [
     align-items: center;
   }
   &__message {
-    height: 10px;
+    height: 30px;
     font-size: 14px;
     padding: 0 15px;
     color: color('red', 'base');
@@ -127,6 +124,9 @@ const getClass = computed(() => [
     display: flex;
     align-items: center;
     justify-content: center;
+    color: color('grey', 'base');
+    border-left: 1px solid color('grey', 'lighten-1');
+    cursor: pointer;
   }
   &--disabled {
     .v-text-field__slot {

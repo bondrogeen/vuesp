@@ -1,21 +1,24 @@
 <template>
-  <button class="v-button text-title-1" :class="[`v-button--${color}`, `v-button--${size}`]">
+  <button class="v-button text-title-1" :class="[`v-button--${color}`, `v-button--${size}`]" @click="onClick">
     <slot></slot>
   </button>
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 defineProps({
   color: { type: String, default: 'primary' },
   size: { type: String, default: 'normal' },
 });
+
+const emit = defineEmits(['click']);
+const onClick = e => emit('click', e);
 </script>
 
 <style lang="scss">
 .v-button {
   position: relative;
-  height: 40px;
+  height: 50px;
   padding: 0 15px;
   border-radius: 4px;
   border: 1px solid color('grey', 'lighten-2');
@@ -29,14 +32,13 @@ defineProps({
     background: color('grey', 'darken-2');
   }
   &--primary {
+    color: var(--var-text-1);
+    background: var(--var-bg-1);
     border: 1px solid color('app', 'primary');
   }
   &--small {
     font-size: 16px;
     height: 30px;
-  }
-  &--large {
-    height: 50px;
   }
 }
 </style>

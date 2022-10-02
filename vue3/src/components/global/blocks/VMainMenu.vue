@@ -1,6 +1,6 @@
 <template>
   <ul class="v-main-menu text-title-1">
-    <li v-for="{ name, path } of routers" class="v-main-menu__item" :key="name">
+    <li v-for="{ name, path } of routers" :key="name" class="v-main-menu__item">
       <router-link :to="path" @click="onRoute">{{ name }}</router-link>
     </li>
   </ul>

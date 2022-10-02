@@ -51,8 +51,6 @@
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed } from 'vue';
 import { toByte, debounce } from '@/utils/func/';
 
-const emit = defineEmits(['send', 'clear', 'message']);
-
 const props = defineProps({
   files: { type: Array, default: () => [] },
   info: { type: Object, default: () => ({}) },
@@ -60,11 +58,13 @@ const props = defineProps({
   url: { type: String, default: '/fs' },
 });
 
+const emit = defineEmits(['send', 'clear', 'message']);
+
 const mainMenu = [
   { id: 1, name: 'Create directory' },
   { id: 2, name: 'Upload files' },
-  { id: 3, name: 'Format' }
-  ];
+  { id: 3, name: 'Format' },
+];
 const listMenu = [
   { id: 1, name: 'Download' },
   { id: 2, name: 'Remove' },

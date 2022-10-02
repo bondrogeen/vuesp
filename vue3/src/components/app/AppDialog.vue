@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
     <div v-if="value" class="app-dialog">
-      <div class="app-dialog__overlay" @click="onClose"></div>
+      <div class="app-dialog__overlay" @click="onClose" @wheel="onWheel"></div>
       <div class="app-dialog__card">
         <div class="app-dialog__header text-h4">
           <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
@@ -23,7 +23,6 @@
 
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
-const emit = defineEmits(['close']);
 const props = defineProps({
   value: { type: Boolean, default: false },
   title: { type: String, default: 'Attention !' },
@@ -33,11 +32,11 @@ const props = defineProps({
   isProgress: { type: Boolean, default: false },
 });
 
-const procent = computed(() =>
-  props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100
-);
+const emit = defineEmits(['close']);
+const procent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
 
 const onClose = e => emit('close', e);
+const onWheel = e => e.preventDefault();
 </script>
 
 <style lang="scss">
@@ -89,6 +88,9 @@ const onClose = e => emit('close', e);
   &__body {
     flex: 1 1 auto;
     padding: 10px 20px;
+    min-height: 100px;
+    max-height: 500px;
+    overflow: auto;
   }
   &__footer {
     text-align: end;

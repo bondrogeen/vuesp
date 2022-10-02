@@ -21,14 +21,8 @@
       <div class="row">
         <div class="col-24 col-md-12 col-lg-8">
           <p class="label">Upgrade</p>
-          <at-input
-            :value="fileFirmware.name"
-            placeholder="Firmware"
-            append-button
-            @focus="onUploadFirmware"
-            @onAppend="onUpdate"
-          >
-            <template slot="append">
+          <at-input :value="fileFirmware.name" placeholder="Firmware" append-button @focus="onUploadFirmware" @onAppend="onUpdate">
+            <template #append>
               <span>Upgrade</span>
             </template>
           </at-input>
@@ -42,7 +36,7 @@
         <div class="col-24 col-md-12 col-lg-8">
           <p class="label">Upload</p>
           <at-input placeholder="Files" append-button>
-            <template slot="append">
+            <template #append>
               <span>Upload</span>
             </template>
           </at-input>
