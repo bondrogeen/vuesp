@@ -9,7 +9,7 @@
 <style lang="scss">
 .v-card {
   position: relative;
-  background: var(--var-bg-2);
+  background: var(--bg-2);
   border-radius: 10px;
   &__content {
     padding: 20px;

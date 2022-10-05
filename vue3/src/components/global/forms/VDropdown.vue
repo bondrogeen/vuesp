@@ -63,7 +63,7 @@ const hide = e => {
     min-width: 100%;
     z-index: 2;
     transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-    background-color: var(--var-bg-1);
+    background-color: var(--bg-1);
   }
   &--opened {
     .b-dropdown__activator::before {

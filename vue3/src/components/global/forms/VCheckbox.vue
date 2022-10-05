@@ -35,12 +35,12 @@ $size: 18px;
     display: block;
     height: $size;
     width: $size;
-    border: 1px solid color('grey', 'base');
+    border: 1px solid color('app', 'primary');
     border-radius: $borderRadius;
     margin-right: 5px;
     &::after {
       content: '';
-      display: block;
+      display: none;
       position: absolute;
       top: 45%;
       left: 50%;
@@ -53,6 +53,9 @@ $size: 18px;
   }
   &__input:checked ~ &__mark {
     background-color: color('app', 'primary');
+  }
+  &__input:checked ~ &__mark::after {
+    display: block;
   }
 }
 </style>

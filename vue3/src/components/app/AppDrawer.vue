@@ -43,7 +43,7 @@ const onClose = e => emit('close', e);
   z-index: 101;
   transition: width 0.2s ease-out;
   overflow: hidden;
-  background-color: var(--var-bg-1);
+  background-color: var(--bg-1);
   &--fixed {
     position: fixed;
     height: 100%;
@@ -68,7 +68,7 @@ const onClose = e => emit('close', e);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--var-bg-2);
+    background-color: var(--bg-2);
     box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
     padding: 0 15px;
     svg {
@@ -76,7 +76,7 @@ const onClose = e => emit('close', e);
     }
   }
   &__content {
-    background-color: var(--var-bg-1);
+    background-color: var(--bg-1);
     position: absolute;
     width: 100%;
     height: 100%;

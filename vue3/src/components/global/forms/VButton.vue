@@ -22,8 +22,8 @@ const onClick = e => emit('click', e);
   padding: 0 15px;
   border-radius: 4px;
   border: 1px solid color('grey', 'lighten-2');
-  color: var(--var-text-1);
-  background: var(--var-bg-1);
+  color: var(--text-1);
+  background: var(--bg-1);
 
   &:not(:disabled) {
     cursor: pointer;
@@ -32,8 +32,8 @@ const onClick = e => emit('click', e);
     background: color('grey', 'darken-2');
   }
   &--primary {
-    color: var(--var-text-1);
-    background: var(--var-bg-1);
+    color: var(--text-1);
+    background: var(--bg-1);
     border: 1px solid color('app', 'primary');
   }
   &--small {
