@@ -18,7 +18,7 @@ const onClick = e => emit('click', e);
 
 <style lang="scss">
 .v-list {
-  // background: var(--var-bg-2);
+  // background: var(--bg-2);
   border-radius: 0;
   list-style-type: none;
   padding: 0;

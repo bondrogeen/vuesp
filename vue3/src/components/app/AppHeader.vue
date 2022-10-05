@@ -33,7 +33,7 @@ const onDrawer = e => emit('drawer', e);
 <style lang="scss">
 .app-header {
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
-  background-color: var(--var-bg-2);
+  background-color: var(--bg-2);
   &__logo {
     margin-right: 60px;
     svg {

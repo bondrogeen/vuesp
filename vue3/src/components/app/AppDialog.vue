@@ -78,7 +78,7 @@ const onWheel = e => e.preventDefault();
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-color: var(--var-bg-1);
+    background-color: var(--bg-1);
   }
   &__header {
     position: relative;

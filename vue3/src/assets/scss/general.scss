@@ -1,13 +1,13 @@
 html {
-  --var-bg-1: #{$light-bg-1};
-  --var-bg-2: #{$light-bg-2};
-  --var-text-1: #{$light-text};
+  @each $color, $value in map-get($colors-app, 'light') {
+    #{$color}: #{$value};
+  }
 }
 
 html[data-theme='dark'] {
-  --var-bg-1: #{$dark-bg-1};
-  --var-bg-2: #{$dark-bg-2};
-  --var-text-1: #{$dark-text};
+  @each $color, $value in map-get($colors-app, 'dark') {
+    #{$color}: #{$value};
+  }
 }
 
 html {
@@ -19,8 +19,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-  background-color: var(--var-bg-1);
-  color: var(--var-text-1);
+  background-color: var(--bg-1);
+  color: var(--text-1);
 }
 
 html,
@@ -53,7 +53,7 @@ body {
 
 a {
   text-decoration: none;
-  color: var(--var-text-1);
+  color: var(--text-1);
   transition: all 0.25s ease-out;
   &:hover {
     color: color('app', 'primary');

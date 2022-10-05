@@ -90,12 +90,12 @@ const onIcon = e => {
   &__label {
     position: absolute;
     transform: translate(0, -50%);
-    color: color('grey', 'base');
+    color: var(--text-1);
     line-height: 10px;
     top: 50%;
     left: 15px;
     transition: all 0.2s ease-in-out;
-    background-color: white;
+    background-color: var(--bg-1);
   }
   &__input {
     border: 0;
@@ -109,8 +109,9 @@ const onIcon = e => {
     flex: 1 1 auto;
     background: inherit;
     outline: none !important;
+    color: var(--text-1);
     &::placeholder {
-      color: color('grey', 'darken-3');
+      color: var(--text-1);
     }
   }
   &:hover:not(.v-text-field--disabled) {
@@ -124,15 +125,15 @@ const onIcon = e => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: color('grey', 'base');
-    border-left: 1px solid color('grey', 'lighten-1');
+    color: var(--text-1);
+    border-left: 1px solid color('app', 'primary');
     cursor: pointer;
   }
   &--disabled {
     .v-text-field__slot {
-      border: 1px solid color('grey', 'base');
-      background-color: color('grey', 'lighten-1');
-      opacity: 0.5;
+      // border: 1px solid color('grey', 'base');
+      // background-color: color('grey', 'lighten-1');
+      opacity: 0.4;
     }
   }
   &--error {

@@ -5,7 +5,7 @@
 #define INDEX_START_ADRESS 0
 
 // Default struct settings
-#define CONFIG_VERSION { 15,8,20 }
+#define CONFIG_VERSION { 15,0,20 }
 
 #define DEF_SERVER_URL "192.168.0.1"
 #define DEF_SERVER_PORT 3001
@@ -23,7 +23,7 @@
 #define DEF_WIFI_DNS { 8,8,8,8 }
 
 #define DEF_WIFI_MODE WIFI_AP
-#define DEF_WIFI_SSID "ESP-8266"
+#define DEF_WIFI_SSID "VUESP-"
 #define DEF_WIFI_PASS ""
 
 #define DEF_AUTH_MODE 1
@@ -33,6 +33,8 @@
 #define DEF_DEVICE_NAME "esp-1"
 
 #define DEF_DEVICE_FIRMWARE {0,0,6}
+
+#define RES_TYPE_JSON "application/json"
 
 enum ws_comm {
   OFF,
@@ -46,6 +48,7 @@ enum ws_comm {
   SCAN,
   PROGRESS,
   FILES,
+  END
 };
 
 
@@ -106,9 +109,11 @@ struct Info {
   uint8_t firmware[3];
   uint32_t totalBytes;
   uint32_t usedBytes;
+  uint32_t id;
 } info_fs = {
   INFO,
   DEF_DEVICE_FIRMWARE,
+  0,
   0,
   0
 };

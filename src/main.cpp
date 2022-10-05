@@ -12,9 +12,6 @@
 #include <ESPAsyncWebServer.h>
 #include "LittleFS.h"
 
-
-#define RES_TYPE_JSON "application/json"
-
 #include "./const/service_page.h"
 #include "./const/struct.h"
 
@@ -30,7 +27,7 @@ uint32_t id =  = ESP.getEfuseMac();
 #endif
 
 uint8_t wsClient = 0;
-uint8_t wsTask[16];
+uint8_t wsTask[END];
 uint8_t wsConnected = false;
 
 uint32_t now;
@@ -69,6 +66,7 @@ void getInfoFS() {
   LittleFS.info(fs_info);
   info_fs.totalBytes = fs_info.totalBytes;
   info_fs.usedBytes = fs_info.usedBytes;
+  info_fs.id = id;
   ws.binary(wsClient, (uint8_t *)&info_fs, sizeof(info_fs));
   wsTask[INFO] = OFF;
   return;
@@ -107,6 +105,9 @@ void loadConfig() {
     EEPROM.get(CONFIG_START, storage);
     Serial.print("Load config");
   } else {
+    char idStr[8];
+    sprintf(idStr, "%02X", id);
+    strcat(storage.wifiSsid,idStr);
     saveConfig();
   }
 }
@@ -220,9 +221,7 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
     }
   }
   if(!Update.hasError()){
-    if(Update.write(data, len) != len){
-      Update.printError(Serial);
-    }
+    if(Update.write(data, len) != len) Update.printError(Serial);
   }
   if(final){
     if(Update.end(true)){
@@ -247,8 +246,6 @@ void setup () {
   EEPROM.begin(256);
   loadConfig();
   initLittleFS();
-
-Serial.println(storage.wifiMode);
 
   if (storage.wifiMode) {
     if (!storage.wifiDhcp) {

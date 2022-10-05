@@ -76,7 +76,8 @@ const structs = {
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'frimware', type: Version },
     { name: 'totalBytes', type: Struct.types.Uint32LE },
-    { name: 'usedBytes', type: Struct.types.Uint32LE }
+    { name: 'usedBytes', type: Struct.types.Uint32LE },
+    { name: 'id', type: Struct.types.Uint32LE }
   ),
 
   SETTINGS: Struct.extend(

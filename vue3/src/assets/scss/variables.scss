@@ -55,13 +55,20 @@ $colors: (
   ),
 );
 
-$light-bg-1: color('app', 'white');
-$light-bg-2: #f1f5f9;
-$light-text: color('app', 'black');
 
-$dark-bg-1: #313135;
-$dark-bg-2: #212024;
-$dark-text: color('app', 'white');
+$colors-app: (
+  'light': (
+    '--bg-1': color('app', 'white'),
+    '--bg-2': #e0f0ff,
+    '--text-1': color('app', 'black'),
+  ),
+  'dark': (
+    '--bg-1': #313135,
+    '--bg-2': #212024,
+    '--text-1': color('app', 'white'),
+  ),
+
+);
 
 $headings: (
   'h1': (
