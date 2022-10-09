@@ -5,10 +5,10 @@
   </v-overlay>
   <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
   <AppDrawer :value="drawer" @close="drawer = false">
-    <component :is="DrawerMain" :isConnect="isConnect" @close="drawer = false" />
+    <component :is="DrawerMain" :state="isConnect" @close="drawer = false" />
   </AppDrawer>
-  <AppHeader :isConnect="isConnect" @drawer="drawer = !drawer" />
-  <main class="v-spacer mt-12">
+  <AppHeader :state="isConnect" @drawer="drawer = !drawer" />
+  <main class="v-spacer mt-6">
     <router-view v-bind="bindView" />
   </main>
   <AppFooter v-bind="info" />

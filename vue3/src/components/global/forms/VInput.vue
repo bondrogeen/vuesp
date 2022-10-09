@@ -5,7 +5,7 @@
         {{ label }}
       </span>
       <input v-bind="$attrs" :value="modelValue" :disabled="disabled" :type="type" class="v-text-field__input" @focus="onFocus" @blur="onBlur" @input="onInput" @click="onClick" />
-      <div v-if="$slots.icon" class="v-text-field__icon" @click="onIcon">
+      <div v-if="$slots.icon" class="v-text-field__icon grey-base" @click="onIcon">
         <slot name="icon"></slot>
       </div>
     </div>
@@ -121,11 +121,10 @@ const onIcon = e => {
   }
   &__icon {
     height: 100%;
-    flex: 0 0 40px;
+    flex: 0 0 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-1);
     border-left: 1px solid color('app', 'primary');
     cursor: pointer;
   }
