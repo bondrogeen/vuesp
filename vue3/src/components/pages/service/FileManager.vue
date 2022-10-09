@@ -1,25 +1,30 @@
 <template>
   <div class="files">
-    <div class="d-flex align-center mb-6">
-      <div class="text-h4 v-spacer">File system</div>
+    <!-- <div class="d-flex align-center mb-6">
+
       <v-input-file :info="info" :path="getFullPath" @submit="onUpload" @error="onMessage">
         <v-icons icon="plus" class="mr-4"></v-icons>
       </v-input-file>
-      <v-dropdown>
-        <template #activator="{ on }">
-          <v-icons icon="menu" @click="on.click"></v-icons>
-        </template>
-        <v-list :list="mainMenu" @click="onEventServise"></v-list>
-      </v-dropdown>
-    </div>
-    <div class="files__route d-flex gap-4 align-center text-h5 fw-600 grey-base">
-      <div class="files__route-item" @click="onPrev(0)">
-        <div class="mr-2">/</div>
-        <v-icons icon="next"></v-icons>
+
+    </div> -->
+    <div class="files__path d-flex align-center">
+      <div class="files__route d-flex gap-4 align-center text-h5 fw-600 grey-base">
+        <div class="files__route-item" @click="onPrev(0)">
+          <div class="mr-2">/</div>
+          <v-icons icon="next"></v-icons>
+        </div>
+        <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i + 1)">
+          <div class="mr-2">{{ value }}</div>
+          <v-icons icon="next"></v-icons>
+        </div>
       </div>
-      <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i + 1)">
-        <div class="mr-2">{{ value }}</div>
-        <v-icons icon="next"></v-icons>
+      <div class="files__menu">
+        <v-dropdown>
+          <template #activator="{ on }">
+            <v-icons icon="menu" @click="on.click"></v-icons>
+          </template>
+          <v-list :list="mainMenu" @click="onEventServise"></v-list>
+        </v-dropdown>
       </div>
     </div>
     <div class="files__list">
@@ -119,10 +124,10 @@ const onFormat = async () => {
   else onMessage({ message: 'Directory is not empty' });
 };
 
-const onUpload = async formData => {
-  const res = await (await fetch(props.url, { method: 'POST', body: formData })).json();
-  if (res?.state) onUpdate();
-};
+// const onUpload = async formData => {
+//   const res = await (await fetch(props.url, { method: 'POST', body: formData })).json();
+//   if (res?.state) onUpdate();
+// };
 
 const onDelete = async name => {
   const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
@@ -160,11 +165,16 @@ onMounted(() => {
 
 <style lang="scss">
 .files {
-  &__route {
-    user-select: none;
-    height: 40px;
+  &__path {
+    width: 100%;
     border-top: 1px solid color('grey', 'lighten-1');
     border-bottom: 1px solid color('grey', 'lighten-1');
+  }
+  &__route {
+    width: 100%;
+    user-select: none;
+    height: 60px;
+
     &-item {
       display: flex;
       &:not(:last-child) {

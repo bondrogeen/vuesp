@@ -1,45 +1,46 @@
 <template>
   <label class="v-input-file">
-    <input type="file" multiple @change="onChange" />
-    <slot></slot>
+    <input type="file" v-bind="$attrs" @change="onChange" />
+    <slot v-bind="selectFiles"></slot>
   </label>
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue';
+import { ref, defineProps, defineEmits } from 'vue';
 const props = defineProps({
   value: { type: String, default: '' },
   path: { type: String, default: '/' },
-  info: { type: Object, default: () => ({}) },
 });
 
-const emit = defineEmits(['submit', 'error']);
+const emit = defineEmits(['change']);
 
-const availableByte = computed(() => props.info.totalBytes - props.info.usedBytes);
+const selectFiles = ref({ files: [], totalSize: 0 });
 
 const onChange = async e => {
-  const formData = new FormData();
+  const date = new FormData();
   const files = e.target.files;
-  let totalSize = 0;
+  const info = { files: [] };
+  info.totalSize = 0;
 
   for (let i = 0; i < files.length; i++) {
     const file = files.item(i);
-    totalSize += file.size;
+    info.totalSize += file.size;
+    info.files.push({ name: file.name, size: file.size });
     const fileName = `${props.path}${file.name}`;
-    formData.append(`file[${i}]`, file, fileName);
+    date.append(`file[${i}]`, file, fileName);
   }
   if (!files.length) return;
-  if (totalSize < availableByte.value) {
-    emit('submit', formData);
-  } else {
-    emit('error', { value: true, message: 'No free space on filesystem' });
-  }
+  selectFiles.value = info;
+  emit('change', { date, info });
 };
 </script>
 
 <style lang="scss">
 .v-input-file {
   position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
   input[type='file'] {
     display: none;
   }

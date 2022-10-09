@@ -1,11 +1,11 @@
 <template>
   <div class="drawer-main">
-    <div class="drawer-main__menu">
+    <div class="drawer-main__menu mt-6">
       <v-main-menu @route="onClose" />
     </div>
     <div class="v-spacer"></div>
     <div class="drawer-main__btn mb-6">
-      <v-button class="mr-2">{{ isConnect ? 'Connected' : 'Disconnected' }}</v-button>
+      <v-button class="mr-2">{{ state ? 'Connected' : 'Disconnected' }}</v-button>
     </div>
   </div>
 </template>
@@ -13,7 +13,7 @@
 <script setup>
 import { defineEmits, defineProps } from 'vue';
 defineProps({
-  isConnect: { type: Boolean, default: false },
+  state: { type: Boolean, default: false },
 });
 const emit = defineEmits(['close']);
 const onClose = value => emit('close', value);

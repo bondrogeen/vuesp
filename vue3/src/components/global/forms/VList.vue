@@ -24,14 +24,15 @@ const onClick = e => emit('click', e);
   padding: 0;
   margin: 0;
   &__item {
-    min-height: 30px;
+    min-height: 50px;
     padding: 0 15px;
     display: flex;
     align-items: center;
     cursor: pointer;
+    border-bottom: 1px solid var(--bg-2);
     &:hover {
       @media (hover: hover) {
-        // background-color: color('grey', 'lighten-1');
+        // background-color: var(--bg-1);
       }
     }
 

@@ -1,12 +1,7 @@
 <template>
   <div class="v-tabs">
     <ul class="v-tabs__header text-title-1 scroll-none">
-      <li
-        v-for="tab of tabs"
-        :key="tab"
-        :class="['v-tabs__item', { 'v-tabs__item--active': selectedIndex === tab }]"
-        @click="onSelect(tab)"
-      >
+      <li v-for="tab of tabs" :key="tab" :class="['v-tabs__item', { 'v-tabs__item--active': selectedIndex === tab }]" @click="onSelect(tab)">
         {{ tab }}
       </li>
     </ul>
@@ -54,9 +49,10 @@ onBeforeMount(() => {
     overflow-y: hidden;
     height: 48px;
     width: 100%;
-    background-color: color('white', 'base');
+    // background-color: color('white', 'base');
     margin: 0 auto;
     white-space: nowrap;
+    font-weight: 600;
     // box-shadow: 0 2px 2px 0 rgb(0 0 0 / 14%), 0 3px 1px -2px rgb(0 0 0 / 12%), 0 1px 5px 0 rgb(0 0 0 / 20%);
   }
   &__item {

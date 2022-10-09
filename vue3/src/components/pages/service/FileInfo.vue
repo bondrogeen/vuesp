@@ -6,15 +6,15 @@
     <div class="file-info__footer d-flex justify-between">
       <div class="center">
         <div class="text-title-1 grey-base">Used</div>
-        <div class="text-h5">{{ toByte(usedBytes) }}</div>
+        <div class="text-h6">{{ toByte(usedBytes) }}</div>
       </div>
       <div class="center">
         <div class="text-title-1 grey-base">Available</div>
-        <div class="text-h5">{{ toByte(availableByte) }}</div>
+        <div class="text-h6">{{ toByte(availableByte) }}</div>
       </div>
       <div class="center">
         <div class="text-title-1 grey-base">Total</div>
-        <div class="text-h5">{{ toByte(totalBytes) }}</div>
+        <div class="text-h6">{{ toByte(totalBytes) }}</div>
       </div>
     </div>
   </v-card>

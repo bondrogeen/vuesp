@@ -1,8 +1,15 @@
 <template>
   <footer class="app-footer">
-    <div class="app-footer__inner container">
-      <div class="grey-base">© 2021 - {{ new Date().getFullYear() }} Vuesp. (ver.{{ frimware }}) ID: {{ id.toString(16) }}</div>
-      <div class="app-footer__link"><a href="https://github.com/bondrogeen/vuesp" target="_blank">GitHub</a></div>
+    <div class="d-flex align-center justify-between container">
+      <div class="d-flex align-center flex-wrap gap-4 grey-base">
+        <div>© 2021 - {{ new Date().getFullYear() }} Vuesp.</div>
+        <div>Firmware (ver.{{ frimware }})</div>
+        <div>ID: {{ id.toString(16) }}</div>
+      </div>
+
+      <div class="app-footer__link">
+        <a href="https://github.com/bondrogeen/vuesp" target="_blank">GitHub</a>
+      </div>
     </div>
   </footer>
 </template>
@@ -19,13 +26,9 @@ defineProps({
 .app-footer {
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
   background-color: var(--bg-2);
+  padding: 30px 0;
   &__inner {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  &__link {
+    flex-wrap: wrap;
   }
 }
 </style>

@@ -5,13 +5,13 @@
         <router-link to="/">
           <v-icons icon="logo"></v-icons>
         </router-link>
+        <div class="app-header__indicator" :class="{ 'app-header__indicator--disabled': !state }"></div>
       </div>
       <div class="app-header__menu d-none d-lg-flex">
         <v-main-menu />
       </div>
       <div class="v-spacer"></div>
       <div class="app-header__right d-none d-lg-flex">
-        <v-button class="mr-2" size="small">{{ isConnect ? 'Connected' : 'Disconnected' }}</v-button>
         <v-theme-button />
       </div>
       <div class="app-header__burger d-lg-none" @click="onDrawer">
@@ -24,7 +24,7 @@
 <script setup>
 import { defineEmits, defineProps } from 'vue';
 defineProps({
-  isConnect: { type: Boolean, default: false },
+  state: { type: Boolean, default: false },
 });
 const emit = defineEmits(['drawer']);
 const onDrawer = e => emit('drawer', e);
@@ -38,6 +38,15 @@ const onDrawer = e => emit('drawer', e);
     margin-right: 60px;
     svg {
       height: 30px;
+    }
+  }
+  &__indicator {
+    height: 3px;
+    width: 100%;
+    background: color(app, primary);
+    transition: all 0.3s ease-in-out;
+    &--disabled {
+      background: color('red', 'base');
     }
   }
   &__right {
