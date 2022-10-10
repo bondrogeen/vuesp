@@ -1,45 +1,24 @@
 <template>
   <div class="page-service container">
     <div class="row">
-      <div class="col sm12 text-h2">Service</div>
-      <div class="col sm12">
+      <h1 class="col sm12 text-h2">Service</h1>
+      <div class="col sm12 lg8 xl7">
         <v-tabs>
-          <v-tab label="Ethernet">
+          <v-tab label="Connection">
             <div class="row">
-              <div class="col sm12 mb-6">
-                <v-checkbox v-model="settings.ethDhcp">DHCP</v-checkbox>
-              </div>
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.ethIp" label="IP" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-              </div>
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.ethSubnet" label="Subnet" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-              </div>
-
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.ethGeteway" label="Geteway" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-              </div>
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.ethDns" label="DNS" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-              </div>
-              <div class="col sm12">
-                <v-button @click="onSave">Save</v-button>
-              </div>
-            </div>
-          </v-tab>
-          <v-tab label="Wi-Fi">
-            <div class="row">
-              <div class="col sm12 md6 lg4">
+              <h2 class="col sm12 text-h5 mb-4">Wi-Fi</h2>
+              <div class="col sm12 md6">
                 <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onChange"></v-select>
               </div>
-              <div class="col sm12 md6 lg4">
+              <div class="col sm12"></div>
+              <div class="col sm12 md6">
                 <v-input v-model="settings.wifiSsid" label="SSID" :disabled="isWifi" :append-button="!isWifi" :rules="[rules.required, rules.max]" @on-icon="onScan">
                   <template #icon>
                     <v-icons icon="search"></v-icons>
                   </template>
                 </v-input>
               </div>
-              <div class="col sm12 md6 lg4">
+              <div class="col sm12 md6">
                 <v-input
                   id="wifiPass"
                   v-model="settings.wifiPass"
@@ -57,46 +36,72 @@
               <div class="col sm12 mb-4">
                 <v-checkbox v-model="settings.wifiDhcp" :disabled="!settings.wifiMode">DHCP</v-checkbox>
               </div>
-              <div class="col sm12 md6 lg4">
+              <div class="col sm12 md6">
                 <v-input v-model="settings.wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
               </div>
-              <div class="col sm12 md6 lg4">
+              <div class="col sm12 md6">
                 <v-input v-model="settings.wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
               </div>
-              <div class="col sm12 md6 lg4">
+              <div class="col sm12 md6">
                 <v-input v-model="settings.wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
               </div>
-              <div class="col sm12 md6 lg4">
+              <div class="col sm12 md6">
                 <v-input v-model="settings.wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
               </div>
+              <h2 class="col sm12 text-h5 mb-4">Ethernet</h2>
+              <div class="col sm12 mb-6">
+                <v-checkbox v-model="settings.ethDhcp">DHCP</v-checkbox>
+              </div>
+              <div class="col sm12 md6">
+                <v-input v-model="settings.ethIp" label="IP" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+              <div class="col sm12 md6">
+                <v-input v-model="settings.ethSubnet" label="Subnet" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+
+              <div class="col sm12 md6">
+                <v-input v-model="settings.ethGeteway" label="Geteway" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
+              <div class="col sm12 md6">
+                <v-input v-model="settings.ethDns" label="DNS" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
+              </div>
               <div class="col sm12">
                 <v-button @click="onSave">Save</v-button>
               </div>
             </div>
           </v-tab>
-          <v-tab label="Server">
+          <v-tab label="Storage">
             <div class="row">
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.serverUrl" label="IP" :rules="[rules.required, rules.max]" />
+              <div class="col sm12">
+                <FileManager :files="fileList" :progress="progress" :info="info" @send="onSend" @clear="onClear" @message="setDialog" />
               </div>
-              <div class="col sm12 md6 lg4">
+            </div>
+          </v-tab>
+          <v-tab label="Update">
+            <div class="row">
+              <div class="col sm12">
+                <UpdateFlash @done="onDone" />
+              </div>
+            </div>
+          </v-tab>
+          <v-tab label="Other">
+            <div class="row">
+              <h2 class="col sm12 text-h5 mb-4">Server</h2>
+              <div class="col sm12 md6">
+                <v-input v-model="settings.serverUrl" label="URL" :rules="[rules.required, rules.max]" />
+              </div>
+              <div class="col sm12 md6">
                 <v-input v-model.number="settings.serverPort" label="Port" :rules="[rules.required, rules.isPort]" />
               </div>
-              <div class="col sm12">
-                <v-button @click="onSave">Save</v-button>
-              </div>
-            </div>
-          </v-tab>
-          <v-tab label="Authentication" icon="icon-lock">
-            <div class="row">
+              <h2 class="col sm12 text-h5 mb-4">Authentication</h2>
               <div class="col sm12 mb-6">
-                <v-checkbox v-model="settings.httpMode">AUTHENTICATION</v-checkbox>
+                <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
               </div>
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.httpLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
+              <div class="col sm12 md6">
+                <v-input v-model="settings.authLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
               </div>
-              <div class="col sm12 md6 lg4">
-                <v-input v-model="settings.httpPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
+              <div class="col sm12 md6">
+                <v-input v-model="settings.authPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
                   <template #icon>
                     <v-icons :icon="`${showPass ? 'eye-open' : 'eye-close'}`"></v-icons>
                   </template>
@@ -107,20 +112,10 @@
               </div>
             </div>
           </v-tab>
-          <v-tab label="File system">
-            <div class="row">
-              <div class="col sm12 lg6 xl6">
-                <FileManager :files="fileList" :progress="progress" :info="info" @send="onSend" @clear="onClear" @message="setDialog" />
-              </div>
-              <div class="col sm12 lg5 offset-lg1 xl4 offset-xl2">
-                <FileInfo v-bind="info" class="page-main__file-info" />
-              </div>
-            </div>
-          </v-tab>
-          <v-tab label="Update">
-            <UpdateFlash />
-          </v-tab>
         </v-tabs>
+      </div>
+      <div class="col sm12 lg4 xl4 offset-xl1 mt-10">
+        <FileInfo v-bind="info" class="page-main__file-info" />
       </div>
     </div>
     <AppDialog title="SCAN" :value="showDialog" @close="showDialog = false">
@@ -145,7 +140,7 @@ import UpdateFlash from '@/components/pages/service/UpdateFlash';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-defineProps({
+const props = defineProps({
   setDialog: { type: Function, default: () => {} },
 });
 
@@ -175,12 +170,19 @@ const getMode = computed(() => listWiFi.find(i => i.value === settings.value.wif
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isEthernetDHCP = computed(() => Boolean(settings.value.ethDhcp));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
-const isAuth = computed(() => Boolean(!settings.value.httpMode));
+const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 // const onReboot = async () => webSocketStore.onSend('REBOOT');
 
+const onDone = res => {
+  console.log(res);
+  if (res?.state) console.log(res);
+  props.setDialog({ title: 'Flash', message: 'Done' });
+};
+
 const onSave = () => {
   webSocketStore.onSend('SETTINGS', settings.value);
+  props.setDialog({ title: 'Save', message: 'Done' });
   // onReboot();
 };
 const onSelectSsid = ({ ssid }) => {

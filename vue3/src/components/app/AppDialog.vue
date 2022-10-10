@@ -13,7 +13,7 @@
         </div>
         <div class="app-dialog__footer">
           <slot name="footer">
-            <v-button @click="onClose">OK</v-button>
+            <v-button size="small" @click="onClose">OK</v-button>
           </slot>
         </div>
       </div>
@@ -83,12 +83,12 @@ const onWheel = e => e.preventDefault();
   &__header {
     position: relative;
     padding: 10px 20px;
-    // border-bottom: 1px solid #888888;
+    border-bottom: 1px solid var(--border-1);
   }
   &__body {
     flex: 1 1 auto;
     padding: 10px 20px;
-    min-height: 100px;
+    min-height: 70px;
     max-height: 500px;
     overflow: auto;
   }

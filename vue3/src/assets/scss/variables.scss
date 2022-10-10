@@ -61,11 +61,15 @@ $colors-app: (
     '--bg-1': color('app', 'white'),
     '--bg-2': #e0f0ff,
     '--text-1': color('app', 'black'),
+    '--label-1': color('grey', 'darken-2'),
+    '--border-1': color('grey', 'darken-1'),
   ),
   'dark': (
     '--bg-1': #313135,
     '--bg-2': #212024,
     '--text-1': color('app', 'white'),
+    '--label-1': color('grey', 'darken-1'),
+    '--border-1': color('grey', 'darken-2'),
   ),
 
 );

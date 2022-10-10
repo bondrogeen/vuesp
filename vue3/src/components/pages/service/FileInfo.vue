@@ -33,7 +33,6 @@ const procent = computed(() => (props.usedBytes * 100) / props.totalBytes);
 
 <style lang="scss">
 .file-info {
-  &__footer {
-  }
+  max-width: 320px;
 }
 </style>

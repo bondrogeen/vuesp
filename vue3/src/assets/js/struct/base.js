@@ -102,9 +102,9 @@ const structs = {
     { name: 'wifiSsid', type: 'String', byteLength: 32 },
     { name: 'wifiPass', type: 'String', byteLength: 32 },
 
-    { name: 'httpMode', type: Struct.types.Uint8 },
-    { name: 'httpLogin', type: 'String', byteLength: 12 },
-    { name: 'httpPass', type: 'String', byteLength: 12 },
+    { name: 'authMode', type: Struct.types.Uint8 },
+    { name: 'authLogin', type: 'String', byteLength: 12 },
+    { name: 'authPass', type: 'String', byteLength: 12 },
 
     { name: 'deviceName', type: 'String', byteLength: 12 }
   )

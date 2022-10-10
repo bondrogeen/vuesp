@@ -19,7 +19,7 @@
         </div>
       </div>
       <div class="files__menu">
-        <v-dropdown>
+        <v-dropdown right="0" left="unset" top="0">
           <template #activator="{ on }">
             <v-icons icon="menu" @click="on.click"></v-icons>
           </template>
@@ -40,7 +40,7 @@
               <div v-if="isFile" class="text-body-2 grey-base">{{ toByte(size) }} ({{ size }})</div>
             </div>
           </div>
-          <v-dropdown>
+          <v-dropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <v-icons icon="menu" @click="on.click"></v-icons>
             </template>
@@ -165,6 +165,7 @@ onMounted(() => {
 
 <style lang="scss">
 .files {
+  min-height: 400px;
   &__path {
     width: 100%;
     border-top: 1px solid color('grey', 'lighten-1');

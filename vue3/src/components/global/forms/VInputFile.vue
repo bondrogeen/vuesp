@@ -6,32 +6,22 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
-const props = defineProps({
-  value: { type: String, default: '' },
-  path: { type: String, default: '/' },
-});
-
+import { ref, defineEmits } from 'vue';
 const emit = defineEmits(['change']);
-
 const selectFiles = ref({ files: [], totalSize: 0 });
 
 const onChange = async e => {
-  const date = new FormData();
   const files = e.target.files;
   const info = { files: [] };
   info.totalSize = 0;
-
   for (let i = 0; i < files.length; i++) {
     const file = files.item(i);
     info.totalSize += file.size;
     info.files.push({ name: file.name, size: file.size });
-    const fileName = `${props.path}${file.name}`;
-    date.append(`file[${i}]`, file, fileName);
   }
   if (!files.length) return;
   selectFiles.value = info;
-  emit('change', { date, info });
+  emit('change', { files, info });
 };
 </script>
 
