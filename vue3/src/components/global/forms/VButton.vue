@@ -28,9 +28,6 @@ const onClick = e => emit('click', e);
   &:not(:disabled) {
     cursor: pointer;
   }
-  &:disabled {
-    background: color('grey', 'darken-2');
-  }
   &--primary {
     color: var(--text-1);
     background: var(--bg-1);
@@ -39,6 +36,10 @@ const onClick = e => emit('click', e);
   &--small {
     font-size: 16px;
     height: 30px;
+  }
+  &:disabled {
+    opacity: 0.5;
+    border: 1px solid var(--border-1);
   }
 }
 </style>

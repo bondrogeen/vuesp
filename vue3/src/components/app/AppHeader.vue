@@ -11,8 +11,9 @@
         <v-main-menu />
       </div>
       <div class="v-spacer"></div>
-      <div class="app-header__right d-none d-lg-flex">
+      <div class="app-header__right d-none d-lg-flex gap-4">
         <v-theme-button />
+        <v-icons icon="logout" @click="onLogout"></v-icons>
       </div>
       <div class="app-header__burger d-lg-none" @click="onDrawer">
         <v-icons icon="burger"></v-icons>
@@ -28,6 +29,7 @@ defineProps({
 });
 const emit = defineEmits(['drawer']);
 const onDrawer = e => emit('drawer', e);
+const onLogout = async () => await fetch('/', { method: 'get', headers: { Authorization: 'Basic AAAAAAAAAAAAAAAAAAA=' } });
 </script>
 
 <style lang="scss">

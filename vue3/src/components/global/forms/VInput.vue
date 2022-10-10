@@ -90,7 +90,7 @@ const onIcon = e => {
   &__label {
     position: absolute;
     transform: translate(0, -50%);
-    color: var(--text-1);
+    color: var(--label-1);
     line-height: 10px;
     top: 50%;
     left: 15px;
@@ -130,8 +130,7 @@ const onIcon = e => {
   }
   &--disabled {
     .v-text-field__slot {
-      // border: 1px solid color('grey', 'base');
-      // background-color: color('grey', 'lighten-1');
+      border: 1px solid var(--border-1);
       opacity: 0.4;
     }
   }

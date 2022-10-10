@@ -8,7 +8,7 @@
     <component :is="DrawerMain" :state="isConnect" @close="drawer = false" />
   </AppDrawer>
   <AppHeader :state="isConnect" @drawer="drawer = !drawer" />
-  <main class="v-spacer mt-6">
+  <main class="v-spacer my-6">
     <router-view v-bind="bindView" />
   </main>
   <AppFooter v-bind="info" />
