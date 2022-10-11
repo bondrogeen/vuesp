@@ -1,8 +1,13 @@
 <template>
   <div class="v-tabs">
     <ul class="v-tabs__header text-title-1 scroll-none">
-      <li v-for="tab of tabs" :key="tab" :class="['v-tabs__item', { 'v-tabs__item--active': selectedIndex === tab }]" @click="onSelect(tab)">
-        {{ tab }}
+      <li v-for="item of tabs" :key="item.label" :class="['v-tabs__item', { 'v-tabs__item--active': isActive(item.label) }]" @click="onSelect(item)">
+        <slot name="icon" :item="item">
+          <v-icons v-if="item.icon" class="v-tabs__icon" :icon="item.icon"></v-icons>
+        </slot>
+        <div class="v-tabs__title">
+          {{ item.label }}
+        </div>
       </li>
     </ul>
     <div class="v-tabs__content">
@@ -20,10 +25,12 @@ const emit = defineEmits(['change']);
 
 const slots = useSlots();
 
-const selectedIndex = ref(0);
+const selectedIndex = ref({});
 const tabs = ref([]);
 
 provide('selected', selectedIndex);
+
+const isActive = label => selectedIndex.value.label === label;
 
 const onSelect = i => {
   selectedIndex.value = i;
@@ -35,8 +42,9 @@ onBeforeMount(() => {
     tabs.value = slots
       .default()
       .filter(child => child.type.__name === 'VTab')
-      .map(i => i.props.label);
+      .map(i => i.props);
     selectedIndex.value = tabs.value[0];
+    console.log(selectedIndex.value);
   }
 });
 </script>
@@ -54,25 +62,48 @@ onBeforeMount(() => {
     white-space: nowrap;
     font-weight: 600;
     border-bottom: 1px solid var(--border-1);
-    // box-shadow: 0 2px 2px 0 rgb(0 0 0 / 14%), 0 3px 1px -2px rgb(0 0 0 / 12%), 0 1px 5px 0 rgb(0 0 0 / 20%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    @include above($sm) {
+      justify-content: flex-start;
+    }
+  }
+  &__icon {
+    height: 34px;
+    width: 34px;
+    @include above($sm) {
+      height: 24px;
+      width: 24px;
+    }
+    color: var(--label-1);
+  }
+  &__title {
+    display: none;
+    @include above($sm) {
+      display: block;
+    }
   }
   &__item {
     cursor: pointer;
     user-select: none;
     position: relative;
-    padding: 0 15px;
-    display: inline-block;
-    text-align: center;
-    line-height: 48px;
+    padding: 0 20px;
+    display: inline-flex;
+    align-items: center;
     height: 48px;
     margin: 0;
+    gap: 10px;
+    @include above($sm) {
+      padding: 0 15px;
+    }
     &::before,
     &::after {
       content: '';
       position: absolute;
       height: 2px;
       width: 0;
-      bottom: 1px;
+      bottom: 0;
       transition: all 0.2s ease-in-out;
       background-color: color('app', 'primary');
     }

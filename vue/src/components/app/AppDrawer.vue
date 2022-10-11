@@ -3,8 +3,8 @@
     <div v-if="value" class="app-drawer__overlay" @click="onClose"></div>
     <div class="app-drawer__content">
       <div class="app-drawer__header">
-        <div>
-          <v-theme-button />
+        <div @click="changeTheme">
+          <v-icons :icon="!theme ? 'dark' : 'light'" />
         </div>
         <div @click="onClose">
           <router-link to="/">
@@ -23,13 +23,15 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, inject } from 'vue';
 defineProps({
   value: { type: Boolean, default: false },
   position: { type: Boolean, default: true },
+  changeTheme: { type: Function, default: () => {} },
 });
 
 const emit = defineEmits(['close']);
+const theme = inject('theme');
 const onClose = e => emit('close', e);
 </script>
 

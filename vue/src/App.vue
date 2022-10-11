@@ -4,18 +4,18 @@
     <v-loader></v-loader>
   </v-overlay>
   <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
-  <AppDrawer :value="drawer" @close="drawer = false">
+  <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
     <component :is="DrawerMain" :state="isConnect" @close="drawer = false" />
   </AppDrawer>
-  <AppHeader :state="isConnect" @drawer="drawer = !drawer" />
-  <main class="v-spacer my-6">
+  <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
+  <main class="v-spacer mt-16 mb-6">
     <router-view v-bind="bindView" />
   </main>
   <AppFooter v-bind="info" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/AppStore';
 import { useWebSocket } from '@/stores/WebSocket';
@@ -33,7 +33,9 @@ const webSocketStore = useWebSocketStore();
 const { info, progress } = storeToRefs(webSocketStore);
 
 const appStore = useAppStore();
-const { dialog } = storeToRefs(appStore);
+const { dialog, theme } = storeToRefs(appStore);
+
+provide('theme', theme);
 
 const bindView = computed(() => {
   return { setDialog: appStore.setDialog };
@@ -61,6 +63,7 @@ const connect = () => {
 onMounted(() => {
   ping = setInterval(webSocket.onPing, 1000);
   connect();
+  appStore.init();
 });
 
 onUnmounted(() => {
