@@ -37,7 +37,7 @@ $size: 18px;
     width: $size;
     border: 1px solid color('app', 'primary');
     border-radius: $borderRadius;
-    margin-right: 5px;
+    margin-right: 10px;
     &::after {
       content: '';
       display: none;

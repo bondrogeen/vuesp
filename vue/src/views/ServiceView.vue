@@ -1,10 +1,10 @@
 <template>
   <div class="page-service container">
     <div class="row">
-      <h1 class="col sm12 text-h2">Service</h1>
+      <h1 class="col sm12 text-h2 mb-6">Service</h1>
       <div class="col sm12 lg8 xl7">
         <v-tabs>
-          <v-tab label="Connection">
+          <v-tab label="Connection" icon="connect">
             <div class="row">
               <h2 class="col sm12 text-h5 mb-4">Wi-Fi</h2>
               <div class="col sm12 md6">
@@ -70,21 +70,22 @@
               </div>
             </div>
           </v-tab>
-          <v-tab label="Storage">
+          <v-tab label="Storage" icon="storage">
             <div class="row">
+              <h2 class="col sm12 text-h5 mb-4">File system</h2>
               <div class="col sm12">
                 <FileManager :files="fileList" :progress="progress" :info="info" @send="onSend" @clear="onClear" @message="setDialog" />
               </div>
             </div>
           </v-tab>
-          <v-tab label="Update">
+          <v-tab label="Update" icon="update">
             <div class="row">
               <div class="col sm12">
                 <UpdateFlash @done="onDone" />
               </div>
             </div>
           </v-tab>
-          <v-tab label="Other">
+          <v-tab label="Other" icon="onher">
             <div class="row">
               <h2 class="col sm12 text-h5 mb-4">Server</h2>
               <div class="col sm12 md6">

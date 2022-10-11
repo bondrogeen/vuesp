@@ -12,8 +12,15 @@
       </div>
       <div class="v-spacer"></div>
       <div class="app-header__right d-none d-lg-flex gap-4">
-        <v-theme-button />
-        <v-icons icon="logout" @click="onLogout"></v-icons>
+        <v-dropdown left="unset" right="0" top="0">
+          <template #activator="{ on }">
+            <v-icons icon="esp" @click="on.click"></v-icons>
+          </template>
+          <v-list v-slot="{ item }" :list="listMenu" @click="onMenu">
+            <v-icons :icon="item.icon"></v-icons>
+            {{ item.name }}
+          </v-list>
+        </v-dropdown>
       </div>
       <div class="app-header__burger d-lg-none" @click="onDrawer">
         <v-icons icon="burger"></v-icons>
@@ -23,19 +30,35 @@
 </template>
 
 <script setup>
-import { defineEmits, defineProps } from 'vue';
-defineProps({
+import { computed, defineEmits, defineProps, inject } from 'vue';
+const props = defineProps({
   state: { type: Boolean, default: false },
+  changeTheme: { type: Function, default: () => {} },
 });
 const emit = defineEmits(['drawer']);
+const theme = inject('theme');
+
+const listMenu = computed(() => [
+  { name: 'Theme', icon: !theme ? 'dark' : 'light' },
+  { name: 'Logout', icon: 'logout' },
+]);
 const onDrawer = e => emit('drawer', e);
 const onLogout = async () => await fetch('/', { method: 'get', headers: { Authorization: 'Basic AAAAAAAAAAAAAAAAAAA=' } });
+const onMenu = ({ name }) => {
+  if (name == 'Logout') onLogout();
+  if (name == 'Theme') props.changeTheme();
+};
 </script>
 
 <style lang="scss">
 .app-header {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  top: 0;
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
   background-color: var(--bg-2);
+  z-index: 10;
   &__logo {
     margin-right: 60px;
     svg {
@@ -54,11 +77,11 @@ const onLogout = async () => await fetch('/', { method: 'get', headers: { Author
   &__right {
     display: flex;
     align-items: center;
-    svg {
-      height: 20px;
-    }
-    .v-icons {
-      cursor: pointer;
+    .v-list {
+      svg {
+        margin-right: 5px;
+        height: 20px;
+      }
     }
   }
   &__inner {
