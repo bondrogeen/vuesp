@@ -5,17 +5,38 @@
     </div>
     <div class="v-spacer"></div>
     <div class="drawer-main__btn mb-6">
-      <v-button class="mr-2">{{ state ? 'Connected' : 'Disconnected' }}</v-button>
+      <div>
+        Chip ID:
+        <span class="grey-base">{{ id.toString(16) }}</span>
+      </div>
+      <div>
+        Frimware:
+        <span class="grey-base">{{ frimware }}</span>
+      </div>
+      <div>
+        Total Bytes:
+        <span class="grey-base">{{ totalBytes }}</span>
+      </div>
+      <div>
+        Used Bytes:
+        <span class="grey-base">{{ usedBytes }}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { defineEmits, defineProps } from 'vue';
-defineProps({
+import { computed, defineEmits, defineProps } from 'vue';
+const props = defineProps({
   state: { type: Boolean, default: false },
+  info: { type: Object, default: () => {} },
 });
 const emit = defineEmits(['close']);
+
+const frimware = computed(() => props.info?.frimware || '');
+const id = computed(() => props.info?.id || '');
+const totalBytes = computed(() => props.info?.totalBytes || '');
+const usedBytes = computed(() => props.info?.usedBytes || '');
 const onClose = value => emit('close', value);
 </script>
 
@@ -26,7 +47,8 @@ const onClose = value => emit('close', value);
   height: 100%;
   &__btn {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
   }
   &__menu {
     .v-main-menu {

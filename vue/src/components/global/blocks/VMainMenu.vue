@@ -12,7 +12,10 @@ import { computed, defineEmits } from 'vue';
 const emit = defineEmits(['route']);
 
 const router = useRouter();
-const routers = computed(() => (router?.options?.routes || []).filter(i => i.path !== '/'));
+const pathFilter = i => {
+  return i.path !== '/' && !i.path.includes(':');
+};
+const routers = computed(() => (router?.options?.routes || []).filter(pathFilter));
 const onRoute = e => emit('route', e);
 </script>
 
@@ -23,6 +26,9 @@ const onRoute = e => emit('route', e);
   gap: 30px;
   &__item {
     cursor: pointer;
+    &::first-letter {
+      text-transform: uppercase;
+    }
   }
   .router-link-active {
     color: color(app, primary);

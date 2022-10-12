@@ -176,7 +176,7 @@ const isAuth = computed(() => Boolean(!settings.value.authMode));
 // const onReboot = async () => webSocketStore.onSend('REBOOT');
 
 const onDone = res => {
-  console.log(res);
+  // console.log(res);
   if (res?.state) console.log(res);
   props.setDialog({ title: 'Flash', message: 'Done' });
 };
@@ -205,7 +205,7 @@ const onScanDialog = () => {
 };
 
 const onChange = ({ value }) => {
-  console.log(value);
+  // console.log(value);
   settings.value.wifiMode = value;
 };
 
@@ -216,7 +216,7 @@ onMounted(() => {
   webSocketStore.onSend('SETTINGS');
 });
 watch(isConnect, isConnect => {
-  console.log(isConnect);
+  // console.log(isConnect);
   if (!settings?.key && isConnect) webSocketStore.onSend('SETTINGS');
 });
 </script>

@@ -3,14 +3,7 @@ module.exports = {
   env: {
     node: true,
   },
-  extends: [
-    'plugin:vue/base',
-    'plugin:vue/vue3-recommended',
-    'plugin:vue/vue3-essential',
-    'plugin:vue/vue3-strongly-recommended',
-    'eslint:recommended',
-    'prettier',
-  ],
+  extends: ['plugin:vue/base', 'plugin:vue/vue3-recommended', 'plugin:vue/vue3-essential', 'plugin:vue/vue3-strongly-recommended', 'eslint:recommended', 'prettier'],
   parserOptions: {
     parser: '@babel/eslint-parser',
     requireConfigFile: false,
@@ -34,5 +27,11 @@ module.exports = {
     'vue/custom-event-name-casing': 'error',
     'vue/no-restricted-props': 'error',
     'vue/camelcase': 'warn',
+    'vue/multi-word-component-names': [
+      'error',
+      {
+        ignores: ['index'],
+      },
+    ],
   },
 };

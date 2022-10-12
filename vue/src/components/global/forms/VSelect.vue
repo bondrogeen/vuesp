@@ -1,7 +1,7 @@
 <template>
   <v-dropdown class="v-select" v-bind="$attrs">
     <template #activator="{ on }">
-      <v-input :key="value" :modelValue="value" readonly active hideMessage :label="label" @click="on.click" @on-icon="on.click">
+      <v-input :key="value" :model-value="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
         <template #icon>
           <v-icons icon="select"></v-icons>
         </template>

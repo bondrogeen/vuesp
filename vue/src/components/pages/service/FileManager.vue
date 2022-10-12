@@ -1,12 +1,5 @@
 <template>
   <div class="files">
-    <!-- <div class="d-flex align-center mb-6">
-
-      <v-input-file :info="info" :path="getFullPath" @submit="onUpload" @error="onMessage">
-        <v-icons icon="plus" class="mr-4"></v-icons>
-      </v-input-file>
-
-    </div> -->
     <div class="files__path d-flex align-center">
       <div class="files__route d-flex gap-4 align-center text-h5 fw-600 grey-base">
         <div class="files__route-item" @click="onPrev(0)">
@@ -19,6 +12,7 @@
         </div>
       </div>
       <div class="files__menu">
+        <v-input-file @change="onUpload"></v-input-file>
         <v-dropdown right="0" left="unset" top="0">
           <template #activator="{ on }">
             <v-icons icon="menu" @click="on.click"></v-icons>
@@ -29,15 +23,15 @@
     </div>
     <div class="files__list">
       <v-loader v-if="isLoading" />
-      <ul class="list">
-        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="list__item">
-          <div class="list__inner" @click="onNext(isDir, name)">
+      <ul class="v-list">
+        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item d-flex align-center pa-0">
+          <div class="d-flex align-center v-spacer my-2" @click="onNext(isDir, name)">
             <div class="mr-4">
               <v-icons :icon="isDir ? `folder` : 'file'"></v-icons>
             </div>
             <div class="v-spacer">
               <div class="text-body-1 fw-600">{{ isDir ? `${name}` : name }}</div>
-              <div v-if="isFile" class="text-body-2 grey-base">{{ toByte(size) }} ({{ size }})</div>
+              <div v-if="isFile" class="text-caption grey-base">{{ toByte(size) }} ({{ size }})</div>
             </div>
           </div>
           <v-dropdown right="0" left="unset" top="0">
@@ -68,7 +62,8 @@ const emit = defineEmits(['send', 'clear', 'message']);
 const mainMenu = [
   { id: 1, name: 'Create directory' },
   { id: 2, name: 'Upload files' },
-  { id: 3, name: 'Format' },
+  { id: 3, name: 'Reload' },
+  { id: 4, name: 'Format' },
 ];
 const listMenu = [
   { id: 1, name: 'Download' },
@@ -110,7 +105,12 @@ const onNext = (isDir, value) => {
 const fileName = name => `${getFullPath.value}${name}`;
 
 const onEventServise = ({ id }) => {
-  if (id === 3) onFormat();
+  if (id === 2) {
+    const input = document.querySelector('input[type="file"]');
+    if (input?.click) input.click();
+  }
+  if (id === 3) onUpdate();
+  if (id === 4) onFormat();
 };
 
 const onEventList = (name, { id }) => {
@@ -121,13 +121,24 @@ const onEventList = (name, { id }) => {
 const onFormat = async () => {
   const res = await (await fetch(`${props.url}?format=true`, { method: 'POST' })).json();
   if (res?.state) onUpdate();
-  else onMessage({ message: 'Directory is not empty' });
 };
 
-// const onUpload = async formData => {
-//   const res = await (await fetch(props.url, { method: 'POST', body: formData })).json();
-//   if (res?.state) onUpdate();
-// };
+const onUpload = async ({ files, info }) => {
+  const totalSize = info?.totalSize || 0;
+  const date = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    const file = files.item(i);
+    const fileName = `${getFullPath.value}${file.name}`;
+    date.append(`file[${i}]`, file, fileName);
+  }
+  const { totalBytes, usedBytes } = props.info;
+  if (totalSize < totalBytes - usedBytes) {
+    const res = await (await fetch(props.url, { method: 'POST', body: date })).json();
+    if (res?.state) onUpdate();
+  } else {
+    onMessage({ message: 'No free space' });
+  }
+};
 
 const onDelete = async name => {
   const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
@@ -189,25 +200,6 @@ onMounted(() => {
   &__list {
     position: relative;
     margin: 0 0 20px 0;
-  }
-}
-.list {
-  &__inner {
-    flex: 1 1;
-    display: flex;
-    align-items: center;
-    height: 100%;
-  }
-  &__item {
-    display: flex;
-    align-items: center;
-    height: 60px;
-    &:not(:last-child) {
-      border-bottom: 1px solid color('grey', 'lighten-1');
-    }
-    .name {
-      font-weight: bold;
-    }
   }
 }
 </style>
