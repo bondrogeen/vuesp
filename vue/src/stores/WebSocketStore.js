@@ -10,7 +10,6 @@ export const useWebSocketStore = defineStore('websocketstore', {
     fileList: [],
     settings: {},
     unknown: null,
-    isConnect: false,
   }),
   actions: {
     SET_INFO(info) {
@@ -38,9 +37,6 @@ export const useWebSocketStore = defineStore('websocketstore', {
     onSend(comm, data) {
       const store = useWebSocket();
       store.onSend(comm, data);
-    },
-    onConnent(isConnect) {
-      this.isConnect = isConnect;
     },
   },
   getters: {

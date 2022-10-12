@@ -37,7 +37,7 @@ const onClick = e => emit('click', e);
     }
 
     white-space: nowrap;
-    overflow: hidden;
+    // overflow: hidden;
   }
 }
 </style>

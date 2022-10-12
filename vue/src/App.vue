@@ -5,7 +5,7 @@
   </v-overlay>
   <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
   <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
-    <component :is="DrawerMain" :state="isConnect" @close="drawer = false" />
+    <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
   </AppDrawer>
   <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
   <main class="v-spacer mt-16 mb-6">
@@ -27,25 +27,19 @@ import AppHeader from '@/components/app/AppHeader';
 import AppFooter from '@/components/app/AppFooter';
 import AppDrawer from '@/components/app/AppDrawer';
 
-const drawer = ref(false);
-
+const appStore = useAppStore();
+const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
+const { dialog, theme } = storeToRefs(appStore);
+const { socket, isConnect } = storeToRefs(webSocket);
 const { info, progress } = storeToRefs(webSocketStore);
 
-const appStore = useAppStore();
-const { dialog, theme } = storeToRefs(appStore);
-
+let ping = null;
+const drawer = ref(false);
 provide('theme', theme);
 
-const bindView = computed(() => {
-  return { setDialog: appStore.setDialog };
-});
-
-const webSocket = useWebSocket();
-const { socket, isConnect } = storeToRefs(webSocket);
+const bindView = computed(() => ({ setDialog: appStore.setDialog }));
 const host = process.env.NODE_ENV === 'production' ? window.location.host : process.env.PROXY;
-
-let ping = null;
 
 const connect = () => {
   const instance = new WebSocket(`ws://${host}/esp`);

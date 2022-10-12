@@ -39,7 +39,7 @@ const emit = defineEmits(['drawer']);
 const theme = inject('theme');
 
 const listMenu = computed(() => [
-  { name: 'Theme', icon: !theme ? 'dark' : 'light' },
+  { name: 'Theme', icon: !theme.value ? 'dark' : 'light' },
   { name: 'Logout', icon: 'logout' },
 ]);
 const onDrawer = e => emit('drawer', e);

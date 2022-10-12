@@ -44,7 +44,6 @@ onBeforeMount(() => {
       .filter(child => child.type.__name === 'VTab')
       .map(i => i.props);
     selectedIndex.value = tabs.value[0];
-    console.log(selectedIndex.value);
   }
 });
 </script>

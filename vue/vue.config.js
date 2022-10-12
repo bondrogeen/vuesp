@@ -1,5 +1,6 @@
 const { defineConfig } = require('@vue/cli-service');
 const RemovePlugin = require('remove-files-webpack-plugin');
+const VueAutoRoutingPlugin = require('vue-auto-routing/lib/webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const root = process.env.OUTPUT_DIR;
 
@@ -38,6 +39,11 @@ module.exports = defineConfig({
   },
   chainWebpack: () => {},
   configureWebpack: {
+    performance: {
+      hints: false,
+      maxEntrypointSize: 512000,
+      maxAssetSize: 512000,
+    },
     optimization: {
       splitChunks: {
         cacheGroups: {
@@ -55,6 +61,10 @@ module.exports = defineConfig({
     },
     plugins: [
       new Dotenv(),
+      new VueAutoRoutingPlugin({
+        pages: 'src/pages',
+        importPrefix: '@/pages/',
+      }),
       new RemovePlugin({
         after: {
           root: root,
