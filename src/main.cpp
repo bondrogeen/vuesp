@@ -12,8 +12,8 @@
 #include <ESPAsyncWebServer.h>
 #include "LittleFS.h"
 
-#include "./const/service_page.h"
 #include "./const/struct.h"
+#include "./pages/recovery.h"
 
 WiFiClient WiFIclient;
 AsyncWebServer server(80);
@@ -107,7 +107,7 @@ void loadConfig() {
   } else {
     char idStr[8];
     sprintf(idStr, "%02X", id);
-    strcat(storage.wifiSsid,idStr);
+    strcat(storage.wifiSsid, idStr);
     saveConfig();
   }
 }
@@ -242,7 +242,7 @@ void initLittleFS() {
 
 void setup () {
   Serial.begin(115200);
-  WiFi.onEvent(WiFiEvent);
+  // WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
   initLittleFS();
@@ -298,15 +298,15 @@ void setup () {
     request->send(response);
   }, onUpdate);
 
-  server.on("/service", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/recovery", HTTP_GET, [](AsyncWebServerRequest *request) {
     if(!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", service_gz, sizeof(service_gz));
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->redirect("/service");
+    request->redirect("/recovery");
   });
 
   server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request){

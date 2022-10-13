@@ -24,7 +24,7 @@ const onClick = e => emit('click', e);
   border: 1px solid color('grey', 'lighten-2');
   color: var(--text-1);
   background: var(--bg-1);
-
+  min-width: 100px;
   &:not(:disabled) {
     cursor: pointer;
   }

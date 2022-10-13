@@ -1,6 +1,6 @@
 # Vuesp 
 
-Vue + ESP = Vuesp
+Vue3 + ESP = Vuesp
 
 Template for your projects with a web interface.
 
@@ -8,9 +8,8 @@ Template for your projects with a web interface.
 
 
 [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino   
-[Vue](https://vuejs.org/) - The Progressive
-JavaScript Framework     
-[AT-UI](https://at-ui.github.io/at-ui/#/en) - A Lightweight and Modular Front-End UI Library   
+[Vue3](https://vuejs.org/) - The Progressive JavaScript Framework     
+
 
 
 ## Project structure
@@ -44,10 +43,10 @@ Next in  [vue.config.js](./vue/vue.config.js) file change proxy to your ip devic
 
 #### Start dev server
 ```
-npm run serve
+npm run dev
 ```
 
-http://localhost:8080/ 
+http://localhost:3000/ 
 
 
 
