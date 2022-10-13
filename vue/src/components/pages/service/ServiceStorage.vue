@@ -179,8 +179,8 @@ onMounted(() => {
   min-height: 400px;
   &__path {
     width: 100%;
-    border-top: 1px solid color('grey', 'lighten-1');
-    border-bottom: 1px solid color('grey', 'lighten-1');
+    border-top: 1px solid var(--border-1);
+    border-bottom: 1px solid var(--border-1);
   }
   &__route {
     width: 100%;

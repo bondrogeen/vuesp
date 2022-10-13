@@ -4,7 +4,7 @@
       <h1 class="col sm12 text-h2 mb-6">Service</h1>
       <div class="col sm12 lg8 xl7">
         <v-tabs>
-          <v-tab label="Connection" icon="connect">
+          <v-tab label="Settings" icon="connect">
             <div class="row">
               <h2 class="col sm12 text-h5 mb-4">Wi-Fi</h2>
               <div class="col sm12 md6">
@@ -74,14 +74,14 @@
             <div class="row">
               <h2 class="col sm12 text-h5 mb-4">File system</h2>
               <div class="col sm12">
-                <FileManager :files="fileList" :progress="progress" :info="info" @send="onSend" @clear="onClear" @message="setDialog" />
+                <ServiceStorage :files="fileList" :progress="progress" :info="info" @send="onSend" @clear="onClear" @message="setDialog" />
               </div>
             </div>
           </v-tab>
-          <v-tab label="Update" icon="update">
+          <v-tab label="System" icon="update">
             <div class="row">
               <div class="col sm12">
-                <UpdateFlash @done="onDone" />
+                <ServiceSystem @done="onDone" @reboot="onReboot" @reset="onReset" />
               </div>
             </div>
           </v-tab>
@@ -134,10 +134,10 @@ import { storeToRefs } from 'pinia';
 import { validateIP, min, max } from '@/utils/validate/';
 
 import AppDialog from '@/components/app/AppDialog';
-import FileManager from '@/components/pages/service/FileManager';
+import ServiceStorage from '@/components/pages/service/ServiceStorage';
 import FileInfo from '@/components/pages/service/FileInfo';
 import WifiList from '@/components/pages/service/WifiList';
-import UpdateFlash from '@/components/pages/service/UpdateFlash';
+import ServiceSystem from '@/components/pages/service/ServiceSystem';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
@@ -173,17 +173,19 @@ const isEthernetDHCP = computed(() => Boolean(settings.value.ethDhcp));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
-// const onReboot = async () => webSocketStore.onSend('REBOOT');
+const onReboot = async () => {
+  webSocketStore.onSend('REBOOT');
+  props.setDialog({ title: 'Done', message: 'Reboot...' });
+};
+const onReset = async () => webSocketStore.onSend('REBOOT');
 
 const onDone = res => {
-  // console.log(res);
-  if (res?.state) console.log(res);
-  props.setDialog({ title: 'Flash', message: 'Done' });
+  if (res?.state) props.setDialog({ title: 'Done', message: 'Reboot...' });
 };
 
 const onSave = () => {
   webSocketStore.onSend('SETTINGS', settings.value);
-  props.setDialog({ title: 'Save', message: 'Done' });
+  props.setDialog({ title: 'Done', message: 'Save' });
   // onReboot();
 };
 const onSelectSsid = ({ ssid }) => {
