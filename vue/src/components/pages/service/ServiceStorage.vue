@@ -1,7 +1,7 @@
 <template>
   <div class="files">
-    <div class="files__path d-flex align-center">
-      <div class="files__route d-flex gap-4 align-center text-h5 fw-600 grey-base">
+    <div class="files__path d-flex a-center">
+      <div class="files__route d-flex gap-4 a-center text-h5 fw-600 grey-base">
         <div class="files__route-item" @click="onPrev(0)">
           <div class="mr-2">/</div>
           <v-icons icon="next"></v-icons>
@@ -11,7 +11,7 @@
           <v-icons icon="next"></v-icons>
         </div>
       </div>
-      <div class="files__menu">
+      <div>
         <v-input-file @change="onUpload"></v-input-file>
         <v-dropdown right="0" left="unset" top="0">
           <template #activator="{ on }">
@@ -24,8 +24,8 @@
     <div class="files__list">
       <v-loader v-if="isLoading" />
       <ul class="v-list">
-        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item d-flex align-center pa-0">
-          <div class="d-flex align-center v-spacer my-2" @click="onNext(isDir, name)">
+        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item d-flex a-center pa-0">
+          <div class="d-flex a-center v-spacer my-2" @click="onNext(isDir, name)">
             <div class="mr-4">
               <v-icons :icon="isDir ? `folder` : 'file'"></v-icons>
             </div>
@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { defineProps, watchEffect, defineEmits, ref, onMounted, computed } from 'vue';
+import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject } from 'vue';
 import { toByte, debounce } from '@/utils/func/';
 
 const props = defineProps({
@@ -57,10 +57,10 @@ const props = defineProps({
   url: { type: String, default: '/fs' },
 });
 
-const emit = defineEmits(['send', 'clear', 'message']);
+const emit = defineEmits(['send', 'clear']);
+const dialog = inject('dialog');
 
 const mainMenu = [
-  { id: 1, name: 'Create directory' },
   { id: 2, name: 'Upload files' },
   { id: 3, name: 'Reload' },
   { id: 4, name: 'Format' },
@@ -75,6 +75,9 @@ const filesTemp = ref([]);
 const isLoading = ref(false);
 
 const getListMenu = isDir => listMenu.filter(i => (isDir ? i.id !== 1 : true));
+const sortFiles = computed(() => JSON.parse(JSON.stringify(filesTemp.value)).sort((a, b) => (a.isFile > b.isFile ? 1 : -1)));
+const getFullPath = computed(() => (path.value.length ? `/${path.value.join('/')}/` : '/'));
+const fileName = name => `${getFullPath.value}${name}`;
 
 const onUpdate = e => {
   isLoading.value = true;
@@ -82,11 +85,6 @@ const onUpdate = e => {
   emit('send', { comm: 'FILES', data: { name: getFullPath.value } });
   emit('send', { comm: 'INFO' });
 };
-
-const onLoad = debounce(() => {
-  filesTemp.value = props.files;
-  isLoading.value = false;
-}, 300);
 
 const onPrev = index => {
   if (path.value.length > index) {
@@ -102,15 +100,10 @@ const onNext = (isDir, value) => {
   }
 };
 
-const fileName = name => `${getFullPath.value}${name}`;
-
 const onEventServise = ({ id }) => {
-  if (id === 2) {
-    const input = document.querySelector('input[type="file"]');
-    if (input?.click) input.click();
-  }
+  if (id === 2) document.querySelector('input[type="file"]').click();
   if (id === 3) onUpdate();
-  if (id === 4) onFormat();
+  if (id === 4) onSureFormat();
 };
 
 const onEventList = (name, { id }) => {
@@ -122,6 +115,8 @@ const onFormat = async () => {
   const res = await (await fetch(`${props.url}?format=true`, { method: 'POST' })).json();
   if (res?.state) onUpdate();
 };
+
+const onSureFormat = () => dialog({ message: 'All files will be deleted. Are you sure?', callback: onFormat });
 
 const onUpload = async ({ files, info }) => {
   const totalSize = info?.totalSize || 0;
@@ -136,14 +131,14 @@ const onUpload = async ({ files, info }) => {
     const res = await (await fetch(props.url, { method: 'POST', body: date })).json();
     if (res?.state) onUpdate();
   } else {
-    onMessage({ message: 'No free space' });
+    dialog({ message: 'No free space' });
   }
 };
 
 const onDelete = async name => {
   const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
   if (res?.state) onUpdate();
-  else onMessage({ message: 'Directory is not empty' });
+  else dialog({ message: 'Directory is not empty' });
 };
 
 const onDownload = name => {
@@ -155,22 +150,17 @@ const onDownload = name => {
   link.remove();
 };
 
-const sortFiles = computed(() => {
-  const arr = JSON.parse(JSON.stringify(filesTemp.value));
-  return arr.sort((a, b) => {
-    return a.isFile > b.isFile ? 1 : -1;
-  });
-});
-
-const onMessage = e => emit('message', e);
-const getFullPath = computed(() => (path.value.length ? `/${path.value.join('/')}/` : '/'));
+const onLoad = debounce(() => {
+  filesTemp.value = props.files;
+  isLoading.value = false;
+}, 300);
 
 watchEffect(() => {
   onLoad(props.files);
 });
 
 onMounted(() => {
-  setTimeout(onUpdate, 300);
+  if (!props.files.length) onUpdate();
 });
 </script>
 
@@ -181,6 +171,12 @@ onMounted(() => {
     width: 100%;
     border-top: 1px solid var(--border-1);
     border-bottom: 1px solid var(--border-1);
+  }
+  &__icons {
+    svg {
+      height: 24px;
+    }
+    cursor: pointer;
   }
   &__route {
     width: 100%;

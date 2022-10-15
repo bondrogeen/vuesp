@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
-    <div v-if="value" class="app-dialog">
-      <div class="app-dialog__overlay" @click="onClose" @wheel="onWheel"></div>
+    <div v-if="value" class="app-dialog" @wheel.prevent>
+      <div class="app-dialog__overlay" @click="onClose"></div>
       <div class="app-dialog__card">
         <div class="app-dialog__header text-h4">
           <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
@@ -9,11 +9,11 @@
         </div>
         <div class="app-dialog__body text-title-1">
           <v-progressbar v-if="isProgress" :value="procent" />
-          <slot>{{ message }}</slot>
+          <slot><div v-html="message"></div></slot>
         </div>
         <div class="app-dialog__footer">
           <slot name="footer">
-            <v-button size="small" @click="onClose">OK</v-button>
+            <v-button size="small" @click="onButton">{{ button }}</v-button>
           </slot>
         </div>
       </div>
@@ -30,13 +30,18 @@ const props = defineProps({
   content: { type: Object, default: () => ({}) },
   progress: { type: Object, default: () => ({}) },
   isProgress: { type: Boolean, default: false },
+  callback: { type: Function, default: null },
+  button: { type: String, default: 'OK' },
 });
 
 const emit = defineEmits(['close']);
 const procent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
 
 const onClose = e => emit('close', e);
-const onWheel = e => e.preventDefault();
+const onButton = () => {
+  if (props.callback) props.callback();
+  onClose();
+};
 </script>
 
 <style lang="scss">
@@ -87,7 +92,7 @@ const onWheel = e => e.preventDefault();
   }
   &__body {
     flex: 1 1 auto;
-    padding: 10px 20px;
+    padding: 15px 20px;
     min-height: 70px;
     max-height: 500px;
     overflow: auto;

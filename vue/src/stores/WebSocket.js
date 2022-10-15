@@ -20,7 +20,7 @@ export const useWebSocket = defineStore('websocket', {
       // console.log(message);
       if (message.data instanceof ArrayBuffer) {
         const obj = struct.get(message.data);
-        if (obj.key !== 'PING') console.log(obj);
+        if (process.env.NODE_ENV !== 'production' && obj.key !== 'PING') console.log(obj);
         if (obj) {
           const store = useWebSocketStore();
           const nameAction = `SET_${obj['key']}`;
