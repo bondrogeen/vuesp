@@ -1,7 +1,7 @@
 <template>
   <div class="list-wifi">
     <v-list v-slot="{ item }" :list="list">
-      <div class="d-flex align-center w-100" @click="onSelect(item)">
+      <div class="d-flex a-center w-100" @click="onSelect(item)">
         <div class="mr-2"><WifiIcon v-bind="item" /></div>
         <div>
           <div class="text-title1">{{ item.ssid }}</div>

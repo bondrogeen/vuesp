@@ -1,49 +1,33 @@
-import Struct from './lib/index'
+import Struct from './lib/index';
 
-class Version extends Struct.extend(
-  { name: 'one', type: 'Uint8' },
-  { name: 'two', type: 'Uint8' },
-  { name: 'three', type: 'Uint8' }
-) {
-  get () {
-    return `${this.one}.${this.two}.${this.three}`
+class Version extends Struct.extend({ name: 'one', type: 'Uint8' }, { name: 'two', type: 'Uint8' }, { name: 'three', type: 'Uint8' }) {
+  get() {
+    return `${this.one}.${this.two}.${this.three}`;
   }
-  set (string) {
-    var x = string.split('.')
-    this.one = +x[0]
-    this.two = +x[1]
-    this.three = +x[2]
+  set(string) {
+    var [one, two, three] = string.split('.');
+    this.one = +one;
+    this.two = +two;
+    this.three = +three;
   }
 }
 
-class Ip extends Struct.extend(
-  { name: 'one', type: 'Uint8' },
-  { name: 'two', type: 'Uint8' },
-  { name: 'three', type: 'Uint8' },
-  { name: 'four', type: 'Uint8' }
-) {
-  get () {
-    return `${this.one}.${this.two}.${this.three}.${this.four}`
+class Ip extends Struct.extend({ name: 'one', type: 'Uint8' }, { name: 'two', type: 'Uint8' }, { name: 'three', type: 'Uint8' }, { name: 'four', type: 'Uint8' }) {
+  get() {
+    return `${this.one}.${this.two}.${this.three}.${this.four}`;
   }
-  set (string) {
-    var x = string.split('.')
-    this.one = +x[0]
-    this.two = +x[1]
-    this.three = +x[2]
-    this.four = +x[3]
+  set(string) {
+    var [one, two, three, four] = string.split('.');
+    this.one = +one;
+    this.two = +two;
+    this.three = +three;
+    this.four = +four;
   }
 }
 
 const structs = {
-  COMMAND: Struct.extend({
-    name: 'key',
-    type: Struct.types.Uint8
-  }),
-
-  PING: Struct.extend({
-    name: 'key',
-    type: Struct.types.Uint8
-  }),
+  COMMAND: Struct.extend({ name: 'key', type: Struct.types.Uint8 }),
+  PING: Struct.extend({ name: 'key', type: Struct.types.Uint8 }),
 
   SCAN: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
@@ -52,16 +36,16 @@ const structs = {
     { name: 'encryptionType', type: Struct.types.Uint8 },
     { name: 'channel', type: Struct.types.Int32LE },
     { name: 'rssi', type: Struct.types.Int32LE },
-    { name: 'ssid', type: 'String', byteLength: 32 },
-  ), 
-  
+    { name: 'ssid', type: 'String', byteLength: 32 }
+  ),
+
   FILES: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
     { name: 'isDir', type: Struct.types.Uint8 },
     { name: 'isFile', type: Struct.types.Uint8 },
     { name: 'command', type: Struct.types.Uint8 },
-    { name: 'name', type: 'String', byteLength: 32 },
     { name: 'size', type: Struct.types.Uint32LE },
+    { name: 'name', type: 'String', byteLength: 32 }
   ),
 
   PROGRESS: Struct.extend(
@@ -69,7 +53,7 @@ const structs = {
     { name: 'status', type: Struct.types.Uint8 },
     { name: 'empty', type: Struct.types.Uint16LE },
     { name: 'size', type: Struct.types.Uint32LE },
-    { name: 'length', type: Struct.types.Uint32LE },
+    { name: 'length', type: Struct.types.Uint32LE }
   ),
 
   INFO: Struct.extend(
@@ -82,33 +66,23 @@ const structs = {
 
   SETTINGS: Struct.extend(
     { name: 'key', type: Struct.types.Uint8 },
-    { name: 'version', type: Version },
-    { name: 'serverUrl', type: 'String', byteLength: 32 },
-    { name: 'serverPort', type: Struct.types.Uint16LE },
-
-    { name: 'ethDhcp', type: Struct.types.Uint8 },
-    { name: 'ethIp', type: Ip },
-    { name: 'ethSubnet', type: Ip },
-    { name: 'ethGeteway', type: Ip },
-    { name: 'ethDns', type: Ip },
-
     { name: 'wifiDhcp', type: Struct.types.Uint8 },
+    { name: 'wifiMode', type: Struct.types.Uint8 },
+    { name: 'authMode', type: Struct.types.Uint8 },
+
+    { name: 'version', type: Struct.types.Uint16LE },
+    { name: 'device', type: Struct.types.Uint16LE },
+
     { name: 'wifiIp', type: Ip },
     { name: 'wifiSubnet', type: Ip },
     { name: 'wifiGeteway', type: Ip },
     { name: 'wifiDns', type: Ip },
 
-    { name: 'wifiMode', type: Struct.types.Uint8 },
     { name: 'wifiSsid', type: 'String', byteLength: 32 },
     { name: 'wifiPass', type: 'String', byteLength: 32 },
-
-    { name: 'authMode', type: Struct.types.Uint8 },
     { name: 'authLogin', type: 'String', byteLength: 12 },
-    { name: 'authPass', type: 'String', byteLength: 12 },
+    { name: 'authPass', type: 'String', byteLength: 12 }
+  ),
+};
 
-    { name: 'deviceName', type: 'String', byteLength: 12 }
-  )
-
-}
-
-export default structs
+export default structs;

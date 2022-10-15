@@ -9,13 +9,13 @@
   </AppDrawer>
   <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
   <main class="v-spacer mt-16 mb-6">
-    <router-view v-bind="bindView" />
+    <router-view />
   </main>
   <AppFooter v-bind="info" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
+import { ref, onMounted, onUnmounted, provide } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/AppStore';
 import { useWebSocket } from '@/stores/WebSocket';
@@ -37,8 +37,8 @@ const { info, progress } = storeToRefs(webSocketStore);
 let ping = null;
 const drawer = ref(false);
 provide('theme', theme);
+provide('dialog', appStore.setDialog);
 
-const bindView = computed(() => ({ setDialog: appStore.setDialog }));
 const host = process.env.NODE_ENV === 'production' ? window.location.host : process.env.PROXY;
 
 const connect = () => {

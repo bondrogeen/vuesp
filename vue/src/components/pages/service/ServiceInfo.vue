@@ -3,7 +3,7 @@
     <div class="file-info__body my-6 mb-10">
       <v-progressbar :value="procent"></v-progressbar>
     </div>
-    <div class="file-info__footer d-flex justify-between">
+    <div class="file-info__footer d-flex j-between">
       <div class="center">
         <div class="text-title-1 grey-base">Used</div>
         <div class="text-h6">{{ toByte(usedBytes) }}</div>
@@ -33,6 +33,9 @@ const procent = computed(() => (props.usedBytes * 100) / props.totalBytes);
 
 <style lang="scss">
 .file-info {
-  max-width: 320px;
+  max-width: 100%;
+  @include above($sm) {
+    max-width: 320px;
+  }
 }
 </style>
