@@ -7,6 +7,7 @@ export const useWebSocket = defineStore('websocket', {
     socket: null,
     pingClient: 5000,
     pingDevice: 0,
+    debug: process.env.NODE_ENV === 'development',
   }),
   actions: {
     onopen(data) {
@@ -17,10 +18,9 @@ export const useWebSocket = defineStore('websocket', {
     },
     onmessage(message) {
       this.pingDevice = Date.now();
-      // console.log(message);
       if (message.data instanceof ArrayBuffer) {
         const obj = struct.get(message.data);
-        // if (obj.key !== 'PING') console.log(obj);
+        if (this.debug && obj.key !== 'PING') console.log(obj);
         if (obj) {
           const store = useWebSocketStore();
           const nameAction = `SET_${obj['key']}`;
@@ -39,7 +39,7 @@ export const useWebSocket = defineStore('websocket', {
       console.log(data);
     },
     onSend(comm, data) {
-      console.log(comm, data)
+      if (this.debug) console.log(comm, data);
       if (this?.socket?.send && this.isConnect) {
         const buffer = struct.set(comm, data);
         if (buffer) this.socket.send(buffer);

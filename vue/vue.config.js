@@ -7,7 +7,6 @@ const root = process.env.OUTPUT_DIR;
 module.exports = defineConfig({
   transpileDependencies: true,
   outputDir: root,
-  // assetsDir: root,
   productionSourceMap: false,
   filenameHashing: false,
   css: {
@@ -20,7 +19,6 @@ module.exports = defineConfig({
   devServer: {
     host: '0.0.0.0',
     port: 3000,
-    // proxy: `http://${process.env.PROXY}`,
     proxy: {
       '/esp': {
         target: `ws://${process.env.PROXY}`,
@@ -48,7 +46,6 @@ module.exports = defineConfig({
       splitChunks: {
         cacheGroups: {
           default: false,
-          // Merge all the CSS into one file
           styles: {
             name: 'styles',
             test: m => m.constructor.name === 'CssModule',
