@@ -38,7 +38,7 @@ const isActive = i => (4 - i) * 15 < quality;
   }
   &__item {
     height: 3px;
-    background-color: color('grey', 'lighten-1');
+    background-color: var(--border-1);
     margin-bottom: 2px;
     border-radius: 2px;
     &--four {

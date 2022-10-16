@@ -57,13 +57,13 @@ const hide = e => {
     position: absolute;
     overflow: auto;
     top: calc(100% + 5px);
-    box-shadow: 0 6px 12px rgb(0 0 0 / 18%);
+    box-shadow: 0 6px 12px var(--shadow-1);
     border: none;
     border-radius: 0;
     min-width: 100%;
     z-index: 2;
     transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-    background-color: var(--bg-1);
+    background-color: var(--list-bg);
   }
   &--opened {
     .b-dropdown__activator::before {

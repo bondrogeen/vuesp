@@ -63,7 +63,7 @@ const updateLittlefs = () => nextTick(() => onFlash('littlefs'));
 
 const onSureFlash = name =>
   dialog({
-    message: `Are you sure you want to update the ${name}?. <br/> <p class="grey-base text-body-1 mt-2" >${getName(name)}</p>`,
+    message: `Are you sure you want to update the ${name}? <br/> <p class="grey-base text-body-1 mt-2" >${getName(name)}</p>`,
     callback: name === 'frimware' ? updateFirmware : updateLittlefs,
   });
 

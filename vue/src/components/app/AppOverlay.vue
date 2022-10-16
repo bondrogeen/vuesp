@@ -13,8 +13,8 @@
 	left: 0;
 	height: 100%;
 	width: 100%;
-	background-color: #5c575740;
-	z-index: 5;
+	background-color: var(--overlay);
+	z-index: 11;
 	&__content {
 		position: absolute;
 		top: 50%;

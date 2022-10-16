@@ -2,7 +2,6 @@
   <div class="page-main container">
     <div class="row">
       <div class="col sm12 text-h2 mb-6">Main</div>
-    {{$router}}
     </div>
   </div>
 </template>
