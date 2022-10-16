@@ -4,17 +4,9 @@
       <v-progressbar :value="procent"></v-progressbar>
     </div>
     <div class="file-info__footer d-flex j-between">
-      <div class="center">
-        <div class="text-title-1 grey-base">Used</div>
-        <div class="text-h6">{{ toByte(usedBytes) }}</div>
-      </div>
-      <div class="center">
-        <div class="text-title-1 grey-base">Available</div>
-        <div class="text-h6">{{ toByte(availableByte) }}</div>
-      </div>
-      <div class="center">
-        <div class="text-title-1 grey-base">Total</div>
-        <div class="text-h6">{{ toByte(totalBytes) }}</div>
+      <div v-for="(item, key) in date" :key="key" class="center">
+        <div class="text-title-1 grey-base">{{ key }}</div>
+        <div class="text-h6">{{ toByte(item) }}</div>
       </div>
     </div>
   </v-card>
@@ -27,7 +19,8 @@ const props = defineProps({
   totalBytes: { type: Number, default: 0 },
   usedBytes: { type: Number, default: 0 },
 });
-const availableByte = computed(() => props.totalBytes - props.usedBytes);
+
+const date = computed(() => ({ Used: props.usedBytes, Available: props.totalBytes - props.usedBytes, Total: props.totalBytes }));
 const procent = computed(() => (props.usedBytes * 100) / props.totalBytes);
 </script>
 

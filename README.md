@@ -1,56 +1,60 @@
-# Vuesp 
+# Vuesp
 
-Vue3 + ESP = Vuesp
+Vue + ESP = Vuesp
 
 Template for your projects with a web interface.
 
 ![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen1.png)
 
-
-[ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino   
-[Vue3](https://vuejs.org/) - The Progressive JavaScript Framework     
-
-
+[ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino  
+[Vue3](https://vuejs.org/) - The Progressive JavaScript Framework
 
 ## Project structure
 
 - /data/
+- /firmware/
+  - firmware.bin
+  - littlefs.bin
 - /github/
-    - /images/
+  - /images/
 - /src/
-    - main.cpp
+  - /const/
+    - /esp8266/
+      - settings.h
+    - /esp32/
+      - settings.h
+    - base.h
+  - /pages/
+    - recovery.h
+  - main.cpp
 - /vue/
-    - /public/
-    - /src/
-    - vue.config.js
+  - /public/
+  - /src/
+  - vue.config.js
 - platformio.ini
 
+## Development
 
-## Front vue dev
 ```
 git clone https://github.com/bondrogeen/vuesp
 cd vuesp/vue
 npm i
 ```
 
-Next in  [vue.config.js](./vue/vue.config.js) file change proxy to your ip device
+Next in [.env](./vue/.env) file change proxy to your ip device
 
-```js
-  devServer: {
-    proxy: 'http://192.168.1.59/' // Change to your ip esp device
-  }
+```
+PROXY=192.168.10.10 // Change to your ip esp device
 ```
 
-#### Start dev server
 ```
 npm run dev
 ```
 
-http://localhost:3000/ 
-
-
+http://localhost:3000/
 
 ## Build the project
+
 ```
 npm run build
 ```
@@ -58,14 +62,23 @@ npm run build
 platformio run --target uploadfs --environment nodemcuv2
 
 
+### 0.1.0 (2022-010-16)
+
+- (bondrogeen) Migrate from Vue2 to Vue3
+- (bondrogeen) Changed project structure
+- (bondrogeen) Adding a dark theme
+
 ### 0.0.3 (2022-01-30)
-* (bondrogeen) add read FS
+
+- (bondrogeen) add read FS
 
 ### 0.0.2 (2022-01-15)
-* (bondrogeen) update firmware
+
+- (bondrogeen) update firmware
 
 ### 0.0.1 (2022-01-07)
-* (bondrogeen) init
+
+- (bondrogeen) init
 
 ## License
 

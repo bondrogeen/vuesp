@@ -90,7 +90,20 @@
       </div>
     </div>
     <AppDialog title="SCAN" :value="showDialog" @close="showDialog = false">
-      <WifiList :list="scanList" @select="onSelectSsid" />
+      <div>
+        <v-list v-slot="{ item }" :list="scanList">
+          <div class="d-flex a-center w-100" @click="onSelectSsid(item)">
+            <div class="mr-2"><WifiIcon v-bind="item" /></div>
+            <div>
+              <div class="text-title1">{{ item.ssid }}</div>
+              <div class="text-body-2 grey-base">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+            </div>
+          </div>
+        </v-list>
+        <div v-if="!scanList.length">
+          <v-loader></v-loader>
+        </div>
+      </div>
       <template #footer>
         <v-button @click="onScan(true)">Scan</v-button>
       </template>
@@ -103,7 +116,6 @@ import { computed, ref, defineProps, defineEmits, inject } from 'vue';
 import { validateIP, min, max } from '@/utils/validate/';
 
 import AppDialog from '@/components/app/AppDialog';
-import WifiList from '@/components/pages/service/WifiList';
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) },
@@ -144,6 +156,9 @@ const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 const onSave = () => emit('save', settings.value);
 
+
+const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
+
 const onSelectSsid = ({ ssid }) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
@@ -152,6 +167,7 @@ const onSelectSsid = ({ ssid }) => {
   input.focus();
   showDialog.value = false;
 };
+
 const onScan = value => {
   showDialog.value = true;
   emit('scan', value);

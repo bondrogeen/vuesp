@@ -8,7 +8,7 @@
         <div class="app-header__indicator" :class="{ 'app-header__indicator--disabled': !state }"></div>
       </div>
       <div class="app-header__menu d-none d-lg-flex">
-        <v-main-menu />
+        <v-main-menu class="d-flex a-center gap-6 text-title-1 fw-600" />
       </div>
       <div class="v-spacer"></div>
       <div class="app-header__right d-none d-lg-flex gap-4">

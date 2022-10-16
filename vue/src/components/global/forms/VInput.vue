@@ -130,6 +130,9 @@ const onIcon = e => {
     cursor: pointer;
   }
   &--disabled {
+    .v-text-field__icon {
+      cursor: default;
+    }
     .v-text-field__slot {
       border: 1px solid var(--border-1);
       opacity: 0.4;

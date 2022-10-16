@@ -8,6 +8,10 @@
   display: flex !important;
 }
 
+.f-column {
+  flex-direction: column;
+}
+
 .gap {
   @each $size in $sizes {
     &-#{$size} {

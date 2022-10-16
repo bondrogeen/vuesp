@@ -1,25 +1,12 @@
 <template>
-  <div class="drawer-main">
-    <div class="drawer-main__menu mt-6">
-      <v-main-menu @route="onClose" />
+  <div class="h-100 drawer-main d-flex f-column">
+    <div class="drawer-main__menu v-spacer mt-6">
+      <v-main-menu class="d-flex a-center f-column gap-6 text-h3" @route="onClose" />
     </div>
-    <div class="v-spacer"></div>
-    <div class="drawer-main__btn mb-6">
-      <div>
-        Chip ID:
-        <span class="grey-base">{{ id.toString(16) }}</span>
-      </div>
-      <div>
-        Frimware:
-        <span class="grey-base">{{ frimware }}</span>
-      </div>
-      <div>
-        Total Bytes:
-        <span class="grey-base">{{ totalBytes }}</span>
-      </div>
-      <div>
-        Used Bytes:
-        <span class="grey-base">{{ usedBytes }}</span>
+    <div class="d-flex a-center f-column mb-6">
+      <div v-for="(item, key) in data" :key="key">
+        {{ key }}:
+        <span class="grey-base">{{ item }}</span>
       </div>
     </div>
   </div>
@@ -33,30 +20,11 @@ const props = defineProps({
 });
 const emit = defineEmits(['close']);
 
-const frimware = computed(() => props.info?.frimware || '');
-const id = computed(() => props.info?.id || '');
-const totalBytes = computed(() => props.info?.totalBytes || '');
-const usedBytes = computed(() => props.info?.usedBytes || '');
+const data = computed(() => ({
+  Frimware: props.info?.frimware || '',
+  'Chip ID': (props.info?.id || '').toString(16),
+  'Total Bytes': props.info?.totalBytes || '',
+  'Used Bytes': props.info?.usedBytes || '',
+}));
 const onClose = value => emit('close', value);
 </script>
-
-<style lang="scss">
-.drawer-main {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  &__btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  &__menu {
-    .v-main-menu {
-      flex-direction: column;
-    }
-    .v-main-menu__item {
-      font-size: 24px;
-    }
-  }
-}
-</style>

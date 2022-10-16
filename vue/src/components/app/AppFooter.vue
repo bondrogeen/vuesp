@@ -1,7 +1,7 @@
 <template>
   <footer class="app-footer">
     <div class="d-flex a-center j-between container">
-      <div class="d-flex a-center flex-wrap gap-4">
+      <div class="d-md-flex a-center flex-wrap gap-4">
         <div>© 2021 - {{ new Date().getFullYear() }} Vuesp.</div>
         <div>Firmware (ver.{{ frimware }})</div>
         <div>ID: {{ id.toString(16) }}</div>
