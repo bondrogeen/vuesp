@@ -15,11 +15,12 @@
 #include "./pages/recovery.h"
 
 #if defined(ESP8266)
+FSInfo fs_info;
 uint32_t id = ESP.getChipId();
 #include "./const/esp8266/settings.h"
 #elif defined(ESP32)
 #include "./const/esp32/settings.h"
-uint32_t id = = ESP.getEfuseMac();
+uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 32);
 #endif
 
 WiFiClient WiFIclient;
@@ -28,42 +29,51 @@ AsyncWebSocket ws("/esp");
 // AsyncWebSocketClient *client;
 
 uint8_t wsClient = 0;
+uint8_t test = 255;
 uint8_t wsTask[END];
 uint8_t wsConnected = false;
 
 uint32_t now;
 uint32_t lastTime = 0;
-FSInfo fs_info;
 
 String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
-void getFile(char *name) {
-  Dir dir = LittleFS.openDir(name);
-  while (dir.next()) {
-    memset(files.name, 0, sizeof(files.name));
-    dir.fileName().toCharArray(files.name, 32);
-    files.size = dir.fileSize();
-    files.isFile = dir.isFile();
-    files.isDir = dir.isDirectory();
-    ws.binary(wsClient, (uint8_t *)&files, sizeof(files));
-  }
-  wsTask[FILES] = OFF;
-}
+// void getFile(char *name) {
+//   Dir dir = LittleFS.openDir(name);
+//   while (dir.next()) {
+//     memset(files.name, 0, sizeof(files.name));
+//     dir.fileName().toCharArray(files.name, 32);
+//     files.size = dir.fileSize();
+//     files.isFile = dir.isFile();
+//     files.isDir = dir.isDirectory();
+//     ws.binary(wsClient, (uint8_t *)&files, sizeof(files));
+//   }
+//   wsTask[FILES] = OFF;
+// }
 
 void reboot() {
   ESP.restart();
 }
 
 void sendProgress() {
-  ws.binary(wsClient, (uint8_t *)&progress, sizeof(progress));
+  if (test > 15) {
+    ws.binary(wsClient, (uint8_t *)&progress, sizeof(progress));
+    test = 0;
+  }
+  test++;
 }
 
 void getInfo() {
+#if defined(ESP8266)
   LittleFS.info(fs_info);
   info_fs.totalBytes = fs_info.totalBytes;
   info_fs.usedBytes = fs_info.usedBytes;
+#elif defined(ESP32)
+  info_fs.totalBytes = LittleFS.totalBytes();
+  info_fs.usedBytes = LittleFS.usedBytes();
+#endif
   info_fs.id = id;
   ws.binary(wsClient, (uint8_t *)&info_fs, sizeof(info_fs));
   wsTask[INFO] = OFF;
@@ -79,7 +89,7 @@ void scanWiFi() {
     scan.channel = WiFi.channel(i);
     scan.rssi = WiFi.RSSI(i);
     scan.encryptionType = WiFi.encryptionType(i);
-    scan.isHidden = WiFi.isHidden(i);
+    // scan.isHidden = WiFi.isHidden(i);
     ws.binary(wsClient, (uint8_t *)&scan, sizeof(scan));
   };
   wsTask[SCAN] = OFF;
@@ -228,21 +238,24 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
 
 void onReqUpdate(AsyncWebServerRequest *request) {
   uint8_t isReboot = !Update.hasError();
+  AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
+  response->addHeader("Connection", "close");
+  request->send(response);
+  Serial.println(F("REBOOT"));
   if (isReboot) wsTask[REBOOT] = ON;
-  request->send(200, RES_TYPE_JSON, status(isReboot));
 }
 
 void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   progress.size += len;
   progress.status = !index ? 1 : 2;
-
   if (!index) {
     progress.length = request->contentLength();
+#if defined(ESP8266)
     Update.runAsync(true);
-    int cmd = (filename == "littlefs.bin") ? U_FS : U_FLASH;
-    size_t fsSize = ((size_t)&_FS_end - (size_t)&_FS_start);
+#endif
+    int cmd = (filename == "littlefs.bin") ? 100 : U_FLASH;
     size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-    if (!Update.begin((cmd == U_FS) ? fsSize : maxSketchSpace, cmd)) {
+    if (!Update.begin((cmd == 100) ? info_fs.totalBytes : maxSketchSpace, cmd)) {
       Update.printError(Serial);
       return request->send(400, RES_TYPE_JSON, status(0));
     }
@@ -260,23 +273,20 @@ void onRecovery(AsyncWebServerRequest *request) {
 }
 
 void initLittleFS() {
-  if (!LittleFS.begin() && LittleFS.format()) {
-    Serial.println(F("Filesystem formatted!"));
-  }
+  if (!LittleFS.begin() && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
 }
 
 void setup() {
   Serial.begin(115200);
-  // WiFi.onEvent(WiFiEvent);
+  WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
   initLittleFS();
+  getInfo();
 
   if (storage.wifiMode) {
-    if (!storage.wifiDhcp) {
-      WiFi.config(storage.wifiIp, storage.wifiGeteway, storage.wifiSubnet, storage.wifiDns);
-    }
     WiFi.mode((WiFiMode_t)storage.wifiMode);
+    if (!storage.wifiDhcp) WiFi.config(storage.wifiIp, storage.wifiGeteway, storage.wifiSubnet, storage.wifiDns);
     if (storage.wifiMode == WIFI_STA) WiFi.begin(storage.wifiSsid, storage.wifiPass);
     if (storage.wifiMode == WIFI_AP) WiFi.softAP(storage.wifiSsid, storage.wifiPass);
   }
@@ -314,7 +324,7 @@ void loop() {
   }
   if (wsTask[SETTINGS]) sendSettings();
   if (wsTask[INFO]) getInfo();
-  if (wsTask[FILES]) getFile(files.name);
+  // if (wsTask[FILES]) getFile(files.name);
   if (wsTask[REBOOT]) reboot();
   if (wsTask[SCAN]) scanWiFi();
 }

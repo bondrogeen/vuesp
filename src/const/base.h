@@ -78,4 +78,4 @@ struct Progress {
   uint16_t empty;
   uint32_t size;
   uint32_t length;
-} progress = {PROGRESS, 0, 0, 0, 0};
+} progress = {PROGRESS, 5, 0, 0, 0};
