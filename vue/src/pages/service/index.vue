@@ -11,7 +11,7 @@
             <div class="row">
               <h2 class="col sm12 text-h5 mb-4">File system</h2>
               <div class="col sm12">
-                <ServiceStorage :files="fileList" :progress="progress" :info="info" @send="onSend" @clear="onClear" />
+                <ServiceStorage v-model="path" :files="fileList" :progress="progress" :info="info" @send="onSend" />
               </div>
             </div>
           </v-tab>
@@ -47,7 +47,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
 const webSocketStore = useWebSocketStore();
-const { fileList, info, progress, settings, scanList, isConnect } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList, isConnect } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
@@ -61,8 +61,10 @@ const onReset = () => {
 const onSureReboot = () => dialog({ message: 'Do you want to restart your device?', callback: onReboot });
 const onSureReset = () => dialog({ message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
-const onSend = ({ comm, data }) => webSocketStore.onSend(comm, data);
-const onClear = () => (fileList.value = []);
+const onSend = ({ comm, data }) => {
+  fileList.value = []
+  webSocketStore.onSend(comm, data);
+}
 
 const onSave = settings => {
   webSocketStore.onSend('SETTINGS', settings);
@@ -77,6 +79,7 @@ const onScan = value => {
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
 });
+
 watch(isConnect, isConnect => {
   if (!settings?.key && isConnect) webSocketStore.onSend('SETTINGS');
 });

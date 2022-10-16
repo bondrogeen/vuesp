@@ -23,9 +23,9 @@ $colors: (
   'grey': (
     'base': #6b7280,
     'lighten-1': #f0f0f0,
-    'lighten-2': #fafafa,
+    'lighten-2': #dddddd,
     'darken-1': #c2c8cc,
-    'darken-2': #747474,
+    'darken-2': #4a4a4a,
   ),
   'blue': (
     'base': #3f51b5,
@@ -52,26 +52,31 @@ $colors: (
     'secondary': #66d3f1,
     'black': #000,
     'white': #fff,
+    'overlay': #0c0b0ba1,
   ),
 );
-
 
 $colors-app: (
   'light': (
     '--bg-1': color('app', 'white'),
     '--bg-2': #e0f0ff,
+    '--list-bg': color('app', 'white'),
     '--text-1': color('app', 'black'),
     '--label-1': color('grey', 'darken-2'),
-    '--border-1': color('grey', 'darken-1'),
+    '--border-1': color('grey', 'lighten-2'),
+    '--shadow-1': #00000020,
+    '--overlay': color('app', 'overlay'),
   ),
   'dark': (
-    '--bg-1': #313135,
-    '--bg-2': #212024,
+    '--bg-1': #212024,
+    '--bg-2': #313135,
+    '--list-bg': #313135,
     '--text-1': color('app', 'white'),
     '--label-1': color('grey', 'darken-1'),
     '--border-1': color('grey', 'darken-2'),
+    '--shadow-1': none,
+    '--overlay': color('app', 'overlay'),
   ),
-
 );
 
 $headings: (

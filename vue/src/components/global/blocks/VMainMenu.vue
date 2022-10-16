@@ -1,6 +1,6 @@
 <template>
-  <ul class="v-main-menu text-title-1 fw-600">
-    <li v-for="{ name, path } of routers" :key="name" class="v-main-menu__item">
+  <ul class="d-flex a-center gap-6 text-title-1 fw-600">
+    <li v-for="{ name, path } of routers" :key="name" class="first-letter">
       <router-link :to="path" @click="onRoute">{{ name }}</router-link>
     </li>
   </ul>
@@ -18,20 +18,3 @@ const pathFilter = i => {
 const routers = computed(() => (router?.options?.routes || []).filter(pathFilter));
 const onRoute = e => emit('route', e);
 </script>
-
-<style lang="scss">
-.v-main-menu {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  &__item {
-    cursor: pointer;
-    &::first-letter {
-      text-transform: uppercase;
-    }
-  }
-  .router-link-active {
-    color: color(app, primary);
-  }
-}
-</style>

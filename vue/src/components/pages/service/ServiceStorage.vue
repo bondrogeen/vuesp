@@ -2,11 +2,7 @@
   <div class="files">
     <div class="files__path d-flex a-center">
       <div class="files__route d-flex gap-4 a-center text-h5 fw-600 grey-base">
-        <div class="files__route-item" @click="onPrev(0)">
-          <div class="mr-2">/</div>
-          <v-icons icon="next"></v-icons>
-        </div>
-        <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i + 1)">
+        <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i)">
           <div class="mr-2">{{ value }}</div>
           <v-icons icon="next"></v-icons>
         </div>
@@ -47,21 +43,22 @@
 </template>
 
 <script setup>
-import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject } from 'vue';
+import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
 import { toByte, debounce } from '@/utils/func/';
 
 const props = defineProps({
+  modelValue: { type: Array, default: () => [] },
   files: { type: Array, default: () => [] },
   info: { type: Object, default: () => ({}) },
   progress: { type: Object, default: () => ({}) },
   url: { type: String, default: '/fs' },
 });
 
-const emit = defineEmits(['send', 'clear']);
+const emit = defineEmits(['update:modelValue', 'send']);
 const dialog = inject('dialog');
 
 const mainMenu = [
-  { id: 2, name: 'Upload files' },
+  { id: 2, name: 'Upload' },
   { id: 3, name: 'Reload' },
   { id: 4, name: 'Format' },
 ];
@@ -70,26 +67,29 @@ const listMenu = [
   { id: 2, name: 'Remove' },
 ];
 
-const path = ref([]);
 const filesTemp = ref([]);
 const isLoading = ref(false);
 
+const path = computed({
+  set: value => emit('update:modelValue', value),
+  get: () => props.modelValue,
+});
+
 const getListMenu = isDir => listMenu.filter(i => (isDir ? i.id !== 1 : true));
 const sortFiles = computed(() => JSON.parse(JSON.stringify(filesTemp.value)).sort((a, b) => (a.isFile > b.isFile ? 1 : -1)));
-const getFullPath = computed(() => (path.value.length ? `/${path.value.join('/')}/` : '/'));
+const getFullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const fileName = name => `${getFullPath.value}${name}`;
 
-const onUpdate = e => {
+const onUpdate = () => {
   isLoading.value = true;
-  emit('clear', e);
   emit('send', { comm: 'FILES', data: { name: getFullPath.value } });
   emit('send', { comm: 'INFO' });
 };
 
 const onPrev = index => {
-  if (path.value.length > index) {
-    path.value = path.value.filter((_, i) => i < index);
-    onUpdate();
+  if (path.value.length > index + 1) {
+    path.value = path.value.filter((_, i) => i < index + 1);
+    nextTick(() => onUpdate());
   }
 };
 
@@ -108,7 +108,7 @@ const onEventServise = ({ id }) => {
 
 const onEventList = (name, { id }) => {
   if (id === 1) onDownload(name);
-  if (id === 2) onDelete(name);
+  if (id === 2) onSureDelete(name);
 };
 
 const onFormat = async () => {
@@ -139,6 +139,14 @@ const onDelete = async name => {
   const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
   if (res?.state) onUpdate();
   else dialog({ message: 'Directory is not empty' });
+};
+
+const onSureDelete = name => {
+  if (fileName(name).includes('www')) {
+    dialog({ message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
+  } else {
+    onDelete(name);
+  }
 };
 
 const onDownload = name => {

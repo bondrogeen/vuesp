@@ -1,8 +1,8 @@
 <template>
-  <v-overlay v-if="!isConnect">
+  <AppOverlay v-if="!isConnect">
     <div>Disconnected</div>
     <v-loader></v-loader>
-  </v-overlay>
+  </AppOverlay>
   <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
   <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
     <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
@@ -26,6 +26,7 @@ import AppDialog from '@/components/app/AppDialog';
 import AppHeader from '@/components/app/AppHeader';
 import AppFooter from '@/components/app/AppFooter';
 import AppDrawer from '@/components/app/AppDrawer';
+import AppOverlay from '@/components/app/AppOverlay';
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();

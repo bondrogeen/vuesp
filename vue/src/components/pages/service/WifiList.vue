@@ -27,9 +27,3 @@ const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'M
 const onSelect = e => emit('select', e);
 </script>
 
-<style lang="scss">
-.list-wifi {
-  width: 100%;
-  border-bottom: 1px solid color('grey', 'lighten-1');
-}
-</style>

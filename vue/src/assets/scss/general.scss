@@ -86,3 +86,15 @@ ul {
 .h-100 {
   height: 100%;
 }
+
+.router-link-active {
+  color: color(app, primary);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.first-letter::first-letter {
+  text-transform: uppercase;
+}

@@ -3,7 +3,7 @@
     <v-expansion label="Wi-Fi" value>
       <div class="row">
         <div class="col sm12 md6">
-          <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onChange"></v-select>
+          <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
         </div>
         <div class="col sm12"></div>
         <div class="col sm12 md6">
@@ -85,7 +85,7 @@
       </div>
     </v-expansion>
     <div class="row mt-6">
-      <div class="col sm12 d-flex">
+      <div class="col sm12 d-flex j-end">
         <v-button @click="onSave">Save</v-button>
       </div>
     </div>
@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { computed, ref, defineProps, defineEmits } from 'vue';
+import { computed, ref, defineProps, defineEmits, inject } from 'vue';
 import { validateIP, min, max } from '@/utils/validate/';
 
 import AppDialog from '@/components/app/AppDialog';
@@ -111,6 +111,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'scan', 'save']);
+const dialog = inject('dialog');
 
 const showPass = ref(false);
 const showDialog = ref(false);
@@ -133,12 +134,11 @@ const listWiFi = [
   { name: 'OFF', value: 0 },
   { name: 'STA', value: 1 },
   { name: 'AP', value: 2 },
-  { name: 'STA + AP', value: 3 },
+  // { name: 'STA + AP', value: 3 },
 ];
 
 const getMode = computed(() => listWiFi.find(i => i.value === settings.value.wifiMode)?.name || '');
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
-// const isEthernetDHCP = computed(() => Boolean(settings.value.ethDhcp));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
@@ -157,5 +157,6 @@ const onScan = value => {
   emit('scan', value);
 };
 
-const onChange = ({ value }) => (settings.value.wifiMode = value);
+const onChange = value => (settings.value.wifiMode = value);
+const onSureOffWifi = ({ value }) => (!value ? dialog({ message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
 </script>

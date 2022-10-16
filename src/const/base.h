@@ -1,8 +1,4 @@
-#define DEF_EEPROM_WRITE_TIME 30
-#define DEF_EEPROM_SIZE 4096
-
-#define CONFIG_START 32
-#define INDEX_START_ADRESS 0
+#define CONFIG_START 0
 
 // Default struct settings
 #define CONFIG_VERSION 4

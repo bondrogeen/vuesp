@@ -80,6 +80,7 @@ const onIcon = e => {
     border-radius: 4px;
     display: flex;
     align-items: center;
+    background-color: var(--list-bg);
   }
   &__message {
     height: 30px;
@@ -141,7 +142,7 @@ const onIcon = e => {
   }
   &--focus {
     .v-text-field__label {
-      top: -1px;
+      top: -2px;
       font-size: 14px;
       padding: 0 4px;
     }

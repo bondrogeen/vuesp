@@ -192,10 +192,31 @@ void WiFiEvent(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
 }
 
+void onReqUpload(AsyncWebServerRequest *request) {
+  if (!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
+  uint8_t method = request->method();
+  if (request->hasParam("file")) {
+    AsyncWebParameter *p = request->getParam("file");
+    if (method == HTTP_GET)
+      if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
+    if (method == HTTP_DELETE)
+      if (LittleFS.exists(p->value()) && (LittleFS.remove(p->value()) || LittleFS.rmdir(p->value()))) return request->send(200, RES_TYPE_JSON, status(1));
+    ;
+  }
+  if (method == HTTP_POST && request->hasParam("format"))
+    if (LittleFS.format()) return request->send(200, RES_TYPE_JSON, status(1));
+
+  if (method == HTTP_POST) {
+    progress.size = 0;
+    progress.status = 0;
+    return request->send(200, RES_TYPE_JSON, status(1));
+  }
+  request->send(404, RES_TYPE_JSON, status(0));
+}
+
 void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   progress.size += len;
   progress.status = !index ? 1 : 2;
-
   if (!index) {
     progress.length = request->contentLength();
     request->_tempFile = LittleFS.open(filename, "w");
@@ -203,6 +224,12 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   if (len) request->_tempFile.write(data, len);
   if (final) request->_tempFile.close();
   sendProgress();
+}
+
+void onReqUpdate(AsyncWebServerRequest *request) {
+  uint8_t isReboot = !Update.hasError();
+  if (isReboot) wsTask[REBOOT] = ON;
+  request->send(200, RES_TYPE_JSON, status(isReboot));
 }
 
 void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -225,6 +252,13 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
   sendProgress();
 }
 
+void onRecovery(AsyncWebServerRequest *request) {
+  if (!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
+  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
+  response->addHeader("Content-Encoding", "gzip");
+  request->send(response);
+}
+
 void initLittleFS() {
   if (!LittleFS.begin() && LittleFS.format()) {
     Serial.println(F("Filesystem formatted!"));
@@ -233,7 +267,7 @@ void initLittleFS() {
 
 void setup() {
   Serial.begin(115200);
-  WiFi.onEvent(WiFiEvent);
+  // WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
   initLittleFS();
@@ -242,16 +276,9 @@ void setup() {
     if (!storage.wifiDhcp) {
       WiFi.config(storage.wifiIp, storage.wifiGeteway, storage.wifiSubnet, storage.wifiDns);
     }
-    if (storage.wifiMode == WIFI_STA) {
-      Serial.println("WIFI_STA");
-      WiFi.mode(WIFI_STA);
-      WiFi.begin(storage.wifiSsid, storage.wifiPass);
-    } else if (storage.wifiMode == WIFI_AP) {
-      Serial.println("WIFI_AP");
-      WiFi.mode(WIFI_AP);
-      WiFi.softAP(storage.wifiSsid, storage.wifiPass);
-    }
-    Serial.println("END");
+    WiFi.mode((WiFiMode_t)storage.wifiMode);
+    if (storage.wifiMode == WIFI_STA) WiFi.begin(storage.wifiSsid, storage.wifiPass);
+    if (storage.wifiMode == WIFI_AP) WiFi.softAP(storage.wifiSsid, storage.wifiPass);
   }
 
   ws.onEvent(onWsEvent);
@@ -263,56 +290,11 @@ void setup() {
     server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
   }
 
-  server.on(
-      "/fs",
-      HTTP_ANY, [](AsyncWebServerRequest *request) {
-        if (!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
-        uint8_t method = request->method();
-        if (request->hasParam("file")) {
-          AsyncWebParameter *p = request->getParam("file");
-          if (method == HTTP_GET)
-            if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
-          if (method == HTTP_DELETE)
-            if (LittleFS.exists(p->value()) && (LittleFS.remove(p->value()) || LittleFS.rmdir(p->value()))) return request->send(200, RES_TYPE_JSON, status(1));
-          ;
-        }
-        if (method == HTTP_POST && request->hasParam("format"))
-          if (LittleFS.format()) return request->send(200, RES_TYPE_JSON, status(1));
-
-        if (method == HTTP_POST) {
-          progress.size = 0;
-          progress.status = 0;
-          return request->send(200, RES_TYPE_JSON, status(1));
-        }
-        request->send(404, RES_TYPE_JSON, status(0));
-      },
-      onUpload);
-
-  server.on(
-      "/update", HTTP_POST, [](AsyncWebServerRequest *request) {
-        uint8_t isReboot = !Update.hasError();
-        if (isReboot) wsTask[REBOOT] = ON;
-        AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
-        response->addHeader("Connection", "close");
-        request->send(response);
-      },
-      onUpdate);
-
-  server.on("/recovery", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
-    response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
-  });
-
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->redirect("/recovery");
-  });
-
-  server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request) {
-    request->redirect("/");
-  });
-
+  server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
+  server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
+  server.on("/recovery", HTTP_GET, onRecovery);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { request->redirect("/recovery"); });
+  server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request) { request->redirect("/"); });
   server.begin();
 }
 

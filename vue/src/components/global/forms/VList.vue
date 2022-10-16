@@ -29,7 +29,9 @@ const onClick = e => emit('click', e);
     display: flex;
     align-items: center;
     cursor: pointer;
-    border-bottom: 1px solid var(--border-1);
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--border-1);
+    }
     &:hover {
       @media (hover: hover) {
         // background-color: var(--bg-1);

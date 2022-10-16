@@ -8,6 +8,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     progress: {},
     scanList: [],
     fileList: [],
+    path: ['root'],
     settings: {},
     unknown: null,
   }),

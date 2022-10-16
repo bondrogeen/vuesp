@@ -7,11 +7,11 @@
           <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
           <slot name="header">{{ title }}</slot>
         </div>
-        <div class="app-dialog__body text-title-1">
+        <div class="app-dialog__body d-flex a-center text-title-1">
           <v-progressbar v-if="isProgress" :value="procent" />
           <slot><div v-html="message"></div></slot>
         </div>
-        <div class="app-dialog__footer">
+        <div v-if="$slots.footer || callback" class="app-dialog__footer">
           <slot name="footer">
             <v-button size="small" @click="onButton">{{ button }}</v-button>
           </slot>
@@ -51,8 +51,7 @@ const onButton = () => {
   left: 0;
   height: 100%;
   width: 100%;
-  //   background-color: #5c575740;
-  z-index: 5;
+  z-index: 11;
   &__close {
     cursor: pointer;
     position: absolute;
@@ -65,7 +64,7 @@ const onButton = () => {
   }
   &__overlay {
     position: absolute;
-    background-color: #5c575740;
+    background-color: var(--overlay);
     left: 0;
     top: 0;
     width: 100%;
@@ -78,7 +77,6 @@ const onButton = () => {
     transform: translate(-50%, -50%);
     min-height: 100px;
     min-width: 280px;
-    // border: 1px solid #888888;
     border-radius: 4px;
     box-sizing: border-box;
     display: flex;
