@@ -20,18 +20,17 @@ struct StoreStruct {
 } storage = {
     SETTINGS,
     DEF_WIFI_DHCP,
+    DEF_WIFI_MODE,
+    DEF_AUTH_MODE,
     CONFIG_VERSION,
+    0,
 
     DEF_WIFI_IP,
     DEF_WIFI_SUBNET,
     DEF_WIFI_GETEWAY,
     DEF_WIFI_DNS,
 
-    DEF_WIFI_MODE,
-    DEF_AUTH_MODE,
-    0,
     DEF_WIFI_SSID,
     DEF_WIFI_PASS,
     DEF_AUTH_LOGIN,
-    DEF_AUTH_PASS,
-};
+    DEF_AUTH_PASS};

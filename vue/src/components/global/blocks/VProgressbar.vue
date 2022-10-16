@@ -18,7 +18,7 @@ const props = defineProps({
   size: { type: String, default: 'normal' },
 });
 
-const getValue = computed(() => (props.value > 100 ? 100 : props.value));
+const getValue = computed(() => (Math.round(props.value > 100 ? 100 : props.value)));
 
 const styleRight = computed(() => {
   const value = getValue.value;
