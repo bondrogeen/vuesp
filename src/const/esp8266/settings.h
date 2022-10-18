@@ -1,6 +1,6 @@
 #include "./const/base.h"
 
-struct StoreStruct {
+struct Settings {
   uint8_t init;
   uint8_t wifiDhcp;
   uint8_t wifiMode;
@@ -17,20 +17,4 @@ struct StoreStruct {
   char wifiPass[32];
   char authLogin[12];
   char authPass[12];
-} storage = {
-    SETTINGS,
-    DEF_WIFI_DHCP,
-    DEF_WIFI_MODE,
-    DEF_AUTH_MODE,
-    CONFIG_VERSION,
-    0,
-
-    DEF_WIFI_IP,
-    DEF_WIFI_SUBNET,
-    DEF_WIFI_GETEWAY,
-    DEF_WIFI_DNS,
-
-    DEF_WIFI_SSID,
-    DEF_WIFI_PASS,
-    DEF_AUTH_LOGIN,
-    DEF_AUTH_PASS};
+};
