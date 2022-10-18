@@ -47,11 +47,11 @@ struct Info {
   uint32_t totalBytes;
   uint32_t usedBytes;
   uint32_t id;
-} info_fs = {INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
+} ;
 
 struct Ping {
   uint8_t init;
-} ping = {PING};
+};
 
 struct Files {
   uint8_t init;
@@ -60,7 +60,7 @@ struct Files {
   uint8_t command;
   uint32_t size;
   char name[32];
-} files = {FILES, 0, 0, 0, 0, ""};
+};
 
 struct Scan {
   uint8_t init;
@@ -70,7 +70,7 @@ struct Scan {
   int32_t channel;
   int32_t rssi;
   char ssid[32];
-} scan = {SCAN, 0, 0, 0, 0, 0, ""};
+};
 
 struct Progress {
   uint8_t init;
@@ -78,4 +78,4 @@ struct Progress {
   uint16_t empty;
   uint32_t size;
   uint32_t length;
-} progress = {PROGRESS, 5, 0, 0, 0};
+};

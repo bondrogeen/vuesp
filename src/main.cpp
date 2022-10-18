@@ -1,7 +1,6 @@
-#include <ArduinoOTA.h>
 #include <EEPROM.h>
-#include <ESPAsyncWebServer.h>
-#include <LittleFS.h>
+
+#include "webserver.h"
 
 #ifdef ESP32
 #include <AsyncTCP.h>
@@ -12,57 +11,76 @@
 #include <ESPAsyncTCP.h>
 #endif
 
-#include "./pages/recovery.h"
+Info info_fs = {INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
+Scan scan = {SCAN, 0, 0, 0, 0, 0, ""};
+Files files = {FILES, 0, 0, 0, 0, ""};
+
+Settings storage = {
+    SETTINGS,
+    DEF_WIFI_DHCP,
+    DEF_WIFI_MODE,
+    DEF_AUTH_MODE,
+    CONFIG_VERSION,
+    0,
+    DEF_WIFI_IP,
+    DEF_WIFI_SUBNET,
+    DEF_WIFI_GETEWAY,
+    DEF_WIFI_DNS,
+    DEF_WIFI_SSID,
+    DEF_WIFI_PASS,
+    DEF_AUTH_LOGIN,
+    DEF_AUTH_PASS};
+
+WiFiClient WiFIclient;
+
+uint8_t wsTask[END];
+uint32_t now;
+uint8_t clientId;
 
 #if defined(ESP8266)
 FSInfo fs_info;
 uint32_t id = ESP.getChipId();
-#include "./const/esp8266/settings.h"
+
 #elif defined(ESP32)
-#include "./const/esp32/settings.h"
+
 uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 32);
 #endif
 
-WiFiClient WiFIclient;
-AsyncWebServer server(80);
-AsyncWebSocket ws("/esp");
-// AsyncWebSocketClient *client;
-
-uint8_t wsClient = 0;
-uint8_t test = 255;
-uint8_t wsTask[END];
-uint8_t wsConnected = false;
-
-uint32_t now;
-uint32_t lastTime = 0;
-
-String status(uint8_t state) {
-  return (state) ? "{\"state\":true}" : "{\"state\":false}";
+#if defined(ESP8266)
+void getFile(char *name) {
+  Dir dir = LittleFS.openDir(name);
+  while (dir.next()) {
+    memset(files.name, 0, sizeof(files.name));
+    dir.fileName().toCharArray(files.name, 32);
+    files.size = dir.fileSize();
+    files.isFile = dir.isFile();
+    files.isDir = dir.isDirectory();
+    wsSend((uint8_t *)&files, sizeof(files));
+  }
+  wsTask[FILES] = OFF;
 }
 
-// void getFile(char *name) {
-//   Dir dir = LittleFS.openDir(name);
-//   while (dir.next()) {
-//     memset(files.name, 0, sizeof(files.name));
-//     dir.fileName().toCharArray(files.name, 32);
-//     files.size = dir.fileSize();
-//     files.isFile = dir.isFile();
-//     files.isDir = dir.isDirectory();
-//     ws.binary(wsClient, (uint8_t *)&files, sizeof(files));
-//   }
-//   wsTask[FILES] = OFF;
-// }
+#elif defined(ESP32)
+
+void getFile(char *name) {
+  File root = LittleFS.open(name);
+  File file = root.openNextFile();
+  String str = "";
+  while (file) {
+    memset(files.name, 0, sizeof(files.name));
+    strcpy(files.name, file.name());
+    files.size = file.size();
+    files.isFile = !file.isDirectory();
+    files.isDir = file.isDirectory();
+    wsSend((uint8_t *)&files, sizeof(files));
+    file = root.openNextFile();
+  }
+  wsTask[FILES] = OFF;
+}
+#endif
 
 void reboot() {
   ESP.restart();
-}
-
-void sendProgress() {
-  if (test > 15) {
-    ws.binary(wsClient, (uint8_t *)&progress, sizeof(progress));
-    test = 0;
-  }
-  test++;
 }
 
 void getInfo() {
@@ -75,7 +93,7 @@ void getInfo() {
   info_fs.usedBytes = LittleFS.usedBytes();
 #endif
   info_fs.id = id;
-  ws.binary(wsClient, (uint8_t *)&info_fs, sizeof(info_fs));
+  wsSend((uint8_t *)&info_fs, sizeof(info_fs));
   wsTask[INFO] = OFF;
   return;
 }
@@ -90,13 +108,13 @@ void scanWiFi() {
     scan.rssi = WiFi.RSSI(i);
     scan.encryptionType = WiFi.encryptionType(i);
     // scan.isHidden = WiFi.isHidden(i);
-    ws.binary(wsClient, (uint8_t *)&scan, sizeof(scan));
+    wsSend((uint8_t *)&scan, sizeof(scan));
   };
   wsTask[SCAN] = OFF;
 }
 
 void sendSettings() {
-  ws.binary(wsClient, (uint8_t *)&storage, sizeof(storage));
+  wsSend((uint8_t *)&storage, sizeof(storage));
   wsTask[SETTINGS] = OFF;
 }
 
@@ -120,156 +138,33 @@ void loadConfig() {
   }
 }
 
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  if (type == WS_EVT_CONNECT) {
-    Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
-    wsConnected = true;
-    wsClient = client->id();
-  } else if (type == WS_EVT_DISCONNECT) {
-    wsConnected = false;
-  } else if (type == WS_EVT_ERROR) {
-    Serial.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
-  } else if (type == WS_EVT_PONG) {
-    Serial.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
-  } else if (type == WS_EVT_DATA) {
-    AwsFrameInfo *info = (AwsFrameInfo *)arg;
-    String msg = "";
-    if (info->final && info->index == 0 && info->len == len) {
-      wsClient = client->id();
-      if (info->opcode == WS_TEXT) {
-        Serial.println("WS_TEXT");
-        for (size_t i = 0; i < info->len; i++) {
-          msg += (char)data[i];
-        }
-        Serial.println(msg.c_str());
-      } else {
-        Serial.println("WS_BINAR");
-        Serial.println(data[0]);
-
-        if (info->len == 1) {
-          wsTask[data[0]] = ON;
-        } else {
-          if (data[0] == SETTINGS && info->len == sizeof(storage)) {
-            for (size_t i = 0; i < info->len; i++) {
-              *((char *)&storage + i) = data[i];
-            }
-            saveConfig();
-          }
-          if (data[0] == FILES && info->len == sizeof(files)) {
-            for (size_t i = 0; i < info->len; i++) {
-              *((char *)&files + i) = data[i];
-            }
-            wsTask[data[0]] = ON;
-          }
-        }
-      }
-    } else {
-      if (info->index == 0) {
-        if (info->num == 0) Serial.printf("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT) ? "text" : "binary");
-        Serial.printf("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
-      }
-
-      Serial.printf("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT) ? "text" : "binary", info->index, info->index + len);
-
-      if (info->opcode == WS_TEXT) {
-        for (size_t i = 0; i < len; i++) {
-          msg += (char)data[i];
-        }
-      } else {
-        char buff[3];
-        for (size_t i = 0; i < len; i++) {
-          sprintf(buff, "%02x", (uint8_t)data[i]);
-          msg += buff;
-        }
-      }
-      Serial.printf("%s\n", msg.c_str());
-
-      if ((info->index + len) == info->len) {
-        Serial.printf("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
-        if (info->final) {
-          Serial.printf("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT) ? "text" : "binary");
-          if (info->message_opcode == WS_TEXT)
-            client->text("I got your text message");
-          else
-            client->binary("I got your binary message");
-        }
-      }
-    }
-  }
-}
-
 void WiFiEvent(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
 }
 
-void onReqUpload(AsyncWebServerRequest *request) {
-  if (!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
-  uint8_t method = request->method();
-  if (request->hasParam("file")) {
-    AsyncWebParameter *p = request->getParam("file");
-    if (method == HTTP_GET)
-      if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
-    if (method == HTTP_DELETE)
-      if (LittleFS.exists(p->value()) && (LittleFS.remove(p->value()) || LittleFS.rmdir(p->value()))) return request->send(200, RES_TYPE_JSON, status(1));
-    ;
-  }
-  if (method == HTTP_POST && request->hasParam("format"))
-    if (LittleFS.format()) return request->send(200, RES_TYPE_JSON, status(1));
-
-  if (method == HTTP_POST) {
-    progress.size = 0;
-    progress.status = 0;
-    return request->send(200, RES_TYPE_JSON, status(1));
-  }
-  request->send(404, RES_TYPE_JSON, status(0));
-}
-
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  progress.size += len;
-  progress.status = !index ? 1 : 2;
-  if (!index) {
-    progress.length = request->contentLength();
-    request->_tempFile = LittleFS.open(filename, "w");
-  }
-  if (len) request->_tempFile.write(data, len);
-  if (final) request->_tempFile.close();
-  sendProgress();
-}
-
-void onReqUpdate(AsyncWebServerRequest *request) {
-  uint8_t isReboot = !Update.hasError();
-  AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
-  response->addHeader("Connection", "close");
-  request->send(response);
-  Serial.println(F("REBOOT"));
-  if (isReboot) wsTask[REBOOT] = ON;
-}
-
-void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  progress.size += len;
-  progress.status = !index ? 1 : 2;
-  if (!index) {
-    progress.length = request->contentLength();
-#if defined(ESP8266)
-    Update.runAsync(true);
-#endif
-    int cmd = (filename == "littlefs.bin") ? 100 : U_FLASH;
-    size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-    if (!Update.begin((cmd == 100) ? info_fs.totalBytes : maxSketchSpace, cmd)) {
-      Update.printError(Serial);
-      return request->send(400, RES_TYPE_JSON, status(0));
+void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
+  AwsFrameInfo *info = (AwsFrameInfo *)arg;
+  if (info->final && info->index == 0 && info->len == len) {
+    if (info->opcode == WS_BINARY) {
+      Serial.println(data[0]);
+      if (info->len == 1) {
+        wsTask[data[0]] = ON;
+      } else {
+        if (data[0] == SETTINGS && info->len == sizeof(storage)) {
+          for (size_t i = 0; i < info->len; i++) {
+            *((char *)&storage + i) = data[i];
+          }
+          saveConfig();
+        }
+        if (data[0] == FILES && info->len == sizeof(files)) {
+          for (size_t i = 0; i < info->len; i++) {
+            *((char *)&files + i) = data[i];
+          }
+          wsTask[data[0]] = ON;
+        }
+      }
     }
   }
-  if (!Update.hasError() && Update.write(data, len) != len) Update.printError(Serial);
-  if (final && !Update.end(true)) Update.printError(Serial);
-  sendProgress();
-}
-
-void onRecovery(AsyncWebServerRequest *request) {
-  if (!request->authenticate(storage.authLogin, storage.authPass)) return request->requestAuthentication();
-  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
 }
 
 void initLittleFS() {
@@ -278,7 +173,7 @@ void initLittleFS() {
 
 void setup() {
   Serial.begin(115200);
-  WiFi.onEvent(WiFiEvent);
+  // WiFi.onEvent(WiFiEvent);
   EEPROM.begin(256);
   loadConfig();
   initLittleFS();
@@ -290,41 +185,16 @@ void setup() {
     if (storage.wifiMode == WIFI_STA) WiFi.begin(storage.wifiSsid, storage.wifiPass);
     if (storage.wifiMode == WIFI_AP) WiFi.softAP(storage.wifiSsid, storage.wifiPass);
   }
-
-  ws.onEvent(onWsEvent);
-  server.addHandler(&ws);
-
-  if (storage.authMode) {
-    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html").setAuthentication(storage.authLogin, storage.authPass);
-  } else {
-    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
-  }
-
-  server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
-  server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
-  server.on("/recovery", HTTP_GET, onRecovery);
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { request->redirect("/recovery"); });
-  server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request) { request->redirect("/"); });
-  server.begin();
+  startWebServer(storage, info_fs.totalBytes, onWsEvent);
 }
 
 void loop() {
   now = millis();
-  if (wsConnected) {
-    if (now - lastTime > 1000) {
-      lastTime = now;
-      if (progress.status == 0) {
-        sendProgress();
-        progress.status = 5;
-      } else {
-        ws.binaryAll((uint8_t *)&ping, sizeof(ping));
-      }
-      // ws.cleanupClients();
-    }
-  }
+  loopWebServer(now);
+
   if (wsTask[SETTINGS]) sendSettings();
   if (wsTask[INFO]) getInfo();
-  // if (wsTask[FILES]) getFile(files.name);
+  if (wsTask[FILES]) getFile(files.name);
   if (wsTask[REBOOT]) reboot();
   if (wsTask[SCAN]) scanWiFi();
 }
