@@ -3,51 +3,43 @@
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
 // AsyncWebSocketClient *client;
-Settings settings;
 
 Ping ping = {PING};
 Progress progress = {PROGRESS, 5, 0, 0, 0};
 
-uint32_t wsClient = 0;
-uint8_t test = 255;
-uint8_t wsConnected = false;
+uint32_t clientID = 0;
+uint8_t connected = false;
+uint8_t hold = 255;
 uint32_t lastTime = 0;
-uint32_t totalBytes;
 
 String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
 void wsSend(uint8_t *message, size_t len) {
-  ws.binary(wsClient, message, len);
+  ws.binary(clientID, message, len);
 }
 
 void sendProgress() {
-  if (progress.status == 1 || progress.status == 0 || test > 15) {
+  if (progress.status == 1 || progress.status == 0 || hold > 15) {
     Serial.print("Save config");
     ws.binaryAll((uint8_t *)&progress, sizeof(progress));
-    test = 0;
+    hold = 0;
   }
-  test++;
+  hold++;
 }
 
 void (*p_function)(void *arg, uint8_t *data, size_t len, uint32_t clientId);
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  wsClient = client->id();
+  clientID = client->id();
   if (type == WS_EVT_CONNECT)
-    wsConnected = true;
+    connected = true;
   else if (type == WS_EVT_DISCONNECT)
-    wsConnected = false;
+    connected = false;
   else if (type == WS_EVT_DATA) {
     if (p_function != NULL) {
-      (*p_function)(arg, data, len, wsClient);
-    }
-    AwsFrameInfo *info = (AwsFrameInfo *)arg;
-    if (info->final && info->index == 0 && info->len == len) {
-      if (info->opcode == WS_BINARY) {
-        Serial.println(data[0]);
-      }
+      (*p_function)(arg, data, len, clientID);
     }
   }
 }
@@ -103,7 +95,7 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
 #endif
     int cmd = (filename == "littlefs.bin") ? 100 : U_FLASH;
     size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-    if (!Update.begin((cmd == 100) ? totalBytes : maxSketchSpace, cmd)) {
+    if (!Update.begin((cmd == 100) ? infoFS.totalBytes : maxSketchSpace, cmd)) {
       Update.printError(Serial);
       return request->send(400, RES_TYPE_JSON, status(0));
     }
@@ -120,10 +112,16 @@ void onRecovery(AsyncWebServerRequest *request) {
   request->send(response);
 }
 
-void startWebServer(Settings storage, uint32_t total, void (*function)(void *arg, uint8_t *data, size_t len, uint32_t clientId)) {
+void onRedirectRecovery(AsyncWebServerRequest *request) {
+  request->redirect("/recovery");
+}
+
+void onRedirectHome(AsyncWebServerRequest *request) {
+  request->redirect("/");
+}
+
+void initServer(void (*function)(void *arg, uint8_t *data, size_t len, uint32_t clientId)) {
   p_function = function;
-  totalBytes = total;
-  settings = storage;
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   if (settings.authMode) {
@@ -135,13 +133,13 @@ void startWebServer(Settings storage, uint32_t total, void (*function)(void *arg
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { request->redirect("/recovery"); });
-  server.on("*", HTTP_ANY, [](AsyncWebServerRequest *request) { request->redirect("/"); });
+  server.on("/", HTTP_GET, onRedirectRecovery);
+  server.on("*", HTTP_ANY, onRedirectHome);
   server.begin();
 }
 
-void loopWebServer(uint32_t now) {
-  if (wsConnected) {
+void loopServer(uint32_t now) {
+  if (connected) {
     if (now - lastTime > 1000) {
       lastTime = now;
       if (progress.status == 0) {
