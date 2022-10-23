@@ -1,38 +1,67 @@
+const { defineConfig } = require('@vue/cli-service');
 const RemovePlugin = require('remove-files-webpack-plugin');
+const VueAutoRoutingPlugin = require('vue-auto-routing/lib/webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const root = process.env.OUTPUT_DIR;
 
-module.exports = {
+module.exports = defineConfig({
+  transpileDependencies: true,
   outputDir: root,
   productionSourceMap: false,
   filenameHashing: false,
-  devServer: {
-    proxy: `http://${process.env.PROXY}/`,
+  css: {
+    loaderOptions: {
+      sass: {
+        additionalData: `@import "@/assets/scss/variables.scss";`,
+      },
+    },
   },
-  // configureWebpack: config => {
-  //   if (process.env.NODE_ENV === 'production') {
-  //   } else {
-  //   }
-  // },
-  chainWebpack: config => { },
+  devServer: {
+    host: '0.0.0.0',
+    port: 3000,
+    proxy: {
+      '/esp': {
+        target: `ws://${process.env.PROXY}`,
+        ws: true,
+      },
+      '/fs': {
+        target: `http://${process.env.PROXY}`,
+      },
+      '/upload': {
+        target: `http://${process.env.PROXY}`,
+      },
+      '/update': {
+        target: `http://${process.env.PROXY}`,
+      },
+    },
+  },
+  chainWebpack: () => {},
   configureWebpack: {
+    performance: {
+      hints: false,
+      maxEntrypointSize: 512000,
+      maxAssetSize: 512000,
+    },
     optimization: {
       splitChunks: {
         cacheGroups: {
           default: false,
-          // Merge all the CSS into one file
           styles: {
             name: 'styles',
             test: m => m.constructor.name === 'CssModule',
             chunks: 'all',
             minChunks: 1,
-            enforce: true
+            enforce: true,
           },
         },
       },
     },
     plugins: [
       new Dotenv(),
+      new VueAutoRoutingPlugin({
+        pages: 'src/pages',
+        importPrefix: '@/pages/',
+      }),
       new RemovePlugin({
         after: {
           root: root,
@@ -80,4 +109,4 @@ module.exports = {
       },
     },
   },
-};
+});

@@ -1,21 +1,25 @@
 <template>
-  <div class="app-overlay">
-    <div class="app-overlay__inner">
-      <div class="app-overlay__text">{{ text }}</div>
-      <div class="lds-roller">
-        <div v-for="item of 8" :key="item"></div>
-      </div>
-    </div>
-  </div>
+	<div class="v-overlay">
+		<div class="v-overlay__content">
+			<slot></slot>
+		</div>
+	</div>
 </template>
 
-<script>
-export default {
-  props: {
-    text: {
-      type: String,
-      default: 'Loading...',
-    },
-  },
-};
-</script>
+<style lang="scss">
+.v-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background-color: var(--overlay);
+	z-index: 11;
+	&__content {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}
+</style>
