@@ -86,10 +86,13 @@ void initApp() {
   loadConfig(settings);
   getInfo();
   initWiFi();
-  
+
+  Serial.println(CURRENT_TIME);
+
   Serial.println("event");
   Serial.println(settings.wifiMode);
   Serial.println(settings.wifiSsid);
   Serial.println(infoFS.totalBytes);
   Serial.println(infoFS.id);
+
 }

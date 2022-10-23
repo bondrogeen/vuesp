@@ -21,5 +21,6 @@
 #define DEF_AUTH_LOGIN "admin"
 #define DEF_AUTH_PASS "admin"
 
-#define DEF_DEVICE_FIRMWARE \
-  { 0, 0, 6 }
+#ifndef DEF_DEVICE_FIRMWARE
+#define DEF_DEVICE_FIRMWARE { 0, 0, 6 }
+#endif

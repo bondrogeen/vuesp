@@ -4,7 +4,7 @@ Vue + ESP = Vuesp
 
 Template for your projects with a web interface.
 
-![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen1.png)
+![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen.gif)
 
 [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino  
 [Vue3](https://vuejs.org/) - The Progressive JavaScript Framework
@@ -13,25 +13,35 @@ Template for your projects with a web interface.
 
 - /data/
 - /firmware/
-  - firmware.bin
-  - littlefs.bin
+  -/esp32/
+    - firmware.bin
+    - littlefs.bin
+  -/esp8266/
+    - firmware.bin
+    - littlefs.bin
 - /github/
   - /images/
 - /src/
   - /const/
-    - /esp8266/
-      - settings.h
-    - /esp32/
-      - settings.h
     - base.h
+    - define.h
+    - struct.h
   - /pages/
     - recovery.h
+  - init.h
+  - init.cpp
   - main.cpp
+  - tasks.cpp
+  - tasks.h
+  - webserver.cpp
+  - webserver.h
 - /vue/
   - /public/
   - /src/
   - vue.config.js
 - platformio.ini
+- script.sh
+- mklittlefs
 
 ## Development
 

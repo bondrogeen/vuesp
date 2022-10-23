@@ -5,7 +5,6 @@
         <div>© 2021 - {{ new Date().getFullYear() }} Vuesp.</div>
         <div>Firmware (ver.{{ frimware }})</div>
         <div>ID: {{ id.toString(16) }}</div>
-        <div>2323323</div>
       </div>
 
       <div class="app-footer__link">

@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve",
-    "build": "vue-cli-service build && npm run recovery && npm run copy",
+    "build": "vue-cli-service build && npm run recovery && npm run firmware",
     "lint": "vue-cli-service lint",
     "recovery": "node ./utils/script.js /recovery/ ../src/pages",
-    "copy": "cp ../.pio/build/nodemcuv2/firmware.bin ../firmware/ | cp ../.pio/build/nodemcuv2/littlefs.bin ../firmware/"
+    "firmware": "cd ../ && sh script.sh build"
   },
   "dependencies": {
     "core-js": "^3.8.3",
