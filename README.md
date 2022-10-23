@@ -13,10 +13,10 @@ Template for your projects with a web interface.
 
 - /data/
 - /firmware/
-  -/esp32/
+  - /esp32/
     - firmware.bin
     - littlefs.bin
-  -/esp8266/
+  - /esp8266/
     - firmware.bin
     - littlefs.bin
 - /github/
@@ -69,8 +69,12 @@ http://localhost:3000/
 npm run build
 ```
 
-platformio run --target uploadfs --environment nodemcuv2
 
+### 1.0.0 (2022-010-23)
+
+- (bondrogeen) Changed project structure
+- (bondrogeen) Changed web interface
+- (bondrogeen) Added build scripts
 
 ### 0.1.0 (2022-010-16)
 
