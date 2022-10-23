@@ -69,5 +69,4 @@ class Struct {
   }
 }
 
-const struct = new Struct()
-export { struct }
+export default new Struct()

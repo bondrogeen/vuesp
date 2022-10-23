@@ -1,30 +1,19 @@
-import Vue from 'vue';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
-import store from './store';
-const host = process.env.NODE_ENV === 'production' ? window.location.host : process.env.PROXY
 
-import VueNativeSock from './assets/js/nativeWebSocket/Main';
-Vue.use(VueNativeSock, `ws://${host}/ws`, {
-  store: store,
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 3000,
-});
+import '@/assets/scss/index.scss';
 
-import '@/utils/filters/index';
+import { add } from './components/global';
+import directives from '@/utils/directives';
 
-import AtComponents from '@/at-ui/src'
-import '@/at-ui/scss/index.scss'
+const pinia = createPinia();
+const app = createApp(App);
 
-Vue.use(AtComponents)
+directives.forEach(directive => app.directive(directive.name, directive));
 
-import '@/assets/scss/main.scss'
-
-Vue.config.productionTip = false;
-
-new Vue({
-  router,
-  store,
-  render: h => h(App),
-}).$mount('#app');
+add(app);
+app.use(pinia);
+app.use(router);
+app.mount('body');

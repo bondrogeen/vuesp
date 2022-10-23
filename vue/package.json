@@ -1,41 +1,40 @@
 {
-  "name": "vuesp",
+  "name": "vuesp_vue3",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "test:unit": "vue-cli-service test:unit",
-    "lint": "vue-cli-service lint"
+    "dev": "vue-cli-service serve",
+    "build": "vue-cli-service build && npm run recovery && npm run firmware",
+    "lint": "vue-cli-service lint",
+    "recovery": "node ./utils/script.js /recovery/ ../src/pages",
+    "firmware": "cd ../ && sh script.sh build"
   },
   "dependencies": {
-    "c-struct-js": "^0.2.0",
-    "core-js": "^3.6.5",
-    "vue": "^2.6.11",
-    "vue-router": "^3.2.0",
-    "vuex": "^3.4.0"
+    "core-js": "^3.8.3",
+    "pinia": "^2.0.21",
+    "vue": "^3.2.13",
+    "vue-router": "^4.0.3"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-plugin-router": "~4.5.0",
-    "@vue/cli-plugin-unit-jest": "~4.5.0",
-    "@vue/cli-plugin-vuex": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "@vue/eslint-config-prettier": "^6.0.0",
-    "@vue/test-utils": "^1.0.3",
-    "babel-eslint": "^10.1.0",
-    "dotenv-webpack": "^7.0.3",
-    "eslint": "^6.7.2",
-    "eslint-plugin-prettier": "^3.3.1",
-    "eslint-plugin-vue": "^6.2.2",
-    "node-sass": "^4.12.0",
-    "prettier": "^2.2.1",
-    "remove-files-webpack-plugin": "^1.4.5",
-    "sass": "^1.35.1",
-    "sass-loader": "^8.0.2",
-    "vue-cli-plugin-compression": "~1.1.4",
-    "vue-template-compiler": "^2.6.11"
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "dotenv-webpack": "^8.0.1",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "prettier": "^2.4.1",
+    "remove-files-webpack-plugin": "^1.5.0",
+    "sass": "^1.32.7",
+    "sass-loader": "^12.0.0",
+    "vue-auto-routing": "^1.0.1",
+    "vue-cli-plugin-compression": "^1.2.0",
+    "minify": "^9.1.0",
+    "node-gzip": "^1.1.2"
   },
   "eslintConfig": {
     "root": true,
@@ -43,31 +42,25 @@
       "node": true
     },
     "extends": [
-      "plugin:vue/essential",
+      "plugin:vue/vue3-essential",
       "eslint:recommended"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@babel/eslint-parser",
+      "requireConfigFile": false
     },
-    "rules": {},
-    "overrides": [
-      {
-        "files": [
-          "**/__tests__/*.{j,t}s?(x)",
-          "**/tests/unit/**/*.spec.{j,t}s?(x)"
-        ],
-        "env": {
-          "jest": true
-        }
-      }
-    ]
+    "ignorePatterns": [
+      "/src/assets/js/struct/lib/*.js"
+    ],
+    "rules": {
+      "no-console": "off",
+      "no-debugger": "off"
+    }
   },
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not dead"
-  ],
-  "jest": {
-    "preset": "@vue/cli-plugin-unit-jest"
-  }
+    "not dead",
+    "not ie 11"
+  ]
 }
