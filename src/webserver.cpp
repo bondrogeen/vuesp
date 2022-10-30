@@ -22,7 +22,6 @@ void wsSend(uint8_t *message, size_t len) {
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
-    Serial.print("Save config");
     ws.binaryAll((uint8_t *)&progress, sizeof(progress));
     hold = 0;
   }

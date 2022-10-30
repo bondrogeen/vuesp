@@ -1,9 +1,11 @@
 #include "init.h"
 
+char nameDevice[13];
+
 #if defined(ESP8266)
 uint32_t id = ESP.getChipId();
 #elif defined(ESP32)
-uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 32);
+uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 24);
 #endif
 
 // WiFiClient WiFIclient;
@@ -36,14 +38,12 @@ void saveSettings(Settings &settings) {
 }
 
 void loadConfig(Settings &settings) {
-  uint16_t version = 1678;
+  uint16_t version = 2678;
   EEPROM.get(CONFIG_START + 4, version);
   if (version == settings.version) {
     EEPROM.get(CONFIG_START, settings);
   } else {
-    char idStr[8];
-    sprintf(idStr, "%02X", id);
-    strcat(settings.wifiSsid, idStr);
+    strcpy(settings.wifiSsid, nameDevice);
     saveSettings(settings);
   }
 }
@@ -58,6 +58,7 @@ void getInfo() {
   infoFS.totalBytes = LittleFS.totalBytes();
   infoFS.usedBytes = LittleFS.usedBytes();
 #endif
+  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
   infoFS.id = id;
   return;
 }
@@ -72,27 +73,19 @@ void WiFiEvent(WiFiEvent_t event) {
 
 void initWiFi() {
   if (settings.wifiMode) {
+    WiFi.setHostname(nameDevice);
     WiFi.mode((WiFiMode_t)settings.wifiMode);
     if (!settings.wifiDhcp) WiFi.config(settings.wifiIp, settings.wifiGeteway, settings.wifiSubnet, settings.wifiDns);
     if (settings.wifiMode == WIFI_STA) WiFi.begin(settings.wifiSsid, settings.wifiPass);
     if (settings.wifiMode == WIFI_AP) WiFi.softAP(settings.wifiSsid, settings.wifiPass);
+    WiFi.onEvent(WiFiEvent);
   }
-  WiFi.onEvent(WiFiEvent);
 }
 
 void initApp() {
   initFS();
   EEPROM.begin(256);
-  loadConfig(settings);
   getInfo();
+  loadConfig(settings);
   initWiFi();
-
-  Serial.println(CURRENT_TIME);
-
-  Serial.println("event");
-  Serial.println(settings.wifiMode);
-  Serial.println(settings.wifiSsid);
-  Serial.println(infoFS.totalBytes);
-  Serial.println(infoFS.id);
-
 }
