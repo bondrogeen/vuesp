@@ -1,7 +1,9 @@
 #define CONFIG_START 0
 
+#define DEF_DEVICE_NAME "VUESP-"
+
 // Default struct settings
-#define CONFIG_VERSION 4
+#define CONFIG_VERSION 5
 
 #define DEF_WIFI_DHCP 1
 #define DEF_WIFI_IP \
@@ -14,7 +16,7 @@
   { 8, 8, 8, 8 }
 
 #define DEF_WIFI_MODE WIFI_AP
-#define DEF_WIFI_SSID "VUESP-"
+#define DEF_WIFI_SSID ""
 #define DEF_WIFI_PASS ""
 
 #define DEF_AUTH_MODE 1
@@ -22,5 +24,5 @@
 #define DEF_AUTH_PASS "admin"
 
 #ifndef DEF_DEVICE_FIRMWARE
-#define DEF_DEVICE_FIRMWARE { 0, 0, 6 }
+#define DEF_DEVICE_FIRMWARE { 0, 0, 1 }
 #endif
