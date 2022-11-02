@@ -58,7 +58,6 @@ void getInfo() {
   infoFS.totalBytes = LittleFS.totalBytes();
   infoFS.usedBytes = LittleFS.usedBytes();
 #endif
-  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
   infoFS.id = id;
   return;
 }
@@ -85,6 +84,7 @@ void initWiFi() {
 void initApp() {
   initFS();
   EEPROM.begin(256);
+  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
   getInfo();
   loadConfig(settings);
   initWiFi();

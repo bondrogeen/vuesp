@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
-import struct from '@/assets/js/struct/';
+import StructToJSON from 'c-struct-to-json';
 import { useWebSocketStore } from './WebSocketStore';
+
+const struct = new StructToJSON();
 
 export const useWebSocket = defineStore('websocket', {
   state: () => ({
@@ -10,25 +12,25 @@ export const useWebSocket = defineStore('websocket', {
     debug: process.env.NODE_ENV === 'development',
   }),
   actions: {
+    onInit() {
+      this.onSend('INFO');
+    },
     onopen(data) {
       console.log(data);
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
-      this.onSend('INFO');
+      struct.onInit = this.onInit;
+      this.onSend('INIT');
     },
     onmessage(message) {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
         const obj = struct.get(message.data);
-        if (this.debug && obj.key !== 'PING') console.log(obj);
         if (obj) {
+          if (this.debug && obj?.key !== 'PING') console.log(obj);
           const store = useWebSocketStore();
-          const nameAction = `SET_${obj['key']}`;
-          if (store?.[nameAction]) {
-            store[nameAction](JSON.parse(JSON.stringify(obj)));
-          } else {
-            store.SET_UNKNOWN(JSON.parse(JSON.stringify(obj)));
-          }
+          const action = store?.[`SET_${obj['key']}`] || store.SET_UNKNOWN;
+          action(obj);
         }
       }
     },
@@ -50,8 +52,6 @@ export const useWebSocket = defineStore('websocket', {
     },
   },
   getters: {
-    isConnect(state) {
-      return state.pingClient - state.pingDevice < 3000;
-    },
+    isConnect: state => state.pingClient - state.pingDevice < 3000,
   },
 });
