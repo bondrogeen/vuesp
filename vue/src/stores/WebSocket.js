@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
-import StructToJSON from 'c-struct-to-json';
+import Struct from '../assets/js/struct/index';
 import { useWebSocketStore } from './WebSocketStore';
 
-const struct = new StructToJSON();
+const struct = new Struct();
 
 export const useWebSocket = defineStore('websocket', {
   state: () => ({
@@ -13,6 +13,7 @@ export const useWebSocket = defineStore('websocket', {
   }),
   actions: {
     onInit() {
+      console.log(struct)
       this.onSend('INFO');
     },
     onopen(data) {
