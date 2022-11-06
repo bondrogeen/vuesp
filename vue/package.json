@@ -11,7 +11,7 @@
     "firmware": "cd ../ && sh script.sh build"
   },
   "dependencies": {
-    "c-struct-to-json": "^0.1.1",
+    "c-struct-to-json": "^1.0.0",
     "core-js": "^3.8.3",
     "pinia": "^2.0.21",
     "vue": "^3.2.13",
