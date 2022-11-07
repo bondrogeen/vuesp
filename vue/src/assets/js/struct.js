@@ -1,6 +1,6 @@
 import Struct from 'c-struct-to-json';
 
-class StructToJSON {
+class StructsToJSON {
   constructor() {
     this.keys = ['INIT'];
     this.isInit = false;
@@ -32,23 +32,21 @@ class StructToJSON {
     }
   }
 
-  getCommand(key) {
-    return typeof key === 'string' ? this.keys.findIndex(i => i === key) : this.keys[key];
+  findIndexKey(name) {
+    return this.keys.findIndex(i => i === name);
+  }
+
+  findNameKey(index) {
+    return this.keys[index];
   }
 
   set(key, data) {
-    console.log(key, data);
-    if (key) {
-      const command = this.getCommand(key);
-      if (data) {
-        const struct = this.structs[key];
-        if (struct) {
-          return struct.setObject(data).getBuffer();
-        }
-      } else {
-        return this.structs['INIT'].setObject({ key: command }).getBuffer();
-      }
+    const struct = this.structs[key];
+    const index = this.findIndexKey(key);
+    if (struct && data) {
+      return struct.setObject({ ...data, key: index }).getBuffer();
     }
+    if (typeof index !== 'undefined') return this.structs['INIT'].setObject({ key: index }).getBuffer();
     console.warn(`No struct or key ${key}`, data);
     return null;
   }
@@ -56,17 +54,16 @@ class StructToJSON {
   get(data) {
     if (data instanceof ArrayBuffer) {
       const [key, ...array] = new Uint8Array(data);
-      const comm = this.getCommand(key);
-      if (comm === 'INIT' && !this.isInit) {
+      const name = this.findNameKey(key);
+      if (name === 'INIT' && !this.isInit) {
         const object = this.parseBytesToJson(array);
         if (object) this.init(object);
         return;
       }
-      const struct = this.structs[comm];
+      const struct = this.structs[name];
       if (struct) {
         const object = struct.setBuffer(data).getObject();
-        object.key = comm
-        return object
+        return { object, key: name };
       }
     }
     console.warn(`No struct from arr: ${data}`);
@@ -74,4 +71,4 @@ class StructToJSON {
   }
 }
 
-export default StructToJSON;
+export default StructsToJSON;
