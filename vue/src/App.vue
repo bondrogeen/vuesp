@@ -66,5 +66,3 @@ onUnmounted(() => {
   socket.value.close(1000);
 });
 </script>
-
-<style lang="scss"></style>

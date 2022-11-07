@@ -1,45 +1,52 @@
 import { defineStore } from 'pinia';
-import struct from '@/assets/js/struct/';
+import Struct from '@/assets/js/struct';
 import { useWebSocketStore } from './WebSocketStore';
+import event from '@/assets/js/event';
+import log from '@/utils/other/debug';
+
+
+const struct = new Struct();
 
 export const useWebSocket = defineStore('websocket', {
   state: () => ({
     socket: null,
     pingClient: 5000,
     pingDevice: 0,
-    debug: process.env.NODE_ENV === 'development',
   }),
   actions: {
-    onopen(data) {
-      console.log(data);
+    onInit() {
+      this.onSend('INFO');
+      event.emit('init');
+    },
+    onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
-      this.onSend('INFO');
+      struct.onInit = this.onInit;
+      this.onSend('INIT');
+      event.emit('connected', true);
     },
     onmessage(message) {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
-        const obj = struct.get(message.data);
-        if (this.debug && obj.key !== 'PING') console.log(obj);
-        if (obj) {
+        const data = struct.get(message.data);
+        if (data) {
+          const { object, key } = data;
+          if (key !== 'PING') log(object, key);
           const store = useWebSocketStore();
-          const nameAction = `SET_${obj['key']}`;
-          if (store?.[nameAction]) {
-            store[nameAction](JSON.parse(JSON.stringify(obj)));
-          } else {
-            store.SET_UNKNOWN(JSON.parse(JSON.stringify(obj)));
-          }
+          (store?.[`SET_${key}`] || store.SET_UNKNOWN)(object);
         }
       }
     },
     onclose(data) {
-      console.log(data);
+      event.emit('connected', false);
+      log(data);
     },
     onerror(data) {
-      console.log(data);
+      event.emit('connected', false);
+      log(data);
     },
     onSend(comm, data) {
-      if (this.debug) console.log(comm, data);
+      log(comm, data);
       if (this?.socket?.send && this.isConnect) {
         const buffer = struct.set(comm, data);
         if (buffer) this.socket.send(buffer);
@@ -50,8 +57,6 @@ export const useWebSocket = defineStore('websocket', {
     },
   },
   getters: {
-    isConnect(state) {
-      return state.pingClient - state.pingDevice < 3000;
-    },
+    isConnect: state => state.pingClient - state.pingDevice < 3000,
   },
 });

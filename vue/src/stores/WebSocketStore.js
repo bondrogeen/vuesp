@@ -41,9 +41,6 @@ export const useWebSocketStore = defineStore('websocketstore', {
     },
   },
   getters: {
-    isConnect() {
-      const webSocket = useWebSocket();
-      return webSocket.isConnect;
-    },
+    isConnect: () => useWebSocket()?.isConnect || false,
   },
 });
