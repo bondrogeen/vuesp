@@ -21,7 +21,7 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const data = computed(() => ({
-  Frimware: props.info?.frimware || '',
+  Frimware: (props.info?.firmware || []).join('.'),
   'Chip ID': (props.info?.id || '').toString(16),
   'Total Bytes': props.info?.totalBytes || '',
   'Used Bytes': props.info?.usedBytes || '',
