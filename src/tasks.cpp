@@ -12,7 +12,7 @@ void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
       uint8_t task = data[0];
       if (task > sizeof(tasks)) return;
       if (info->len == 1) {
-        tasks[task] = ON;
+        tasks[task] = true;
       } else {
         if (task == SETTINGS && info->len == sizeof(settings)) {
           memcpy(&settings, data, sizeof(settings));
@@ -20,7 +20,7 @@ void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
         }
         if (task == FILES && info->len == sizeof(files)) {
           memcpy(&files, data, sizeof(files));
-          tasks[task] = ON;
+          tasks[task] = true;
         }
       }
     }
@@ -38,7 +38,7 @@ void getFile(char *name) {
     files.isDir = dir.isDirectory();
     wsSend((uint8_t *)&files, sizeof(files));
   }
-  tasks[FILES] = OFF;
+  tasks[FILES] = false;
 }
 
 #elif defined(ESP32)
@@ -56,7 +56,7 @@ void getFile(char *name) {
     wsSend((uint8_t *)&files, sizeof(files));
     file = root.openNextFile();
   }
-  tasks[FILES] = OFF;
+  tasks[FILES] = false;
 }
 #endif
 
@@ -72,17 +72,18 @@ void scanWiFi() {
     // scan.isHidden = WiFi.isHidden(i);
     wsSend((uint8_t *)&scan, sizeof(scan));
   };
-  tasks[SCAN] = OFF;
+  tasks[SCAN] = false;
 }
 
 void send(uint8_t *message, size_t len, uint8_t task) {
   wsSend(message, len);
-  tasks[task] = OFF;
+  tasks[task] = false;
 }
 
 void loopTask(uint32_t now) {
   if (tasks[SETTINGS]) send((uint8_t *)&settings, sizeof(settings), SETTINGS);
   if (tasks[INFO]) send((uint8_t *)&infoFS, sizeof(infoFS), INFO);
+  if (tasks[INIT]) send((uint8_t *)&initData, sizeof(initData), INIT);
 
   if (tasks[FILES]) getFile(files.name);
   if (tasks[REBOOT]) reboot();

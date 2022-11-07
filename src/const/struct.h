@@ -1,5 +1,17 @@
+enum keys {
+  INIT,
+  SETTINGS,
+  INFO,
+  PING,
+  SCAN,
+  PROGRESS,
+  FILES,
+  REBOOT,
+  END
+};
+
 struct Settings {
-  uint8_t init;
+  uint8_t key;
   uint8_t wifiDhcp;
   uint8_t wifiMode;
   uint8_t authMode;
@@ -18,7 +30,7 @@ struct Settings {
 };
 
 struct Info {
-  uint8_t init;
+  uint8_t key;
   uint8_t firmware[3];
   uint32_t totalBytes;
   uint32_t usedBytes;
@@ -26,20 +38,11 @@ struct Info {
 };
 
 struct Ping {
-  uint8_t init;
-};
-
-struct Files {
-  uint8_t init;
-  uint8_t isDir;
-  uint8_t isFile;
-  uint8_t command;
-  uint32_t size;
-  char name[32];
+  uint8_t key;
 };
 
 struct Scan {
-  uint8_t init;
+  uint8_t key;
   uint8_t id;
   uint8_t isHidden;
   uint8_t encryptionType;
@@ -49,9 +52,18 @@ struct Scan {
 };
 
 struct Progress {
-  uint8_t init;
+  uint8_t key;
   uint8_t status;
   uint16_t empty;
   uint32_t size;
   uint32_t length;
+};
+
+struct Files {
+  uint8_t key;
+  uint8_t isDir;
+  uint8_t isFile;
+  uint8_t command;
+  uint32_t size;
+  char name[32];
 };

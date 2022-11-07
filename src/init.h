@@ -1,5 +1,5 @@
-#ifndef index_H
-#define index_H
+#ifndef INIT_H
+#define INIT_H
 
 #include <EEPROM.h>
 #include <LittleFS.h>
@@ -13,7 +13,7 @@
 #include <ESPAsyncTCP.h>
 #endif
 
-#include "./const/base.h"
+#include "./const/index.h"
 
 void initApp();
 void saveSettings(Settings &settings);

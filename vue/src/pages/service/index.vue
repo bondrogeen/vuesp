@@ -35,8 +35,9 @@
 </template>
 
 <script setup>
-import { onMounted, watch, inject, nextTick } from 'vue';
+import { onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
+import event from '@/assets/js/event';
 
 import ServiceStorage from '@/components/pages/service/ServiceStorage';
 import ServiceSettings from '@/components/pages/service/ServiceSettings';
@@ -47,7 +48,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, progress, settings, scanList, isConnect } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
@@ -62,9 +63,9 @@ const onSureReboot = () => dialog({ message: 'Do you want to restart your device
 const onSureReset = () => dialog({ message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
 const onSend = ({ comm, data }) => {
-  fileList.value = []
+  fileList.value = [];
   webSocketStore.onSend(comm, data);
-}
+};
 
 const onSave = settings => {
   webSocketStore.onSend('SETTINGS', settings);
@@ -76,11 +77,12 @@ const onScan = value => {
   if (!scanList.value.length) webSocketStore.onSend('SCAN');
 };
 
+event.on('init', () => {
+  if (!settings?.key) webSocketStore.onSend('SETTINGS');
+});
+
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
 });
 
-watch(isConnect, isConnect => {
-  if (!settings?.key && isConnect) webSocketStore.onSend('SETTINGS');
-});
 </script>

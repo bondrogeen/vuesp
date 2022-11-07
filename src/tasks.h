@@ -1,5 +1,5 @@
-#ifndef tasks_H
-#define tasks_H
+#ifndef TASKS_H
+#define TASKS_H
 
 #include "init.h"
 #include "webserver.h"

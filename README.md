@@ -70,6 +70,11 @@ npm run build
 ```
 
 
+### 1.1.0 (2022-011-7)
+
+- (bondrogeen) Changed lib struct
+- (bondrogeen) Add structure initialization events
+
 ### 1.0.0 (2022-010-23)
 
 - (bondrogeen) Changed project structure
