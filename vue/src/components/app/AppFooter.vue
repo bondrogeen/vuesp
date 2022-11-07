@@ -3,7 +3,7 @@
     <div class="d-flex a-center j-between container">
       <div class="d-md-flex a-center flex-wrap gap-4">
         <div>© 2021 - {{ new Date().getFullYear() }} Vuesp.</div>
-        <div>Firmware (ver.{{ frimware }})</div>
+        <div>Firmware (ver.{{ getFirmware }})</div>
         <div>ID: {{ id.toString(16) }}</div>
       </div>
 
@@ -15,11 +15,13 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
-defineProps({
-  frimware: { type: String, default: '' },
+import { computed, defineProps } from 'vue';
+const props = defineProps({
+  firmware: { type: Array, default: () => [] },
   id: { type: Number, default: 0 },
 });
+
+const getFirmware = computed(() => props.firmware.join('.'));
 </script>
 
 <style lang="scss">
