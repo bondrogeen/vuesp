@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
-import Struct from '../assets/js/struct/index';
+import Struct from '@/assets/js/struct';
 import { useWebSocketStore } from './WebSocketStore';
+import event from '@/assets/js/event';
+import log from '@/utils/other/debug';
+
 
 const struct = new Struct();
 
@@ -9,40 +12,41 @@ export const useWebSocket = defineStore('websocket', {
     socket: null,
     pingClient: 5000,
     pingDevice: 0,
-    debug: process.env.NODE_ENV === 'development',
   }),
   actions: {
     onInit() {
-      console.log(struct)
       this.onSend('INFO');
+      event.emit('init');
     },
-    onopen(data) {
-      console.log(data);
+    onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
       struct.onInit = this.onInit;
       this.onSend('INIT');
+      event.emit('connected', true);
     },
     onmessage(message) {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
-        const obj = struct.get(message.data);
-        if (obj) {
-          if (this.debug && obj?.key !== 'PING') console.log(obj);
+        const data = struct.get(message.data);
+        if (data) {
+          const { object, key } = data;
+          if (key !== 'PING') log(object, key);
           const store = useWebSocketStore();
-          const action = store?.[`SET_${obj['key']}`] || store.SET_UNKNOWN;
-          action(obj);
+          (store?.[`SET_${key}`] || store.SET_UNKNOWN)(object);
         }
       }
     },
     onclose(data) {
-      console.log(data);
+      event.emit('connected', false);
+      log(data);
     },
     onerror(data) {
-      console.log(data);
+      event.emit('connected', false);
+      log(data);
     },
     onSend(comm, data) {
-      if (this.debug) console.log(comm, data);
+      log(comm, data);
       if (this?.socket?.send && this.isConnect) {
         const buffer = struct.set(comm, data);
         if (buffer) this.socket.send(buffer);

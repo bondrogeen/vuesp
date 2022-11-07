@@ -24,49 +24,19 @@
           <v-checkbox v-model="settings.wifiDhcp" :disabled="!settings.wifiMode">DHCP</v-checkbox>
         </div>
         <div class="col sm12 md6">
-          <v-input v-model="settings.wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+          <v-input v-model="wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
         <div class="col sm12 md6">
-          <v-input v-model="settings.wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+          <v-input v-model="wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
         <div class="col sm12 md6">
-          <v-input v-model="settings.wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+          <v-input v-model="wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
         <div class="col sm12 md6">
-          <v-input v-model="settings.wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+          <v-input v-model="wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
       </div>
     </v-expansion>
-    <!-- <v-expansion label="Ethernet">
-      <div class="row">
-        <div class="col sm12 mb-6">
-          <v-checkbox v-model="settings.ethDhcp">DHCP</v-checkbox>
-        </div>
-        <div class="col sm12 md6">
-          <v-input v-model="settings.ethIp" label="IP" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-        </div>
-        <div class="col sm12 md6">
-          <v-input v-model="settings.ethSubnet" label="Subnet" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-        </div>
-
-        <div class="col sm12 md6">
-          <v-input v-model="settings.ethGeteway" label="Geteway" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-        </div>
-        <div class="col sm12 md6">
-          <v-input v-model="settings.ethDns" label="DNS" :disabled="isEthernetDHCP" :rules="[rules.ip]" />
-        </div>
-      </div>
-    </v-expansion> -->
-    <!-- <v-expansion label="Server">
-      <div class="row">
-        <div class="col sm12 md6">
-          <v-input v-model="settings.serverUrl" label="URL" :rules="[rules.required, rules.max]" />
-        </div>
-        <div class="col sm12">
-          <v-input v-model.number="settings.serverPort" label="Port" :rules="[rules.required, rules.isPort]" />
-        </div>
-      </div>
-    </v-expansion> -->
     <v-expansion label="Security">
       <div class="row">
         <div class="col sm12 mb-6">
@@ -128,6 +98,26 @@ const dialog = inject('dialog');
 const showPass = ref(false);
 const showDialog = ref(false);
 
+const wifiIp = computed({
+  set: value => {
+    console.log( value.split('.'))
+    settings.value.wifiIp = value.split('.').map(i => +i)
+  },
+  get: () => (settings?.value?.wifiIp || []).join('.'),
+});
+const wifiSubnet = computed({
+  set: value => value.split('.'),
+  get: () => (settings?.value?.wifiSubnet || []).join('.'),
+});
+const wifiGeteway = computed({
+  set: value => value.split('.'),
+  get: () => (settings?.value?.wifiGeteway || []).join('.'),
+});
+const wifiDns = computed({
+  set: value => value.split('.'),
+  get: () => (settings?.value?.wifiDns || []).join('.'),
+});
+
 const settings = computed({
   set: value => emit('update:modelValue', value),
   get: () => props.modelValue,
@@ -155,7 +145,6 @@ const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 const onSave = () => emit('save', settings.value);
-
 
 const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
