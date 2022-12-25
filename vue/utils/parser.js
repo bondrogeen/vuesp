@@ -57,7 +57,8 @@ const toHexString = byteArray => Array.from(byteArray, byte => '0x' + ('0' + (by
   try {
     let data = await fs.readFile(pathInput, 'utf8');
     const result = getCharCodes(JSON.stringify(parseStruct(data)));
-    const text = `const uint8_t initData[] PROGMEM = { 0x00, ${toHexString([...result])} };`;
+    // const text = `const uint8_t initData[] PROGMEM = { 0x00, ${toHexString([...result])} };`; // esp 8266 if PROGMEM < 1324 = (reboot)
+    const text = `const uint8_t initData[] = { 0x00, ${toHexString([...result])} };`;
     await fs.writeFile(`${pathOutput}/struct.h`, text);
     console.log(`Convert struct: ${pathInput} to struct.h`);
     // console.log(text);
