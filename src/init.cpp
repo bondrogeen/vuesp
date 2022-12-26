@@ -38,7 +38,7 @@ void saveSettings(Settings &settings) {
 }
 
 void loadConfig(Settings &settings) {
-  uint16_t version = 2678;
+  uint16_t version = 345;
   EEPROM.get(CONFIG_START + 4, version);
   if (version == settings.version) {
     EEPROM.get(CONFIG_START, settings);
@@ -49,6 +49,7 @@ void loadConfig(Settings &settings) {
 }
 
 void getInfo() {
+  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
 #if defined(ESP8266)
   FSInfo fs_info;
   LittleFS.info(fs_info);
@@ -64,6 +65,14 @@ void getInfo() {
 
 void initFS() {
   if (!LittleFS.begin() && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
+}
+
+void initEeprom() {
+  EEPROM.begin(256);
+}
+
+void initSerial() {
+  Serial.begin(115200);
 }
 
 void WiFiEvent(WiFiEvent_t event) {
@@ -82,9 +91,9 @@ void initWiFi() {
 }
 
 void initApp() {
+  initSerial();
   initFS();
-  EEPROM.begin(256);
-  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
+  initEeprom();
   getInfo();
   loadConfig(settings);
   initWiFi();
