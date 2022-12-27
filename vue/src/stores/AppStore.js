@@ -7,6 +7,7 @@ export const useAppStore = defineStore('app', {
     dialog: {
       value: false,
     },
+    struct: {},
   }),
   actions: {
     init() {
