@@ -10,6 +10,9 @@ enum keys {
   END
 };
 
+struct Init {
+  uint8_t key;
+};
 struct Settings {
   uint8_t key;
   uint8_t wifiDhcp;

@@ -4,7 +4,6 @@ import { useWebSocketStore } from './WebSocketStore';
 import event from '@/assets/js/event';
 import log from '@/utils/other/debug';
 
-
 const struct = new Struct();
 
 export const useWebSocket = defineStore('websocket', {
@@ -12,17 +11,22 @@ export const useWebSocket = defineStore('websocket', {
     socket: null,
     pingClient: 5000,
     pingDevice: 0,
+    struct: null,
   }),
   actions: {
+    async onStruct() {
+      const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
+      struct.init(res);
+      return res;
+    },
     onInit() {
-      this.onSend('INFO');
-      event.emit('init');
+      // this.onSend('INFO');
     },
     onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
-      struct.onInit = this.onInit;
-      this.onSend('INIT');
+      this.onSend('INFO');
+      event.emit('init');
       event.emit('connected', true);
     },
     onmessage(message) {
