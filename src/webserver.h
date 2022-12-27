@@ -5,7 +5,6 @@
 #include <ESPAsyncWebServer.h>
 
 #include "./pages/recovery.h"
-#include "./pages/struct.h"
 #include "init.h"
 #define RES_TYPE_JSON "application/json"
 
