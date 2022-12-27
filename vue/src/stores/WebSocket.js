@@ -57,6 +57,6 @@ export const useWebSocket = defineStore('websocket', {
     },
   },
   getters: {
-    isConnect: state => state.pingClient - state.pingDevice < 3000,
+    isConnect: state => state.pingClient - state.pingDevice < 10000,
   },
 });
