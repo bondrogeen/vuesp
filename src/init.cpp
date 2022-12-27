@@ -1,4 +1,4 @@
-#include "init.h"
+#include "./include/init.h"
 
 char nameDevice[13];
 
@@ -90,7 +90,7 @@ void initWiFi() {
   }
 }
 
-void initApp() {
+void setupInit() {
   initSerial();
   initFS();
   initEeprom();

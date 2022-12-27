@@ -1,4 +1,4 @@
-#include "webserver.h"
+#include "./include/webserver.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
@@ -119,7 +119,7 @@ void onRedirectHome(AsyncWebServerRequest *request) {
   request->redirect("/");
 }
 
-void initServer(void (*function)(void *arg, uint8_t *data, size_t len, uint32_t clientId)) {
+void setupServer(void (*function)(void *arg, uint8_t *data, size_t len, uint32_t clientId)) {
   p_function = function;
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
