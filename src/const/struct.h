@@ -7,6 +7,7 @@ enum keys {
   PROGRESS,
   FILES,
   REBOOT,
+  GPIO,
   END
 };
 
@@ -69,4 +70,11 @@ struct Files {
   uint8_t command;
   uint32_t size;
   char name[32];
+};
+
+struct Gpio {
+  uint8_t key;
+  uint8_t gpio;
+  uint8_t presses;
+  uint8_t pressed;
 };
