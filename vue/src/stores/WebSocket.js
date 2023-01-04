@@ -19,9 +19,6 @@ export const useWebSocket = defineStore('websocket', {
       struct.init(res);
       return res;
     },
-    onInit() {
-      // this.onSend('INFO');
-    },
     onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
