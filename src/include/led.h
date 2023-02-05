@@ -1,6 +1,7 @@
 #ifndef LED_H
 #define LED_H
 
+#include "./init.h"
 #include <Adafruit_NeoPixel.h>
 #define PIN D5
 
