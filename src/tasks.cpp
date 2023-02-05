@@ -1,4 +1,4 @@
-#include "tasks.h"
+#include "./include/tasks.h"
 uint8_t tasks[END];
 // uint32_t lastTime = 0;
 
@@ -83,8 +83,6 @@ void send(uint8_t *message, size_t len, uint8_t task) {
 void loopTask(uint32_t now) {
   if (tasks[SETTINGS]) send((uint8_t *)&settings, sizeof(settings), SETTINGS);
   if (tasks[INFO]) send((uint8_t *)&infoFS, sizeof(infoFS), INFO);
-  if (tasks[INIT]) send((uint8_t *)&initData, sizeof(initData), INIT);
-
   if (tasks[FILES]) getFile(files.name);
   if (tasks[REBOOT]) reboot();
   if (tasks[SCAN]) scanWiFi();

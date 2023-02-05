@@ -1,28 +1,29 @@
 import { defineStore } from 'pinia';
-import Struct from '@/assets/js/struct';
+import VuespStruct from 'vuesp-struct';
 import { useWebSocketStore } from './WebSocketStore';
 import event from '@/assets/js/event';
 import log from '@/utils/other/debug';
 
-
-const struct = new Struct();
+const struct = new VuespStruct();
 
 export const useWebSocket = defineStore('websocket', {
   state: () => ({
     socket: null,
     pingClient: 5000,
     pingDevice: 0,
+    struct: null,
   }),
   actions: {
-    onInit() {
-      this.onSend('INFO');
-      event.emit('init');
+    async onStruct() {
+      const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
+      struct.init(res);
+      return res;
     },
     onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
-      struct.onInit = this.onInit;
-      this.onSend('INIT');
+      this.onSend('INFO');
+      event.emit('init');
       event.emit('connected', true);
     },
     onmessage(message) {
