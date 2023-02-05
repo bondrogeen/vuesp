@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
-import Struct from '@/assets/js/struct';
+import VuespStruct from 'vuesp-struct';
 import { useWebSocketStore } from './WebSocketStore';
 import event from '@/assets/js/event';
 import log from '@/utils/other/debug';
 
-const struct = new Struct();
+const struct = new VuespStruct();
 
 export const useWebSocket = defineStore('websocket', {
   state: () => ({
