@@ -1,14 +1,12 @@
-#include "init.h"
-#include "led.h"
-#include "tasks.h"
-#include "webserver.h"
+#include "./include/init.h"
+#include "./include/tasks.h"
+#include "./include/webserver.h"
 
 uint32_t now;
 
 void setup() {
-  initApp();
-  initServer(onWsEvent);
-  setupLed();
+  setupInit();
+  setupServer(onWsEvent);
 }
 
 void loop() {

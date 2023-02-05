@@ -13,9 +13,9 @@
 #include <ESPAsyncTCP.h>
 #endif
 
-#include "./const/index.h"
+#include "../const/index.h"
 
-void initApp();
+void setupInit();
 void saveSettings(Settings &settings);
 void reboot();
 extern Settings settings;

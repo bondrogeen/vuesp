@@ -4,14 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve",
-    "build": "vue-cli-service build && npm run recovery && npm run parser && npm run firmware",
+    "build": "npm run recovery && npm run parser && vue-cli-service build && npm run firmware",
     "lint": "vue-cli-service lint",
     "recovery": "node ./utils/script.js /recovery/ ../src/pages",
-    "parser": "node ./utils/parser.js ../src/const/struct.h  ../src/pages",
+    "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
     "firmware": "cd ../ && sh script.sh build"
   },
   "dependencies": {
-    "c-struct-to-json": "^1.0.0",
+    "vuesp-struct": "^1.0.0",
     "core-js": "^3.8.3",
     "pinia": "^2.0.21",
     "vue": "^3.2.13",
