@@ -55,22 +55,22 @@ const onLoad = e => {
   };
   img.src = URL.createObjectURL(e.files[0]);
 };
+// 
+// const saveByteArray = (data, name) => {
+//   var a = document.createElement('a');
+//   document.body.appendChild(a);
+//   a.style = 'display: none';
 
-const saveByteArray = (data, name) => {
-  var a = document.createElement('a');
-  document.body.appendChild(a);
-  a.style = 'display: none';
-
-  console.log(data, name);
-  const blob = new Blob(data, { type: 'octet/stream' });
-  console.log(blob);
-  const url = window.URL.createObjectURL(blob);
-  console.log(url);
-  a.href = url;
-  a.download = name;
-  a.click();
-  window.URL.revokeObjectURL(url);
-};
+//   console.log(data, name);
+//   const blob = new Blob(data, { type: 'octet/stream' });
+//   console.log(blob);
+//   const url = window.URL.createObjectURL(blob);
+//   console.log(url);
+//   a.href = url;
+//   a.download = name;
+//   a.click();
+//   window.URL.revokeObjectURL(url);
+// };
 
 const ctx = computed(() => {
   const canvas = document.querySelector('canvas');
