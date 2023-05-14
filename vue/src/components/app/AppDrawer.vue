@@ -3,7 +3,7 @@
     <div v-if="value" class="app-drawer__overlay" @click="onClose"></div>
     <div class="app-drawer__content">
       <div class="app-drawer__header">
-        <div @click="changeTheme">
+        <div class="app-drawer__theme" @click="changeTheme">
           <v-icons :icon="!theme ? 'dark' : 'light'" />
         </div>
         <div @click="onClose">
@@ -11,7 +11,7 @@
             <v-icons icon="logo"></v-icons>
           </router-link>
         </div>
-        <div @click="onClose">
+        <div class="app-drawer__close" @click="onClose">
           <v-icons icon="close"></v-icons>
         </div>
       </div>
@@ -53,7 +53,7 @@ const onClose = e => emit('close', e);
   &--open {
     width: 100%;
     @include above($sm) {
-      width: 50%;
+      width: 360px;
     }
   }
   &__overlay {
@@ -78,6 +78,7 @@ const onClose = e => emit('close', e);
     }
   }
   &__content {
+    min-width: 360px;
     background-color: var(--bg-1);
     position: absolute;
     width: 100%;
@@ -87,6 +88,10 @@ const onClose = e => emit('close', e);
   &__body {
     height: calc(100% - 60px);
     padding: 15px;
+  }
+  &__theme,
+  &__close {
+    cursor: pointer;
   }
 }
 </style>

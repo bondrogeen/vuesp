@@ -10,6 +10,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     fileList: [],
     path: ['root'],
     settings: {},
+    pins: {},
     unknown: null,
   }),
   actions: {
@@ -31,6 +32,9 @@ export const useWebSocketStore = defineStore('websocketstore', {
         app.setDialog({ title: 'Progress', value: true, isProgress: true });
       }
       this.progress = value;
+    },
+    SET_PINS(value) {
+      this.pins = value;
     },
     SET_UNKNOWN(value) {
       this.unknown = value;
