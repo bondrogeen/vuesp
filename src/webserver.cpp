@@ -4,8 +4,8 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
 // AsyncWebSocketClient *client;
 
-Ping ping = {PING};
-Progress progress = {PROGRESS, 5, 0, 0, 0};
+Ping ping = {KEY_PING};
+Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
 uint32_t clientID = 0;
 uint8_t connected = false;

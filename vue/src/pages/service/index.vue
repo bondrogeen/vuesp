@@ -22,8 +22,15 @@
               </div>
             </div>
           </v-tab>
-          <v-tab label="Other" icon="onher">
+          <!-- <v-tab label="Other" icon="onher">
             <div class="row"></div>
+          </v-tab> -->
+          <v-tab label="GPIO" icon="onher">
+            <div class="row">
+              <div class="col sm12">
+                <ServiceGPIO :pins="pins" />
+              </div>
+            </div>
           </v-tab>
         </v-tabs>
       </div>
@@ -39,6 +46,7 @@ import { onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 import event from '@/assets/js/event';
 
+import ServiceGPIO from '@/components/pages/service/ServiceGPIO';
 import ServiceStorage from '@/components/pages/service/ServiceStorage';
 import ServiceSettings from '@/components/pages/service/ServiceSettings';
 import ServiceInfo from '@/components/pages/service/ServiceInfo';
@@ -48,7 +56,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, progress, settings, scanList } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList, pins } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
@@ -84,5 +92,4 @@ event.on('init', () => {
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
 });
-
 </script>

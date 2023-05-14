@@ -10,10 +10,10 @@ uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 24);
 
 // WiFiClient WiFIclient;
 
-Info infoFS = {INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
+Info infoFS = {KEY_INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
 
 Settings settings = {
-    SETTINGS,
+    KEY_SETTINGS,
     DEF_WIFI_DHCP,
     DEF_WIFI_MODE,
     DEF_AUTH_MODE,

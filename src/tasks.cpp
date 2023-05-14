@@ -1,9 +1,9 @@
 #include "./include/tasks.h"
-uint8_t tasks[END];
+uint8_t tasks[KEY_END];
 // uint32_t lastTime = 0;
 
-Scan scan = {SCAN, 0, 0, 0, 0, 0, ""};
-Files files = {FILES, 0, 0, 0, 0, ""};
+Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
+Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 
 void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -14,11 +14,11 @@ void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
       if (info->len == 1) {
         tasks[task] = true;
       } else {
-        if (task == SETTINGS && info->len == sizeof(settings)) {
+        if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
           memcpy(&settings, data, sizeof(settings));
           saveSettings(settings);
         }
-        if (task == FILES && info->len == sizeof(files)) {
+        if (task == KEY_FILES && info->len == sizeof(files)) {
           memcpy(&files, data, sizeof(files));
           tasks[task] = true;
         }
@@ -38,7 +38,7 @@ void getFile(char *name) {
     files.isDir = dir.isDirectory();
     wsSend((uint8_t *)&files, sizeof(files));
   }
-  tasks[FILES] = false;
+  tasks[KEY_FILES] = false;
 }
 
 #elif defined(ESP32)
@@ -56,7 +56,7 @@ void getFile(char *name) {
     wsSend((uint8_t *)&files, sizeof(files));
     file = root.openNextFile();
   }
-  tasks[FILES] = false;
+  tasks[KEY_FILES] = false;
 }
 #endif
 
@@ -72,7 +72,7 @@ void scanWiFi() {
     // scan.isHidden = WiFi.isHidden(i);
     wsSend((uint8_t *)&scan, sizeof(scan));
   };
-  tasks[SCAN] = false;
+  tasks[KEY_SCAN] = false;
 }
 
 void send(uint8_t *message, size_t len, uint8_t task) {
@@ -81,9 +81,9 @@ void send(uint8_t *message, size_t len, uint8_t task) {
 }
 
 void loopTask(uint32_t now) {
-  if (tasks[SETTINGS]) send((uint8_t *)&settings, sizeof(settings), SETTINGS);
-  if (tasks[INFO]) send((uint8_t *)&infoFS, sizeof(infoFS), INFO);
-  if (tasks[FILES]) getFile(files.name);
-  if (tasks[REBOOT]) reboot();
-  if (tasks[SCAN]) scanWiFi();
+  if (tasks[KEY_SETTINGS]) send((uint8_t *)&settings, sizeof(settings), KEY_SETTINGS);
+  if (tasks[KEY_INFO]) send((uint8_t *)&infoFS, sizeof(infoFS), KEY_INFO);
+  if (tasks[KEY_FILES]) getFile(files.name);
+  if (tasks[KEY_REBOOT]) reboot();
+  if (tasks[KEY_SCAN]) scanWiFi();
 }
