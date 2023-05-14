@@ -7,6 +7,7 @@ enum keys {
   PROGRESS,
   FILES,
   REBOOT,
+  RELAY,
   END
 };
 
@@ -69,4 +70,11 @@ struct Files {
   uint8_t command;
   uint32_t size;
   char name[32];
+};
+
+struct Relay {
+  uint8_t key;
+  uint8_t status;
+  uint8_t isFile;
+  uint8_t command;
 };

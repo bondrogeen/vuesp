@@ -76,7 +76,7 @@ void initSerial() {
 }
 
 void WiFiEvent(WiFiEvent_t event) {
-  Serial.printf("[WiFi-event] event: %d\n", event);
+  // Serial.printf("[WiFi-event] event: %d\n", event);
 }
 
 void initWiFi() {
