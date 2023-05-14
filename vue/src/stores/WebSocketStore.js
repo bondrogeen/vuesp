@@ -10,6 +10,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     fileList: [],
     path: ['root'],
     settings: {},
+    data: {},
     unknown: null,
   }),
   actions: {
@@ -24,6 +25,9 @@ export const useWebSocketStore = defineStore('websocketstore', {
     },
     SET_SETTINGS(value) {
       this.settings = value;
+    },
+    SET_DATA(key, value) {
+      this.data[key] = value;
     },
     SET_PROGRESS(value) {
       if (value.status === 1) {
