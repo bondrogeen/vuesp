@@ -32,12 +32,17 @@ void reboot() {
   ESP.restart();
 }
 
-void saveSettings(Settings &settings) {
+void saveEeprom(Settings& settings) {
   EEPROM.put(CONFIG_START, settings);
   EEPROM.commit();
 }
 
-void loadConfig(Settings &settings) {
+void saveSettings(Settings& settings) {
+  EEPROM.put(CONFIG_START, settings);
+  EEPROM.commit();
+}
+
+void loadConfig(Settings& settings) {
   uint16_t version = 345;
   EEPROM.get(CONFIG_START + 4, version);
   if (version == settings.version) {
@@ -88,6 +93,26 @@ void initWiFi() {
     if (settings.wifiMode == WIFI_AP) WiFi.softAP(settings.wifiSsid, settings.wifiPass);
     WiFi.onEvent(WiFiEvent);
   }
+}
+
+uint8_t readFile(const char* path, uint8_t* buf, size_t size) {
+  File file = LittleFS.open(path, "r");
+  if (!file) {
+    return 0;
+  } else {
+    while (file.available()) {
+      file.read(buf, size);
+    }
+    file.close();
+    return 1;
+  }
+}
+
+void writeFile(const char* path, const uint8_t* buf, size_t size) {
+  File file = LittleFS.open(path, "w");
+  file.write(buf, size);
+  delay(1);
+  file.close();
 }
 
 void setupInit() {

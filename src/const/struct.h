@@ -8,6 +8,7 @@ enum keys {
   KEY_FILES,
   KEY_REBOOT,
   KEY_PINS,
+  KEY_PORT,
   KEY_END
 };
 
@@ -71,13 +72,10 @@ struct Files {
   uint32_t size;
   char name[32];
 };
-struct Pins {
+
+struct Port {
   uint8_t key;
-  uint8_t gpio1;
-  uint8_t gpio3;
-  uint8_t gpio4;
-  uint8_t gpio5;
-  uint8_t gpio12;
-  uint8_t gpio13;
-  uint8_t gpio14;
+  uint8_t mode;
+  uint8_t number;
+  uint8_t state;
 };

@@ -4,6 +4,7 @@ uint8_t tasks[KEY_END];
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
+Port port = {KEY_PORT, 0, 0, 0};
 
 void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -20,6 +21,10 @@ void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
         }
         if (task == KEY_FILES && info->len == sizeof(files)) {
           memcpy(&files, data, sizeof(files));
+          tasks[task] = true;
+        }
+        if (task == KEY_PORT && info->len == sizeof(port)) {
+          memcpy(&port, data, sizeof(port));
           tasks[task] = true;
         }
       }
