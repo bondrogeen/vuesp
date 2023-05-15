@@ -16,7 +16,7 @@ export const useWebSocket = defineStore('websocket', {
   actions: {
     async onStruct() {
       const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
-      console.log(res);
+      // console.log(res);
       struct.init(res);
       return res;
     },
@@ -33,7 +33,7 @@ export const useWebSocket = defineStore('websocket', {
         const data = struct.get(message.data);
         if (data) {
           const { object, key } = data;
-          console.log(object);
+          // console.log(object);
           if (key !== 'PING') log(object, key);
           const store = useWebSocketStore();
           (store?.[`SET_${key}`] || store.SET_UNKNOWN)(object);

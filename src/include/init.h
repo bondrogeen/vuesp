@@ -16,8 +16,10 @@
 #include "../const/index.h"
 
 void setupInit();
-void saveSettings(Settings &settings);
+void saveSettings(Settings& settings);
 void reboot();
+uint8_t readFile(const char* path, uint8_t* buf, size_t size);
+void writeFile(const char* path, const uint8_t* buf, size_t size);
 extern Settings settings;
 extern Info infoFS;
 
