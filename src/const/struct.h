@@ -75,7 +75,7 @@ struct Files {
 
 struct Port {
   uint8_t key;
-  uint8_t mode;
-  uint8_t number;
-  uint8_t state;
+  uint8_t command;
+  uint8_t gpio;
+  uint8_t data;
 };

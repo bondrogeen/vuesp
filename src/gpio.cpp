@@ -9,9 +9,10 @@
 #define GPIO_IN_BTN 5
 
 uint8_t gpio[5] = {4, 5, 12, 13, 14};
-uint8_t ports[60] = {};
+uint8_t ports[sizeof(gpio)][2] = {};
 
 uint32_t lastTimeDevice = 0;
+
 // uint8_t btnStatus = 0;
 // Relay relay = {RELAY, 0, 0, 0};
 // uint32_t debounce;
@@ -29,13 +30,56 @@ uint32_t lastTimeDevice = 0;
 //   attachInterrupt(GPIO_IN_BTN, btnIsr, FALLING);
 // }
 
+void changeBit(uint8_t *address, uint8_t value, uint8_t mask) {
+  *address = value ? *address | mask : *address & ~mask;
+}
+
+uint8_t readBit(uint8_t data, uint8_t mask) {
+  return bool(data & mask);
+}
+
+void defPorts() {
+  for (uint8_t i = 0; i < sizeof(gpio); i++) {
+    ports[i][0] = gpio[i];
+    uint8_t *adress = &ports[i][1];
+
+    changeBit(adress, 1, GPIO_INIT);
+    changeBit(adress, INPUT, GPIO_MODE);
+    changeBit(adress, 1, GPIO_STATUS);
+  }
+}
+
+uint8_t getPort(uint8_t gpio) {
+  for (uint8_t i = 0; i < sizeof(gpio); i++) {
+    if (ports[i][0] == gpio) {
+      return ports[i][1];
+      break;
+    }
+  }
+  return 0;
+}
+
+// uint8_t getarr() {
+//   uint8_t arr[10];
+//   for (uint8_t i = 0; ports[i]; i++) {
+//     arr[i] = ports[i][0];
+//     arr[i + 1] = ports[i][1];
+//   }
+
+//   return
+// }
+
 void setupGPIO() {
   pinMode(GPIO_LED, OUTPUT);
   pinMode(GPIO_RELAY, OUTPUT);
 
-  uint8_t isOk = readFile("/gpio.io", ports, sizeof(ports));
+  uint8_t isOk = readFile("/gpio.io", (uint8_t *)ports, sizeof(ports));
+
+  Serial.println(isOk);
   if (!isOk) {
-    writeFile("/gpio.io", ports, sizeof(ports));
+    defPorts();
+    writeFile("/gpio.io", (uint8_t *)ports, sizeof(ports));
+  } else {
   }
   // pinMode(GPIO_OUT_BTN, INPUT_PULLUP);
   // pinMode(GPIO_IN_BTN, INPUT_PULLUP);
@@ -60,18 +104,29 @@ void loopGPIO(uint32_t now) {
   if (now - lastTimeDevice > 1000) {
     lastTimeDevice = now;
 
-    tasks[KEY_PORT] = 1;
+    // tasks[KEY_PORT] = 1;
 
     if (tasks[KEY_PORT]) {
-      for (int i = 0; gpio[i]; i++) {
-        ports[gpio[i]] = 134;
+      if (port.command == GPIO_COMMAND_GET_ALL) {
+        for (int i = 0; gpio[i]; i++) {
+          port.gpio = gpio[i];
+          port.data = getPort(gpio[i]);
+          send((uint8_t *)&port, sizeof(port), KEY_PORT);
+        }
       }
-      writeFile("/gpio.io", ports, sizeof(ports));
+      if (port.command == GPIO_COMMAND_SET) {
+        digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
+        Serial.println(readBit(port.data, GPIO_VALUE));
+        Serial.println(port.data);
+      }
+      Serial.println(port.gpio);
       // send((uint8_t *)&test, sizeof(test), KEY_PORT);
+      // digitalWrite(GPIO_LED, !digitalRead(GPIO_LED));
+      tasks[KEY_PORT] = 0;
     };
 
-    digitalWrite(GPIO_LED, !digitalRead(GPIO_LED));
-    digitalWrite(GPIO_RELAY, !digitalRead(GPIO_RELAY));
+    // digitalWrite(GPIO_LED, !digitalRead(GPIO_LED));
+    // digitalWrite(GPIO_RELAY, !digitalRead(GPIO_RELAY));
     Serial.println("sdsdsds");
   }
 }
