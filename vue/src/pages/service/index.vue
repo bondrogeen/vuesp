@@ -28,7 +28,7 @@
           <v-tab label="GPIO" icon="onher">
             <div class="row">
               <div class="col sm12">
-                <ServiceGPIO :pins="pins" />
+                <ServiceGPIO :pins="pins" @send="onSend" />
               </div>
             </div>
           </v-tab>

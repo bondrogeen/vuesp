@@ -18,7 +18,7 @@ const onClick = e => emit('click', e);
 <style lang="scss">
 .v-button {
   position: relative;
-  height: 50px;
+  height: 40px;
   padding: 0 15px;
   border-radius: 4px;
   border: 1px solid color('grey', 'lighten-2');

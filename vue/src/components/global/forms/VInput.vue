@@ -74,7 +74,7 @@ const onIcon = e => {
   width: 100%;
   &__slot {
     position: relative;
-    height: 50px;
+    height: 40px;
     width: 100%;
     border: 1px solid color('app', 'secondary');
     border-radius: 4px;
