@@ -21,7 +21,6 @@ $size: 18px;
 .v-checkbox {
   position: relative;
   display: flex;
-  align-items: center;
   &__input {
     position: absolute;
     opacity: 0;

@@ -1,12 +1,9 @@
 export const mask = {
-  GPIO_INIT: 1,
-  GPIO_EMPTY_2: 2,
-  GPIO_EMPTY_3: 4,
-  GPIO_EMPTY_4: 8,
-  GPIO_EMPTY_5: 16,
-  GPIO_VALUE: 32,
-  GPIO_MODE: 64,
-  GPIO_STATUS: 128,
+  GPIO_VALUE: 0b00000001,
+  GPIO_STATUS: 0b00000010,
+  GPIO_EMPTY: 0b00001100,
+  GPIO_MODE: 0b01110000,
+  GPIO_INIT: 0b10000000,
 };
 
 export const command = {
@@ -44,19 +41,21 @@ export const toggleBit = (byte, mask) => (byte ^= mask);
 
 export const getData = byte => {
   return {
-    value: getBit(byte, mask.GPIO_VALUE),
-    mode: getBit(byte, mask.GPIO_MODE),
-    init: getBit(byte, mask.GPIO_INIT),
-    status: getBit(byte, mask.GPIO_STATUS),
+    init: (byte & mask.GPIO_INIT) >> 7,
+    mode: (byte & mask.GPIO_MODE) >> 4,
+    empty: (byte & mask.GPIO_EMPTY) >> 2,
+    status: (byte & mask.GPIO_STATUS) >> 1,
+    value: (byte & mask.GPIO_VALUE) >> 0,
   };
 };
 
 export const setData = obj => {
   let data = 0;
   data = obj.value ? setBit(data, mask.GPIO_VALUE) : clearBit(data, mask.GPIO_VALUE);
-  data = obj.mode ? setBit(data, mask.GPIO_MODE) : clearBit(data, mask.GPIO_MODE);
   data = obj.init ? setBit(data, mask.GPIO_INIT) : clearBit(data, mask.GPIO_INIT);
   data = obj.status ? setBit(data, mask.GPIO_STATUS) : clearBit(data, mask.GPIO_STATUS);
+  data = clearBit(data, mask.GPIO_MODE);
+  data |= (obj.mode & 0b111) << 4;
   return data;
 };
 
