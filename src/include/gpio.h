@@ -1,14 +1,11 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#define GPIO_INIT 1
-#define GPIO_EMPTY_2 2
-#define GPIO_EMPTY_3 4
-#define GPIO_EMPTY_4 8
-#define GPIO_EMPTY_5 16
-#define GPIO_VALUE 32
-#define GPIO_MODE 64
-#define GPIO_STATUS 128
+#define GPIO_VALUE 0b00000001
+#define GPIO_STATUS 0b00000010
+#define GPIO_EMPTY 0b00001100
+#define GPIO_MODE 0b01110000
+#define GPIO_INIT 0b10000000
 
 #define GPIO_COMMAND_GET 0
 #define GPIO_COMMAND_SET 1

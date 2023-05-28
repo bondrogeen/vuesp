@@ -23,7 +23,7 @@ const onClick = e => emit('click', e);
   padding: 0;
   margin: 0;
   &__item {
-    min-height: 50px;
+    min-height: 40px;
     padding: 0 15px;
     display: flex;
     align-items: center;
@@ -32,6 +32,9 @@ const onClick = e => emit('click', e);
       border-bottom: 1px solid var(--border-1);
     }
     white-space: nowrap;
+    &:hover {
+      background-color: var(--hover);
+    }
   }
 }
 </style>

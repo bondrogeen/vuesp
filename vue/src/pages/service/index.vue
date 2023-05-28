@@ -28,7 +28,7 @@
           <v-tab label="GPIO" icon="onher">
             <div class="row">
               <div class="col sm12">
-                <ServiceGPIO :pins="pins" @send="onSend" />
+                <ServiceGPIO :gpios="gpios" @send="onSend" />
               </div>
             </div>
           </v-tab>
@@ -56,7 +56,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, progress, settings, scanList, pins } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList, gpios } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
