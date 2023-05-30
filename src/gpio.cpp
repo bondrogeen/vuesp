@@ -6,8 +6,6 @@
 uint8_t gpio[5] = {4, 5, 12, 13, 14};
 uint8_t ports[sizeof(gpio)][2] = {};
 
-uint32_t lastTimeDevice = 0;
-
 uint8_t btnStatus = 0;
 uint32_t debounce = 0;
 
@@ -59,11 +57,11 @@ void initGpio() {
 }
 
 void setupGPIO() {
-  uint8_t isOk = readFile("/service/gpio.io", (uint8_t *)ports, sizeof(ports));
+  uint8_t isOk = readFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
   Serial.println(isOk);
   if (!isOk) {
     defPorts();
-    writeFile("/service/gpio.io", (uint8_t *)ports, sizeof(ports));
+    writeFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
   }
   initGpio();
 }
@@ -95,18 +93,14 @@ void loopGPIO(uint32_t now) {
     getAll();
   }
 
-  if (now - lastTimeDevice > 1000) {
-    lastTimeDevice = now;
-
-    if (tasks[KEY_PORT]) {
-      if (port.command == GPIO_COMMAND_GET_ALL) {
-        getAll();
-      }
-      if (port.command == GPIO_COMMAND_SET) {
-        digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
-        getAll();
-      }
-      tasks[KEY_PORT] = 0;
-    };
-  }
+  if (tasks[KEY_PORT]) {
+    if (port.command == GPIO_COMMAND_GET_ALL) {
+      getAll();
+    }
+    if (port.command == GPIO_COMMAND_SET) {
+      digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
+      getAll();
+    }
+    tasks[KEY_PORT] = 0;
+  };
 }
