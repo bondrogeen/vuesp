@@ -34,7 +34,6 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.progress = value;
     },
     SET_PORT(value) {
-      console.log(value);
       this.gpios[value.gpio] = value;
     },
     SET_UNKNOWN(value) {

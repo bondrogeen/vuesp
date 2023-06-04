@@ -24,7 +24,6 @@ export const stringifyDateGPIO = object => {
   const arr = [];
 
   for (const key in object) {
-    console.log(object[key]);
     arr.push(object[key].gpio);
     arr.push(object[key].data);
   }

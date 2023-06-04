@@ -116,7 +116,7 @@ const onFormat = async () => {
   if (res?.state) onUpdate();
 };
 
-const onSureFormat = () => dialog({ message: 'All files will be deleted. Are you sure?', callback: onFormat });
+const onSureFormat = () => dialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
 
 const onUpload = async ({ files, info }) => {
   const totalSize = info?.totalSize || 0;
@@ -131,19 +131,19 @@ const onUpload = async ({ files, info }) => {
     const res = await (await fetch(props.url, { method: 'POST', body: date })).json();
     if (res?.state) onUpdate();
   } else {
-    dialog({ message: 'No free space' });
+    dialog({ value: true, message: 'No free space' });
   }
 };
 
 const onDelete = async name => {
   const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
   if (res?.state) onUpdate();
-  else dialog({ message: 'Directory is not empty' });
+  else dialog({ value: true, message: 'Directory is not empty' });
 };
 
 const onSureDelete = name => {
   if (fileName(name).includes('www')) {
-    dialog({ message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
+    dialog({ value: true, message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
   } else {
     onDelete(name);
   }

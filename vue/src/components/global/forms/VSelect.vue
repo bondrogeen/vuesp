@@ -1,9 +1,9 @@
 <template>
   <v-dropdown class="v-select" v-bind="$attrs">
-    <template #activator="{ on }">
+    <template #activator="{ on, show }">
       <v-input :key="value" :model-value="value" :title="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
         <template #icon>
-          <v-icons icon="select"></v-icons>
+          <v-icons :class="['v-select__icon', { 'v-select__icon--active': show }]" icon="select"></v-icons>
         </template>
       </v-input>
     </template>
@@ -34,5 +34,11 @@ const onChange = e => emit('change', e);
   position: relative;
   width: 100%;
   margin-bottom: 30px;
+  &__icon {
+    transition: all 0.3s ease-in-out;
+    &--active {
+      transform: rotateX(180deg);
+    }
+  }
 }
 </style>

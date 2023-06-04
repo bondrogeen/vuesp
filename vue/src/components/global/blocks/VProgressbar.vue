@@ -18,7 +18,7 @@ const props = defineProps({
   size: { type: String, default: 'normal' },
 });
 
-const getValue = computed(() => (Math.round(props.value > 100 ? 100 : props.value)));
+const getValue = computed(() => Math.round(props.value > 100 ? 100 : props.value));
 
 const styleRight = computed(() => {
   const value = getValue.value;
@@ -68,6 +68,10 @@ const styleLeft = computed(() => {
     border: 12px solid color('app', 'primary');
     position: absolute;
     top: 0;
+    transition: all 0.1s ease-in-out;
+    &:hover {
+      border: 12px solid color('app', 'secondary');
+    }
   }
 
   &-value {

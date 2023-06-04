@@ -28,7 +28,7 @@
           <v-tab label="GPIO" icon="onher">
             <div class="row">
               <div class="col sm12">
-                <ServiceGPIO :gpios="gpios" @send="onSend" />
+                <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
               </div>
             </div>
           </v-tab>
@@ -60,15 +60,20 @@ const { fileList, info, path, progress, settings, scanList, gpios } = storeToRef
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
-  nextTick(() => dialog({ title: 'Done', message: 'Reboot...' }));
+  nextTick(() => {
+    dialog({ value: true, title: 'Done', message: 'Reboot...' });
+    setTimeout(() => {
+      dialog({});
+    }, 2000);
+  });
 };
 const onReset = () => {
   settings.value.version = Math.floor(Math.random() * 65000);
   nextTick(() => onSave(settings.value));
 };
 
-const onSureReboot = () => dialog({ message: 'Do you want to restart your device?', callback: onReboot });
-const onSureReset = () => dialog({ message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
+const onSureReboot = () => dialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
+const onSureReset = () => dialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
 const onSend = ({ comm, data }) => {
   fileList.value = [];
@@ -77,7 +82,7 @@ const onSend = ({ comm, data }) => {
 
 const onSave = settings => {
   webSocketStore.onSend('SETTINGS', settings);
-  dialog({ title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
+  dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };
 
 const onScan = value => {

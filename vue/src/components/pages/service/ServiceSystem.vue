@@ -55,7 +55,7 @@ const onFlash = async name => {
   }
   if (!files.length) return;
   const res = await (await fetch('/update', { method: 'POST', body: date })).json();
-  if (res?.state) dialog({ title: 'Done', message: 'Reboot...' });
+  if (res?.state) dialog({ value: true, title: 'Done', message: 'Reboot...' });
 };
 
 const updateFirmware = () => nextTick(() => onFlash('frimware'));
@@ -63,6 +63,7 @@ const updateLittlefs = () => nextTick(() => onFlash('littlefs'));
 
 const onSureFlash = name =>
   dialog({
+    value: true,
     message: `Are you sure you want to update the ${name}? <br/> <p class="grey-base text-body-1 mt-2" >${getName(name)}</p>`,
     callback: name === 'frimware' ? updateFirmware : updateLittlefs,
   });

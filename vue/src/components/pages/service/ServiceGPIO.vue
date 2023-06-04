@@ -3,30 +3,39 @@
     <div v-for="pin in ports" :key="pin.gpio">
       <div v-if="pin" class="d-flex j-between">
         <v-select class="service-gpio__select" :value="getMode(pin).name" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)"></v-select>
-        <v-button class="" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
+        <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
       </div>
     </div>
     <div class="row mt-6">
       <div class="col sm12 d-flex j-end">
         <v-button class="mr-4" @click="onGetPort">Update</v-button>
-        <v-button @click="onSave">Save</v-button>
+        <v-button :disabled="!isDifferent" @click="onSave">Save</v-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { defineProps, defineEmits, onMounted, ref } from 'vue';
+import { defineProps, defineEmits, onMounted, ref, computed } from 'vue';
 import { getBinary, onUploadBinary } from '@/utils/fs/';
 import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio/';
 
 const props = defineProps({
   gpios: { type: Object, default: () => ({}) },
+  path: { type: String, default: '/service/gpio.io' },
 });
 
-const emit = defineEmits(['click', 'send']);
+const emit = defineEmits(['click', 'send', 'reboot']);
 
 const ports = ref([]);
+const portsDef = ref([]);
+
+const isDifferent = computed(() => {
+  for (let i = 0; i < ports.value.length; i++) {
+    if (getMode(ports.value[i])?.value !== getMode(portsDef.value[i])?.value) return 1;
+  }
+  return 0;
+});
 
 const listMode = [
   { name: 'OFF', value: 0 },
@@ -68,24 +77,26 @@ const onSetPort = (port, value) => {
   emit('send', { comm: 'PORT', data: { gpio: port.gpio, command: command.GPIO_COMMAND_SET, data: port.data } });
 };
 
-const onGetPort = port => {
-  console.log(port);
+const onGetPort = () => {
   emit('send', { comm: 'PORT', data: { command: command.GPIO_COMMAND_GET_ALL } });
 };
 
 const onLoadDataGpio = async () => {
-  const array = await getBinary('/service/gpio.io');
+  const array = await getBinary(props.path);
   return parseDateGPIO(array);
 };
 
 const onSave = async () => {
   const data = stringifyDateGPIO(ports.value);
   const buffer = new Uint8Array(data).buffer;
-  await onUploadBinary('/service/gpio.io', buffer);
+  await onUploadBinary(props.path, buffer);
+  portsDef.value = JSON.parse(JSON.stringify(ports.value));
+  emit('reboot');
 };
 
 onMounted(async () => {
   ports.value = await onLoadDataGpio();
+  portsDef.value = JSON.parse(JSON.stringify(ports.value));
   onGetPort();
 });
 </script>

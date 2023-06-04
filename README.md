@@ -57,7 +57,7 @@ npm i
 Next in [.env](./vue/.env) file change proxy to your ip device
 
 ```
-PROXY=192.168.10.10 // Change to your ip esp device
+PROXY=192.168.1.10 // Change to your ip esp device
 ```
 
 ```
@@ -72,6 +72,9 @@ http://localhost:3000/
 npm run build
 ```
 
+### 1.2.1 (2023-06-04)
+
+- (bondrogeen) Minor fixes
 
 ### 1.2.0 (2023-05-28)
 
