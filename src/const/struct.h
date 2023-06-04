@@ -9,6 +9,7 @@ enum keys {
   KEY_REBOOT,
   KEY_PINS,
   KEY_PORT,
+  KEY_DEVICE,
   KEY_END
 };
 
@@ -78,4 +79,12 @@ struct Port {
   uint8_t command;
   uint8_t gpio;
   uint8_t data;
+};
+
+struct Device {
+  uint8_t key;
+  uint8_t direction;
+  uint16_t example1;
+  uint32_t now;
+  char buffer[64];
 };

@@ -1,5 +1,8 @@
 #include "./include/webserver.h"
 
+#include "./include/device.h"
+#include "./include/tasks.h"
+
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
 // AsyncWebSocketClient *client;
@@ -28,8 +31,6 @@ void sendProgress() {
   hold++;
 }
 
-void (*p_function)(void *arg, uint8_t *data, size_t len, uint32_t clientId);
-
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   clientID = client->id();
   if (type == WS_EVT_CONNECT)
@@ -37,9 +38,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   else if (type == WS_EVT_DISCONNECT)
     connected = false;
   else if (type == WS_EVT_DATA) {
-    if (p_function != NULL) {
-      (*p_function)(arg, data, len, clientID);
-    }
+    onWsEventTasks(arg, data, len, clientID);
+    onWsEventDevice(arg, data, len, clientID);
   }
 }
 
@@ -119,8 +119,7 @@ void onRedirectHome(AsyncWebServerRequest *request) {
   request->redirect("/");
 }
 
-void setupServer(void (*function)(void *arg, uint8_t *data, size_t len, uint32_t clientId)) {
-  p_function = function;
+void setupServer() {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   if (settings.authMode) {

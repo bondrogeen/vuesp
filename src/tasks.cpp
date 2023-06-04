@@ -6,7 +6,7 @@ Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
 
-void onWsEvent(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
+void onWsEventTasks(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
   if (info->final && info->index == 0 && info->len == len) {
     if (info->opcode == WS_BINARY) {

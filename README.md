@@ -72,6 +72,10 @@ http://localhost:3000/
 npm run build
 ```
 
+### 1.3.0 (2023-06-05)
+
+- (bondrogeen) Add example
+
 ### 1.2.1 (2023-06-04)
 
 - (bondrogeen) Minor fixes
