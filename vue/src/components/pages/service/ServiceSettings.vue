@@ -21,7 +21,7 @@
           </v-input>
         </div>
         <div class="col sm12 mb-4">
-          <v-checkbox v-model="settings.wifiDhcp" :disabled="!settings.wifiMode">DHCP</v-checkbox>
+          <v-checkbox v-model="settings.wifiDhcp">DHCP</v-checkbox>
         </div>
         <div class="col sm12 md6">
           <v-input v-model="wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
@@ -59,7 +59,7 @@
         <v-button @click="onSave">Save</v-button>
       </div>
     </div>
-    <AppDialog title="SCAN" :value="showDialog" @close="showDialog = false">
+    <AppDialog title="SCAN" :value="showDialog" @close="onClose">
       <div>
         <v-list v-slot="{ item }" :list="scanList">
           <div class="d-flex a-center w-100" @click="onSelectSsid(item)">
@@ -94,14 +94,14 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'scan', 'save']);
 const dialog = inject('dialog');
+const overlay = inject('overlay');
 
 const showPass = ref(false);
 const showDialog = ref(false);
 
 const wifiIp = computed({
   set: value => {
-    console.log( value.split('.'))
-    settings.value.wifiIp = value.split('.').map(i => +i)
+    settings.value.wifiIp = value.split('.').map(i => +i);
   },
   get: () => (settings?.value?.wifiIp || []).join('.'),
 });
@@ -154,14 +154,20 @@ const onSelectSsid = ({ ssid }) => {
   const input = document.querySelector('#wifiPass input');
   input.select();
   input.focus();
+  onClose();
+};
+
+const onClose = () => {
   showDialog.value = false;
+  overlay.value = false;
 };
 
 const onScan = value => {
   showDialog.value = true;
+  overlay.value = true;
   emit('scan', value);
 };
 
 const onChange = value => (settings.value.wifiMode = value);
-const onSureOffWifi = ({ value }) => (!value ? dialog({ message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
+const onSureOffWifi = ({ value }) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
 </script>

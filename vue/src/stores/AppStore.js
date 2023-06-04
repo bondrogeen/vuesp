@@ -21,7 +21,7 @@ export const useAppStore = defineStore('app', {
     },
     setDialog(data) {
       this.dialog = data;
-      this.dialog.value = true;
+      // this.dialog.value = true;
     },
   },
 });
