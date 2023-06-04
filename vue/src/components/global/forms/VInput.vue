@@ -4,7 +4,18 @@
       <span class="v-text-field__label">
         {{ label }}
       </span>
-      <input v-bind="$attrs" :value="modelValue" :disabled="disabled" :type="type" class="v-text-field__input" @focus="onFocus" @blur="onBlur" @input="onInput" @click="onClick" />
+      <input
+        v-bind="$attrs"
+        :value="modelValue"
+        :disabled="disabled"
+        :type="type"
+        class="v-text-field__input"
+        @focus="onFocus"
+        @blur="onBlur"
+        @input="onInput"
+        @click="onClick"
+        @keypress.enter="onEnter"
+      />
       <div v-if="$slots.icon" class="v-text-field__icon grey-base" @click="onIcon">
         <slot name="icon"></slot>
       </div>
@@ -28,7 +39,7 @@ const props = defineProps({
   rules: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['update:modelValue', 'click', 'on-icon']);
+const emit = defineEmits(['update:modelValue', 'click', 'on-icon', 'enter']);
 
 // const value = ref(props.modelValue);
 const error = ref('');
@@ -58,6 +69,7 @@ const onBlur = () => {
   isFocus.value = false;
   isDirty.value = true;
 };
+const onEnter = e => emit('enter', e);
 
 const onFocus = () => (isFocus.value = true);
 const onClick = e => emit('click', e);
@@ -112,7 +124,7 @@ const onIcon = e => {
     outline: none !important;
     color: var(--text-1);
     &::placeholder {
-      color: var(--text-1);
+      color: var(--border-1);
     }
   }
   &:hover:not(.v-text-field--disabled) {

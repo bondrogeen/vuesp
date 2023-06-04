@@ -9,7 +9,7 @@
 #define RES_TYPE_JSON "application/json"
 
 String status(uint8_t state);
-void setupServer(void (*function)(void *arg, uint8_t *data, size_t len, uint32_t wsClient));
+void setupServer();
 void loopServer(uint32_t now);
 void wsSend(uint8_t *message, size_t len);
 

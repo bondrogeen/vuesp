@@ -8,7 +8,7 @@ uint32_t now;
 
 void setup() {
   setupInit();
-  setupServer(onWsEvent);
+  setupServer();
   setupGPIO();
   setupDevice();
 }

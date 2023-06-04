@@ -36,7 +36,11 @@ export const useWebSocket = defineStore('websocket', {
           // console.log(object);
           if (key !== 'PING') log(object, key);
           const store = useWebSocketStore();
-          (store?.[`SET_${key}`] || store.SET_UNKNOWN)(object);
+          if (store?.[`SET_${key}`]) {
+            store?.[`SET_${key}`](object);
+          } else {
+            store.SET_UNKNOWN(data);
+          }
         }
       }
     },
