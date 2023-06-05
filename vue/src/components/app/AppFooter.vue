@@ -3,8 +3,13 @@
     <div class="d-flex a-center j-between container">
       <div class="d-md-flex a-center flex-wrap gap-4">
         <div>© 2021 - {{ new Date().getFullYear() }} Vuesp.</div>
-        <div>Firmware (ver.{{ getFirmware }})</div>
-        <div>ID: {{ id.toString(16) }}</div>
+        <div>
+          Firmware:
+          <span class="grey-darken-1">(ver.{{ getFirmware }})</span>
+        </div>
+        <div>ID: 
+          <span class="grey-darken-1">{{ id.toString(16) }}</span>
+          </div>
       </div>
 
       <div class="app-footer__link">

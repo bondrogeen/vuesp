@@ -18,13 +18,14 @@ const onClick = e => emit('click', e);
 <style lang="scss">
 .v-button {
   position: relative;
-  height: 50px;
+  height: 40px;
   padding: 0 15px;
   border-radius: 4px;
   border: 1px solid color('grey', 'lighten-2');
   color: var(--text-1);
   background: var(--bg-1);
   min-width: 100px;
+  transition: all 0.2s ease-in-out;
   &:not(:disabled) {
     cursor: pointer;
   }
@@ -35,11 +36,16 @@ const onClick = e => emit('click', e);
   }
   &--small {
     font-size: 16px;
-    height: 30px;
+    height: 32px;
   }
   &:disabled {
     opacity: 0.5;
     border: 1px solid var(--border-1);
+  }
+  &:hover:not(:disabled) {
+    @media (hover: hover) {
+      border-color: color('app', 'secondary');
+    }
   }
 }
 </style>

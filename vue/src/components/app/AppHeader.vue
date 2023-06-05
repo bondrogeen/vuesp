@@ -22,7 +22,7 @@
           </v-list>
         </v-dropdown>
       </div>
-      <div class="app-header__burger d-lg-none" @click="onDrawer">
+      <div class="app-header__burger d-flex a-center j-center d-lg-none" @click.stop="onDrawer">
         <v-icons icon="burger"></v-icons>
       </div>
     </div>
@@ -64,6 +64,11 @@ const onMenu = ({ name }) => {
     svg {
       height: 30px;
     }
+  }
+  &__burger {
+    height: 32px;
+    width: 32px;
+    margin-right: -4px;
   }
   &__indicator {
     height: 3px;

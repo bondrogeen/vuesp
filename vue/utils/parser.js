@@ -19,7 +19,7 @@ const parseStruct = data => {
 
   getEnum.forEach(data => {
     const all = data.match(/\w*,/g);
-    keys = all.map(i => i.replace(',', ''));
+    keys = all.map(i => i.replace(',', '').replace('KEY_', ''));
   });
 
   getStruct.forEach(struct => {
@@ -30,7 +30,7 @@ const parseStruct = data => {
     variables.forEach(variable => {
       const [type, value] = variable.split(' ');
       const name = value.match(/(\w*)/)[0];
-      const length = value.match(/\d+/)?.[0];
+      const length = value.match(/\[(\d+)\]/)?.[1];
       const res = { type, name };
       if (length) res.length = +length;
       structs[structName].push(res);

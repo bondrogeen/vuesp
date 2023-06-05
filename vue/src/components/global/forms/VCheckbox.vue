@@ -1,6 +1,6 @@
 <template>
-  <label class="v-checkbox">
-    <input :checked="modelValue" class="v-checkbox__input" type="checkbox" @change="onChange" />
+  <label class="v-checkbox" :class="{ 'v-checkbox--disabled': disabled }">
+    <input :checked="modelValue" class="v-checkbox__input" type="checkbox" :disabled="disabled" @change="onChange" />
     <span class="v-checkbox__mark"></span>
     <slot></slot>
   </label>
@@ -10,6 +10,7 @@
 import { defineProps, defineEmits } from 'vue';
 defineProps({
   modelValue: { type: [Boolean, Number], default: false },
+  disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(['update:modelValue']);
 const onChange = ({ target }) => emit('update:modelValue', target.checked);
@@ -21,11 +22,12 @@ $size: 18px;
 .v-checkbox {
   position: relative;
   display: flex;
-  align-items: center;
+  &:not(.v-checkbox--disabled) {
+    cursor: pointer;
+  }
   &__input {
     position: absolute;
     opacity: 0;
-    cursor: pointer;
     height: 0;
     width: 0;
   }
@@ -56,6 +58,14 @@ $size: 18px;
   }
   &__input:checked ~ &__mark::after {
     display: block;
+  }
+  &--disabled {
+    .v-checkbox__mark {
+      border-color: var(--border-1);
+    }
+    .v-checkbox__input:checked ~ .v-checkbox__mark {
+      background-color: color('grey', 'darken-1');
+    }
   }
 }
 </style>

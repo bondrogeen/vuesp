@@ -1,9 +1,8 @@
 <template>
   <div class="app-drawer" :class="[{ 'app-drawer--open': value }, { 'app-drawer--fixed': position }]">
-    <div v-if="value" class="app-drawer__overlay" @click="onClose"></div>
     <div class="app-drawer__content">
       <div class="app-drawer__header">
-        <div @click="changeTheme">
+        <div class="app-drawer__theme" @click="changeTheme">
           <v-icons :icon="!theme ? 'dark' : 'light'" />
         </div>
         <div @click="onClose">
@@ -11,7 +10,7 @@
             <v-icons icon="logo"></v-icons>
           </router-link>
         </div>
-        <div @click="onClose">
+        <div class="app-drawer__close" @click="onClose">
           <v-icons icon="close"></v-icons>
         </div>
       </div>
@@ -24,7 +23,7 @@
 
 <script setup>
 import { defineProps, defineEmits, inject } from 'vue';
-defineProps({
+const props = defineProps({
   value: { type: Boolean, default: false },
   position: { type: Boolean, default: true },
   changeTheme: { type: Function, default: () => {} },
@@ -32,7 +31,11 @@ defineProps({
 
 const emit = defineEmits(['close']);
 const theme = inject('theme');
-const onClose = e => emit('close', e);
+const onClose = e => {
+  if (props.value) {
+    emit('close', e);
+  }
+};
 </script>
 
 <style lang="scss">
@@ -41,29 +44,27 @@ const onClose = e => emit('close', e);
   left: 0;
   top: 0;
   height: 100%;
-  width: 0px;
   z-index: 101;
-  transition: width 0.2s ease-out;
+  transition: all 0.2s ease-in-out;
   overflow: hidden;
   background-color: var(--bg-1);
+  box-shadow: 0px 8px 35px -2px var(--shadow-1);
+  transform: translateX(-100%);
+  width: 100%;
+  @include above($sm) {
+    transform: translateX(-100%);
+    width: 360px;
+  }
+
   &--fixed {
     position: fixed;
     height: 100%;
   }
   &--open {
-    width: 100%;
-    @include above($sm) {
-      width: 50%;
-    }
+    transform: translateX(0);
   }
-  &__overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #26292e;
-    opacity: 0.8;
+  @include above($md) {
+    transform: translateX(-100%);
   }
   &__header {
     height: 60px;
@@ -78,6 +79,7 @@ const onClose = e => emit('close', e);
     }
   }
   &__content {
+    min-width: 360px;
     background-color: var(--bg-1);
     position: absolute;
     width: 100%;
@@ -87,6 +89,13 @@ const onClose = e => emit('close', e);
   &__body {
     height: calc(100% - 60px);
     padding: 15px;
+  }
+  &__theme,
+  &__close {
+    cursor: pointer;
+    svg {
+      height: 24px;
+    }
   }
 }
 </style>

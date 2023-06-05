@@ -75,7 +75,7 @@ onBeforeMount(() => {
       height: 24px;
       width: 24px;
     }
-    color: var(--label-1);
+    color: inherit;
   }
   &__title {
     display: none;
@@ -93,6 +93,8 @@ onBeforeMount(() => {
     height: 48px;
     margin: 0;
     gap: 10px;
+    transition: all 0.3s ease-in-out;
+    color: var(--label-1);
     @include above($sm) {
       padding: 0 15px;
     }
@@ -113,6 +115,7 @@ onBeforeMount(() => {
       left: 50%;
     }
     &--active {
+      color: var(--text-1);
       &::before,
       &::after {
         width: 50%;

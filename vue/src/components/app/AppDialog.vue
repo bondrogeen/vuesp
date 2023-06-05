@@ -3,13 +3,15 @@
     <div v-if="value" class="app-dialog" @wheel.prevent>
       <div class="app-dialog__overlay" @click="onClose"></div>
       <div class="app-dialog__card">
-        <div class="app-dialog__header text-h4">
+        <div class="app-dialog__header text-h5">
           <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
           <slot name="header">{{ title }}</slot>
         </div>
         <div class="app-dialog__body d-flex a-center text-title-1">
           <v-progressbar v-if="isProgress" :value="procent" />
-          <slot><div v-html="message"></div></slot>
+          <slot>
+            <div v-html="message"></div>
+          </slot>
         </div>
         <div v-if="$slots.footer || callback" class="app-dialog__footer">
           <slot name="footer">
@@ -64,7 +66,6 @@ const onButton = () => {
   }
   &__overlay {
     position: absolute;
-    background-color: var(--overlay);
     left: 0;
     top: 0;
     width: 100%;
@@ -82,6 +83,7 @@ const onButton = () => {
     display: flex;
     flex-direction: column;
     background-color: var(--bg-1);
+    box-shadow: 0px 8px 35px -2px var(--shadow-1);
   }
   &__header {
     position: relative;
