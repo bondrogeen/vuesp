@@ -1,7 +1,9 @@
 <template>
-  <AppOverlay v-if="!isConnect">
-    <div>Disconnected</div>
-    <v-loader></v-loader>
+  <AppOverlay v-if="isOverlay" @click="onClose">
+    <template v-if="!isConnect">
+      <div>Disconnected</div>
+      <v-loader></v-loader>
+    </template>
   </AppOverlay>
   <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
   <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
@@ -15,7 +17,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from 'vue';
+import { ref, onMounted, onUnmounted, provide, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/AppStore';
 import { useWebSocket } from '@/stores/WebSocket';
@@ -35,8 +37,15 @@ const { dialog, theme } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
 const { info, progress } = storeToRefs(webSocketStore);
 
-let ping = null;
 const drawer = ref(false);
+const overlay = ref(false);
+
+const isOverlay = computed(() => Boolean(!isConnect.value || isDialog.value || drawer.value || overlay.value));
+const isDialog = computed(() => Boolean(dialog.value?.value));
+
+let ping = null;
+
+provide('overlay', overlay);
 provide('theme', theme);
 provide('dialog', appStore.setDialog);
 
@@ -53,6 +62,11 @@ const connect = () => {
   };
   instance.onerror = webSocket.onerror;
   socket.value = instance;
+};
+
+const onClose = () => {
+  drawer.value = false;
+  dialog.value = {};
 };
 
 onMounted(() => {

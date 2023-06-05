@@ -1,13 +1,16 @@
 enum keys {
-  INIT,
-  SETTINGS,
-  INFO,
-  PING,
-  SCAN,
-  PROGRESS,
-  FILES,
-  REBOOT,
-  END
+  KEY_INIT,
+  KEY_SETTINGS,
+  KEY_INFO,
+  KEY_PING,
+  KEY_SCAN,
+  KEY_PROGRESS,
+  KEY_FILES,
+  KEY_REBOOT,
+  KEY_PINS,
+  KEY_PORT,
+  KEY_DEVICE,
+  KEY_END
 };
 
 struct Init {
@@ -69,4 +72,19 @@ struct Files {
   uint8_t command;
   uint32_t size;
   char name[32];
+};
+
+struct Port {
+  uint8_t key;
+  uint8_t command;
+  uint8_t gpio;
+  uint8_t data;
+};
+
+struct Device {
+  uint8_t key;
+  uint8_t direction;
+  uint16_t example1;
+  uint32_t now;
+  char buffer[64];
 };

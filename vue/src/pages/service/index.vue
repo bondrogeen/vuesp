@@ -22,8 +22,15 @@
               </div>
             </div>
           </v-tab>
-          <v-tab label="Other" icon="onher">
+          <!-- <v-tab label="Other" icon="onher">
             <div class="row"></div>
+          </v-tab> -->
+          <v-tab label="GPIO" icon="onher">
+            <div class="row">
+              <div class="col sm12">
+                <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
+              </div>
+            </div>
           </v-tab>
         </v-tabs>
       </div>
@@ -39,6 +46,7 @@ import { onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 import event from '@/assets/js/event';
 
+import ServiceGPIO from '@/components/pages/service/ServiceGPIO';
 import ServiceStorage from '@/components/pages/service/ServiceStorage';
 import ServiceSettings from '@/components/pages/service/ServiceSettings';
 import ServiceInfo from '@/components/pages/service/ServiceInfo';
@@ -48,19 +56,24 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, progress, settings, scanList } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList, gpios } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
-  nextTick(() => dialog({ title: 'Done', message: 'Reboot...' }));
+  nextTick(() => {
+    dialog({ value: true, title: 'Done', message: 'Reboot...' });
+    setTimeout(() => {
+      dialog({});
+    }, 2000);
+  });
 };
 const onReset = () => {
   settings.value.version = Math.floor(Math.random() * 65000);
   nextTick(() => onSave(settings.value));
 };
 
-const onSureReboot = () => dialog({ message: 'Do you want to restart your device?', callback: onReboot });
-const onSureReset = () => dialog({ message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
+const onSureReboot = () => dialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
+const onSureReset = () => dialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
 const onSend = ({ comm, data }) => {
   fileList.value = [];
@@ -69,7 +82,7 @@ const onSend = ({ comm, data }) => {
 
 const onSave = settings => {
   webSocketStore.onSend('SETTINGS', settings);
-  dialog({ title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
+  dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };
 
 const onScan = value => {
@@ -84,5 +97,4 @@ event.on('init', () => {
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
 });
-
 </script>

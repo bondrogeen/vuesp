@@ -23,18 +23,21 @@ Template for your projects with a web interface.
   - /images/
 - /src/
   - /const/
-    - base.h
+    - index.h
     - define.h
     - struct.h
   - /pages/
     - recovery.h
-  - init.h
+  - /include/
+    - init.h
+    - tasks.h
+    - webserver.h
+    - gpio.h
+  - gpio.cpp
   - init.cpp
   - main.cpp
   - tasks.cpp
-  - tasks.h
   - webserver.cpp
-  - webserver.h
 - /vue/
   - /public/
   - /src/
@@ -54,7 +57,7 @@ npm i
 Next in [.env](./vue/.env) file change proxy to your ip device
 
 ```
-PROXY=192.168.10.10 // Change to your ip esp device
+PROXY=192.168.1.10 // Change to your ip esp device
 ```
 
 ```
@@ -69,19 +72,30 @@ http://localhost:3000/
 npm run build
 ```
 
+### 1.3.0 (2023-06-05)
 
-### 1.1.0 (2022-011-7)
+- (bondrogeen) Add example
+
+### 1.2.1 (2023-06-04)
+
+- (bondrogeen) Minor fixes
+
+### 1.2.0 (2023-05-28)
+
+- (bondrogeen) Add GPIO
+
+### 1.1.0 (2022-11-7)
 
 - (bondrogeen) Changed lib struct
 - (bondrogeen) Add structure initialization events
 
-### 1.0.0 (2022-010-23)
+### 1.0.0 (2022-10-23)
 
 - (bondrogeen) Changed project structure
 - (bondrogeen) Changed web interface
 - (bondrogeen) Added build scripts
 
-### 0.1.0 (2022-010-16)
+### 0.1.0 (2022-10-16)
 
 - (bondrogeen) Migrate from Vue2 to Vue3
 - (bondrogeen) Changed project structure

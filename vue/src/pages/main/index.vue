@@ -9,15 +9,70 @@
       </div>
       <div class="col sm12">
         <v-input-file @change="onLoad">load</v-input-file>
+        <div class="col sm12 text-h2 mb-6">
+          <input v-model="datetime" class="page-main__date" type="datetime-local" @change="onDate" />
+        </div>
+      </div>
+      <div class="col sm12 page-main__list">
+        <div class="d-flex gap-4 mb-2">
+          <div class="page-main__time grey-base">Time</div>
+          <div class="grey-base">Message</div>
+        </div>
+        <div v-for="item of logs" :key="item.now" class="page-main__item d-flex gap-4 mb-2">
+          <div class="page-main__time">
+            {{ new Date(item.now * 1000).toLocaleString() }}
+          </div>
+          <div class="page-main__log grey">
+            {{ item.buffer }}
+          </div>
+        </div>
+      </div>
+      <div class="col sm12 page-main__send d-flex">
+        <v-input v-model="text" placeholder="Message" @enter="onSend" />
+        <v-button class="ml-4" :disabled="!text" @click="onSend">Send</v-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-// import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { nextTick, computed, onMounted, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-import { computed, onMounted } from 'vue';
+import event from '@/assets/js/event';
+
+const webSocketStore = useWebSocketStore();
+const { device } = storeToRefs(webSocketStore);
+
+const text = ref('start');
+const logs = ref([]);
+const datetime = ref('');
+
+const now = ref(0);
+
+event.on('init', () => {
+  console.log('init websocket');
+});
+
+const onSend = () => {
+  webSocketStore.onSend('DEVICE', { now: now.value, direction: 0, buffer: `${text.value}\n` });
+  text.value = '';
+};
+const onDate = e => {
+  const _now = e?.target?.valueAsNumber;
+  if (_now) now.value = _now / 1000;
+  webSocketStore.onSend('DEVICE', { now: now.value, direction: 0, buffer: `Change date` });
+};
+
+const onScrollEnd = () => {
+  nextTick(() => {
+    const el = document.querySelector('.page-main__list');
+    if (el) {
+      el.scrollTo(0, el.scrollHeight);
+    }
+  });
+};
 
 // const webSocketStore = useWebSocketStore();
 // const { fileList, info, progress } = storeToRefs(webSocketStore);
@@ -55,7 +110,7 @@ const onLoad = e => {
   };
   img.src = URL.createObjectURL(e.files[0]);
 };
-// 
+//
 // const saveByteArray = (data, name) => {
 //   var a = document.createElement('a');
 //   document.body.appendChild(a);
@@ -118,7 +173,7 @@ const onUpload = async buffer => {
   data.append(`file[0]`, blob, 'test.txt');
   let headers = new Headers();
   headers.set('Authorization', 'Basic ' + btoa('admin:admin'));
-console.log(btoa('admin:admin'))
+  console.log(btoa('admin:admin'));
   const res = await (await fetch('/fs', { method: 'POST', headers, body: data })).json();
   console.log(res);
 };
@@ -128,18 +183,45 @@ const draw = () => {
   ctx.value.fillStyle = '#00FF00';
   ctx.value.fillRect(0, 0, 16, 16);
 };
+watch(
+  () => device.value,
+  value => {
+    logs.value.push(value);
+    onScrollEnd();
+  }
+);
+
+onMounted(() => {
+  onSend();
+});
 </script>
 
 <style lang="scss">
 .page-main {
   position: relative;
-  .canvas {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 150px;
-    scale: 10;
+
+  &__list {
+    height: 400px;
+    overflow: auto;
   }
+  &__item {
+    border-bottom: 1px solid var(--border-1);
+  }
+  &__time {
+    min-width: 150px;
+  }
+  &__date {
+    font-size: 16px;
+    height: 32px;
+  }
+}
+
+.canvas {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  scale: 10;
 }
 </style>

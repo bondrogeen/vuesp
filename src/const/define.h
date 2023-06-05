@@ -23,6 +23,8 @@
 #define DEF_AUTH_LOGIN "admin"
 #define DEF_AUTH_PASS "admin"
 
+#define DEF_PAHT_GPIO "/service/gpio.io"
+
 #ifndef DEF_DEVICE_FIRMWARE
 #define DEF_DEVICE_FIRMWARE { 0, 0, 1 }
 #endif
