@@ -1,6 +1,9 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#define NUMPIXELS 256
+
+#include <Adafruit_NeoPixel.h>
 #include "./init.h"
 #include "./tasks.h"
 #include "./webserver.h"

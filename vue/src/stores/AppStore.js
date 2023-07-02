@@ -14,8 +14,8 @@ export const useAppStore = defineStore('app', {
       this.theme = localStorage.getItem('theme') === 'dark';
       document.documentElement.setAttribute('data-theme', this.theme ? 'dark' : 'light');
     },
-    changeTheme() {
-      this.theme = !this.theme;
+    changeTheme(value) {
+      this.theme = typeof value === 'undefined' ? !this.theme : Boolean(value);
       document.documentElement.setAttribute('data-theme', this.theme ? 'dark' : 'light');
       localStorage.setItem('theme', this.theme ? 'dark' : 'light');
     },

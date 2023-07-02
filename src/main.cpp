@@ -1,7 +1,6 @@
 #include "./include/init.h"
 #include "./include/tasks.h"
 #include "./include/webserver.h"
-#include "./include/led.h"
 #include "./include/gpio.h"
 #include "./include/device.h"
 
@@ -12,7 +11,6 @@ void setup() {
   setupServer();
   setupGPIO();
   setupDevice();
-  setupLed();
 }
 
 void loop() {
@@ -21,5 +19,4 @@ void loop() {
   loopTask(now);
   loopGPIO(now);
   loopDevice(now);
-  loopLed(now);
 }

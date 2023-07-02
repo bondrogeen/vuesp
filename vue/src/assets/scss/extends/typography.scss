@@ -1,14 +1,9 @@
-.fw-500 {
-  font-weight: 500 !important;
-}
-.fw-600 {
-  font-weight: 600 !important;
-}
-.fw-700 {
-  font-weight: 700 !important;
-}
-.fw-800 {
-  font-weight: 800 !important;
+.fw {
+  @each $key, $value in $font-weights {
+    &-#{$key} {
+      font-weight: $value;
+    }
+  }
 }
 
 .text {
@@ -22,8 +17,4 @@
       text-transform: none;
     }
   }
-}
-
-.center {
-  text-align: center;
 }
