@@ -70,6 +70,7 @@ const onTools = tool => {
   if (tool.event) {
     if (typeof tool.event === 'function') tool.event();
     if (canvas[tool.event]) canvas[tool.event]();
+    onArray();
   } else {
     tools.value = tools.value.map(item => ({ ...item, active: Boolean(tool.name === item.name) }));
   }
@@ -138,6 +139,7 @@ class Canvas {
     this.steps = [];
     this.redo_arr = [];
     this.frames = [];
+    this.color = [0, 0, 0, 255];
 
     this.canvas.addEventListener('click', e => {
       console.log(e);
@@ -148,6 +150,7 @@ class Canvas {
       y = Math.floor((this.height * y) / this.canvas.clientHeight);
       if (isToolActive('pen')) {
         this.draw(x, y);
+        onArray();
       } else if (isToolActive('eraser')) {
         this.erase(x, y);
       }
@@ -205,19 +208,20 @@ class Canvas {
 
   array() {
     console.log(this.data);
+    console.log(this.data[15][0]);
     let arr = [];
-    for (let h = 0; h < this.height; h++) {
-      for (let w = 0; w < this.width; w++) {
-        arr = h % 2 ? [...arr, ...this.data[15 - w][h]] : [...arr, ...this.data[w][h]];
+    for (let x = 0; x < this.height; x++) {
+      for (let y = 0; y < this.width; y++) {
+        arr = x % 2 ? [...arr, ...this.data[y][x]] : [...arr, ...this.data[15 - y][x]];
       }
     }
     let uint8bytes = Uint8Array.from(arr);
     let dataview = new DataView(uint8bytes.buffer);
     const buffer = [];
     for (let i = 0; i < dataview.byteLength; i += 4) {
-      buffer.push(dataview.getInt32(i));
+      const value = dataview.getUint32(i);
+      buffer.push(value);
     }
-    // console.log(buffer);
     return buffer;
   }
 
@@ -442,8 +446,8 @@ onMounted(() => {
     grid-template-columns: 1fr 1fr;
   }
   &__color {
-    height: 10px;
-    width: 10px;
+    height: 30px;
+    width: 30px;
   }
 
   &__input {
@@ -454,10 +458,11 @@ onMounted(() => {
     width: 14px;
   }
   &__canvas {
+    margin: 0 auto;
     // box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
-    height: 100%;
+    // height: 100%;
     width: 100%;
-    // max-width: 500px;
+    max-width: 500px;
     cursor: crosshair;
     touch-action: none;
     image-rendering: pixelated;
