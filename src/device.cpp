@@ -24,7 +24,7 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
       Serial.println(len);
       Serial.println(info->len);
       Serial.println(info->index);
-      uint8_t *address = (uint8_t*)&device;
+      uint8_t *address = (uint8_t *)&device;
       for (size_t i = 0; i < len; i++) {
         *(address + i + info->index) = *(data + i);
       }
@@ -46,7 +46,10 @@ void led() {
   pixels.clear();
 
   for (int i = 0; i < NUMPIXELS; i++) {
-    pixels.setPixelColor(i, device.buffer[i]);
+    uint8_t r = (uint8_t)(device.buffer[i] >> 24);
+    uint8_t g = (uint8_t)(device.buffer[i] >> 16);
+    uint8_t b = (uint8_t)(device.buffer[i] >> 8);
+    pixels.setPixelColor(i, r, g, b);
     // Serial.println(device.buffer[i]);
   }
   pixels.show();
