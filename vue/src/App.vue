@@ -71,7 +71,7 @@ const onClose = () => {
 
 onMounted(() => {
   ping = setInterval(webSocket.onPing, 1000);
-  connect();
+  setTimeout(connect, 100);
   appStore.init();
 });
 
