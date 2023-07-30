@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
+import { defineProps, defineEmits, computed, watch, inject, onMounted } from 'vue';
 const props = defineProps({
   value: { type: Boolean, default: false },
   title: { type: String, default: 'Attention !' },
@@ -39,11 +39,20 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 const procent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
 
+const overlay = inject('overlay');
 const onClose = e => emit('close', e);
 const onButton = () => {
   if (props.callback) props.callback();
   onClose();
 };
+
+watch(
+  () => props.value,
+  value => (overlay.value = value)
+);
+onMounted(() => {
+  if (props.value) overlay.value = true;
+});
 </script>
 
 <style lang="scss">
