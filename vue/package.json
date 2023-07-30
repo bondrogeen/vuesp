@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "vue-cli-service serve",
     "build": "npm run recovery && npm run parser && vue-cli-service build && npm run firmware",
     "lint": "vue-cli-service lint",
-    "recovery": "node ./utils/script.js /recovery/ ../src/pages",
+    "dev": "vue-cli-service serve",
+    "firmware": "cd ../ && sh script.sh build",
     "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
-    "firmware": "cd ../ && sh script.sh build"
+    "recovery": "node ./utils/script.js /recovery/ ../src/pages"
   },
   "dependencies": {
     "core-js": "^3.8.3",
@@ -20,6 +20,8 @@
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",
+    "@fullhuman/postcss-purgecss": "^4.0.0",
+    "@fullhuman/vue-cli-plugin-purgecss": "~5.0.0",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-plugin-router": "~5.0.0",
