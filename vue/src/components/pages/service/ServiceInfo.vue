@@ -1,5 +1,5 @@
 <template>
-  <v-card class="file-info">
+  <div class="file-info">
     <div class="file-info__body my-6 mb-10">
       <v-progressbar :value="procent"></v-progressbar>
     </div>
@@ -9,7 +9,7 @@
         <div class="text-h6">{{ toByte(item) }}</div>
       </div>
     </div>
-  </v-card>
+  </div>
 </template>
 
 <script setup>
@@ -27,6 +27,11 @@ const procent = computed(() => (props.usedBytes * 100) / props.totalBytes);
 <style lang="scss">
 .file-info {
   max-width: 100%;
+  position: relative;
+  background: var(--bg-2);
+  border-radius: 10px;
+  padding: 20px;
+
   @include above($sm) {
     max-width: 320px;
   }

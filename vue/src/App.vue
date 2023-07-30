@@ -11,7 +11,7 @@
   </AppDrawer>
   <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
   <main class="v-spacer mt-16 mb-6">
-    <router-view />
+    <router-view :change-theme="appStore.changeTheme" />
   </main>
   <AppFooter v-bind="info" />
 </template>
@@ -71,7 +71,7 @@ const onClose = () => {
 
 onMounted(() => {
   ping = setInterval(webSocket.onPing, 1000);
-  connect();
+  setTimeout(connect, 100);
   appStore.init();
 });
 

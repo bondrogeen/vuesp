@@ -1,5 +1,8 @@
 <template>
   <div class="v-card">
+    <div class="v-card__header d-flex j-between">
+      <slot name="header"></slot>
+    </div>
     <div class="v-card__content">
       <slot></slot>
     </div>
@@ -9,10 +12,17 @@
 <style lang="scss">
 .v-card {
   position: relative;
-  background: var(--bg-2);
-  border-radius: 10px;
+  box-shadow: 0 6px 12px var(--shadow-1);
+
+  &__header {
+    border-radius: 10px 10px 0 0;
+    padding: 10px 20px;
+    background: var(--bg-2);
+  }
   &__content {
-    padding: 20px;
+    background: color('app', 'white');
+
+    // padding: 20px;
   }
 }
 </style>
