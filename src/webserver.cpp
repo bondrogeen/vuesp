@@ -10,8 +10,8 @@ AsyncWebSocket ws("/esp");
 Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
+uint32_t countClient = 0;
 uint32_t clientID = 0;
-uint8_t connected = false;
 uint8_t hold = 255;
 uint32_t lastTime = 0;
 
@@ -34,9 +34,9 @@ void sendProgress() {
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   clientID = client->id();
   if (type == WS_EVT_CONNECT)
-    connected = true;
+    countClient += clientID;
   else if (type == WS_EVT_DISCONNECT)
-    connected = false;
+    countClient -= clientID;
   else if (type == WS_EVT_DATA) {
     onWsEventTasks(arg, data, len, clientID);
     onWsEventDevice(arg, data, len, clientID);
@@ -137,7 +137,7 @@ void setupServer() {
 }
 
 void loopServer(uint32_t now) {
-  if (connected) {
+  if (countClient) {
     if (now - lastTime > 1000) {
       lastTime = now;
       if (progress.status == 0) {
