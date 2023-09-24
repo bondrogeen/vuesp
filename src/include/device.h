@@ -2,14 +2,14 @@
 #define DEVICE_H
 
 #define NUMPIXELS 256
-#include <FastLED.h>
+// #include <FastLED.h>
 
 #define LED_PIN D5
 #define COLOR_ORDER GRB
 #define CHIPSET WS2812B
 #define NUM_LEDS 256
 
-#define BRIGHTNESS 100
+#define BRIGHTNESS 20
 #define FRAMES_PER_SECOND 30
 #define CURRENT_LIMIT (2000U)
 
@@ -49,7 +49,7 @@
 #define EFF_WHITE_COLOR (25U)     // Белый свет
 #define MODE_AMOUNT (26U)
 
-// #include <Adafruit_NeoPixel.h>
+#include <Adafruit_NeoPixel.h>
 #include "./init.h"
 #include "./tasks.h"
 #include "./webserver.h"
