@@ -7,7 +7,7 @@
 
 #define NUMPIXELS 256
 #define LED_PIN D5
-#define BRIGHTNESS 10
+#define BRIGHTNESS 50
 
 #define MATRIX_TYPE (0U)
 #define SEGMENTS (1U)
