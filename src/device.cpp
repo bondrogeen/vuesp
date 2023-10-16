@@ -84,7 +84,7 @@ void i2cSscan() {
 }
 
 void setupDevice() {
-  Wire.begin(D1, D2);
+  Wire.begin(D3, D4);
   setupLed();
   aht.begin();
   bmp.begin();
