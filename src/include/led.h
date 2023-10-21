@@ -6,7 +6,7 @@
 #include "./include/device.h"
 
 #define NUMPIXELS 256
-#define LED_PIN D5
+#define LED_PIN 14  // D5
 #define BRIGHTNESS 50
 
 #define MATRIX_TYPE (0U)
@@ -21,6 +21,7 @@
 void setupLed();
 void led(Device device);
 void ledShow();
+void ledClear();
 
 void ledEffectLighters();
 void ledEffectFire();
