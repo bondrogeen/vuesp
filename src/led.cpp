@@ -190,6 +190,10 @@ void ledShow() {
   pixels.show();
 }
 
+void ledClear() {
+  pixels.clear();
+}
+
 void setupLed() {
   pixels.begin();
   pixels.setBrightness(BRIGHTNESS);

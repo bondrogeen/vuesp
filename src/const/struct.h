@@ -10,6 +10,8 @@ enum keys {
   KEY_PINS,
   KEY_PORT,
   KEY_DEVICE,
+  KEY_SENSORS,
+  KEY_LED,
   KEY_END
 };
 
@@ -86,4 +88,22 @@ struct Device {
   uint8_t direction;
   uint16_t example1;
   uint32_t buffer[256];
+};
+
+struct Led {
+  uint8_t key;
+  uint8_t speed;
+  uint8_t ledEffect;
+  uint8_t brightness;
+};
+
+struct Sensors {
+  uint8_t key;
+  uint8_t direction;
+  uint16_t example1;
+  float bmpTemperature;
+  float bmpPressure;
+  float bmpAltitude;
+  float ahtTemperature;
+  float ahtHumidity;
 };

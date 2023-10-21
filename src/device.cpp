@@ -1,6 +1,3 @@
-#include <Adafruit_AHTX0.h>
-#include <Adafruit_BMP280.h>
-#include <Wire.h>
 
 #include "./include/gpio.h"
 #include "./include/init.h"
@@ -11,6 +8,8 @@ Adafruit_AHTX0 aht;
 Adafruit_BMP280 bmp;
 
 Device device = {KEY_DEVICE, 42, 57, {0xffffffff, 0xff0000ff, 0x00ff00ff, 0x0000ffff, 0x000000ff, 0x00000000, 0x000000ff, 0x0000ff00, 0xffff0000, 5}};
+Sensors sensors = {KEY_SENSORS};
+Led ledSettings = {KEY_LED, 60, 0, 20};
 
 uint8_t task;
 uint32_t effTimer;
@@ -41,50 +40,36 @@ void onSend(uint8_t direction) {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
 }
 
+void eventGPIO(uint8_t port, uint8_t value) {
+  Serial.print(port);
+  Serial.println(value);
+  if (port == 13 && value) {
+    ledSettings.ledEffect++;
+  }
+}
+
 void effectsTick(uint32_t now) {
   if (now - effTimer >= 60) {
     effTimer = now;
 
-    // ledEffectLighters();
-    ledEffectFire();
+    switch (ledSettings.ledEffect) {
+      case 1:
+        ledEffectLighters();
+        break;
+      case 2:
+        ledEffectFire();
+        break;
+      default:
+        ledSettings.ledEffect = 0;
+        ledClear();
+    }
+
     ledShow();
   }
 }
 
-void i2cSscan() {
-  byte error, address;
-  int nDevices;
-
-  Serial.println("Scanning...");
-
-  nDevices = 0;
-  for (address = 1; address < 127; address++) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-
-    if (error == 0) {
-      Serial.print("I2C device found at address 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.print(address, HEX);
-      Serial.println("  !");
-
-      nDevices++;
-    } else if (error == 4) {
-      Serial.print("Unknown error at address 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.println(address, HEX);
-    }
-  }
-  if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
-  else
-    Serial.println("done\n");
-}
-
 void setupDevice() {
-  Wire.begin(D3, D4);
+  Wire.begin(0, 2);
   setupLed();
   aht.begin();
   bmp.begin();
@@ -98,32 +83,20 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     // i2cSscan();
     sensors_event_t humidity, temp;
-    aht.getEvent(&humidity, &temp);  // populate temp and humidity objects with fresh data
-    Serial.print("Temperature: ");
-    Serial.print(temp.temperature);
-    Serial.println(" degrees C");
-    Serial.print("Humidity: ");
-    Serial.print(humidity.relative_humidity);
-    Serial.println("% rH");
-
-    Serial.print(F("Temperature = "));
-    Serial.print(bmp.readTemperature());
-    Serial.println(" *C");
-
-    Serial.print(F("Pressure = "));
-    Serial.print(bmp.readPressure());
-    Serial.println(" Pa");
-
-    Serial.print(F("Approx altitude = "));
-    Serial.print(bmp.readAltitude(1013.25)); /* Adjusted to local forecast! */
-    Serial.println(" m");
-
-    Serial.println();
-
-    // send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+    aht.getEvent(&humidity, &temp);
+    sensors.ahtTemperature = temp.temperature;
+    sensors.ahtHumidity = humidity.relative_humidity;
+    sensors.bmpTemperature = bmp.readTemperature();
+    sensors.bmpPressure = bmp.readPressure();
+    sensors.bmpAltitude = bmp.readAltitude(1013.25);
+    send((uint8_t *)&sensors, sizeof(sensors), KEY_SENSORS);
   }
   if (tasks[KEY_DEVICE]) {
     // led();
     tasks[KEY_DEVICE] = 0;
+  };
+  if (tasks[KEY_LED]) {
+    // led();
+    tasks[KEY_LED] = 0;
   };
 }
