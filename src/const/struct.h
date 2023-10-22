@@ -11,7 +11,6 @@ enum keys {
   KEY_PORT,
   KEY_DEVICE,
   KEY_SENSORS,
-  KEY_LED,
   KEY_END
 };
 
@@ -85,16 +84,14 @@ struct Port {
 
 struct Device {
   uint8_t key;
-  uint8_t direction;
-  uint16_t example1;
-  uint32_t buffer[256];
-};
-
-struct Led {
-  uint8_t key;
+  uint8_t command;
   uint8_t speed;
-  uint8_t ledEffect;
+  uint8_t effect;
   uint8_t brightness;
+  uint8_t empty1;
+  uint8_t empty2;
+  uint8_t empty3;
+  uint32_t buffer[256];
 };
 
 struct Sensors {

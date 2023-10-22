@@ -84,6 +84,7 @@ void getAll(uint8_t readAll) {
     } else {
       if (readBit(port.data, GPIO_VALUE_OLD) != value) {
         changeBit(adress, value, GPIO_VALUE_OLD);
+        port.data = ports[i][1];
         send((uint8_t *)&port, sizeof(port), KEY_PORT);
         eventGPIO(gpio[i], value);
       }
