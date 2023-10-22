@@ -13,7 +13,7 @@ export class Canvas {
     this.ctx.fillStyle = 'white';
     this.ctx.globalAlpha = 1;
     this.ctx.fillRect(0, 0, this.w, this.h);
-    this.data = [...Array(this.width)].map(() => Array(this.height).fill([255, 255, 255, 255]));
+    this.data = [...Array(this.width)].map(() => Array(this.height).fill([0, 0, 0, 255]));
     this.steps = [];
     this.redo_arr = [];
     this.frames = [];

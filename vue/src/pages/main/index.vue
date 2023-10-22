@@ -3,6 +3,7 @@
     <div class="row">
       <div class="pagemain__menu col sm12">
         <div class="page-main__wrapper">
+          {{ sensors }}
           <div class="tools">
             <div v-for="tool of tools" :key="tool.name" class="tools__item" :class="{ 'tools__item--active': tool.active }" :title="tool.name" @click="onTools(tool)">
               <v-icons :icon="tool.name"></v-icons>
@@ -16,13 +17,7 @@
         </div>
       </div>
     </div>
-    <AppDialog class="page-main__dialog" title="Select grid" :value="showDialog" @close="onClose">
-      <div class="d-flex j-space-between">
-        <v-input v-model.number="height" class="page-main__input" label="height" type="text" hide-message />
-        <v-icons class="page-main__close mx-2" icon="close" @click="onClose"></v-icons>
-        <v-input v-model.number="width" class="page-main__input" label="width" type="text" hide-message />
-      </div>
-
+    <AppDialog class="page-main__dialog" title="Create new" :value="showDialog" @close="onClose">
       <template #footer>
         <v-button @click="onDone">OK</v-button>
       </template>
@@ -33,7 +28,7 @@
 <script setup>
 import AppDialog from '@/components/app/AppDialog';
 import { onMounted, ref, defineProps } from 'vue';
-// import { storeToRefs } from 'pinia';
+import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import Canvas from '@/assets/js/canvas';
 
@@ -46,7 +41,7 @@ const props = defineProps({
 props.changeTheme(true);
 
 const webSocketStore = useWebSocketStore();
-// const { device } = storeToRefs(webSocketStore);
+const { sensors } = storeToRefs(webSocketStore);
 
 // const text = ref('start');
 // const logs = ref([]);
@@ -59,7 +54,7 @@ const webSocketStore = useWebSocketStore();
 
 const onArray = () => {
   const buffer = canvas.array();
-  webSocketStore.onSend('DEVICE', { buffer, direction: 0, example1: 0 });
+  webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 3 });
 };
 
 const onClick = () => {
@@ -67,8 +62,6 @@ const onClick = () => {
 };
 
 const showDialog = ref(true);
-const height = ref(16);
-const width = ref(16);
 
 const onTools = tool => {
   if (tool.event) {
@@ -130,7 +123,7 @@ const onClose = () => {
 };
 
 const onDone = () => {
-  canvas = new Canvas({ width: width.value, height: height.value, event: { click: onClick } });
+  canvas = new Canvas({ width: 16, height: 16, event: { click: onClick } });
   canvas.setcolor([0, 0, 0, 255]);
   onClose();
 };

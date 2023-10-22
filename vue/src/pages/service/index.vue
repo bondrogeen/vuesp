@@ -5,6 +5,7 @@
       <div class="col sm12 lg8 xl7">
         <v-tabs>
           <v-tab label="Settings" icon="connect">
+            <ServicDevice v-model="device" @save="onSaveDevice" />
             <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
           </v-tab>
           <v-tab label="Storage" icon="storage">
@@ -51,12 +52,13 @@ import ServiceStorage from '@/components/pages/service/ServiceStorage';
 import ServiceSettings from '@/components/pages/service/ServiceSettings';
 import ServiceInfo from '@/components/pages/service/ServiceInfo';
 import ServiceSystem from '@/components/pages/service/ServiceSystem';
+import ServicDevice from '@/components/pages/service/ServicDevice';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, progress, settings, scanList, gpios } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList, gpios, device } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
@@ -84,6 +86,9 @@ const onSave = settings => {
   webSocketStore.onSend('SETTINGS', settings);
   dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };
+const onSaveDevice = device => {
+  webSocketStore.onSend('DEVICE', device);
+};
 
 const onScan = value => {
   if (value) scanList.value = [];
@@ -92,6 +97,7 @@ const onScan = value => {
 
 event.on('init', () => {
   if (!settings?.key) webSocketStore.onSend('SETTINGS');
+  if (!device?.key) webSocketStore.onSend('DEVICE', { command: 0 });
 });
 
 onMounted(() => {

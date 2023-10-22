@@ -11,7 +11,7 @@ int8_t lightersSpeed[2U][LIGHTERS_AM];
 uint32_t lightersColor[LIGHTERS_AM];
 uint8_t loopCounter;
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, GPIO_LED, NEO_GRB + NEO_KHZ800);
 
 const uint8_t valueMask[8][16] PROGMEM =
     {
@@ -194,7 +194,10 @@ void ledClear() {
   pixels.clear();
 }
 
+void ledBrightness(uint8_t brightness) {
+  pixels.setBrightness(brightness);
+}
+
 void setupLed() {
   pixels.begin();
-  pixels.setBrightness(BRIGHTNESS);
 }

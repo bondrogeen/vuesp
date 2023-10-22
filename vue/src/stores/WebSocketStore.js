@@ -13,6 +13,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     gpios: {},
     unknown: {},
     device: {},
+    sensors: {},
   }),
   actions: {
     SET_INFO(info) {
@@ -39,6 +40,9 @@ export const useWebSocketStore = defineStore('websocketstore', {
     },
     SET_DEVICE(value) {
       this.device = value;
+    },
+    SET_SENSORS(value) {
+      this.sensors = value;
     },
     SET_UNKNOWN({ object, key }) {
       this.unknown[key] = object;

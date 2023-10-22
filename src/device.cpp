@@ -7,9 +7,10 @@
 Adafruit_AHTX0 aht;
 Adafruit_BMP280 bmp;
 
-Device device = {KEY_DEVICE, 42, 57, {0xffffffff, 0xff0000ff, 0x00ff00ff, 0x0000ffff, 0x000000ff, 0x00000000, 0x000000ff, 0x0000ff00, 0xffff0000, 5}};
+sensors_event_t humidity, temp;
+
+Device device = {KEY_DEVICE, COMMAND_GET_ALL, SPEED, EFFECT_DRAW, BRIGHTNESS, 0, 0, 0, {}};
 Sensors sensors = {KEY_SENSORS};
-Led ledSettings = {KEY_LED, 60, 0, 20};
 
 uint8_t task;
 uint32_t effTimer;
@@ -34,33 +35,31 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
   }
 }
 
-void onSend(uint8_t direction) {
-  device.example1 += 1;
-  device.direction = direction;
+void onSend() {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
 }
 
 void eventGPIO(uint8_t port, uint8_t value) {
   Serial.print(port);
   Serial.println(value);
-  if (port == 13 && value) {
-    ledSettings.ledEffect++;
+  if (port == GPIO_BTN && value) {
+    device.effect++;
   }
 }
 
 void effectsTick(uint32_t now) {
-  if (now - effTimer >= 60) {
+  if (now - effTimer >= device.speed) {
     effTimer = now;
 
-    switch (ledSettings.ledEffect) {
-      case 1:
-        ledEffectLighters();
-        break;
-      case 2:
+    switch (device.effect) {
+      case EFFECT_FIRE:
         ledEffectFire();
         break;
+      case EFFECT_LIGHTERS:
+        ledEffectLighters();
+        break;
       default:
-        ledSettings.ledEffect = 0;
+        device.effect = 0;
         ledClear();
     }
 
@@ -69,20 +68,25 @@ void effectsTick(uint32_t now) {
 }
 
 void setupDevice() {
-  Wire.begin(0, 2);
+  uint8_t isOk = readFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
+  Serial.println(isOk);
+  if (!isOk) {
+    writeFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
+  }
+
   setupLed();
-  aht.begin();
+  ledBrightness(device.brightness);
+  Wire.begin(GPIO_SDA, GPIO_SCL);
   bmp.begin();
   bmp.setSampling(Adafruit_BMP280::MODE_NORMAL, Adafruit_BMP280::SAMPLING_X2, Adafruit_BMP280::SAMPLING_X16, Adafruit_BMP280::FILTER_X16, Adafruit_BMP280::STANDBY_MS_500);
+  aht.begin();
 }
 
 void loopDevice(uint32_t now) {
-  effectsTick(now);
+  if (device.effect) effectsTick(now);
 
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-    // i2cSscan();
-    sensors_event_t humidity, temp;
     aht.getEvent(&humidity, &temp);
     sensors.ahtTemperature = temp.temperature;
     sensors.ahtHumidity = humidity.relative_humidity;
@@ -92,11 +96,28 @@ void loopDevice(uint32_t now) {
     send((uint8_t *)&sensors, sizeof(sensors), KEY_SENSORS);
   }
   if (tasks[KEY_DEVICE]) {
-    // led();
+    Serial.println("KEY_DEVICE");
+    Serial.println(tasks[KEY_DEVICE]);
+    if (device.command == COMMAND_GET_ALL) {
+      readFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
+      onSend();
+      Serial.println("all");
+    }
+    if (device.command == COMMAND_SET) {
+      Serial.println("set");
+      // led(device);
+      ledBrightness(device.brightness);
+    }
+    if (device.command == COMMAND_DRAW) {
+      Serial.println("draW");
+      led(device);
+    }
+    if (device.command == COMMAND_SAVE) {
+      device.command = COMMAND_GET_ALL;
+      Serial.println("save");
+      writeFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
+    }
+
     tasks[KEY_DEVICE] = 0;
-  };
-  if (tasks[KEY_LED]) {
-    // led();
-    tasks[KEY_LED] = 0;
   };
 }

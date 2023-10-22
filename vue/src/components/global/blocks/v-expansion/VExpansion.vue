@@ -26,6 +26,13 @@ const isActive = ref(props.value);
 const onChange = () => {
   const content = root.value.querySelector('.v-expansion__content');
   content.style.maxHeight = isActive.value ? `${content.scrollHeight}px` : '0';
+  if (isActive.value) {
+    setTimeout(() => {
+      content.style.overflow = isActive.value ? `` : 'hidden';
+    }, 500);
+  } else {
+    content.style.overflow = isActive.value ? `` : 'hidden';
+  }
 };
 
 const onActive = () => {
@@ -51,7 +58,7 @@ onMounted(() => {
   }
   &__content {
     max-height: 0;
-    overflow: hidden;
+    // overflow: hidden;
     transition: all 0.3s ease-out;
   }
   &__icon {
