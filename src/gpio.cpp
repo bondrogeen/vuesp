@@ -1,5 +1,6 @@
 #include "./include/gpio.h"
 
+#include "./include/device.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
 
@@ -58,7 +59,6 @@ void initGpio() {
 
 void setupGPIO() {
   uint8_t isOk = readFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
-  Serial.println(isOk);
   if (!isOk) {
     defPorts();
     writeFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
@@ -71,14 +71,22 @@ uint8_t readPort(uint8_t port) {
   return value;
 }
 
-void getAll() {
+void getAll(uint8_t readAll) {
   for (int i = 0; gpio[i]; i++) {
     port.gpio = gpio[i];
     uint8_t value = digitalRead(gpio[i]);
     uint8_t *adress = &ports[i][1];
     changeBit(adress, value, GPIO_VALUE);
     port.data = ports[i][1];
-    send((uint8_t *)&port, sizeof(port), KEY_PORT);
+    if (readAll) {
+      send((uint8_t *)&port, sizeof(port), KEY_PORT);
+    } else {
+      if (readBit(port.data, GPIO_VALUE_OLD) != value) {
+        changeBit(adress, value, GPIO_VALUE_OLD);
+        send((uint8_t *)&port, sizeof(port), KEY_PORT);
+        eventGPIO(gpio[i], value);
+      }
+    }
   }
 }
 
@@ -90,16 +98,16 @@ void loopGPIO(uint32_t now) {
   if (btnStatus == 2 && now - debounce > 50) {
     Serial.println(debounce);
     btnStatus = 0;
-    getAll();
+    getAll(false);
   }
 
   if (tasks[KEY_PORT]) {
     if (port.command == GPIO_COMMAND_GET_ALL) {
-      getAll();
+      getAll(true);
     }
     if (port.command == GPIO_COMMAND_SET) {
       digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
-      getAll();
+      getAll(true);
     }
     tasks[KEY_PORT] = 0;
   };
