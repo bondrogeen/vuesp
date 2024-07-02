@@ -41,6 +41,7 @@ void onSend() {
 
 void eventGPIO(uint8_t port, uint8_t value) {
   Serial.print(port);
+  Serial.print(device.effect);
   Serial.println(value);
   if (port == GPIO_BTN && value) {
     device.effect++;

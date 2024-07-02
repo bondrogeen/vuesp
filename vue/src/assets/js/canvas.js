@@ -14,11 +14,12 @@ const defColors = [
 ];
 
 export default class Canvas {
-  constructor({ width, height, colors, event }) {
+  constructor({ width, height, colors, event, fill = [0, 0, 0, 255] }) {
     this.canvas = document.querySelector('canvas');
     this.width = +width;
     this.height = +height;
     this.tool = 'pen';
+    this.fill = fill;
     this.event = event;
     this.colors = colors || defColors;
     this.canvas.width = 10 * this.width;
@@ -28,10 +29,10 @@ export default class Canvas {
     this.w = +this.canvas.width;
     this.h = +this.canvas.height;
     this.ctx = this.canvas.getContext('2d');
-    this.ctx.fillStyle = 'white';
+    this.ctx.fillStyle = `rgb(${this.fill.join(',')})`;
     this.ctx.globalAlpha = 1;
     this.ctx.fillRect(0, 0, this.w, this.h);
-    this.data = [...Array(this.width)].map(() => Array(this.height).fill([255, 255, 255, 255]));
+    this.data = [...Array(this.width)].map(() => Array(this.height).fill(this.fill));
     this.steps = [];
     this.redo_arr = [];
     this.frames = [];
@@ -107,11 +108,12 @@ export default class Canvas {
 
   array() {
     let arr = [];
-    for (let x = 0; x < this.height; x++) {
+    for (let x = this.height - 1; x > 0; x--) {
       for (let y = 0; y < this.width; y++) {
         arr = x % 2 ? [...arr, ...this.data[y][x]] : [...arr, ...this.data[this.width - 1 - y][x]];
       }
     }
+    console.log(this.data);
     let uint8bytes = Uint8Array.from(arr);
     let dataview = new DataView(uint8bytes.buffer);
     const buffer = [];
@@ -148,9 +150,9 @@ export default class Canvas {
   }
 
   clear() {
-    this.ctx.fillStyle = 'white';
+    this.ctx.fillStyle = `rgb(${this.fill.join(',')})`;;
     this.ctx.fillRect(0, 0, this.w, this.h);
-    this.data = [...Array(this.width)].map(() => Array(this.height).fill([255, 255, 255, 255]));
+    this.data = [...Array(this.width)].map(() => Array(this.height).fill(this.fill));
     this.setcolor(this.color);
   }
 

@@ -20,7 +20,7 @@
 #define GPIO_SDA 0
 #define GPIO_SCL 2
 
-#define BRIGHTNESS 50
+#define BRIGHTNESS 10
 #define SPEED 60
 
 #define EFFECT_DRAW 0
