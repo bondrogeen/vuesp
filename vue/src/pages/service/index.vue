@@ -102,5 +102,6 @@ event.on('init', () => {
 
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
+  webSocketStore.onSend('DEVICE', { command: 0 });
 });
 </script>
