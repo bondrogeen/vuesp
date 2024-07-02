@@ -14,7 +14,7 @@ const defColors = [
 ];
 
 export default class Canvas {
-  constructor({ width, height, colors, event, fill = [0, 0, 0, 255] }) {
+  constructor({ width, height, colors, event, fill = [25, 0, 0, 255] }) {
     this.canvas = document.querySelector('canvas');
     this.width = +width;
     this.height = +height;
@@ -29,7 +29,7 @@ export default class Canvas {
     this.w = +this.canvas.width;
     this.h = +this.canvas.height;
     this.ctx = this.canvas.getContext('2d');
-    this.ctx.fillStyle = `rgb(${this.fill.join(',')})`;
+    this.ctx.fillStyle = `rgba(${this.fill.join(',')})`;
     this.ctx.globalAlpha = 1;
     this.ctx.fillRect(0, 0, this.w, this.h);
     this.data = [...Array(this.width)].map(() => Array(this.height).fill(this.fill));
@@ -108,12 +108,11 @@ export default class Canvas {
 
   array() {
     let arr = [];
-    for (let x = this.height - 1; x > 0; x--) {
+    for (let x = this.height - 1; x >= 0; x--) {
       for (let y = 0; y < this.width; y++) {
         arr = x % 2 ? [...arr, ...this.data[y][x]] : [...arr, ...this.data[this.width - 1 - y][x]];
       }
     }
-    console.log(this.data);
     let uint8bytes = Uint8Array.from(arr);
     let dataview = new DataView(uint8bytes.buffer);
     const buffer = [];
@@ -127,7 +126,7 @@ export default class Canvas {
   erase(x, y) {
     var temp = this.color;
     var tga = this.ctx.globalAlpha;
-    this.setcolor([255, 255, 255, 255]);
+    this.setcolor(this.fill);
     this.draw(x, y);
     this.setcolor(temp);
     this.ctx.globalAlpha = tga;
@@ -136,7 +135,7 @@ export default class Canvas {
   setcolor(color) {
     this.ctx.globalAlpha = 1;
     this.color = color;
-    this.ctx.fillStyle = 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',' + color[3] + ')';
+    this.ctx.fillStyle = `rgba(${this.color.join(',')})`;
   }
 
   save() {
@@ -150,7 +149,7 @@ export default class Canvas {
   }
 
   clear() {
-    this.ctx.fillStyle = `rgb(${this.fill.join(',')})`;;
+    this.ctx.fillStyle = `rgba(${this.fill.join(',')})`;
     this.ctx.fillRect(0, 0, this.w, this.h);
     this.data = [...Array(this.width)].map(() => Array(this.height).fill(this.fill));
     this.setcolor(this.color);
