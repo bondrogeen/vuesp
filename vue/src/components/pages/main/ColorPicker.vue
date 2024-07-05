@@ -3,9 +3,9 @@
     <div class="color-picker__main">
       <input class="color-picker__input color-picker__input--color" type="color" list="presetColors" :value="valueColor" @input="onChange('color', $event)" />
       <input class="color-picker__input color-picker__input--fill" type="color" list="presetColors" :value="valueFill" @input="onChange('fill', $event)" />
-      <datalist id="presetColors">
+      <!-- <datalist id="presetColors">
         <option v-for="item of colors" :key="item" :value="getColor(item)" />
-      </datalist>
+      </datalist> -->
     </div>
     <button class="color-picker__reverse" @click="onReverse">
       <v-icons icon="reverse"></v-icons>

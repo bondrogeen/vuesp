@@ -1,26 +1,34 @@
 <template>
   <div class="main-paint">
-    <div class="col sm12">
-      <div class="row">
-        <div class="main-paint__menu col sm12">
-          <div class="main-paint__wrapper">
-            <div class="main-paint__header">
-              <div class="tools">
-                <div v-for="tool of tools" :key="tool.name" class="tools__item" :class="{ 'tools__item--active': tool.active }" :title="tool.name" @click="onTools(tool)">
-                  <v-icons :icon="tool.name"></v-icons>
-                </div>
+    <div class="row">
+      <div class="main-paint__menu col sm12 lg10 xl8">
+        <div class="main-paint__wrapper">
+          <div class="main-paint__header">
+            <div class="main-paint__tools">
+              <div v-for="tool of tools" :key="tool.name" class="main-paint__tool" :title="tool.name" @click="onTools(tool)">
+                <v-icons :icon="tool.name"></v-icons>
               </div>
-              <ColorPicker v-if="colorPicker" class="mr-2" :colors="colors" @color="onSetColor" @fill="onSetFill" @close="onClosePicker" />
+
+              <v-dropdown>
+                <template #activator="{ on }">
+                  <v-icons icon="addFrame" @click="on.click"></v-icons>
+                </template>
+                <v-list :list="listFrame" @click="onFrame"></v-list>
+              </v-dropdown>
             </div>
-            <canvas class="main-paint__canvas"></canvas>
+            <ColorPicker v-if="colorPicker" class="mr-2" :colors="colors" @color="onSetColor" @fill="onSetFill" />
           </div>
+          <canvas class="main-paint__canvas"></canvas>
         </div>
-        <AppDialog class="main-paint__dialog" title="Create new" :value="showDialog" @close="onClose">
-          <template #footer>
-            <v-button @click="onDone">OK</v-button>
-          </template>
-        </AppDialog>
       </div>
+      <div class="main-paint__frames col sm12 lg2 xl4">
+        <CardFrame v-for="frame of frames" :key="frame.id" v-bind="frame" @click="onCardFrame(frame)" />
+      </div>
+      <AppDialog class="main-paint__dialog" title="Create new" :value="showDialog" @close="onClose">
+        <template #footer>
+          <v-button @click="onDone">OK</v-button>
+        </template>
+      </AppDialog>
     </div>
   </div>
 </template>
@@ -28,6 +36,7 @@
 <script setup>
 import AppDialog from '@/components/app/AppDialog';
 import ColorPicker from '@/components/pages/main/ColorPicker';
+import CardFrame from '@/components/pages/main/CardFrame';
 import { storeToRefs } from 'pinia';
 
 import { defineProps, onMounted, ref } from 'vue';
@@ -39,34 +48,42 @@ defineProps({
 });
 
 const colorPicker = ref(true);
-
-// const emit = defineEmits(['click']);
+const frames = ref([]);
 
 const webSocketStore = useWebSocketStore();
 const { device } = storeToRefs(webSocketStore);
 
-// const title = computed(() => props.name || '');
-
-const onClick = () => {
-  onArray();
-};
-
-const onClosePicker = () => (colorPicker.value = false);
-
 let canvas = {};
 
-const onArray = () => {
+const onClick = () => {
   const buffer = canvas.getBuffer();
+  webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 3 });
+};
+
+const onFrame = ({ id }) => {
+  if (id === 1) {
+    const buffer = canvas.getBuffer();
+    frames.value.push({ id: frames.value.length + 1, buffer });
+  }
+};
+const onCardFrame = ({ buffer }) => {
+  canvas.clear();
+  canvas.setBuffer(buffer);
   webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 3 });
 };
 
 const showDialog = ref(true);
 
+const listFrame = [
+  { id: 1, name: 'New' },
+  { id: 2, name: 'Remove' },
+];
+
 const onTools = tool => {
   if (tool.event) {
     if (typeof tool.event === 'function') tool.event();
     if (canvas[tool.event]) canvas[tool.event]();
-    onArray();
+    onClick();
   } else {
     tools.value = tools.value.map(item => ({ ...item, active: Boolean(tool.name === item.name) }));
     canvas.setTool(tool.name);
@@ -80,13 +97,14 @@ const newProject = () => {
 
 const tools = ref([
   { active: false, name: 'new', event: newProject },
+  { active: false, name: 'image', event: 'saveImage' },
   { active: false, name: 'save', event: 'save' },
-  { active: false, name: 'array', event: onArray },
-  { active: false, name: 'addFrame', event: 'addFrame' },
-  { active: false, name: 'undo', event: 'undo' },
-  { active: false, name: 'redo', event: 'redo' },
+  { active: false, name: 'palette', event: 'text' },
+  { active: false, name: 'send', event: onClick },
   { active: false, name: 'clear', event: 'clear' },
   { active: false, name: 'addImage', event: 'addImage' },
+  { active: false, name: 'undo', event: 'undo' },
+  { active: false, name: 'redo', event: 'redo' },
   // { active: false, name: 'open', event: 'open' },
 ]);
 
@@ -109,8 +127,6 @@ const onSetColor = color => {
   if (canvas?.setColor) canvas.setColor(color);
 };
 const onSetFill = color => {
-  console.log(color);
-
   if (canvas?.setFill) canvas.setFill(color);
 };
 
@@ -136,12 +152,10 @@ onMounted(() => {
 .main-paint {
   position: relative;
 
-  &__input {
-    max-width: 100px;
-  }
-
-  &__close {
-    width: 14px;
+  &__frames {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
   }
 
   &__header {
@@ -154,7 +168,6 @@ onMounted(() => {
     padding: 4px;
   }
   &__wrapper {
-    margin: 0 auto;
     width: 100%;
     max-width: 500px;
   }
@@ -166,17 +179,15 @@ onMounted(() => {
     image-rendering: crisp-edges;
     border: 1px solid color('grey', 'darken-1');
   }
-}
 
-.tools {
-  display: grid;
-  grid-template-columns: repeat(6, 30px);
-
-  gap: 2px;
-  background-color: var(--bg-1);
-  &__item {
-    height: 30px;
-    width: 30px;
+  &__tools {
+    display: grid;
+    grid-template-columns: repeat(6, 24px);
+    gap: 4px;
+  }
+  &__tool {
+    height: 24px;
+    width: 24px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -184,10 +195,6 @@ onMounted(() => {
     &:hover {
       background-color: var(--bg-2);
     }
-  }
-
-  &__item--active {
-    background-color: var(--bg-2);
   }
 }
 </style>

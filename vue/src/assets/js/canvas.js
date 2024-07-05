@@ -13,7 +13,7 @@ const defColors = [
   [255, 255, 255, 255],
 ];
 
-import { int32ToBytes } from '@/utils/helpers'
+import { int32ToBytes, objCopy } from '@/utils/helpers'
 
 const rotateRight90 = (matrix) => {
   let result = [];
@@ -29,8 +29,8 @@ const rotateRight90 = (matrix) => {
 const rotateRight180 = (matrix) => rotateRight90(rotateRight90(matrix))
 const rotateRight270 = (matrix) => rotateRight90(rotateRight90(rotateRight90(matrix)))
 export default class Canvas {
-  constructor({ width, height, colors, event, color = [255, 255, 255, 255], fill = [0, 0, 0, 255], rotate = '180', direction = 'serpentine' }) {
-    this.canvas = document.querySelector('canvas');
+  constructor({ width, height, colors, event, view = false, selector = 'canvas', color = [255, 255, 255, 255], fill = [0, 0, 0, 255], rotate = '180', direction = 'serpentine' }) {
+    this.canvas = document.querySelector(selector);
     this.width = +width;
     this.height = +height;
     this.tool = 'pen';
@@ -54,16 +54,13 @@ export default class Canvas {
     this.frames = [];
     this.color = color;
 
+    if (view) return;
+    console.log('sdsd');
     this.canvas.addEventListener('click', e => {
       const { x, y } = this.getPosition(e)
-      if (this.tool === 'pen') {
-        this.draw(x, y);
-      } else if (this.tool === 'eraser') {
-        this.erase(x, y);
-      }
+      if (this.tool === 'pen') this.draw(x, y);
+      if (this.tool === 'eraser') this.erase(x, y);
     });
-
-
 
     this.canvas.addEventListener('contextmenu', e => {
       e.preventDefault();
@@ -76,21 +73,15 @@ export default class Canvas {
     this.canvas.addEventListener('mousemove', e => {
       if (this.active) {
         const { x, y } = this.getPosition(e)
-        if (this.tool === 'pen') {
-          this.draw(x, y);
-        } else if (this.tool === 'eraser') {
-          this.erase(x, y);
-        }
+        if (this.tool === 'pen') this.draw(x, y);
+        if (this.tool === 'eraser') this.erase(x, y);
       }
     });
 
     this.canvas.addEventListener('touchmove', e => {
       const { x, y } = this.getPosition(e)
-      if (this.tool === 'pen') {
-        this.draw(x, y);
-      } else if (this.tool === 'eraser') {
-        this.erase(x, y);
-      }
+      if (this.tool === 'pen') this.draw(x, y);
+      if (this.tool === 'eraser') this.erase(x, y);
     });
 
     this.canvas.addEventListener('mouseleave', () => {
@@ -104,7 +95,9 @@ export default class Canvas {
 
     this.canvas.addEventListener('mouseup', () => {
       this.active = false;
-      if (this?.event?.click) this.event.click();
+      setTimeout(() => {
+        if (this?.event?.click) this.event.click();
+      }, 100)
     });
   }
 
@@ -131,17 +124,10 @@ export default class Canvas {
   }
 
   getRotate() {
-    let data = JSON.parse(JSON.stringify(this.data))
-
-    if (this.rotate === '90') {
-      data = rotateRight90(data)
-    }
-    if (this.rotate === '180') {
-      data = rotateRight180(data)
-    }
-    if (this.rotate === '270') {
-      data = rotateRight270(data)
-    }
+    let data = objCopy(this.data)
+    if (this.rotate === '90') data = rotateRight90(data);
+    if (this.rotate === '180') data = rotateRight180(data);
+    if (this.rotate === '270') data = rotateRight270(data);
     return data
   }
 
@@ -167,12 +153,14 @@ export default class Canvas {
   }
 
   update() {
+    const colorTemp = this.color
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         this.setColor(this.data[x][y]);
         this.draw(x, y);
       }
     }
+    this.setColor(colorTemp);
   }
 
   setBuffer(buffer) {
@@ -194,8 +182,8 @@ export default class Canvas {
   }
 
   erase(x, y) {
-    var temp = this.color;
-    var tga = this.ctx.globalAlpha;
+    const temp = this.color;
+    const tga = this.ctx.globalAlpha;
     this.setColor(this.fill);
     this.draw(x, y);
     this.setColor(temp);
@@ -212,15 +200,19 @@ export default class Canvas {
     this.fill = color;
   }
 
-  save() {
+  saveImage() {
     this.canvas.toBlob(function (blob) {
-      var url = URL.createObjectURL(blob);
-      var link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
       link.download = 'canvas.png';
       link.href = url;
       link.click();
     });
+  }
+
+  save() {
     this.saveInLocal()
+    if (this?.event?.save) this.event.save();
   }
 
   clear() {
@@ -279,10 +271,9 @@ export default class Canvas {
   saveInLocal() {
     const data = {
       colors: this.colors,
-      currColor: this.color,
+      color: this.color,
       width: this.width,
       height: this.height,
-      url: this.canvas.toDataURL(),
       steps: this.steps,
       redo_arr: this.redo_arr,
     };
@@ -292,20 +283,43 @@ export default class Canvas {
   loadInLocal() {
     const load = localStorage.getItem('canvas-data');
     if (load) {
-      JSON.parse(load)
+      const data = JSON.parse(load)
+      console.log(data);
     }
-    // const data = {
-    //   colors: this.colors,
-    //   currColor: this.color,
-    //   width: this.width,
-    //   height: this.height,
-    //   url: this.canvas.toDataURL(),
-    //   steps: this.steps,
-    //   redo_arr: this.redo_arr,
-    // };
+
+  }
+
+  text() {
+
+    let x = 0;
+
+    x += 0.01;
+
+    const t = 0.2 + Math.abs(Math.sin(x)) * 0.8;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.font = '40px Arial';
+
+    this.ctx.save();
+    this.ctx.scale(t, t);
+    this.ctx.fillText('Hello World', 0, 30);
+    this.ctx.restore();
+
+
+    this.ctx.save();
+    this.ctx.scale(t, t);
+    this.ctx.rotate(Math.PI / 180);
+    this.ctx.fillText('Hello World', 0, 60);
+    this.ctx.restore();
+
+
+
+    // render();
   }
 
   addImage() {
+    this.clear()
     var _this = this;
     var fp = document.createElement('input');
     fp.type = 'file';

@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="row">
-      <h1 class="col sm12 text-h2 mb-6">Service</h1>
+      <h1 class="col sm12 text-h2 mb-6">Main</h1>
       <div class="col sm12 lg8 xl7">
         <v-tabs>
           <v-tab label="Sensors" icon="connect">
@@ -21,7 +21,7 @@
           </v-tab>
           <v-tab label="Paint" icon="onher">
             <div class="row">
-              <MainPaint />
+              <MainPaint class="col sm12" />
             </div>
           </v-tab>
         </v-tabs>
