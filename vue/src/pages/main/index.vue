@@ -7,9 +7,15 @@
           <v-tab label="Sensors" icon="connect">
             <div class="row">
               <div class="col sm12">
-                <ul>
-                  <li v-for="(item, key) in sensors" :key="key">{{ key }}: {{ item }}</li>
-                </ul>
+                <div v-for="(sensor, key) in getSensors" :key="key">
+                  <h4 class="mb-4 text-h4">{{ key }}</h4>
+                  <ul class="mb-4">
+                    <li v-for="(item, name) in sensor" :key="name">
+                      <span class="grey-base text-up">{{ name }}</span>
+                      : {{ getValue(item) }}
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </v-tab>
@@ -25,7 +31,7 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+import { computed, defineProps } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
@@ -41,6 +47,20 @@ props.changeTheme(true);
 
 const webSocketStore = useWebSocketStore();
 const { sensors } = storeToRefs(webSocketStore);
+
+const getSensors = computed(() => ({
+  BMP280: {
+    temperature: sensors.value.bmpTemperature,
+    pressure: sensors.value.bmpPressure,
+    altitude: sensors.value.bmpAltitude,
+  },
+  AHT15: {
+    temperature: sensors.value.ahtTemperature,
+    humidity: sensors.value.ahtHumidity,
+  },
+}));
+
+const getValue = value => (value ? value.toFixed(2) : '--');
 </script>
 
 <style lang="scss"></style>

@@ -12,6 +12,7 @@ module.exports = {
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-unused-vars': 'warn',
     'vue/attribute-hyphenation': 'warn',
     'vue/v-on-event-hyphenation': 'warn',
     'vue/no-v-html': 'warn',

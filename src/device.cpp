@@ -59,6 +59,9 @@ void effectsTick(uint32_t now) {
       case EFFECT_LIGHTERS:
         ledEffectLighters();
         break;
+      case EFFECT_TWINKLEUP:
+        rainbow_fade();
+        break;
       default:
         device.effect = 0;
         ledClear();
