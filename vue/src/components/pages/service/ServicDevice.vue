@@ -40,6 +40,7 @@ const device = computed({
 });
 
 const listSpeed = [
+  { name: '10', value: 20 },
   { name: '20', value: 20 },
   { name: '40', value: 40 },
   { name: '60', value: 60 },
@@ -51,10 +52,11 @@ const listEffect = [
   { name: 'EFFECT_DRAW', value: 0 },
   { name: 'EFFECT_LIGHTERS', value: 1 },
   { name: 'EFFECT_FIRE', value: 2 },
+  { name: 'EFFECT_FABE', value: 3 },
 ];
 
 const listBrightness = [
-  { name: '0', value: 1 },
+  { name: '1', value: 1 },
   { name: '10', value: 25 },
   { name: '20', value: 50 },
   { name: '30', value: 75 },

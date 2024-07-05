@@ -173,6 +173,18 @@ void ledEffectLighters() {
   }
 }
 
+uint8_t ihue = 0;
+void rainbow_fade() {  //-m2-FADE ALL LEDS THROUGH HSV RAINBOW
+  ihue++;
+  if (ihue > 255) {
+    ihue = 0;
+  }
+  for (int i = 0; i < NUMPIXELS; i++) {
+    // leds[idex] = CHSV(ihue, thissat, 255);
+    pixels.setPixelColor(i, ihue, ihue, ihue);
+  }
+}
+
 void led(Device device) {
   pixels.clear();
 

@@ -4,16 +4,15 @@
       <div class="row">
         <div class="main-paint__menu col sm12">
           <div class="main-paint__wrapper">
-            <div class="tools">
-              <div v-for="tool of tools" :key="tool.name" class="tools__item" :class="{ 'tools__item--active': tool.active }" :title="tool.name" @click="onTools(tool)">
-                <v-icons :icon="tool.name"></v-icons>
+            <div class="main-paint__header">
+              <div class="tools">
+                <div v-for="tool of tools" :key="tool.name" class="tools__item" :class="{ 'tools__item--active': tool.active }" :title="tool.name" @click="onTools(tool)">
+                  <v-icons :icon="tool.name"></v-icons>
+                </div>
               </div>
+              <ColorPicker v-if="colorPicker" class="mr-2" :colors="colors" @color="onSetColor" @fill="onSetFill" @close="onClosePicker" />
             </div>
             <canvas class="main-paint__canvas"></canvas>
-          </div>
-
-          <div class="main-paint__palette">
-            <div v-for="color of colors" :key="color" class="main-paint__color" :style="getColor(color)" @click="onSetColor(color)"></div>
           </div>
         </div>
         <AppDialog class="main-paint__dialog" title="Create new" :value="showDialog" @close="onClose">
@@ -28,6 +27,8 @@
 
 <script setup>
 import AppDialog from '@/components/app/AppDialog';
+import ColorPicker from '@/components/pages/main/ColorPicker';
+import { storeToRefs } from 'pinia';
 
 import { defineProps, onMounted, ref } from 'vue';
 import Canvas from '@/assets/js/canvas';
@@ -37,9 +38,12 @@ defineProps({
   name: { type: String, default: '' },
 });
 
+const colorPicker = ref(true);
+
 // const emit = defineEmits(['click']);
 
 const webSocketStore = useWebSocketStore();
+const { device } = storeToRefs(webSocketStore);
 
 // const title = computed(() => props.name || '');
 
@@ -47,10 +51,12 @@ const onClick = () => {
   onArray();
 };
 
+const onClosePicker = () => (colorPicker.value = false);
+
 let canvas = {};
 
 const onArray = () => {
-  const buffer = canvas.array();
+  const buffer = canvas.getBuffer();
   webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 3 });
 };
 
@@ -67,7 +73,6 @@ const onTools = tool => {
   }
 };
 
-
 const newProject = () => {
   showDialog.value = true;
   localStorage.removeItem('pc-canvas-data');
@@ -77,15 +82,12 @@ const tools = ref([
   { active: false, name: 'new', event: newProject },
   { active: false, name: 'save', event: 'save' },
   { active: false, name: 'array', event: onArray },
-  { active: true, name: 'pen' },
-  { active: false, name: 'eraser' },
   { active: false, name: 'addFrame', event: 'addFrame' },
   { active: false, name: 'undo', event: 'undo' },
   { active: false, name: 'redo', event: 'redo' },
   { active: false, name: 'clear', event: 'clear' },
   { active: false, name: 'addImage', event: 'addImage' },
-  { active: false, name: 'open', event: 'open' },
-  { active: false, name: 'palette' },
+  // { active: false, name: 'open', event: 'open' },
 ]);
 
 const colors = [
@@ -103,12 +105,13 @@ const colors = [
   [255, 255, 255, 255],
 ];
 
-const getColor = ([red, green, blue]) => {
-  return `background-color: rgb(${red},${green},${blue})`;
-};
-
 const onSetColor = color => {
-  if (canvas?.setcolor) canvas.setcolor(color);
+  if (canvas?.setColor) canvas.setColor(color);
+};
+const onSetFill = color => {
+  console.log(color);
+
+  if (canvas?.setFill) canvas.setFill(color);
 };
 
 const onClose = () => {
@@ -117,65 +120,21 @@ const onClose = () => {
 
 const onDone = () => {
   canvas = new Canvas({ width: 16, height: 16, event: { click: onClick } });
-  console.log(canvas);
-  canvas.setcolor([255, 255, 255, 255]);
   onClose();
 };
 
 onMounted(() => {
-  newProject();
-  dragElement(document.querySelector('.main-paint__palette'));
+  onDone();
+  webSocketStore.onSend('DEVICE', { command: 0 });
+  setTimeout(() => {
+    canvas.setBuffer(device.value.buffer);
+  }, 1000);
 });
-
-function dragElement(elmnt) {
-
-  function dragMouseDown(e) {
-    e = e || window.event;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
-  }
-
-  let pos1 = 0
-  let pos2 = 0
-  let  pos3 = 0
-  let  pos4 = 0
-  elmnt.onmousedown = dragMouseDown;
-
-
-  function elementDrag(e) {
-    e = e || window.event;
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    elmnt.style.top = elmnt.offsetTop - pos2 + 'px';
-    elmnt.style.left = elmnt.offsetLeft - pos1 + 'px';
-  }
-
-  function closeDragElement() {
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
-}
 </script>
 
 <style lang="scss">
 .main-paint {
   position: relative;
-  &__palette {
-    width: 60px;
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  &__color {
-    height: 30px;
-    width: 30px;
-  }
 
   &__input {
     max-width: 100px;
@@ -185,6 +144,15 @@ function dragElement(elmnt) {
     width: 14px;
   }
 
+  &__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border: 1px solid color('grey', 'darken-1');
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 4px;
+  }
   &__wrapper {
     margin: 0 auto;
     width: 100%;
@@ -201,17 +169,14 @@ function dragElement(elmnt) {
 }
 
 .tools {
-  display: flex;
-  flex-wrap: wrap;
-  border: 1px solid color('grey', 'darken-1');
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
-  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(6, 30px);
+
   gap: 2px;
   background-color: var(--bg-1);
   &__item {
-    height: 28px;
-    width: 28px;
+    height: 30px;
+    width: 30px;
     display: flex;
     justify-content: center;
     align-items: center;

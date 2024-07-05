@@ -25,5 +25,6 @@ void ledBrightness(uint8_t brightness);
 
 void ledEffectLighters();
 void ledEffectFire();
+void rainbow_fade();
 
 #endif

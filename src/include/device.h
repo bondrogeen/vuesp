@@ -26,6 +26,7 @@
 #define EFFECT_DRAW 0
 #define EFFECT_LIGHTERS 1
 #define EFFECT_FIRE 2
+#define EFFECT_TWINKLEUP 3
 
 void setupDevice();
 void loopDevice(uint32_t now);
