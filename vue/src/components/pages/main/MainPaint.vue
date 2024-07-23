@@ -16,7 +16,7 @@
                 <v-list :list="listFrame" @click="onFrame"></v-list>
               </v-dropdown>
             </div>
-            <ColorPicker v-if="colorPicker" class="mr-2" :colors="colors" @color="onSetColor" @fill="onSetFill" />
+            <ColorPicker v-if="colorPicker" class="mr-2" @color="onSetColor" @fill="onSetFill" />
           </div>
           <canvas class="main-paint__canvas"></canvas>
         </div>
@@ -54,10 +54,16 @@ const webSocketStore = useWebSocketStore();
 const { device } = storeToRefs(webSocketStore);
 
 let canvas = {};
+const showDialog = ref(true);
 
 const onClick = () => {
   const buffer = canvas.getBuffer();
   webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 3 });
+};
+
+const onSave = () => {
+  const buffer = canvas.getBuffer();
+  webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 4 });
 };
 
 const onFrame = ({ id }) => {
@@ -66,13 +72,12 @@ const onFrame = ({ id }) => {
     frames.value.push({ id: frames.value.length + 1, buffer });
   }
 };
+
 const onCardFrame = ({ buffer }) => {
   canvas.clear();
   canvas.setBuffer(buffer);
   webSocketStore.onSend('DEVICE', { buffer, effect: 0, command: 3 });
 };
-
-const showDialog = ref(true);
 
 const listFrame = [
   { id: 1, name: 'New' },
@@ -99,7 +104,7 @@ const tools = ref([
   { active: false, name: 'new', event: newProject },
   { active: false, name: 'image', event: 'saveImage' },
   { active: false, name: 'save', event: 'save' },
-  { active: false, name: 'palette', event: 'text' },
+  // { active: false, name: 'palette', event: 'text' },
   { active: false, name: 'send', event: onClick },
   { active: false, name: 'clear', event: 'clear' },
   { active: false, name: 'addImage', event: 'addImage' },
@@ -108,21 +113,6 @@ const tools = ref([
   // { active: false, name: 'open', event: 'open' },
 ]);
 
-const colors = [
-  [0, 0, 0, 255],
-  [127, 127, 127, 255],
-  [255, 0, 0, 255],
-  [0, 255, 0, 255],
-  [0, 0, 255, 255],
-  [255, 242, 0, 255],
-  [34, 177, 36, 255],
-  [0, 162, 232, 255],
-  [63, 72, 204, 255],
-  [163, 73, 164, 255],
-  [163, 73, 164, 255],
-  [255, 255, 255, 255],
-];
-
 const onSetColor = color => {
   if (canvas?.setColor) canvas.setColor(color);
 };
@@ -130,12 +120,10 @@ const onSetFill = color => {
   if (canvas?.setFill) canvas.setFill(color);
 };
 
-const onClose = () => {
-  showDialog.value = false;
-};
+const onClose = () => (showDialog.value = false);
 
 const onDone = () => {
-  canvas = new Canvas({ width: 16, height: 16, event: { click: onClick } });
+  canvas = new Canvas({ width: 16, height: 16, event: { click: onClick, save: onSave } });
   onClose();
 };
 
@@ -155,7 +143,7 @@ onMounted(() => {
   &__frames {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
+    gap: 16px 4px;
   }
 
   &__header {
