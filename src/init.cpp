@@ -115,6 +115,10 @@ void writeFile(const char* path, const uint8_t* buf, size_t size) {
   file.close();
 }
 
+void createDir(const char* path) {
+  LittleFS.mkdir(path);
+}
+
 void setupInit() {
   initSerial();
   initFS();
