@@ -61,6 +61,9 @@ void setupGPIO() {
   uint8_t isOk = readFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
   if (!isOk) {
     defPorts();
+#if defined(ESP32)
+    createDir(DEF_PATH_SERVICE);
+#endif
     writeFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
   }
   initGpio();
