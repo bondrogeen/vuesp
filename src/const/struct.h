@@ -85,6 +85,13 @@ struct Device {
   uint8_t key;
   uint8_t direction;
   uint16_t example1;
+  uint8_t portIn1;
+  uint8_t portIn2;
+  uint8_t portOut1;
+  uint8_t portOut2;
+  uint16_t adc1;
+  uint16_t adc2;
+  uint16_t adc3;
+  uint16_t adc4;
   uint32_t now;
-  char buffer[64];
 };

@@ -1,5 +1,7 @@
 #include "./include/webserver.h"
 
+#include <ETH.h>
+
 #include "./include/device.h"
 #include "./include/tasks.h"
 
@@ -122,6 +124,11 @@ void onRedirectHome(AsyncWebServerRequest *request) {
 void setupServer() {
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
+
+  ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE, ETH_CLK_MODE);
+
+  ETH.config(DEF_ETH_IP, DEF_ETH_GETEWAY, DEF_ETH_SUBNET, DEF_ETH_DNS);
+
   if (settings.authMode) {
     server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html").setAuthentication(settings.authLogin, settings.authPass);
   } else {

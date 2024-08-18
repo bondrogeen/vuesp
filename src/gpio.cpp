@@ -4,7 +4,7 @@
 #include "./include/init.h"
 #include "./include/tasks.h"
 
-uint8_t gpio[5] = {4, 5, 12, 13, 14};
+uint8_t gpio[3] = {32, 33, 14};
 uint8_t ports[sizeof(gpio)][2] = {};
 
 uint8_t btnStatus = 0;
