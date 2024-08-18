@@ -11,7 +11,7 @@
   </AppDrawer>
   <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
   <main class="v-spacer mt-16 mb-6">
-    <router-view :change-theme="appStore.changeTheme" />
+    <router-view />
   </main>
   <AppFooter v-bind="info" />
 </template>

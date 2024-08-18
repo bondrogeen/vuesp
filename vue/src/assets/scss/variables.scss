@@ -7,12 +7,12 @@ $heading-font-family: $body-font-family;
 $border-radius-root: 4px !default;
 
 $font-weights: (
-  'thin': 100,
-  'light': 300,
-  'regular': 400,
-  'medium': 500,
-  'bold': 700,
-  'black': 900,
+  '100': 100,
+  '300': 300,
+  '400': 400,
+  '500': 500,
+  '700': 700,
+  '900': 900,
 );
 
 $spacer: 5px;

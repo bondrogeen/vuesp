@@ -5,6 +5,21 @@
 // Default struct settings
 #define CONFIG_VERSION 5
 
+#define ETH_CLK_MODE ETH_CLOCK_GPIO17_OUT  // Version with not PSRAM
+#define ETH_POWER_PIN -1
+#define ETH_TYPE ETH_PHY_LAN8720
+#define ETH_ADDR 0
+#define ETH_MDC_PIN 23
+#define ETH_MDIO_PIN 18
+
+#define NRST 5
+
+#define DEF_ETH_DHCP 1
+#define DEF_ETH_IP {192, 168, 23, 135}
+#define DEF_ETH_SUBNET {255, 255, 255, 0}
+#define DEF_ETH_GETEWAY {192, 168, 23, 1}
+#define DEF_ETH_DNS {192, 168, 23, 1}
+
 #define DEF_WIFI_DHCP 1
 #define DEF_WIFI_IP \
   {192, 168, 1, 12}
