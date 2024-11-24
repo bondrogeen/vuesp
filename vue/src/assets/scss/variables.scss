@@ -66,6 +66,7 @@ $colors-app: (
     '--border-1': color('grey', 'lighten-2'),
     '--shadow-1': #00000020,
     '--overlay': color('app', 'overlay'),
+    '--primary': color('app', 'primary'),
     '--hover': #e0f0ff80,
   ),
   'dark': (
@@ -77,6 +78,7 @@ $colors-app: (
     '--border-1': color('grey', 'darken-2'),
     '--shadow-1': none,
     '--overlay': color('app', 'overlay'),
+    '--primary': color('app', 'primary'),
     '--hover': #21202480,
   ),
 );
