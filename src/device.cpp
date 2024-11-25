@@ -47,11 +47,6 @@ void onSend() {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
 }
 
-void getGpio() {
-  getInput();
-  onSend();
-}
-
 void getInput() {
   Wire.requestFrom(ADDRESS_INPUT, 1);
   while (Wire.available()) {
@@ -73,15 +68,15 @@ void getADC() {
   device.adc4 = analogRead(GPIO_ADC4);
 }
 
+void getGPIO() {
+  getInput();
+  onSend();
+}
+
 void setupDevice() {
   Wire.begin(GPIO_SDA, GPIO_SCL);
-
-  Wire.beginTransmission(ADDRESS_OUTPUT);
-  Wire.write(0);
-  Wire.endTransmission();
-
   getADC();
-  getGpio();
+  getGPIO();
 }
 
 void scan() {

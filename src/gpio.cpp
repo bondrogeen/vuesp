@@ -90,7 +90,7 @@ void loopGPIO(uint32_t now) {
     Serial.println(debounce);
     btnStatus = 0;
     // getAll(false);
-    getGpio();
+    getGPIO();
   }
 
   if (tasks[KEY_PORT]) {

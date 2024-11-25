@@ -69,7 +69,9 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.status = !index ? 1 : 2;
   if (!index) {
     progress.length = request->contentLength();
+
     request->_tempFile = LittleFS.open(filename, "w");
+    Serial.println(filename);
   }
   if (len) request->_tempFile.write(data, len);
   if (final) request->_tempFile.close();
