@@ -4,7 +4,7 @@
 #include "./include/init.h"
 #include "./include/tasks.h"
 
-uint8_t gpio[5] = {};
+uint8_t gpio[0] = {};
 uint8_t ports[sizeof(gpio)][2] = {};
 
 uint8_t btnStatus = 0;
@@ -47,13 +47,16 @@ void initGpio() {
 }
 
 void setupGPIO() {
-  uint8_t isOk = readFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
+  uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
   if (!isOk) {
     defPorts();
 #if defined(ESP32)
-    createDir(DEF_PATH_SERVICE);
+    if (createDir(DEF_PATH_SERVICE)) {
+      writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
+    }
+#else
+    writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
 #endif
-    writeFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
   }
   initGpio();
 }

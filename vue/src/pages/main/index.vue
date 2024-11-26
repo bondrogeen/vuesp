@@ -6,12 +6,12 @@
       <div class="col sm12 text-h2 mb-6">
         <input v-model="datetime" class="page-main__date" type="datetime-local" @change="onDate" />
       </div>
-      {{ device }}
 
       <div class="col sm12 md8 mb-6">
         <div class="page-main__card pa-4">
           <div class="d-flex j-between">
             <h2 class="mb-6">GPIO</h2>
+
             <v-dropdown right="0" left="unset" top="0">
               <template #activator="{ on }">
                 <v-icons icon="menu" @click="on.click"></v-icons>
@@ -24,7 +24,7 @@
             <h5 class="text-body-1 mb-6">INPUT</h5>
             <div class="d-flex flex-wrap gap-2 mb-8">
               <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="pin">
-                <div class="text-small mb-1">{{ `Input ${i + 1}` }}</div>
+                <div class="text-small mb-1">{{ getName('input', i) }}</div>
                 <v-button disabled class="">{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
               </div>
             </div>
@@ -34,7 +34,7 @@
             <h5 class="text-body-1 mb-6">OUTPUT</h5>
             <div class="d-flex flex-wrap gap-2">
               <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="pin">
-                <div class="text-small mb-1">{{ `Output ${i + 1}` }}</div>
+                <div class="text-small mb-1">{{ getName('output', i) }}</div>
                 <v-button class="" @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
               </div>
             </div>
@@ -61,19 +61,35 @@
         </div>
       </div>
     </div>
+    {{ config }}
+    <AppDialog size="lg" title="Config" :value="showDialog" @close="onClose">
+      <AppConfig :config="config" @submit="onSubmit"></AppConfig>
+      <template #footer>
+        <v-button @click="onSubmit(true)">Scan</v-button>
+      </template>
+    </AppDialog>
   </div>
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { nextTick, onMounted, ref, watch, inject } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
-import { getFile, onUploadBinary } from '@/utils/fs/';
+import { getFileJSON, onUploadBinary } from '@/utils/fs/';
 
 import event from '@/assets/js/event';
 
-const path = '/data.json';
+import AppDialog from '@/components/app/AppDialog';
+import AppConfig from '@/components/app/AppConfig';
+
+const config = ref({
+  input: [{ name: 'input 1' }, { name: 'input 2' }, { name: 'input 3' }, { name: 'input 4' }, { name: 'input 5' }, { name: 'input 6' }],
+  output: [{ name: 'output 1' }, { name: 'output 2' }, { name: 'output 3' }, { name: 'output 4' }, { name: 'output 5' }, { name: 'output 6' }],
+});
+
+const showDialog = ref(false);
+const path = '/device/data.json';
 
 const webSocketStore = useWebSocketStore();
 const { device } = storeToRefs(webSocketStore);
@@ -82,6 +98,8 @@ const listMenu = [
   { id: 1, name: 'Download' },
   { id: 2, name: 'Remove' },
 ];
+
+const overlay = inject('overlay');
 
 const text = ref('start');
 const logs = ref([]);
@@ -92,6 +110,13 @@ const now = ref(0);
 event.on('init', () => {
   webSocketStore.onSend('DEVICE');
 });
+
+const getName = (key, i) => config?.value?.[key]?.[i]?.name || `${key} ${i}`;
+
+const onClose = () => {
+  showDialog.value = false;
+  overlay.value = false;
+};
 
 const onSetOutput = (pin, value) => {
   const byte = device.value.output;
@@ -127,13 +152,21 @@ watch(
 );
 
 const onUploadFile = async () => {
-  await onUploadBinary(path, {});
+  showDialog.value = true;
+  // overlay.value = true;
+};
+
+const onSubmit = async e => {
+  console.log(e);
 };
 
 onMounted(async () => {
   onSend();
+  const res = await getFileJSON(path);
+  if (res.ok) {
+    config.value = res;
+  }
 
-  const res = await getFile(path);
   console.log(res);
 });
 </script>

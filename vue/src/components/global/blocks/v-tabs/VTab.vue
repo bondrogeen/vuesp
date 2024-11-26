@@ -12,5 +12,5 @@ const props = defineProps({
 });
 
 const selected = inject('selected');
-const isActive = computed(() => props.label === selected.value.label);
+const isActive = computed(() => props.label === selected.value?.label);
 </script>

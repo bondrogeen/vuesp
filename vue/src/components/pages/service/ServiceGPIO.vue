@@ -22,7 +22,7 @@ import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } f
 
 const props = defineProps({
   gpios: { type: Object, default: () => ({}) },
-  path: { type: String, default: '/service/gpio.io' },
+  path: { type: String, default: '/device/gpio.io' },
 });
 
 const emit = defineEmits(['click', 'send', 'reboot']);

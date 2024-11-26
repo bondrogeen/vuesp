@@ -1,22 +1,24 @@
 <template>
   <transition name="fade">
-    <div v-if="value" class="app-dialog" @wheel.prevent>
+    <div v-if="value" class="app-dialog" :class="getClass" @wheel.stop>
       <div class="app-dialog__overlay" @click="onClose"></div>
-      <div class="app-dialog__card">
-        <div class="app-dialog__header text-h5">
-          <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
-          <slot name="header">{{ title }}</slot>
-        </div>
-        <div class="app-dialog__body d-flex a-center text-title-1">
-          <v-progressbar v-if="isProgress" :value="procent" />
-          <slot>
-            <div v-html="message"></div>
-          </slot>
-        </div>
-        <div v-if="$slots.footer || callback" class="app-dialog__footer">
-          <slot name="footer">
-            <v-button size="small" @click="onButton">{{ button }}</v-button>
-          </slot>
+      <div class="app-dialog__wrapper">
+        <div class="app-dialog__card">
+          <div class="app-dialog__header text-h5">
+            <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
+            <slot name="header">{{ title }}</slot>
+          </div>
+          <div class="app-dialog__body text-title-1 scroll-none">
+            <v-progressbar v-if="isProgress" :value="procent" />
+            <slot>
+              <div v-html="message"></div>
+            </slot>
+          </div>
+          <div v-if="$slots.footer || callback" class="app-dialog__footer">
+            <slot name="footer">
+              <v-button size="small" @click="onButton">{{ button }}</v-button>
+            </slot>
+          </div>
         </div>
       </div>
     </div>
@@ -34,10 +36,12 @@ const props = defineProps({
   isProgress: { type: Boolean, default: false },
   callback: { type: Function, default: null },
   button: { type: String, default: 'OK' },
+  size: { type: String, default: 'sm' },
 });
 
 const emit = defineEmits(['close']);
 const procent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
+const getClass = computed(() => [`app-dialog--${props.size}`]);
 
 const overlay = inject('overlay');
 const onClose = e => emit('close', e);
@@ -60,9 +64,22 @@ onMounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
+  height: 100dvh;
   width: 100%;
   z-index: 11;
+
+  display: flex;
+  flex-direction: column;
+
+  &__wrapper {
+    // height: 100%;
+    // max-height: 500px;
+    flex: 1 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
   &__close {
     cursor: pointer;
     position: absolute;
@@ -81,12 +98,9 @@ onMounted(() => {
     height: 100%;
   }
   &__card {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    min-height: 100px;
-    min-width: 280px;
+    margin: auto;
+    width: 100%;
+
     border-radius: 4px;
     box-sizing: border-box;
     display: flex;
@@ -94,6 +108,7 @@ onMounted(() => {
     background-color: var(--bg-1);
     box-shadow: 0px 8px 35px -2px var(--shadow-1);
   }
+
   &__header {
     position: relative;
     padding: 10px 20px;
@@ -110,6 +125,22 @@ onMounted(() => {
     text-align: end;
     padding: 10px 15px;
     flex: 0 0 40px;
+  }
+
+  &--sm {
+    .app-dialog__card {
+      max-width: 280px;
+    }
+  }
+  &--md {
+    .app-dialog__card {
+      max-width: 600px;
+    }
+  }
+  &--lg {
+    .app-dialog__card {
+      max-width: 960px;
+    }
   }
 }
 </style>
