@@ -1,5 +1,10 @@
 export const getFile = path => fetch(`/fs?file=${path}`);
 
+export const getFileJSON = async (path) => {
+  const res = await getFile(path)
+  return res.ok ? await res.json() : res
+}
+
 export const uploadFile = body => fetch('/fs', { method: 'POST', body });
 
 export const getBinary = async path => {

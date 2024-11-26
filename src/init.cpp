@@ -69,7 +69,7 @@ void getInfo() {
 }
 
 void initFS() {
-  if (!LittleFS.begin() && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
+  if (!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED) && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
 }
 
 void initEeprom() {
@@ -115,8 +115,8 @@ void writeFile(const char* path, const uint8_t* buf, size_t size) {
   file.close();
 }
 
-void createDir(const char* path) {
-  LittleFS.mkdir(path);
+bool createDir(const char* path) {
+  return LittleFS.mkdir(path);
 }
 
 void setupInit() {

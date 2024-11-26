@@ -1,6 +1,9 @@
 <template>
   <div class="v-tabs">
     <ul class="v-tabs__header text-title-1 scroll-none">
+      {{
+        tabs
+      }}
       <li v-for="item of tabs" :key="item.label" :class="['v-tabs__item', { 'v-tabs__item--active': isActive(item.label) }]" @click="onSelect(item)">
         <slot name="icon" :item="item">
           <v-icons v-if="item.icon" class="v-tabs__icon" :icon="item.icon"></v-icons>
@@ -17,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, onBeforeMount, useSlots, provide } from 'vue';
+import { ref, defineProps, defineEmits, useSlots, provide, onMounted } from 'vue';
 defineProps({
   value: { type: Boolean, default: false },
 });
@@ -30,20 +33,22 @@ const tabs = ref([]);
 
 provide('selected', selectedIndex);
 
-const isActive = label => selectedIndex.value.label === label;
+const isActive = label => selectedIndex.value?.label === label;
 
 const onSelect = i => {
   selectedIndex.value = i;
   emit('change', i);
 };
 
-onBeforeMount(() => {
+onMounted(() => {
   if (slots.default) {
-    tabs.value = slots
-      .default()
-      .filter(child => child.type.__name === 'VTab')
-      .map(i => i.props);
-    selectedIndex.value = tabs.value[0];
+    setTimeout(() => {
+      tabs.value = slots
+        .default()
+        .filter(child => child.type.__name === 'VTab')
+        .map(i => i.props);
+      selectedIndex.value = tabs.value?.[0] || {};
+    }, 300);
   }
 });
 </script>
