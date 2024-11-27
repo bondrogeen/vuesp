@@ -2,9 +2,12 @@
 
 #include <Wire.h>
 
+#include "./include/UnixTime.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
+
+UnixTime stamp(0);
 
 Device device = {
     KEY_DEVICE,
@@ -68,6 +71,46 @@ void getADC() {
   device.adc4 = analogRead(GPIO_ADC4);
 }
 
+uint8_t bcdToDec(uint8_t val) {
+  return ((val / 0x10) * 10) + (val % 0x10);
+}
+
+uint8_t decToBcd(uint8_t val) {
+  return ((val / 10) * 0x10) + (val % 10);
+}
+
+void setDate(uint32_t unixTime) {
+  stamp.getDateTime(unixTime);
+  Wire.beginTransmission(ADDRESS_RTC);
+  Wire.write(0);
+  Wire.write(decToBcd(stamp.second));
+  Wire.write(decToBcd(stamp.minute));
+  Wire.write(decToBcd(stamp.hour));
+  Wire.write(decToBcd(stamp.dayOfWeek));
+  Wire.write(decToBcd(stamp.day));
+  Wire.write(decToBcd(stamp.month));
+  Wire.write(decToBcd(stamp.year - 2000));
+  Wire.endTransmission(true);
+}
+
+uint32_t getDate() {
+  Wire.beginTransmission(ADDRESS_RTC);
+  Wire.write(0);
+  Wire.endTransmission(true);
+
+  Wire.requestFrom(ADDRESS_RTC, 7);
+  uint8_t second = bcdToDec(Wire.read());
+  uint8_t minute = bcdToDec(Wire.read());
+  uint8_t hour = bcdToDec(Wire.read() & 0b111111);  // 24 hour time
+  uint8_t weekDay = bcdToDec(Wire.read());          // 0-6 -> Sunday - Saturday
+  uint8_t monthDay = bcdToDec(Wire.read());
+  uint8_t month = bcdToDec(Wire.read());
+  uint8_t year = bcdToDec(Wire.read());
+
+  stamp.setDateTime(2000 + year, month, monthDay, hour, minute, second);
+  return stamp.getUnix();
+}
+
 void getGPIO() {
   getInput();
   onSend();
@@ -76,6 +119,7 @@ void getGPIO() {
 void setupDevice() {
   Wire.begin(GPIO_SDA, GPIO_SCL);
   getADC();
+  device.now = getDate();
   getGPIO();
 }
 
@@ -120,9 +164,16 @@ void loopDevice(uint32_t now) {
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
 
-    Wire.beginTransmission(ADDRESS_OUTPUT);
-    Wire.write(device.output);
-    Wire.endTransmission();
+    if (device.command == 1) {
+      setDate(device.now);
+    }
+    if (device.command == 2) {
+      Wire.beginTransmission(ADDRESS_OUTPUT);
+      Wire.write(device.output);
+      Wire.endTransmission();
+    }
+    device.now = getDate();
+    device.command = 0;
     onSend();
   };
 }

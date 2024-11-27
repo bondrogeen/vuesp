@@ -13,6 +13,7 @@
 #define GPIO_ADC3 34
 #define GPIO_ADC4 35
 
+#define ADDRESS_RTC 0x68
 #define ADDRESS_OUTPUT 0x24
 #define ADDRESS_INPUT 0x22
 

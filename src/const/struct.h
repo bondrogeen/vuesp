@@ -83,7 +83,7 @@ struct Port {
 
 struct Device {
   uint8_t key;
-  uint8_t direction;
+  uint8_t command;
   uint8_t input;
   uint8_t output;
   uint8_t dac1;
