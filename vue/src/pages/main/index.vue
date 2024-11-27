@@ -2,9 +2,9 @@
   <div class="page-main container">
     <div class="row">
       <div class="col sm12 text-h2 mb-6">Main</div>
-
+      {{ device }}
       <div class="col sm12 text-h2 mb-6">
-        <input v-model="datetime" class="page-main__date" type="datetime-local" @change="onDate" />
+        <input :value="datetime" class="page-main__date" type="datetime-local" @change="onDate" />
       </div>
 
       <div class="col sm12 md8 mb-6">
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref, watch, inject } from 'vue';
+import { computed, nextTick, onMounted, ref, watch, inject } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
@@ -101,9 +101,8 @@ const listMenu = [
 
 const overlay = inject('overlay');
 
-const text = ref('start');
 const logs = ref([]);
-const datetime = ref('');
+const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
 const now = ref(0);
 
@@ -121,17 +120,16 @@ const onClose = () => {
 const onSetOutput = (pin, value) => {
   const byte = device.value.output;
   device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
-  webSocketStore.onSend('DEVICE', { ...device.value });
+  webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
 };
 
 const onSend = () => {
-  webSocketStore.onSend('DEVICE', { now: now.value, direction: 0 });
-  text.value = '';
+  webSocketStore.onSend('DEVICE', { now: now.value, command: 0 });
 };
 const onDate = e => {
   const _now = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
-  webSocketStore.onSend('DEVICE', { now: now.value, direction: 0 });
+  webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
 };
 
 const onScrollEnd = () => {
