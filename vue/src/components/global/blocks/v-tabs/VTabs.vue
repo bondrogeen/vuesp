@@ -1,9 +1,6 @@
 <template>
   <div class="v-tabs">
     <ul class="v-tabs__header text-title-1 scroll-none">
-      {{
-        tabs
-      }}
       <li v-for="item of tabs" :key="item.label" :class="['v-tabs__item', { 'v-tabs__item--active': isActive(item.label) }]" @click="onSelect(item)">
         <slot name="icon" :item="item">
           <v-icons v-if="item.icon" class="v-tabs__icon" :icon="item.icon"></v-icons>

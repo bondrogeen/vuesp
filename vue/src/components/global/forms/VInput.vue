@@ -47,7 +47,11 @@ const isError = computed(() => isDirty.value && error.value);
 const isDirty = ref(false);
 const isFocus = ref(false);
 
-const getClass = computed(() => [{ 'v-text-field--disabled': props.disabled }, { 'v-text-field--focus': isFocus.value || props.modelValue || props.active }, { 'v-text-field--error': isError.value }]);
+const getClass = computed(() => [
+  { 'v-text-field--disabled': props.disabled },
+  { 'v-text-field--focus': isFocus.value || typeof props.modelValue !== 'undefined' || props.active },
+  { 'v-text-field--error': isError.value },
+]);
 
 const onRules = value => {
   const errors = props.rules
@@ -112,6 +116,7 @@ const onIcon = e => {
   }
   &__input {
     border: 0;
+    border-radius: 4px;
     height: 100%;
     padding: 0 15px;
     font-size: $font-size-root;
