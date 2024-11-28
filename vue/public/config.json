@@ -1,0 +1,6 @@
+{
+  "input": [{ "name": "input 1" }, { "name": "input 2" }, { "name": "input 3" }, { "name": "input 4" }, { "name": "input 5" }, { "name": "input 6" }],
+  "output": [{ "name": "output 1" }, { "name": "output 2" }, { "name": "output 3" }, { "name": "output 4" }, { "name": "output 5" }, { "name": "output 6" }],
+  "adc": [{ "name": "adc 1" }, { "name": "adc 2" }, { "name": "adc 3" }, { "name": "adc 4" }],
+  "dac": [{ "name": "adc 1" }, { "name": "adc 2" }]
+}

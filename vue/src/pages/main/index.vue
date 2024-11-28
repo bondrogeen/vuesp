@@ -1,13 +1,31 @@
 <template>
   <div class="page-main container">
     <div class="row">
-      <div class="col sm12 text-h2 mb-6">Main</div>
+      <div class="col sm12 mb-6 d-flex a-center">
+        <h1 class="text-h2">Main</h1>
+
+        <div class="v-spacer"></div>
+
+        <v-dropdown right="0" left="unset" top="0">
+          <template #activator="{ on }">
+            <v-icons icon="menu" @click="on.click"></v-icons>
+          </template>
+          <v-list :list="listPage" @click="onPage"></v-list>
+        </v-dropdown>
+      </div>
       {{ device }}
-      <div class="col sm12 text-h2 mb-6">
-        <input :value="datetime" class="page-main__date" type="datetime-local" @change="onDate" />
+
+      <div class="col sm12 mb-4">
+        <div class="page-main__card pa-4 d-flex j-between">
+          <h2 class="text-h4">Date</h2>
+
+          <div class="d-flex a-center">
+            <input :value="datetime" class="page-main__date mr-4" type="datetime-local" @change="onDate" />
+          </div>
+        </div>
       </div>
 
-      <div class="col sm12 md8 mb-6">
+      <div class="col sm12 lg8 mb-4">
         <div class="page-main__card pa-4">
           <div class="d-flex j-between">
             <h2 class="mb-6">GPIO</h2>
@@ -16,25 +34,30 @@
               <template #activator="{ on }">
                 <v-icons icon="menu" @click="on.click"></v-icons>
               </template>
+
               <v-list :list="listMenu" @click="onUploadFile"></v-list>
             </v-dropdown>
           </div>
 
           <div>
-            <h5 class="text-body-1 mb-6">INPUT</h5>
+            <h3 class="text-body-1 mb-6">INPUT</h3>
+
             <div class="d-flex flex-wrap gap-2 mb-8">
-              <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="pin">
+              <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
                 <div class="text-small mb-1">{{ getName('input', i) }}</div>
+
                 <v-button disabled class="">{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
               </div>
             </div>
           </div>
 
           <div>
-            <h5 class="text-body-1 mb-6">OUTPUT</h5>
+            <h3 class="text-body-1 mb-6">OUTPUT</h3>
+
             <div class="d-flex flex-wrap gap-2">
-              <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="pin">
+              <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
                 <div class="text-small mb-1">{{ getName('output', i) }}</div>
+
                 <v-button class="" @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
               </div>
             </div>
@@ -42,28 +65,39 @@
         </div>
       </div>
 
-      <div class="col sm12 md4 mb-6">
+      <div class="col sm12 lg4">
         <div class="page-main__card pa-4">
+          <h2 class="mb-6">ADC</h2>
+
+          <div class="row">
+            <div v-for="(pin, i) of 4" :key="`adc_${pin}`" class="d-flex gap-4 col sm12 md6 lg6">
+              <div class="text-small mb-1">{{ getName('adc', i) }}:</div>
+              {{ device[`adc${i + 1}`] }}
+            </div>
+          </div>
+        </div>
+
+        <div class="page-main__card pa-4 mt-4">
           <div class="d-flex j-between">
-            <h2 class="mb-6">ADC</h2>
+            <h2 class="mb-6">DAC</h2>
+
             <v-dropdown right="0" left="unset" top="0">
               <template #activator="{ on }">
                 <v-icons icon="menu" @click="on.click"></v-icons>
               </template>
-              <v-list :list="listMenu" @click="onEventService"></v-list>
+
+              <v-list :list="listMenu" @click="onUploadFile"></v-list>
             </v-dropdown>
           </div>
-
-          <div v-for="(pin, i) of 4" :key="pin" class="d-flex gap-4">
-            <div class="text-small mb-1">{{ `ADC${i + 1}` }}:</div>
-            {{ device[`adc${i + 1}`] }}
+          <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="d-flex gap-4">
+            <v-input v-model.number="dac[`dac${i + 1}`]" :label="getName('dac', i)" />
+            <v-button class="" :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
           </div>
         </div>
       </div>
     </div>
-    {{ config }}
+
     <AppDialog size="lg" title="Config" :value="showDialog" @close="onClose">
-      <AppConfig :config="config" @submit="onSubmit"></AppConfig>
       <template #footer>
         <v-button @click="onSubmit(true)">Scan</v-button>
       </template>
@@ -72,45 +106,47 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch, inject } from 'vue';
+import { computed, onMounted, ref, inject } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
-import { getFileJSON, onUploadBinary } from '@/utils/fs/';
+import { getConfig } from '@/utils/fs/';
 
 import event from '@/assets/js/event';
 
 import AppDialog from '@/components/app/AppDialog';
-import AppConfig from '@/components/app/AppConfig';
 
-const config = ref({
-  input: [{ name: 'input 1' }, { name: 'input 2' }, { name: 'input 3' }, { name: 'input 4' }, { name: 'input 5' }, { name: 'input 6' }],
-  output: [{ name: 'output 1' }, { name: 'output 2' }, { name: 'output 3' }, { name: 'output 4' }, { name: 'output 5' }, { name: 'output 6' }],
-});
+const config = ref();
 
 const showDialog = ref(false);
-const path = '/device/data.json';
 
 const webSocketStore = useWebSocketStore();
 const { device } = storeToRefs(webSocketStore);
 
-const listMenu = [
-  { id: 1, name: 'Download' },
-  { id: 2, name: 'Remove' },
+const listPage = [
+  { id: 1, name: 'Config' },
+  { id: 2, name: 'Restore' },
 ];
+const listMenu = [{ id: 1, name: 'Save' }];
 
 const overlay = inject('overlay');
 
-const logs = ref([]);
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
 const now = ref(0);
+
+const dac = ref({ dac1: 0, dac2: 0 });
 
 event.on('init', () => {
   webSocketStore.onSend('DEVICE');
 });
 
 const getName = (key, i) => config?.value?.[key]?.[i]?.name || `${key} ${i}`;
+
+const onPage = item => {
+  console.log(item);
+};
+const isDac = value => !(value >= 0 && value <= 255);
 
 const onClose = () => {
   showDialog.value = false;
@@ -122,32 +158,21 @@ const onSetOutput = (pin, value) => {
   device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
   webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
 };
+const onDac = (i, value) => {
+  console.log(i, value);
+  device.value[`dac${i}`] = value;
+  webSocketStore.onSend('DEVICE', { ...device.value, command: 3 });
+};
 
 const onSend = () => {
   webSocketStore.onSend('DEVICE', { now: now.value, command: 0 });
 };
+
 const onDate = e => {
   const _now = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
   webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
 };
-
-const onScrollEnd = () => {
-  nextTick(() => {
-    const el = document.querySelector('.page-main__list');
-    if (el) {
-      el.scrollTo(0, el.scrollHeight);
-    }
-  });
-};
-
-watch(
-  () => device.value,
-  value => {
-    logs.value.push(value);
-    onScrollEnd();
-  }
-);
 
 const onUploadFile = async () => {
   showDialog.value = true;
@@ -160,28 +185,17 @@ const onSubmit = async e => {
 
 onMounted(async () => {
   onSend();
-  const res = await getFileJSON(path);
-  if (res.ok) {
-    config.value = res;
-  }
+  config.value = await getConfig();
 
-  console.log(res);
+  dac.value.dac1 = device.value?.dac1 || 0;
+  dac.value.dac2 = device.value?.dac2 || 0;
 });
 </script>
 
 <style lang="scss">
 .page-main {
   position: relative;
-  &__list {
-    height: 400px;
-    overflow: auto;
-  }
-  &__item {
-    border-bottom: 1px solid var(--border-1);
-  }
-  &__time {
-    min-width: 150px;
-  }
+
   &__date {
     font-size: 16px;
     height: 32px;

@@ -2,19 +2,23 @@
   <div class="container">
     <div class="row">
       <h1 class="col sm12 text-h2 mb-6">Service</h1>
+
       <div class="col sm12 lg8 xl7">
         <v-tabs>
           <v-tab label="Settings" icon="connect">
             <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
           </v-tab>
+
           <v-tab label="Storage" icon="storage">
             <div class="row">
               <h2 class="col sm12 text-h5 mb-4">File system</h2>
+
               <div class="col sm12">
                 <ServiceStorage v-model="path" :files="fileList" :progress="progress" :info="info" @send="onSend" />
               </div>
             </div>
           </v-tab>
+
           <v-tab label="System" icon="update">
             <div class="row">
               <div class="col sm12">
@@ -22,9 +26,11 @@
               </div>
             </div>
           </v-tab>
+
           <!-- <v-tab label="Other" icon="onher">
             <div class="row"></div>
           </v-tab> -->
+
           <v-tab label="GPIO" icon="onher">
             <div class="row">
               <div class="col sm12">
@@ -34,6 +40,7 @@
           </v-tab>
         </v-tabs>
       </div>
+
       <div class="col sm12 lg4 xl4 offset-xl1 mt-10">
         <ServiceInfo v-bind="info" class="page-main__file-info" />
       </div>

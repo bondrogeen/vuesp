@@ -13,7 +13,7 @@ Device device = {
     KEY_DEVICE,
     0,
     0,
-    255,
+    0,
     0,
     0,
     0,
@@ -171,6 +171,10 @@ void loopDevice(uint32_t now) {
       Wire.beginTransmission(ADDRESS_OUTPUT);
       Wire.write(device.output);
       Wire.endTransmission();
+    }
+    if (device.command == 3) {
+      dacWrite(DAC1, device.dac1);
+      dacWrite(DAC2, device.dac2);
     }
     device.now = getDate();
     device.command = 0;

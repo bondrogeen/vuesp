@@ -2,17 +2,23 @@
   <AppOverlay v-if="isOverlay" @click="onClose">
     <template v-if="!isConnect">
       <div>Disconnected</div>
+      
       <v-loader></v-loader>
     </template>
   </AppOverlay>
+
   <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
+
   <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
     <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
   </AppDrawer>
+
   <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
+
   <main class="v-spacer mt-16 mb-6">
     <router-view :change-theme="appStore.changeTheme" />
   </main>
+
   <AppFooter v-bind="info" />
 </template>
 

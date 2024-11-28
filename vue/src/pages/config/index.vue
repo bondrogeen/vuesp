@@ -1,0 +1,88 @@
+<template>
+  <div class="page-config container">
+    <div class="row">
+      <div class="col sm12 mb-6 d-flex a-center">
+        <h1 class="text-h2">Config</h1>
+        <div class="v-spacer"></div>
+        <v-dropdown right="0" left="unset" top="0">
+          <template #activator="{ on }">
+            <v-icons icon="menu" @click="on.click"></v-icons>
+          </template>
+          <v-list :list="listMenu" @click="onUploadFile"></v-list>
+        </v-dropdown>
+      </div>
+    </div>
+
+    <div class="row">
+      <div v-for="(item, key) in config" :key="key" label="key" class="col sm12">
+        <h2 class="text-h5 mb-6">{{ key }}</h2>
+
+        <div class="row">
+          <div v-for="(field, i) of item" :key="`${key}_${i}`" class="col sm12 md6">
+            <v-input v-model="field.name" :label="`${key} ${i + 1}`" />
+          </div>
+        </div>
+      </div>
+      <div class="col sm12">
+        <v-button @click="onSave">Save</v-button>
+      </div>
+    </div>
+
+    <AppDialog size="lg" title="Config" :value="showDialog" @close="onClose">
+      <template #footer>
+        <v-button @click="onSubmit(true)">Scan</v-button>
+      </template>
+    </AppDialog>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, ref } from 'vue';
+
+import { getConfig, saveConfig } from '@/utils/fs/';
+
+import AppDialog from '@/components/app/AppDialog';
+
+const showDialog = ref(false);
+const config = ref({});
+
+const listMenu = [
+  { id: 1, name: 'Config' },
+  { id: 2, name: 'Remove' },
+];
+
+const onSave = async e => {
+  await saveConfig(config.value);
+};
+const onClose = e => {
+  showDialog.value = false;
+};
+
+onMounted(async () => {
+  config.value = await getConfig();
+});
+</script>
+
+<style lang="scss">
+.page-main {
+  position: relative;
+  &__list {
+    height: 400px;
+    overflow: auto;
+  }
+  &__item {
+    border-bottom: 1px solid var(--border-1);
+  }
+  &__time {
+    min-width: 150px;
+  }
+  &__date {
+    font-size: 16px;
+    height: 32px;
+  }
+  &__card {
+    border: 1px solid, var(--primary);
+    border-radius: 16px;
+  }
+}
+</style>
