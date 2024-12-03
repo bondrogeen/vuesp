@@ -1,20 +1,25 @@
+#include "./include/device.h"
+#include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
 #include "./include/webserver.h"
-#include "./include/gpio.h"
-#include "./include/device.h"
 
 uint32_t now;
+uint8_t isInit = 0;
 
 void setup() {
   setupInit();
   setupServer();
-  setupGPIO();
   setupDevice();
 }
 
 void loop() {
   now = millis();
+  if (!isInit && now > 5000) {
+    setupGPIO();
+    isInit = true;
+  }
+
   loopServer(now);
   loopTask(now);
   loopGPIO(now);
