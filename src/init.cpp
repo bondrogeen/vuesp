@@ -82,6 +82,9 @@ void initSerial() {
 
 void WiFiEvent(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
+  if (event == 7) {
+    Serial.println(WiFi.localIP());
+  }
 }
 
 void initWiFi() {
@@ -95,9 +98,99 @@ void initWiFi() {
   }
 }
 
+void listDir(fs::FS& fs, const char* dirname, uint8_t levels) {
+  Serial.printf("Listing directory: %s\r\n", dirname);
+
+  File root = fs.open(dirname);
+  if (!root) {
+    Serial.println("- failed to open directory");
+    return;
+  }
+  if (!root.isDirectory()) {
+    Serial.println(" - not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  while (file) {
+    if (file.isDirectory()) {
+      Serial.print("  DIR : ");
+
+#ifdef CONFIG_LITTLEFS_FOR_IDF_3_2
+      Serial.println(file.name());
+#else
+      Serial.print(file.name());
+      time_t t = file.getLastWrite();
+      struct tm* tmstruct = localtime(&t);
+      Serial.printf("  LAST WRITE: %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+#endif
+
+      if (levels) {
+        listDir(fs, file.name(), levels - 1);
+      }
+    } else {
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+
+#ifdef CONFIG_LITTLEFS_FOR_IDF_3_2
+      Serial.println(file.size());
+#else
+      Serial.print(file.size());
+      time_t t = file.getLastWrite();
+      struct tm* tmstruct = localtime(&t);
+      Serial.printf("  LAST WRITE: %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+#endif
+    }
+    file = root.openNextFile();
+  }
+}
+void listDir(const char* dirname, uint8_t levels) {
+  Serial.printf("Listing directory: %s\r\n", dirname);
+
+  File root = LittleFS.open(dirname);
+  if (!root) {
+    Serial.println("- failed to open directory");
+    return;
+  }
+  if (!root.isDirectory()) {
+    Serial.println(" - not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  while (file) {
+    if (file.isDirectory()) {
+      Serial.print("  DIR : ");
+
+      Serial.print(file.name());
+      time_t t = file.getLastWrite();
+      struct tm* tmstruct = localtime(&t);
+      Serial.printf("  LAST WRITE: %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+
+      if (levels) {
+        listDir(file.name(), levels - 1);
+      }
+    } else {
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+
+      Serial.print(file.size());
+      time_t t = file.getLastWrite();
+      struct tm* tmstruct = localtime(&t);
+      Serial.printf("  LAST WRITE: %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+    }
+    file = root.openNextFile();
+  }
+}
+
 uint8_t readFile(const char* path, uint8_t* buf, size_t size) {
+  Serial.println(path);
+  Serial.println("readFile");
   File file = LittleFS.open(path, "r");
-  if (!file) {
+  Serial.println(file);
+  if (!file || file.isDirectory()) {
     return 0;
   } else {
     while (file.available()) {
@@ -109,21 +202,48 @@ uint8_t readFile(const char* path, uint8_t* buf, size_t size) {
 }
 
 void writeFile(const char* path, const uint8_t* buf, size_t size) {
-  File file = LittleFS.open(path, "w");
+  File file = LittleFS.open(path, FILE_WRITE);
   file.write(buf, size);
   delay(1);
   file.close();
 }
 
 bool createDir(const char* path) {
-  return LittleFS.mkdir(path);
+  Serial.printf("Creating Dir: %s\n", path);
+  if (LittleFS.mkdir(path)) {
+    Serial.println("Dir created");
+    return 1;
+  } else {
+    Serial.println("mkdir failed");
+    return 0;
+  }
+}
+
+void writeFile(const char* path, const char* message) {
+  Serial.printf("Writing file: %s\r\n", path);
+
+  File file = LittleFS.open(path, FILE_WRITE);
+  if (!file) {
+    Serial.println("- failed to open file for writing");
+    return;
+  }
+  if (file.print(message)) {
+    Serial.println("- file written");
+  } else {
+    Serial.println("- write failed");
+  }
+  file.close();
 }
 
 void setupInit() {
   initSerial();
-  initFS();
   initEeprom();
+  initFS();
   getInfo();
   loadConfig(settings);
   initWiFi();
+
+  // listDir("/", 0);
+  // createDir("/temp");
+  // writeFile("/temp/hello2.txt", "Hello2");
 }

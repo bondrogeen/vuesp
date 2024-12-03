@@ -1,11 +1,14 @@
 #include "./include/device.h"
 
+#include <OneWire.h>
 #include <Wire.h>
 
 #include "./include/UnixTime.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
+
+OneWire ds(GPIO_HT1);
 
 UnixTime stamp(0);
 
@@ -48,6 +51,19 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
 
 void onSend() {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+}
+
+void getDef() {
+  uint8_t isOk = readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+  if (!isOk) {
+#if defined(ESP32)
+    if (createDir(DEF_DIR_DEVICE)) {
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+    }
+#else
+    writeFile(DEF_PATH_CONFIG, (uint8_t *)device, sizeof(device));
+#endif
+  }
 }
 
 void getInput() {
@@ -114,12 +130,14 @@ uint32_t getDate() {
 void getGPIO() {
   getInput();
   onSend();
+  // getDef();
 }
 
 void setupDevice() {
   Wire.begin(GPIO_SDA, GPIO_SCL);
   getADC();
   device.now = getDate();
+  getOutput();
   getGPIO();
 }
 
@@ -153,6 +171,46 @@ void scan() {
 // I2C device found at address 0x24  !
 // I2C device found at address 0x68  !
 
+void getTemperature(byte *address1) {
+  Serial.print(&address, HEX);
+  float temperature = 0;
+  // считываем показания датчика после предыдущей конвертации
+  int temp;
+  ds.reset();
+  ds.select(address1);
+  ds.write(0xBE);                       // Считывание значения с датчика
+  temp = (ds.read() | ds.read() << 8);  // Принимаем два байта температуры
+  temperature = (float)temp / 16.0;
+
+  Serial.println(temperature);
+
+  // даем команду на конвертацию для следующего запроса
+  ds.reset();
+  ds.select(address1);
+  ds.write(0x44, 1);
+}
+
+void find() {
+  int a, b, i;
+  uint8_t addr[8];
+  uint8_t addr1[5][8];
+
+  while (ds.search(addr) == 1) {
+    for (b = 0; b < 8; b++) {
+      addr1[a][b] = addr[b];
+    }
+    a++;
+    Serial.print("Addr = ");
+    for (i = 0; i < 8; i++) {
+      Serial.print(addr1[a][i], HEX);
+      Serial.print(" ");
+    }
+    getTemperature(addr);
+    Serial.println(" ");
+    delay(250);
+  }
+}
+
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
@@ -160,6 +218,7 @@ void loopDevice(uint32_t now) {
     getInput();
     getADC();
     onSend();
+    find();
   }
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;

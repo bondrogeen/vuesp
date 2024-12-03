@@ -51,7 +51,7 @@ void setupGPIO() {
   if (!isOk) {
     defPorts();
 #if defined(ESP32)
-    if (createDir(DEF_PATH_SERVICE)) {
+    if (createDir(DEF_DIR_DEVICE)) {
       writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
     }
 #else
@@ -70,14 +70,14 @@ void getAll(uint8_t readAll) {
   for (int i = 0; gpio[i]; i++) {
     port.gpio = gpio[i];
     uint8_t value = digitalRead(gpio[i]);
-    uint8_t *adress = &ports[i][1];
-    changeBit(adress, value, GPIO_VALUE);
+    uint8_t *address = &ports[i][1];
+    changeBit(address, value, GPIO_VALUE);
     port.data = ports[i][1];
     if (readAll) {
       send((uint8_t *)&port, sizeof(port), KEY_PORT);
     } else {
       if (readBit(port.data, GPIO_VALUE_OLD) != value) {
-        changeBit(adress, value, GPIO_VALUE_OLD);
+        changeBit(address, value, GPIO_VALUE_OLD);
         send((uint8_t *)&port, sizeof(port), KEY_PORT);
       }
     }

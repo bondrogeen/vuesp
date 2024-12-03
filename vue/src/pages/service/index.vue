@@ -31,13 +31,13 @@
             <div class="row"></div>
           </v-tab> -->
 
-          <v-tab label="GPIO" icon="onher">
+          <!-- <v-tab label="GPIO" icon="onher">
             <div class="row">
               <div class="col sm12">
                 <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
               </div>
             </div>
-          </v-tab>
+          </v-tab> -->
         </v-tabs>
       </div>
 
