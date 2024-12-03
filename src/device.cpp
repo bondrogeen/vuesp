@@ -12,6 +12,8 @@ OneWire ds(GPIO_HT1);
 
 UnixTime stamp(0);
 
+Dallas ht1 = {KEY_DALLAS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 Device device = {
     KEY_DEVICE,
     0,
@@ -51,6 +53,9 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
 
 void onSend() {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+}
+void onSendTemp() {
+  send((uint8_t *)&ht1, sizeof(ht1), KEY_DALLAS);
 }
 
 void getDef() {
@@ -171,43 +176,23 @@ void scan() {
 // I2C device found at address 0x24  !
 // I2C device found at address 0x68  !
 
-void getTemperature(byte *address1) {
-  Serial.print(&address, HEX);
-  float temperature = 0;
-  // считываем показания датчика после предыдущей конвертации
-  int temp;
+float getTemperature(uint8_t *address1) {
+  uint16_t temp;
   ds.reset();
   ds.select(address1);
-  ds.write(0xBE);                       // Считывание значения с датчика
-  temp = (ds.read() | ds.read() << 8);  // Принимаем два байта температуры
-  temperature = (float)temp / 16.0;
+  ds.write(0xBE);
+  temp = (ds.read() | ds.read() << 8);
 
-  Serial.println(temperature);
-
-  // даем команду на конвертацию для следующего запроса
   ds.reset();
   ds.select(address1);
   ds.write(0x44, 1);
+  return (float)temp / 16.0;
 }
 
-void find() {
-  int a, b, i;
-  uint8_t addr[8];
-  uint8_t addr1[5][8];
-
-  while (ds.search(addr) == 1) {
-    for (b = 0; b < 8; b++) {
-      addr1[a][b] = addr[b];
-    }
-    a++;
-    Serial.print("Addr = ");
-    for (i = 0; i < 8; i++) {
-      Serial.print(addr1[a][i], HEX);
-      Serial.print(" ");
-    }
-    getTemperature(addr);
-    Serial.println(" ");
-    delay(250);
+void findDallas() {
+  while (ds.search(ht1.address) == 1) {
+    ht1.temp = getTemperature(ht1.address);
+    onSendTemp();
   }
 }
 
@@ -218,7 +203,7 @@ void loopDevice(uint32_t now) {
     getInput();
     getADC();
     onSend();
-    find();
+    findDallas();
   }
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;

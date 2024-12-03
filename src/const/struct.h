@@ -10,6 +10,7 @@ enum keys {
   KEY_PINS,
   KEY_PORT,
   KEY_DEVICE,
+  KEY_DALLAS,
   KEY_END
 };
 
@@ -94,4 +95,12 @@ struct Device {
   uint16_t adc3;
   uint16_t adc4;
   uint32_t now;
+};
+
+struct Dallas {
+  uint8_t key;
+  uint8_t comm;
+  uint16_t comm2;
+  uint8_t address[8];
+  float temp;
 };

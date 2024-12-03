@@ -12,14 +12,14 @@
         </v-dropdown>
       </div>
     </div>
-
+    {{ config }}
     <div class="row">
       <div v-for="(item, key) in config" :key="key" label="key" class="col sm12">
         <h2 class="text-h5 mb-6">{{ key }}</h2>
 
         <div class="row">
-          <div v-for="(field, i) of item" :key="`${key}_${i}`" class="col sm12 md6">
-            <v-input v-model="field.name" :label="`${key} ${i + 1}`" />
+          <div v-for="(field, k) in item" :key="`${k}`" class="col sm12 md6">
+            <v-input v-model="field.name" :label="`${k}`" />
           </div>
         </div>
       </div>
@@ -38,10 +38,15 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-
+import { storeToRefs } from 'pinia';
 import { getConfig, saveConfig } from '@/utils/fs/';
 
+import { useWebSocketStore } from '@/stores/WebSocketStore';
+
 import AppDialog from '@/components/app/AppDialog';
+
+const webSocketStore = useWebSocketStore();
+const { dallas } = storeToRefs(webSocketStore);
 
 const showDialog = ref(false);
 const config = ref({});
@@ -59,7 +64,13 @@ const onClose = e => {
 };
 
 onMounted(async () => {
-  config.value = await getConfig();
+  const object = dallas?.value || {};
+  const ds = {};
+  for (const key in object) {
+    ds[key] = {};
+  }
+
+  config.value = await getConfig({ ds });
 });
 </script>
 
