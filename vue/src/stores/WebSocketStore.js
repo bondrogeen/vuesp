@@ -13,6 +13,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     gpios: {},
     unknown: {},
     device: {},
+    dallas: {},
   }),
   actions: {
     SET_INFO(info) {
@@ -39,6 +40,10 @@ export const useWebSocketStore = defineStore('websocketstore', {
     },
     SET_DEVICE(value) {
       this.device = value;
+    },
+    SET_DALLAS(data) {
+      const name = (data.address || []).map(i => i < 15 ? `0${i.toString(16)}` : i.toString(16)).join('')
+      this.dallas[name] = data
     },
     SET_UNKNOWN({ object, key }) {
       this.unknown[key] = object;

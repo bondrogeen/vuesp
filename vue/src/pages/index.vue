@@ -13,7 +13,7 @@
           <v-list :list="listPage" @click="onPage"></v-list>
         </v-dropdown>
       </div>
-      {{ device }}
+      {{ dallas }}
 
       <div class="col sm12 mb-4">
         <div class="page-main__card pa-4 d-flex j-between">
@@ -34,7 +34,7 @@
 
             <div class="d-flex flex-wrap gap-2 mb-8">
               <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
-                <div class="text-small mb-1">{{ getName('input', i) }}</div>
+                <div class="text-small mb-1">{{ findName('input', `input${i + 1}`) }}</div>
 
                 <v-button disabled class="">{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
               </div>
@@ -46,7 +46,7 @@
 
             <div class="d-flex flex-wrap gap-2">
               <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
-                <div class="text-small mb-1">{{ getName('output', i) }}</div>
+                <div class="text-small mb-1">{{ findName('output', `output${i + 1}`) }}</div>
 
                 <v-button class="" @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
               </div>
@@ -61,8 +61,19 @@
 
           <div class="row">
             <div v-for="(pin, i) of 4" :key="`adc_${pin}`" class="d-flex gap-4 col sm12 md6 lg6">
-              <div class="text-small mb-1">{{ getName('adc', i) }}:</div>
+              <div class="text-small mb-1">{{ findName('adc', `adc${pin}`) }}:</div>
               {{ device[`adc${i + 1}`] }}
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isDallas" class="page-main__card pa-4 mt-4">
+          <h2 class="mb-6">DS 18B20</h2>
+
+          <div class="row">
+            <div v-for="(ds, key) in dallas" :key="`adc_${key}`" class="col sm12 md6 lg6">
+              <div class="text-small mb-1" :title="key">{{ findName('ds', key) }}:</div>
+              {{ ds.temp }} ℃
             </div>
           </div>
         </div>
@@ -71,7 +82,7 @@
           <h2 class="mb-6">DAC</h2>
 
           <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="d-flex gap-4">
-            <v-input v-model.number="dac[`dac${i + 1}`]" :label="getName('dac', i)" />
+            <v-input v-model.number="dac[`dac${i + 1}`]" :label="findName('dac', `dac${pin}`)" />
             <v-button class="" :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
           </div>
         </div>
@@ -102,7 +113,7 @@ const config = ref();
 const showDialog = ref(false);
 
 const webSocketStore = useWebSocketStore();
-const { device } = storeToRefs(webSocketStore);
+const { device, dallas } = storeToRefs(webSocketStore);
 
 const listPage = [
   { id: 1, name: 'Config' },
@@ -114,6 +125,8 @@ const overlay = inject('overlay');
 
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
+const isDallas = computed(() => Boolean(Object.values(dallas)?.length));
+
 const now = ref(0);
 
 const dac = ref({ dac1: 0, dac2: 0 });
@@ -122,7 +135,7 @@ event.on('init', () => {
   webSocketStore.onSend('DEVICE');
 });
 
-const getName = (key, i) => config?.value?.[key]?.[i]?.name || `${key} ${i}`;
+const findName = (name, key) => config?.value?.[name]?.[key]?.name || `${key}`;
 
 const onPage = item => {
   console.log(item);

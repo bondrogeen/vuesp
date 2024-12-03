@@ -6,10 +6,23 @@ export const saveConfig = (data) => {
   return onUploadBinary(pathConfig, JSON.stringify(data));
 }
 
-export const getConfig = async () => {
+const mixinObjects = (obj1, obj2) => {
+  var c = {}
+  for (const key in obj1) {
+    if (obj1[key] && obj2[key]) {
+      c[key] = obj2[key] || obj1[key]
+    } else{
+      
+    }
+  }
+  return c;
+}
+
+export const getConfig = async (mixin = {}) => {
   const def = await fetchJSON(pathConfigDef);
   const res = await getFileJSON(pathConfig);
-  return res || def;
+  const config = res || def
+  return mixinObjects(config, mixin);
 }
 
 export const fetchJSON = async (path) => {
