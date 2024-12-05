@@ -1,25 +1,27 @@
 <template>
-  <AppOverlay v-if="isOverlay" @click="onClose">
-    <template v-if="!isConnect">
-      <div>Disconnected</div>
-      
-      <v-loader></v-loader>
-    </template>
-  </AppOverlay>
+  <div class="h-[100dvh] min-h-full flex flex-col">
+    <AppOverlay v-if="isOverlay" @click="onClose">
+      <template v-if="!isConnect">
+        <div>Disconnected</div>
 
-  <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
+        <v-loader></v-loader>
+      </template>
+    </AppOverlay>
 
-  <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
-    <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
-  </AppDrawer>
+    <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
 
-  <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
+    <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
+      <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
+    </AppDrawer>
 
-  <main class="v-spacer mt-16 mb-6">
-    <router-view :change-theme="appStore.changeTheme" />
-  </main>
+    <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
 
-  <AppFooter v-bind="info" />
+    <main class="px-4 py-6 sm:px-6 lg:px-8 flex-auto">
+      <router-view />
+    </main>
+
+    <AppFooter v-bind="info" />
+  </div>
 </template>
 
 <script setup>

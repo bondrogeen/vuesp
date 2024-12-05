@@ -1,5 +1,5 @@
 <template>
-  <div class="app-drawer" :class="[{ 'app-drawer--open': value }, { 'app-drawer--fixed': position }]">
+  <div class="app-drawer " :class="[{ 'app-drawer--open': value }, { 'app-drawer--fixed': position }]">
     <div class="app-drawer__content">
       <div class="app-drawer__header">
         <div class="app-drawer__theme" @click="changeTheme">
@@ -14,7 +14,7 @@
           <v-icons icon="close"></v-icons>
         </div>
       </div>
-      <div class="app-drawer__body">
+      <div class="app-drawer__body bg-white">
         <slot></slot>
       </div>
     </div>
@@ -47,7 +47,7 @@ const onClose = e => {
   z-index: 101;
   transition: all 0.2s ease-in-out;
   overflow: hidden;
-  background-color: var(--bg-1);
+
   box-shadow: 0px 8px 35px -2px var(--shadow-1);
   transform: translateX(-100%);
   width: 100%;

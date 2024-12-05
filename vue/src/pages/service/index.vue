@@ -1,9 +1,8 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <h1 class="col sm12 text-h2 mb-6">Service</h1>
-
-      <div class="col sm12 lg8 xl7">
+  <div class="container mx-auto">
+    <h1 class="mb-6">Service</h1>
+    <div class="grid grid-cols-2">
+      <div>
         <v-tabs>
           <v-tab label="Settings" icon="connect">
             <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
@@ -41,7 +40,7 @@
         </v-tabs>
       </div>
 
-      <div class="col sm12 lg4 xl4 offset-xl1 mt-10">
+      <div class="">
         <ServiceInfo v-bind="info" class="page-main__file-info" />
       </div>
     </div>

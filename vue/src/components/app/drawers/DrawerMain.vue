@@ -1,9 +1,9 @@
 <template>
-  <div class="h-100 drawer-main d-flex f-column">
+  <div class="h-100 drawer-main flex f-column">
     <div class="drawer-main__menu v-spacer mt-6">
-      <v-main-menu class="d-flex a-center f-column gap-6 text-h3" @route="onClose" />
+      <v-main-menu class="flex items-center f-column gap-6 text-h3" @route="onClose" />
     </div>
-    <div class="d-flex a-center f-column mb-6">
+    <div class="flex items-center f-column mb-6">
       <div v-for="(item, key) in data" :key="key">
         {{ key }}:
         <span class="grey-base">{{ item }}</span>

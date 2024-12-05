@@ -1,17 +1,17 @@
 <template>
-  <header class="app-header">
-    <div class="app-header__inner container">
+  <header class="bg-blue-50 shadow px-4">
+    <div class="container mx-auto flex py-4">
       <div class="app-header__logo">
         <router-link to="/">
           <v-icons icon="logo"></v-icons>
         </router-link>
         <div class="app-header__indicator" :class="{ 'app-header__indicator--disabled': !state }"></div>
       </div>
-      <div class="app-header__menu d-none d-lg-flex">
-        <v-main-menu class="d-flex a-center gap-6 text-title-1 fw-600" />
+      <div class="app-header__menu hidden lg:flex">
+        <v-main-menu class="flex items-center gap-6 text-title-1 fw-600" />
       </div>
-      <div class="v-spacer"></div>
-      <div class="app-header__right d-none d-lg-flex gap-4">
+      <div class="flex-auto"></div>
+      <div class="app-header__right hidden lg:flex gap-4">
         <v-dropdown left="unset" right="0" top="0">
           <template #activator="{ on }">
             <v-icons icon="esp" @click="on.click"></v-icons>
@@ -22,7 +22,7 @@
           </v-list>
         </v-dropdown>
       </div>
-      <div class="app-header__burger d-flex a-center j-center d-lg-none" @click.stop="onDrawer">
+      <div class="app-header__burger flex items-center justify-center lg:hidden" @click.stop="onDrawer">
         <v-icons icon="burger"></v-icons>
       </div>
     </div>

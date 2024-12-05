@@ -1,7 +1,7 @@
 <template>
-  <div class="page-config container">
+  <div class="page-config container mx-auto">
     <div class="row">
-      <div class="col sm12 mb-6 d-flex a-center">
+      <div class="col sm12 mb-6 flex items-center">
         <h1 class="text-h2">Config</h1>
         <div class="v-spacer"></div>
         <v-dropdown right="0" left="unset" top="0">

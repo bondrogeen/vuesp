@@ -5,7 +5,9 @@
         <div class="col sm12 md6">
           <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
         </div>
+
         <div class="col sm12"></div>
+
         <div class="col sm12 md6">
           <v-input v-model="settings.wifiSsid" label="SSID" :disabled="isWifi" :append-button="!isWifi" :rules="[rules.required, rules.max]" @on-icon="onScan(false)">
             <template #icon>
@@ -13,6 +15,7 @@
             </template>
           </v-input>
         </div>
+
         <div class="col sm12 md6">
           <v-input id="wifiPass" v-model="settings.wifiPass" label="Password" :disabled="isWifi" :type="showPass ? 'text' : 'password'" :rules="[rules.min, rules.max]" @on-icon="showPass = !showPass">
             <template #icon>
@@ -20,32 +23,38 @@
             </template>
           </v-input>
         </div>
+
         <div class="col sm12 mb-4">
           <v-checkbox v-model="settings.wifiDhcp">DHCP</v-checkbox>
         </div>
+
         <div class="col sm12 md6">
           <v-input v-model="wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
+
         <div class="col sm12 md6">
           <v-input v-model="wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
+
         <div class="col sm12 md6">
           <v-input v-model="wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
+
         <div class="col sm12 md6">
           <v-input v-model="wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
         </div>
       </div>
     </v-expansion>
+
     <v-expansion label="Security">
-      <div class="row">
-        <div class="col sm12 mb-6">
-          <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
-        </div>
-        <div class="col sm12 md6">
+      <div class="col sm12 mb-6">
+        <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           <v-input v-model="settings.authLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
         </div>
-        <div class="col sm12 md6">
+        <div>
           <v-input v-model="settings.authPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
             <template #icon>
               <v-icons :icon="`${showPass ? 'eye-open' : 'eye-close'}`"></v-icons>
@@ -54,15 +63,17 @@
         </div>
       </div>
     </v-expansion>
+
     <div class="row mt-6">
-      <div class="col sm12 d-flex j-end">
+      <div class="col sm12 flex j-end">
         <v-button @click="onSave">Save</v-button>
       </div>
     </div>
+
     <AppDialog title="SCAN" :value="showDialog" @close="onClose">
       <div>
         <v-list v-slot="{ item }" :list="scanList">
-          <div class="d-flex a-center w-100" @click="onSelectSsid(item)">
+          <div class="flex items-center w-100" @click="onSelectSsid(item)">
             <div class="mr-2"><WifiIcon v-bind="item" /></div>
             <div>
               <div class="text-title1">{{ item.ssid }}</div>
