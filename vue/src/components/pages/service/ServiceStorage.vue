@@ -1,7 +1,7 @@
 <template>
   <div class="files">
-    <div class="files__path d-flex a-center">
-      <div class="files__route d-flex gap-4 a-center text-h5 fw-600 grey-base">
+    <div class="files__path flex items-center">
+      <div class="files__route flex gap-4 items-center text-h5 fw-600 grey-base">
         <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i)">
           <div class="mr-2">{{ value }}</div>
           <v-icons icon="next"></v-icons>
@@ -20,8 +20,8 @@
     <div class="files__list">
       <v-loader v-if="isLoading" />
       <ul class="v-list">
-        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item d-flex a-center pa-0">
-          <div class="d-flex a-center v-spacer my-2" @click="onNext(isDir, name)">
+        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item flex items-center pa-0">
+          <div class="flex items-center v-spacer my-2" @click="onNext(isDir, name)">
             <div class="mr-4">
               <v-icons :icon="isDir ? `folder` : 'file'"></v-icons>
             </div>

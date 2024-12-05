@@ -5,7 +5,8 @@ import { useWebSocket } from './stores/WebSocket';
 import App from './App.vue';
 import router from './router';
 
-import '@/assets/scss/index.scss';
+// import '@/assets/scss/index.scss';
+import '@/assets/tailwind.css';
 
 import { add } from './components/global';
 import directives from '@/utils/directives';

@@ -1,30 +1,30 @@
 <template>
-  <div class="service-update">
+  <div class="p-4">
     <div class="text-h5 mb-2">Update</div>
-    <div class="mb-4 d-flex a-center">
+    <div class="mb-4 flex items-center">
       <div class="service-update__title text-title-1">Frimware:</div>
       <v-input-file v-slot="{ files }" accept=".bin" @change="onUpdateFrimware">
         <span class="grey-base">{{ getFileNames(files) }}</span>
       </v-input-file>
-      <div class="v-spacer"></div>
+      <div class="flex-auto"></div>
       <v-button size="small" :disabled="isDisabledFrimware" @click="onSureFlash('frimware')">Update</v-button>
     </div>
-    <div class="d-flex a-center mb-4">
+    <div class="flex items-center mb-4">
       <div class="service-update__title text-title-1">Littlefs:</div>
       <v-input-file v-slot="{ files }" accept=".bin" @change="onUpdateLittlefs">
         <span class="grey-base">{{ getFileNames(files) }}</span>
       </v-input-file>
-      <div class="v-spacer"></div>
+      <div class="flex-auto"></div>
       <v-button size="small" :disabled="isDisabledLittlefs" @click="onSureFlash('littlefs')">Update</v-button>
     </div>
     <div class="text-h5 mb-2">Reboot</div>
-    <div class="d-flex a-center mb-4">
-      <div class="v-spacer grey-base">Reboot device</div>
+    <div class="flex items-center mb-4">
+      <div class="flex-auto grey-base">Reboot device</div>
       <v-button size="small" @click="onEmit('reboot')">Reboot</v-button>
     </div>
     <div class="text-h5 mb-2">Reset</div>
-    <div class="d-flex a-center mb-4">
-      <div class="v-spacer grey-base">Reset configuration</div>
+    <div class="flex items-center mb-4">
+      <div class="flex-auto grey-base">Reset configuration</div>
       <v-button size="small" @click="onEmit('reset')">Reset</v-button>
     </div>
   </div>
@@ -70,11 +70,3 @@ const onSureFlash = name =>
 
 const onEmit = name => emit(name);
 </script>
-
-<style lang="scss">
-.service-update {
-  &__title {
-    min-width: 100px;
-  }
-}
-</style>

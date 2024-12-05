@@ -1,6 +1,6 @@
 <template>
   <div class="v-card">
-    <div class="v-card__header d-flex j-between">
+    <div class="v-card__header flex justify-between">
       <slot name="header"></slot>
     </div>
     <div class="v-card__content">

@@ -3,7 +3,7 @@
     <div class="file-info__body my-6 mb-10">
       <v-progressbar :value="procent"></v-progressbar>
     </div>
-    <div class="file-info__footer d-flex j-between">
+    <div class="file-info__footer flex justify-between">
       <div v-for="(item, key) in date" :key="key" class="center">
         <div class="text-title-1 grey-base">{{ key }}</div>
         <div class="text-h6">{{ toByte(item) }}</div>

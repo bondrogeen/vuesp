@@ -1,7 +1,7 @@
 <template>
-  <footer class="app-footer">
-    <div class="d-flex a-center j-between container">
-      <div class="d-md-flex a-center flex-wrap gap-4">
+  <footer class="py-4 px-4 bg-blue-50">
+    <div class="flex items-center justify-between container mx-auto">
+      <div class="md:flex items-center flex-wrap gap-4">
         <div>© 2021 - {{ new Date().getFullYear() }} Vuesp.</div>
 
         <div>
@@ -31,14 +31,3 @@ const props = defineProps({
 
 const getFirmware = computed(() => props.firmware.join('.'));
 </script>
-
-<style lang="scss">
-.app-footer {
-  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.1);
-  background-color: var(--bg-2);
-  padding: 30px 0;
-  &__inner {
-    flex-wrap: wrap;
-  }
-}
-</style>
