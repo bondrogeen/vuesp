@@ -19,7 +19,7 @@ Device device = {
     KEY_DEVICE,
     0,
     0,
-    0,
+    255,
     0,
     0,
     0,
@@ -61,6 +61,8 @@ void onSendTemp() {
 
 void getDef() {
   uint8_t isOk = readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+  Serial.println("device");
+  Serial.println(device.output);
   if (!isOk) {
     writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
   }
@@ -78,6 +80,19 @@ void getOutput() {
   while (Wire.available()) {
     device.output = Wire.read();
   }
+}
+
+void setOutput() {
+  Wire.beginTransmission(ADDRESS_OUTPUT);
+  Wire.write(device.output);
+  Wire.endTransmission();
+}
+
+void setDAC() {
+#if defined(ESP32)
+  dacWrite(DAC1, device.dac1);
+  dacWrite(DAC2, device.dac2);
+#endif
 }
 
 void getADC() {
@@ -110,6 +125,7 @@ void setDate(uint32_t unixTime) {
 }
 
 uint32_t getDate() {
+  uint32_t unixTime = 0;
   Wire.beginTransmission(ADDRESS_RTC);
   Wire.write(0);
   Wire.endTransmission(true);
@@ -124,7 +140,9 @@ uint32_t getDate() {
   uint8_t year = bcdToDec(Wire.read());
 
   stamp.setDateTime(2000 + year, month, monthDay, hour, minute, second);
-  return stamp.getUnix();
+  unixTime = stamp.getUnix();
+  device.now = unixTime;
+  return unixTime;
 }
 
 void getGPIO() {
@@ -138,8 +156,10 @@ void setupFirstDevice() {
 
 void setupDevice() {
   Wire.begin(GPIO_SDA, GPIO_SCL);
+  setOutput();
+  setDAC();
   getADC();
-  device.now = getDate();
+  getDate();
   getOutput();
   getGPIO();
 }
@@ -194,36 +214,39 @@ void findDallas() {
   }
 }
 
+void getData() {
+  getADC();
+  getInput();
+  getOutput();
+  getDate();
+}
+
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-
-    getInput();
-    getADC();
+    getData();
     onSend();
+
     findDallas();
   }
+
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
 
     if (device.command == 1) {
       setDate(device.now);
+    } else if (device.command == 2) {
+      setOutput();
+    } else if (device.command == 3) {
+      setDAC();
+    } else if (device.command == 4) {
+      device.command = 0;
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+    } else {
+      getData();
+      findDallas();
     }
-    if (device.command == 2) {
-      Wire.beginTransmission(ADDRESS_OUTPUT);
-      Wire.write(device.output);
-      Wire.endTransmission();
-    }
-    if (device.command == 3) {
-#if defined(ESP32)
-      dacWrite(DAC1, device.dac1);
-      dacWrite(DAC2, device.dac2);
-#endif
-    }
-    if (device.command == 4) {
-      getDef();
-    }
-    device.now = getDate();
+
     device.command = 0;
     onSend();
   };
