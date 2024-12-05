@@ -4,6 +4,7 @@
 #include <Wire.h>
 
 #include "./include/UnixTime.h"
+#include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
@@ -61,13 +62,7 @@ void onSendTemp() {
 void getDef() {
   uint8_t isOk = readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
   if (!isOk) {
-#if defined(ESP32)
-    if (createDir(DEF_DIR_DEVICE)) {
-      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-    }
-#else
-    writeFile(DEF_PATH_CONFIG, (uint8_t *)device, sizeof(device));
-#endif
+    writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
   }
 }
 
@@ -135,7 +130,10 @@ uint32_t getDate() {
 void getGPIO() {
   getInput();
   onSend();
-  // getDef();
+}
+
+void setupFirstDevice() {
+  getDef();
 }
 
 void setupDevice() {
@@ -217,8 +215,13 @@ void loopDevice(uint32_t now) {
       Wire.endTransmission();
     }
     if (device.command == 3) {
+#if defined(ESP32)
       dacWrite(DAC1, device.dac1);
       dacWrite(DAC2, device.dac2);
+#endif
+    }
+    if (device.command == 4) {
+      getDef();
     }
     device.now = getDate();
     device.command = 0;

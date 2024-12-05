@@ -13,7 +13,7 @@
           <v-list :list="listPage" @click="onPage"></v-list>
         </v-dropdown>
       </div>
-      {{ dallas }}
+      {{ device }}
 
       <div class="col sm12 mb-4">
         <div class="page-main__card pa-4 d-flex j-between">
@@ -125,7 +125,7 @@ const overlay = inject('overlay');
 
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
-const isDallas = computed(() => Boolean(Object.values(dallas)?.length));
+const isDallas = computed(() => Boolean(Object.values(dallas?.value)?.length));
 
 const now = ref(0);
 
@@ -135,7 +135,10 @@ event.on('init', () => {
   webSocketStore.onSend('DEVICE');
 });
 
-const findName = (name, key) => config?.value?.[name]?.[key]?.name || `${key}`;
+const findName = (name, key) => {
+  const value = config?.value?.[name]?.[key]?.name;
+  return typeof value === 'undefined' ? `${key}` : value;
+};
 
 const onPage = item => {
   console.log(item);
