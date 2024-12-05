@@ -1,6 +1,7 @@
 #include "./include/gpio.h"
 
 #include "./include/device.h"
+#include "./include/files.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
 
@@ -46,18 +47,15 @@ void initGpio() {
   attachInterrupt(13, btnIsr, FALLING);
 }
 
-void setupGPIO() {
+void setupFirstGPIO() {
   uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
   if (!isOk) {
-    defPorts();
-#if defined(ESP32)
-    if (createDir(DEF_DIR_DEVICE)) {
-      writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-    }
-#else
     writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-#endif
   }
+}
+
+void setupGPIO() {
+  defPorts();
   initGpio();
 }
 

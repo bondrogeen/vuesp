@@ -1,27 +1,59 @@
 #include "./include/device.h"
+#include "./include/eeprom.h"
+#include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
 #include "./include/webserver.h"
 
+#if defined(ESP8266)
+uint32_t id = ESP.getChipId();
+#elif defined(ESP32)
+uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 24);
+#endif
+
 uint32_t now;
-uint8_t isInit = 0;
+
+uint8_t isSetup = false;
+uint8_t isInit = false;
+uint8_t isFirst = false;
 
 void setup() {
-  setupInit();
-  setupServer();
+  Serial.begin(115200);
+  initFS();
+  initEEprom();
+}
+
+void setupFirst() {
+  setupFirstDevice();
+  setupFirstGPIO();
+}
+
+void setupDelay() {
+  getInfo(infoFS, id);
+  loadConfig(settings, id);
+  initWiFi();
+  setupGPIO();
   setupDevice();
+  setupServer();
 }
 
 void loop() {
   now = millis();
-  if (!isInit && now > 5000) {
-    setupGPIO();
-    isInit = true;
+  if (!isFirst && now > 100) {
+    setupFirst();
+    isFirst = true;
   }
 
-  loopServer(now);
-  loopTask(now);
-  loopGPIO(now);
-  loopDevice(now);
+  if (!isSetup && now > 1000) {
+    setupDelay();
+    isSetup = true;
+  }
+
+  if (isSetup) {
+    loopServer(now);
+    loopTask(now);
+    loopGPIO(now);
+    loopDevice(now);
+  }
 }

@@ -1,6 +1,7 @@
 #include "./include/webserver.h"
 
 #include "./include/device.h"
+#include "./include/files.h"
 #include "./include/tasks.h"
 
 AsyncWebServer server(80);

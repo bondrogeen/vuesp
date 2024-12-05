@@ -19,7 +19,7 @@
 
         <div class="row">
           <div v-for="(field, k) in item" :key="`${k}`" class="col sm12 md6">
-            <v-input v-model="field.name" :label="`${k}`" />
+            <v-input :model-value="getValue(field, k)" :label="`Name`" @update:model-value="onInput(key, k, $event)" />
           </div>
         </div>
       </div>
@@ -61,6 +61,14 @@ const onSave = async e => {
 };
 const onClose = e => {
   showDialog.value = false;
+};
+const getValue = (field, k) => {
+  return typeof field.name === 'undefined' ? k : '';
+};
+
+const onInput = (name, key, value) => {
+  config.value[name][key].name = value;
+  console.log(name, key, value);
 };
 
 onMounted(async () => {

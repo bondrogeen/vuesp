@@ -1,6 +1,9 @@
 #include "./include/tasks.h"
+
+#include "./include/eeprom.h"
+#include "./include/files.h"
+
 uint8_t tasks[KEY_END];
-// uint32_t lastTime = 0;
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
