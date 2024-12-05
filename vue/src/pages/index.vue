@@ -140,8 +140,12 @@ const findName = (name, key) => {
   return typeof value === 'undefined' ? `${key}` : value;
 };
 
-const onPage = item => {
-  console.log(item);
+const onPage = ({ id }) => {
+  // if (id === 1) {
+  // }
+  if (id === 2) {
+    onSaveDef();
+  }
 };
 const isDac = value => !(value >= 0 && value <= 255);
 
@@ -155,10 +159,14 @@ const onSetOutput = (pin, value) => {
   device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
   webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
 };
+
 const onDac = (i, value) => {
   console.log(i, value);
   device.value[`dac${i}`] = value;
   webSocketStore.onSend('DEVICE', { ...device.value, command: 3 });
+};
+const onSaveDef = () => {
+  webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
 };
 
 const onSend = () => {

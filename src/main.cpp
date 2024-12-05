@@ -40,12 +40,12 @@ void setupDelay() {
 
 void loop() {
   now = millis();
-  if (!isFirst && now > 100) {
+  if (!isFirst) {
     setupFirst();
     isFirst = true;
   }
 
-  if (!isSetup && now > 1000) {
+  if (!isSetup && now > 100) {
     setupDelay();
     isSetup = true;
   }
