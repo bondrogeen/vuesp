@@ -1,12 +1,13 @@
 <template>
-  <label class="v-input-file">
-    <input type="file" v-bind="$attrs" @change="onChange" />
+  <label class="flex items-center cursor-pointer">
+    <input type="file" class="hidden" v-bind="$attrs" @change="onChange" />
     <slot v-bind="selectFiles"></slot>
   </label>
 </template>
 
 <script setup>
 import { ref, defineEmits } from 'vue';
+
 const emit = defineEmits(['change']);
 const selectFiles = ref({ files: [], totalSize: 0 });
 
@@ -24,15 +25,3 @@ const onChange = async e => {
   emit('change', { files, info });
 };
 </script>
-
-<style lang="scss">
-.v-input-file {
-  position: relative;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  input[type='file'] {
-    display: none;
-  }
-}
-</style>

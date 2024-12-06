@@ -1,11 +1,11 @@
 <template>
   <v-dropdown class="v-select" v-bind="$attrs">
     <template #activator="{ on, show }">
-      <v-input :key="value" :model-value="value" :title="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
+      <VTextField :key="value" :model-value="value" :title="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
         <template #icon>
-          <v-icons :class="['v-select__icon', { 'v-select__icon--active': show }]" icon="select"></v-icons>
+          <IconSelect class="transition duration-500 ease-in-out" :class="getClass(show)"></IconSelect>
         </template>
-      </v-input>
+      </VTextField>
     </template>
     <v-list v-slot="{ item }" :list="list" @click="onChange">
       <slot :item="item">{{ item.name }}</slot>
@@ -15,6 +15,9 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
+
+import IconSelect from '@/components/icons/IconSelect';
+import VTextField from '@/components/general/VTextField';
 
 defineProps({
   value: { type: String, default: '' },
@@ -27,6 +30,7 @@ defineProps({
 const emit = defineEmits(['change']);
 
 const onChange = e => emit('change', e);
+const getClass = show => ({ 'rotate-180': show });
 </script>
 
 <style lang="scss">

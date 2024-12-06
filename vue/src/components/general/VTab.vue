@@ -3,8 +3,10 @@
     <slot></slot>
   </div>
 </template>
+
 <script setup>
 import { defineProps, inject, computed } from 'vue';
+
 const props = defineProps({
   type: { type: String, default: 'VTab', requared: true },
   label: { type: String, default: '' },

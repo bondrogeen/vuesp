@@ -1,47 +1,29 @@
 <template>
   <div class="container mx-auto">
     <h1 class="mb-6">Service</h1>
-    <div class="grid grid-cols-2">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div>
-        <v-tabs>
-          <v-tab label="Settings" icon="connect">
+        <VTabs>
+          <VTab label="Settings" icon="connect">
             <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
-          </v-tab>
+          </VTab>
 
-          <v-tab label="Storage" icon="storage">
-            <div class="row">
-              <h2 class="col sm12 text-h5 mb-4">File system</h2>
+          <VTab label="Storage" icon="storage">
+            <ServiceStorage v-model="path" :files="fileList" :progress="progress" :info="info" @send="onSend" />
+          </VTab>
 
-              <div class="col sm12">
-                <ServiceStorage v-model="path" :files="fileList" :progress="progress" :info="info" @send="onSend" />
-              </div>
-            </div>
-          </v-tab>
+          <VTab label="System" icon="update">
+            <ServiceSystem @reboot="onSureReboot" @reset="onSureReset" />
+          </VTab>
 
-          <v-tab label="System" icon="update">
-            <div class="row">
-              <div class="col sm12">
-                <ServiceSystem @reboot="onSureReboot" @reset="onSureReset" />
-              </div>
-            </div>
-          </v-tab>
-
-          <!-- <v-tab label="Other" icon="onher">
-            <div class="row"></div>
-          </v-tab> -->
-
-          <!-- <v-tab label="GPIO" icon="onher">
-            <div class="row">
-              <div class="col sm12">
-                <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
-              </div>
-            </div>
-          </v-tab> -->
-        </v-tabs>
+          <VTab label="GPIO" icon="onher">
+            <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
+          </VTab>
+        </VTabs>
       </div>
 
       <div class="">
-        <ServiceInfo v-bind="info" class="page-main__file-info" />
+        <ServiceInfo v-bind="info" class="" />
       </div>
     </div>
   </div>
@@ -57,6 +39,9 @@ import ServiceStorage from '@/components/pages/service/ServiceStorage';
 import ServiceSettings from '@/components/pages/service/ServiceSettings';
 import ServiceInfo from '@/components/pages/service/ServiceInfo';
 import ServiceSystem from '@/components/pages/service/ServiceSystem';
+
+import VTabs from '@/components/general/VTabs';
+import VTab from '@/components/general/VTab';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 

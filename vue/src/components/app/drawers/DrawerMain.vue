@@ -1,12 +1,12 @@
 <template>
-  <div class="h-100 drawer-main flex f-column">
-    <div class="drawer-main__menu v-spacer mt-6">
-      <v-main-menu class="flex items-center f-column gap-6 text-h3" @route="onClose" />
+  <div class="h-100 flex flex-col">
+    <div class="flex-1 mt-6">
+      <VMainMenu class="flex items-center flex-col gap-6" @route="onClose" />
     </div>
-    <div class="flex items-center f-column mb-6">
+    <div class="flex items-center flex-col mb-6">
       <div v-for="(item, key) in data" :key="key">
         {{ key }}:
-        <span class="grey-base">{{ item }}</span>
+        <span class="text-gray-400 text-body">{{ item }}</span>
       </div>
     </div>
   </div>
@@ -14,6 +14,8 @@
 
 <script setup>
 import { computed, defineEmits, defineProps } from 'vue';
+
+import VMainMenu from '@/components/general/VMainMenu';
 const props = defineProps({
   state: { type: Boolean, default: false },
   info: { type: Object, default: () => {} },

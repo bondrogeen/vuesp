@@ -6,16 +6,16 @@
 
         <div>
           Firmware:
-          <span class="text-small grey-darken-1">(ver.{{ getFirmware }})</span>
+          <span class="text-gray-400 text-body">(ver.{{ getFirmware }})</span>
         </div>
 
         <div>
           ID:
-          <span class="grey-darken-1">{{ id.toString(16) }}</span>
+          <span class="text-gray-400 text-body">{{ id.toString(16) }}</span>
         </div>
       </div>
 
-      <div class="app-footer__link">
+      <div>
         <a href="https://github.com/bondrogeen/vuesp" target="_blank">GitHub</a>
       </div>
     </div>

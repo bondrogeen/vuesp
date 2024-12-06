@@ -1,31 +1,45 @@
 <template>
   <div class="p-4">
-    <div class="text-h5 mb-2">Update</div>
+    <h5 class="mb-2">Update</h5>
+
     <div class="mb-4 flex items-center">
-      <div class="service-update__title text-title-1">Frimware:</div>
-      <v-input-file v-slot="{ files }" accept=".bin" @change="onUpdateFrimware">
-        <span class="grey-base">{{ getFileNames(files) }}</span>
-      </v-input-file>
-      <div class="flex-auto"></div>
-      <v-button size="small" :disabled="isDisabledFrimware" @click="onSureFlash('frimware')">Update</v-button>
+      <div class="md:flex flex-auto gap-4">
+        <h6 class="text-gray-400">Firmware:</h6>
+
+        <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
+          <span class="">{{ getFileNames(files) }}</span>
+        </VTextFieldFile>
+      </div>
+
+      <v-button size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
     </div>
-    <div class="flex items-center mb-4">
-      <div class="service-update__title text-title-1">Littlefs:</div>
-      <v-input-file v-slot="{ files }" accept=".bin" @change="onUpdateLittlefs">
-        <span class="grey-base">{{ getFileNames(files) }}</span>
-      </v-input-file>
-      <div class="flex-auto"></div>
-      <v-button size="small" :disabled="isDisabledLittlefs" @click="onSureFlash('littlefs')">Update</v-button>
+
+    <div class="flex items-center gap-4 mb-4">
+      <div class="md:flex flex-auto gap-4">
+        <h6 class="text-gray-400">LittleFS:</h6>
+
+        <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
+          <span class="">{{ getFileNames(files) }}</span>
+        </VTextFieldFile>
+      </div>
+
+      <v-button size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
     </div>
-    <div class="text-h5 mb-2">Reboot</div>
+
+    <h5 class="mb-2">Reboot</h5>
+
     <div class="flex items-center mb-4">
-      <div class="flex-auto grey-base">Reboot device</div>
-      <v-button size="small" @click="onEmit('reboot')">Reboot</v-button>
+      <div class="flex-auto text-gray-400">Reboot device</div>
+
+      <v-button size="small" @click="emit('reboot')">Reboot</v-button>
     </div>
-    <div class="text-h5 mb-2">Reset</div>
+
+    <h5 class="mb-2">Reset</h5>
+
     <div class="flex items-center mb-4">
-      <div class="flex-auto grey-base">Reset configuration</div>
-      <v-button size="small" @click="onEmit('reset')">Reset</v-button>
+      <div class="flex-auto text-gray-400">Reset configuration</div>
+
+      <v-button size="small" @click="emit('reset')">Reset</v-button>
     </div>
   </div>
 </template>
@@ -33,14 +47,16 @@
 <script setup>
 import { computed, ref, defineEmits, inject, nextTick } from 'vue';
 
+import VTextFieldFile from '@/components/general/VTextFieldFile';
+
 const emit = defineEmits(['done', 'reboot', 'reset']);
 const dialog = inject('dialog');
 
-const selectFile = ref({ littlefs: null, frimware: null });
-const onUpdateFrimware = e => (selectFile.value.frimware = e);
-const onUpdateLittlefs = e => (selectFile.value.littlefs = e);
-const isDisabledFrimware = computed(() => Boolean(!selectFile.value?.frimware));
-const isDisabledLittlefs = computed(() => Boolean(!selectFile.value?.littlefs));
+const selectFile = ref({ LittleFS: null, firmware: null });
+const onUpdateFirmware = e => (selectFile.value.firmware = e);
+const onUpdateLittleFS = e => (selectFile.value.littlefs = e);
+const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
+const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
 
 const getFileNames = files => (files.length ? files.map(i => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
 const getName = name => (selectFile.value?.[name]?.info?.files || []).map(i => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
@@ -58,15 +74,13 @@ const onFlash = async name => {
   if (res?.state) dialog({ value: true, title: 'Done', message: 'Reboot...' });
 };
 
-const updateFirmware = () => nextTick(() => onFlash('frimware'));
-const updateLittlefs = () => nextTick(() => onFlash('littlefs'));
+const updateFirmware = () => nextTick(() => onFlash('firmware'));
+const updateLittleFS = () => nextTick(() => onFlash('LittleFS'));
 
 const onSureFlash = name =>
   dialog({
     value: true,
     message: `Are you sure you want to update the ${name}? <br/> <p class="grey-base text-body-1 mt-2" >${getName(name)}</p>`,
-    callback: name === 'frimware' ? updateFirmware : updateLittlefs,
+    callback: name === 'firmware' ? updateFirmware : updateLittleFS,
   });
-
-const onEmit = name => emit(name);
 </script>

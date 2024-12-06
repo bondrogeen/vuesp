@@ -1,20 +1,24 @@
 <template>
   <transition name="fade">
-    <div v-if="value" class="app-dialog" :class="getClass" @wheel.stop>
-      <div class="app-dialog__overlay" @click="onClose"></div>
-      <div class="app-dialog__wrapper">
-        <div class="app-dialog__card">
-          <div class="app-dialog__header text-h5">
-            <v-icons class="app-dialog__close" icon="close" @click="onClose"></v-icons>
-            <slot name="header">{{ title }}</slot>
+    <div v-if="value" class="z-20 fixed top-0 h-[100dvh] w-full left-0 flex flex-col" @wheel.stop>
+      <div class="app-dialog__overlay bg-gray-900 opacity-40" @click="onClose"></div>
+      <div class="flex-auto flex align-center p-4">
+        <div class="m-auto w-full bg-white shadow-lg flex flex-col rounded-lg z-30" :class="getClass">
+          <div class="flex justify-between px-4 py-2 border-b">
+            <h3>
+              <slot name="header">{{ title }}</slot>
+            </h3>
+            <button class="transition text-gray-400 hover:text-black">
+              <IconClose @click="onClose"></IconClose>
+            </button>
           </div>
-          <div class="app-dialog__body text-title-1 scroll-none">
-            <v-progressbar v-if="isProgress" :value="procent" />
+          <div class="px-4 py-2 flex-auto scroll-none">
+            <v-progressbar v-if="isProgress" :value="percent" />
             <slot>
               <div v-html="message"></div>
             </slot>
           </div>
-          <div v-if="$slots.footer || callback" class="app-dialog__footer">
+          <div v-if="$slots.footer || callback" class="px-4 py-2 flex justify-end">
             <slot name="footer">
               <v-button size="small" @click="onButton">{{ button }}</v-button>
             </slot>
@@ -27,6 +31,10 @@
 
 <script setup>
 import { defineProps, defineEmits, computed, watch, inject, onMounted } from 'vue';
+
+import VProgressbar from '@/components/general/VProgressbar';
+import IconClose from '@/components/icons/IconClose';
+
 const props = defineProps({
   value: { type: Boolean, default: false },
   title: { type: String, default: 'Attention !' },
@@ -40,8 +48,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
-const procent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
-const getClass = computed(() => [`app-dialog--${props.size}`]);
+
+const sizes = { sm: 'max-w-[240px]', md: 'max-w-[600px]', lg: 'max-w-[960px]' };
+const percent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
+const getClass = computed(() => [`${sizes?.[props.size]}`]);
 
 const overlay = inject('overlay');
 const onClose = e => emit('close', e);
@@ -61,86 +71,12 @@ onMounted(() => {
 
 <style lang="scss">
 .app-dialog {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100dvh;
-  width: 100%;
-  z-index: 11;
-
-  display: flex;
-  flex-direction: column;
-
-  &__wrapper {
-    // height: 100%;
-    // max-height: 500px;
-    flex: 1 1;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  &__close {
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translate(0, -50%);
-    svg {
-      height: 20px;
-    }
-  }
   &__overlay {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-  }
-  &__card {
-    margin: auto;
-    width: 100%;
-
-    border-radius: 4px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--bg-1);
-    box-shadow: 0px 8px 35px -2px var(--shadow-1);
-  }
-
-  &__header {
-    position: relative;
-    padding: 10px 20px;
-    border-bottom: 1px solid var(--border-1);
-  }
-  &__body {
-    flex: 1 1 auto;
-    padding: 15px 20px;
-    min-height: 70px;
-    max-height: 500px;
-    overflow: auto;
-  }
-  &__footer {
-    text-align: end;
-    padding: 10px 15px;
-    flex: 0 0 40px;
-  }
-
-  &--sm {
-    .app-dialog__card {
-      max-width: 280px;
-    }
-  }
-  &--md {
-    .app-dialog__card {
-      max-width: 600px;
-    }
-  }
-  &--lg {
-    .app-dialog__card {
-      max-width: 960px;
-    }
   }
 }
 </style>

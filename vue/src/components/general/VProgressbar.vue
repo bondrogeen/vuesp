@@ -6,7 +6,7 @@
     <span class="progress-right">
       <span class="progress-bar" :style="styleRight"></span>
     </span>
-    <div class="progress-value text-h4">{{ getValue }}%</div>
+    <div class="progress-value ">{{ getValue }}%</div>
   </div>
 </template>
 

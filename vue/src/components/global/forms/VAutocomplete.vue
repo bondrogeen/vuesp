@@ -1,25 +1,28 @@
 <template>
-  <v-dropdown class="v-autocomplete" v-bind="$attrs">
+  <v-dropdown class="" v-bind="$attrs">
     <template #activator="{ show, on }">
-      <v-input :value="show ? search : currentUser" :placeholder="show ? 'Поиск' : placeholder" @click="on.click" @input="onInput" @focus="search = ''">
+      <VTextField :value="show ? search : currentUser" :placeholder="show ? 'Поиск' : placeholder" @click="on.click" @input="onInput" @focus="search = ''">
         <template #icon>
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
             <path d="M1 1L5 5L9 1" stroke="#ABB5BE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </template>
-      </v-input>
+      </VTextField>
     </template>
     <div>
       <v-list v-slot="{ item }" :list="getList" @click="$emit('change', $event)">
         <slot :item="item">{{ item[valueName] }}</slot>
       </v-list>
     </div>
-    <div v-if="isEmpty" class="v-autocomplete__empty">Not found</div>
+    <div v-if="isEmpty" class="p-4 py-2">Not found</div>
   </v-dropdown>
 </template>
 
 <script setup>
 import { ref, computed, defineProps, defineEmits } from 'vue';
+
+import VTextField from '@/components/general/VTextField';
+
 const props = defineProps({
   value: { type: String, default: '' },
   valueName: { type: String, default: 'name' },
@@ -40,12 +43,3 @@ const isEmpty = computed(() => Boolean(!getList?.value?.length));
 
 const onInput = e => (search.value = e.target.value);
 </script>
-
-<style lang="scss">
-.v-autocomplete {
-  position: relative;
-  &__empty {
-    padding: 5px 15px;
-  }
-}
-</style>
