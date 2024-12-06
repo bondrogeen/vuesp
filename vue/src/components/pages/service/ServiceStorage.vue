@@ -1,14 +1,14 @@
 <template>
   <div class="files">
     <div class="files__path flex items-center">
-      <div class="files__route flex gap-4 items-center text-h5 fw-600 grey-base">
+      <div class="files__route flex gap-4 items-center  fw-600 grey-base">
         <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i)">
           <div class="mr-2">{{ value }}</div>
           <v-icons icon="next"></v-icons>
         </div>
       </div>
       <div>
-        <v-input-file @change="onUpload"></v-input-file>
+        <VTextFieldFile @change="onUpload"></VTextFieldFile>
         <v-dropdown right="0" left="unset" top="0">
           <template #activator="{ on }">
             <v-icons icon="menu" @click="on.click"></v-icons>
@@ -45,6 +45,8 @@
 <script setup>
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
 import { toByte, debounce } from '@/utils/func/';
+
+import VTextFieldFile from '@/components/general/VTextFieldFile';
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },

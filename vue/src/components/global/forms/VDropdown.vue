@@ -1,10 +1,10 @@
 <template>
-  <div v-outside="outside" class="v-dropdown" :class="{ 'v-dropdown--opened': isShown }">
-    <div class="v-dropdown__activator">
+  <div v-outside="outside" class="v-dropdown relative">
+    <div class="flex items-center cursor-pointer">
       <slot name="activator" :on="{ click: onClick }" :show="isShown"></slot>
     </div>
     <transition name="slide-up">
-      <div v-if="isShown" class="v-dropdown__content" :style="getStyle" @click="onClick">
+      <div v-if="isShown" class="v-dropdown__content z-10 min-w-full absolute overflow-auto shadow-lg" :style="getStyle" @click="onClick">
         <slot :show="onShow" :hide="hide" :is-shown="isShown"></slot>
       </div>
     </transition>
@@ -47,28 +47,8 @@ const hide = e => {
 
 <style lang="scss">
 .v-dropdown {
-  position: relative;
-  &__activator {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
   &__content {
-    position: absolute;
-    overflow: auto;
     top: calc(100% + 5px);
-    box-shadow: 0 6px 12px var(--shadow-1);
-    border: none;
-    border-radius: 0;
-    min-width: 100%;
-    z-index: 2;
-    transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-    background-color: var(--list-bg);
-  }
-  &--opened {
-    .b-dropdown__activator::before {
-      transform: rotate(180deg);
-    }
   }
 }
 </style>

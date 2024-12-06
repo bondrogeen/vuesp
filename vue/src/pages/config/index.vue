@@ -1,29 +1,26 @@
 <template>
-  <div class="page-config container mx-auto">
-    <div class="row">
-      <div class="col sm12 mb-6 flex items-center">
-        <h1 class="text-h2">Config</h1>
-        <div class="v-spacer"></div>
-        <v-dropdown right="0" left="unset" top="0">
-          <template #activator="{ on }">
-            <v-icons icon="menu" @click="on.click"></v-icons>
-          </template>
-          <v-list :list="listMenu" @click="onUploadFile"></v-list>
-        </v-dropdown>
-      </div>
+  <div class="container mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+      <h1>Config</h1>
+      <v-dropdown right="0" left="unset" top="0">
+        <template #activator="{ on }">
+          <v-icons icon="menu" @click="on.click"></v-icons>
+        </template>
+        <v-list :list="listMenu" @click="onUploadFile"></v-list>
+      </v-dropdown>
     </div>
-    {{ config }}
-    <div class="row">
-      <div v-for="(item, key) in config" :key="key" label="key" class="col sm12">
-        <h2 class="text-h5 mb-6">{{ key }}</h2>
 
-        <div class="row">
-          <div v-for="(field, k) in item" :key="`${k}`" class="col sm12 md6">
-            <v-input :model-value="getValue(field, k)" :label="`Name`" @update:model-value="onInput(key, k, $event)" />
+    <div class="grid grid-cols-1 gap-4">
+      <div v-for="(item, key) in config" :key="key" label="key" class="">
+        <h3 class="mb-6">{{ key }}</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div v-for="(field, k) in item" :key="`${k}`">
+            <VTextField :model-value="getValue(field, k)" :label="`Name`" @update:model-value="onInput(key, k, $event)" />
           </div>
         </div>
       </div>
-      <div class="col sm12">
+      <div>
         <v-button @click="onSave">Save</v-button>
       </div>
     </div>
@@ -44,6 +41,7 @@ import { getConfig, saveConfig } from '@/utils/fs/';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import AppDialog from '@/components/app/AppDialog';
+import VTextField from '@/components/general/VTextField';
 
 const webSocketStore = useWebSocketStore();
 const { dallas } = storeToRefs(webSocketStore);
@@ -81,27 +79,3 @@ onMounted(async () => {
   config.value = await getConfig({ ds });
 });
 </script>
-
-<style lang="scss">
-.page-main {
-  position: relative;
-  &__list {
-    height: 400px;
-    overflow: auto;
-  }
-  &__item {
-    border-bottom: 1px solid var(--border-1);
-  }
-  &__time {
-    min-width: 150px;
-  }
-  &__date {
-    font-size: 16px;
-    height: 32px;
-  }
-  &__card {
-    border: 1px solid, var(--primary);
-    border-radius: 16px;
-  }
-}
-</style>

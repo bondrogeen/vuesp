@@ -1,81 +1,81 @@
 <template>
   <div class="container mx-auto">
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-h2">Main</h1>
+      <h1>Main</h1>
 
       <div class="v-spacer"></div>
 
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <v-icons icon="menu" @click="on.click"></v-icons>
+          <IconMenu @click="on.click"></IconMenu>
         </template>
         <v-list :list="listPage" @click="onPage"></v-list>
       </v-dropdown>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <GeneralCard class="flex justify-between col-span-full">
-        <h2 class="text-h4">Date</h2>
+        <h4>Date</h4>
 
         <div class="flex items-center">
-          <input :value="datetime" class="mr-4" type="datetime-local" @change="onDate" />
+          <input :value="datetime" type="datetime-local" @change="onDate" />
         </div>
       </GeneralCard>
 
-      <GeneralCard class="">
-        <h2 class="mb-6">INPUT</h2>
+      <VCard>
+        <h4 class="mb-6">INPUT</h4>
 
         <div class="flex flex-wrap gap-2">
           <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
-            <div class="text-small mb-1">{{ findName('input', `input${i + 1}`) }}</div>
+            <div class="mb-1">{{ findName('input', `input${i + 1}`) }}</div>
 
-            <v-button disabled class="">{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
+            <v-button disabled>{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
-      </GeneralCard>
+      </VCard>
 
-      <GeneralCard class="">
-        <h2 class="mb-6">OUTPUT</h2>
+      <VCard>
+        <h4 class="mb-6">OUTPUT</h4>
 
         <div class="flex flex-wrap gap-2">
           <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
-            <div class="text-small mb-1">{{ findName('output', `output${i + 1}`) }}</div>
+            <div class="mb-1">{{ findName('output', `output${i + 1}`) }}</div>
 
-            <v-button class="" @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
+            <v-button @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
-      </GeneralCard>
+      </VCard>
 
-      <GeneralCard class="">
-        <h2 class="mb-6">ADC</h2>
+      <VCard>
+        <h4 class="mb-6">ADC</h4>
 
         <div class="grid grid-cols-2">
           <div v-for="(pin, i) of 4" :key="`adc_${pin}`" class="flex gap-4">
-            <div class="text-small mb-1">{{ findName('adc', `adc${pin}`) }}:</div>
+            <div class="mb-1">{{ findName('adc', `adc${pin}`) }}:</div>
             {{ device[`adc${i + 1}`] }}
           </div>
         </div>
-      </GeneralCard>
+      </VCard>
 
-      <GeneralCard v-if="isDallas" class="">
-        <h2 class="mb-6">DS 18B20</h2>
+      <VCard v-if="isDallas">
+        <h4 class="mb-6">DS18B20</h4>
 
         <div class="grid grid-cols-2">
           <div v-for="(ds, key) in dallas" :key="`adc_${key}`">
-            <div class="text-small mb-1" :title="key">{{ findName('ds', key) }}:</div>
+            <div class="mb-1" :title="key">{{ findName('ds', key) }}:</div>
             {{ ds.temp }} ℃
           </div>
         </div>
-      </GeneralCard>
+      </VCard>
 
-      <GeneralCard class="">
-        <h2 class="mb-6">DAC</h2>
+      <VCard>
+        <h4 class="mb-6">DAC</h4>
 
         <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="flex gap-4">
-          <v-input v-model.number="dac[`dac${i + 1}`]" :label="findName('dac', `dac${pin}`)" />
-          <v-button class="" :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
+          <VTextField v-model.number="dac[`dac${i + 1}`]" :label="findName('dac', `dac${pin}`)" />
+          <v-button :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
         </div>
-      </GeneralCard>
+      </VCard>
     </div>
     <AppDialog size="lg" title="Config" :value="showDialog" @close="onClose">
       <template #footer>
@@ -95,7 +95,10 @@ import { getConfig } from '@/utils/fs/';
 import event from '@/assets/js/event';
 
 import AppDialog from '@/components/app/AppDialog';
-import GeneralCard from '@/components/general/GeneralCard';
+import VCard from '@/components/general/VCard';
+import VTextField from '@/components/general/VTextField';
+
+import IconMenu from '@/components/icons/IconMenu';
 
 const config = ref();
 

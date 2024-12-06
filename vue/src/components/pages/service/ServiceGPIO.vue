@@ -6,8 +6,8 @@
         <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
       </div>
     </div>
-    <div class="row mt-6">
-      <div class="col sm12 flex j-end">
+    <div class="mt-6">
+      <div class="flex j-end">
         <v-button class="mr-4" @click="onGetPort">Update</v-button>
         <v-button :disabled="!isDifferent" @click="onSave">Save</v-button>
       </div>

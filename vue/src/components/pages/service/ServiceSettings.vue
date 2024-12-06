@@ -1,48 +1,39 @@
 <template>
   <div>
     <v-expansion label="Wi-Fi" value>
-      <div class="row">
-        <div class="col sm12 md6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="">
           <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
         </div>
 
-        <div class="col sm12"></div>
-
-        <div class="col sm12 md6">
-          <v-input v-model="settings.wifiSsid" label="SSID" :disabled="isWifi" :append-button="!isWifi" :rules="[rules.required, rules.max]" @on-icon="onScan(false)">
+        <div class="col-start-1 col-span-1">
+          <VTextField v-model="settings.wifiSsid" label="SSID" :disabled="isWifi" :append-button="!isWifi" :rules="[rules.required, rules.max]" @on-icon="onScan(false)">
             <template #icon>
-              <v-icons icon="search"></v-icons>
+              <IconSearch></IconSearch>
             </template>
-          </v-input>
+          </VTextField>
         </div>
 
-        <div class="col sm12 md6">
-          <v-input id="wifiPass" v-model="settings.wifiPass" label="Password" :disabled="isWifi" :type="showPass ? 'text' : 'password'" :rules="[rules.min, rules.max]" @on-icon="showPass = !showPass">
+        <div class="">
+          <VTextField id="wifiPass" v-model="settings.wifiPass" label="Password" :disabled="isWifi" :type="showPass ? 'text' : 'password'" :rules="[rules.min, rules.max]" @on-icon="showPass = !showPass">
             <template #icon>
-              <v-icons :icon="`${showPass ? 'eye-open' : 'eye-close'}`"></v-icons>
+              <IconEyeOpen v-if="showPass"></IconEyeOpen>
+              <IconEyeClose v-else></IconEyeClose>
             </template>
-          </v-input>
+          </VTextField>
         </div>
 
-        <div class="col sm12 mb-4">
+        <div class="col-span-full mb-4">
           <v-checkbox v-model="settings.wifiDhcp">DHCP</v-checkbox>
         </div>
 
-        <div class="col sm12 md6">
-          <v-input v-model="wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
-        </div>
+        <VTextField v-model="wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
 
-        <div class="col sm12 md6">
-          <v-input v-model="wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
-        </div>
+        <VTextField v-model="wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
 
-        <div class="col sm12 md6">
-          <v-input v-model="wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
-        </div>
+        <VTextField v-model="wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
 
-        <div class="col sm12 md6">
-          <v-input v-model="wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
-        </div>
+        <VTextField v-model="wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
       </div>
     </v-expansion>
 
@@ -52,14 +43,15 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <v-input v-model="settings.authLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
+          <VTextField v-model="settings.authLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
         </div>
         <div>
-          <v-input v-model="settings.authPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
+          <VTextField v-model="settings.authPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
             <template #icon>
-              <v-icons :icon="`${showPass ? 'eye-open' : 'eye-close'}`"></v-icons>
+              <IconEyeOpen v-if="showPass"></IconEyeOpen>
+              <IconEyeClose v-else></IconEyeClose>
             </template>
-          </v-input>
+          </VTextField>
         </div>
       </div>
     </v-expansion>
@@ -70,14 +62,16 @@
       </div>
     </div>
 
-    <AppDialog title="SCAN" :value="showDialog" @close="onClose">
+    <AppDialog title="SCAN" size="md" :value="showDialog" @close="onClose">
       <div>
         <v-list v-slot="{ item }" :list="scanList">
-          <div class="flex items-center w-100" @click="onSelectSsid(item)">
-            <div class="mr-2"><WifiIcon v-bind="item" /></div>
+          <div class="flex items-center w-full" @click="onSelectSsid(item)">
+            <div class="mr-2">
+              <WifiIcon v-bind="item" />
+            </div>
             <div>
               <div class="text-title1">{{ item.ssid }}</div>
-              <div class="text-body-2 grey-base">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+              <div class="text-gray-400">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
         </v-list>
@@ -94,9 +88,15 @@
 
 <script setup>
 import { computed, ref, defineProps, defineEmits, inject } from 'vue';
-import { validateIP, min, max } from '@/utils/validate/';
+import { rules } from '@/utils/validate/';
 
 import AppDialog from '@/components/app/AppDialog';
+import WifiIcon from '@/components/general/WifiIcon';
+import VTextField from '@/components/general/VTextField';
+
+import IconSearch from '@/components/icons/IconSearch';
+import IconEyeOpen from '@/components/icons/IconEyeOpen';
+import IconEyeClose from '@/components/icons/IconEyeClose';
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) },
@@ -133,15 +133,6 @@ const settings = computed({
   set: value => emit('update:modelValue', value),
   get: () => props.modelValue,
 });
-
-const rules = {
-  required: value => !!value || 'Required.',
-  ip: v => validateIP(v) || 'Invalid ip address',
-  min: v => min(8, v) || 'Min 8 characters',
-  max: v => max(32, v) || 'Max 32 characters',
-  max12: v => max(12, v) || 'Max 12 characters',
-  isPort: v => (typeof +v === 'number' && !isNaN(+v) && +v < 65536) || 'Invalid port',
-};
 
 const listWiFi = [
   { name: 'OFF', value: 0 },

@@ -1,7 +1,7 @@
 <template>
-  <div class="v-text-field" :class="getClass">
-    <div class="v-text-field__slot">
-      <span class="v-text-field__label">
+  <div class="v-text-field w-full relative" :class="getClass">
+    <div class="v-text-field__slot relative w-full h-[40px] border flex items-center rounded transition" :class="getClassSlot">
+      <span class="v-text-field__label absolute bg-white text-gray-600">
         {{ label }}
       </span>
       <input
@@ -16,17 +16,18 @@
         @click="onClick"
         @keypress.enter="onEnter"
       />
-      <div v-if="$slots.icon" class="v-text-field__icon grey-base" @click="onIcon">
+      <button v-if="$slots.icon" :disabled="disabled" style="flex: 0 0 50px" class="h-full flex items-center justify-center text-gray-400 border-l border-primary" @click="onIcon">
         <slot name="icon"></slot>
-      </div>
+      </button>
     </div>
-    <div v-if="!hideMessage" class="v-text-field__message">
+    <div v-if="!hideMessage" class="text-red-500 h-[24px] px-2 text-small">
       <slot name="message">
         {{ isDirty ? error : '' }}
       </slot>
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, defineProps, defineEmits, computed } from 'vue';
 const props = defineProps({
@@ -47,11 +48,9 @@ const isError = computed(() => isDirty.value && error.value);
 const isDirty = ref(false);
 const isFocus = ref(false);
 
-const getClass = computed(() => [
-  { 'v-text-field--disabled': props.disabled },
-  { 'v-text-field--focus': isFocus.value || typeof props.modelValue !== 'undefined' || props.active },
-  { 'v-text-field--error': isError.value },
-]);
+const getClassSlot = computed(() => [isError.value ? 'border-red-500' : 'hover:border-secondary', props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-primary']);
+
+const getClass = computed(() => [{ 'v-text-field--focus': isFocus.value || typeof props.modelValue !== 'undefined' || props.active }]);
 
 const onRules = value => {
   const errors = props.rules
@@ -85,38 +84,12 @@ const onIcon = e => {
 
 <style lang="scss">
 .v-text-field {
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  &__slot {
-    position: relative;
-    height: 40px;
-    width: 100%;
-    border: 1px solid color('app', 'secondary');
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    background-color: var(--list-bg);
-  }
-  &__message {
-    height: 30px;
-    font-size: 14px;
-    padding: 0 15px;
-    color: color('red', 'base');
-  }
   &__label {
-    position: absolute;
     transform: translate(0, -50%);
-    color: var(--label-1);
-    line-height: 10px;
     top: 50%;
     left: 15px;
-    transition: all 0.2s ease-in-out;
-    background-color: var(--bg-1);
   }
   &__input {
-    border: 0;
-    border-radius: 4px;
     height: 100%;
     padding: 0 15px;
     font-size: $font-size-root;
@@ -132,34 +105,7 @@ const onIcon = e => {
       color: var(--border-1);
     }
   }
-  &:hover:not(.v-text-field--disabled) {
-    @media (hover: hover) {
-      border-color: color('app', 'primary');
-    }
-  }
-  &__icon {
-    height: 100%;
-    flex: 0 0 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-left: 1px solid color('app', 'primary');
-    cursor: pointer;
-  }
-  &--disabled {
-    .v-text-field__icon {
-      cursor: default;
-    }
-    .v-text-field__slot {
-      border: 1px solid var(--border-1);
-      opacity: 0.4;
-    }
-  }
-  &--error {
-    .v-text-field__slot {
-      border: 1px solid color('red', 'base');
-    }
-  }
+
   &--focus {
     .v-text-field__label {
       top: -2px;

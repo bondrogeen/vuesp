@@ -1,12 +1,12 @@
 <template>
   <div class="h-[100dvh] min-h-full flex flex-col">
-    <AppOverlay v-if="isOverlay" @click="onClose">
+    <!-- <AppOverlay v-if="isOverlay" @click="onClose">
       <template v-if="!isConnect">
         <div>Disconnected</div>
 
         <v-loader></v-loader>
       </template>
-    </AppOverlay>
+    </AppOverlay> -->
 
     <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
 

@@ -1,51 +1,23 @@
 <template>
-  <button class="v-button text-title-1" :class="[`v-button--${color}`, `v-button--${size}`]" @click="onClick">
+  <button class="flex justify-center items-center px-4 transition min-w-[100px] text-title-1 disabled:opacity-50 disabled:text-gray-400 disabled:border-gray-400" :class="getClass" @click="onClick">
     <slot></slot>
   </button>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
-defineProps({
+import { defineProps, defineEmits, computed } from 'vue';
+
+const props = defineProps({
   color: { type: String, default: 'primary' },
   size: { type: String, default: 'normal' },
 });
 
 const emit = defineEmits(['click']);
 const onClick = e => emit('click', e);
-</script>
 
-<style lang="scss">
-.v-button {
-  position: relative;
-  height: 40px;
-  padding: 0 15px;
-  border-radius: 4px;
-  border: 1px solid color('grey', 'lighten-2');
-  color: var(--text-1);
-  background: var(--bg-1);
-  min-width: 100px;
-  transition: all 0.2s ease-in-out;
-  &:not(:disabled) {
-    cursor: pointer;
-  }
-  &--primary {
-    color: var(--text-1);
-    background: var(--bg-1);
-    border: 1px solid color('app', 'primary');
-  }
-  &--small {
-    font-size: 16px;
-    height: 32px;
-  }
-  &:disabled {
-    opacity: 0.5;
-    border: 1px solid var(--border-1);
-  }
-  &:hover:not(:disabled) {
-    @media (hover: hover) {
-      border-color: color('app', 'secondary');
-    }
-  }
-}
-</style>
+const colors = {
+  primary: 'bg-white text-black border border-primary rounded hover:border-secondary',
+};
+const sizes = { normal: 'h-[40px]', small: 'h-[32px]' };
+const getClass = computed(() => [colors[props.color], sizes[props.size]]);
+</script>
