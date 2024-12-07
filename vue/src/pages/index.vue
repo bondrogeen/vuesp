@@ -5,12 +5,12 @@
 
       <div class="v-spacer"></div>
 
-      <v-dropdown right="0" left="unset" top="0">
+      <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <IconMenu @click="on.click"></IconMenu>
         </template>
-        <v-list :list="listPage" @click="onPage"></v-list>
-      </v-dropdown>
+        <VList :list="listPage" @click="onPage"></VList>
+      </VDropdown>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -97,6 +97,8 @@ import event from '@/assets/js/event';
 import AppDialog from '@/components/app/AppDialog';
 import VCard from '@/components/general/VCard';
 import VTextField from '@/components/general/VTextField';
+import VDropdown from '@/components/general/VDropdown';
+import VList from '@/components/general/VList';
 
 import IconMenu from '@/components/icons/IconMenu';
 

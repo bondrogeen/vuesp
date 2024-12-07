@@ -3,8 +3,8 @@
     <!-- <AppOverlay v-if="isOverlay" @click="onClose">
       <template v-if="!isConnect">
         <div>Disconnected</div>
+        <VLoader></VLoader>
 
-        <v-loader></v-loader>
       </template>
     </AppOverlay> -->
 
@@ -32,6 +32,9 @@ import { useWebSocket } from '@/stores/WebSocket';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import DrawerMain from '@/components/app/drawers/DrawerMain';
+
+import VLoader from '@/components/general/VLoader';
+
 import AppDialog from '@/components/app/AppDialog';
 import AppHeader from '@/components/app/AppHeader';
 import AppFooter from '@/components/app/AppFooter';

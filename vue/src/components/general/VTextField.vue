@@ -1,7 +1,7 @@
 <template>
-  <div class="v-text-field w-full relative" :class="getClass">
-    <div class="v-text-field__slot relative w-full h-[40px] border flex items-center rounded transition" :class="getClassSlot">
-      <span class="v-text-field__label absolute bg-white text-gray-600">
+  <div class="w-full relative">
+    <div class="relative w-full h-[40px] border flex items-center rounded transition" :class="getClassSlot">
+      <span class="absolute left-4 top-1/2 -translate-y-1/2 bg-white text-gray-600" :class="getClass">
         {{ label }}
       </span>
       <input
@@ -9,7 +9,7 @@
         :value="modelValue"
         :disabled="disabled"
         :type="type"
-        class="v-text-field__input"
+        class="px-4 h-100 outline-none overflow-ellipsis flex-auto overflow-hidden w-[calc(100% - 20px)]"
         @focus="onFocus"
         @blur="onBlur"
         @input="onInput"
@@ -42,15 +42,17 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'click', 'on-icon', 'enter']);
 
-// const value = ref(props.modelValue);
 const error = ref('');
 const isError = computed(() => isDirty.value && error.value);
 const isDirty = ref(false);
 const isFocus = ref(false);
 
-const getClassSlot = computed(() => [isError.value ? 'border-red-500' : 'hover:border-secondary', props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-primary']);
+const getClassSlot = computed(() => [
+  isError.value ? 'border-red-500 hover:border-gray-400' : '',
+  props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-primary hover:border-secondary',
+]);
 
-const getClass = computed(() => [{ 'v-text-field--focus': isFocus.value || typeof props.modelValue !== 'undefined' || props.active }]);
+const getClass = computed(() => [{ '-top-1 text-small px-1 py-0': isFocus.value || typeof props.modelValue !== 'undefined' || props.active }]);
 
 const onRules = value => {
   const errors = props.rules
@@ -81,37 +83,3 @@ const onIcon = e => {
   emit('on-icon', e);
 };
 </script>
-
-<style lang="scss">
-.v-text-field {
-  &__label {
-    transform: translate(0, -50%);
-    top: 50%;
-    left: 15px;
-  }
-  &__input {
-    height: 100%;
-    padding: 0 15px;
-    font-size: $font-size-root;
-    width: calc(100% - 20px);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    flex: 1 1 auto;
-    background: inherit;
-    outline: none !important;
-    color: var(--text-1);
-    &::placeholder {
-      color: var(--border-1);
-    }
-  }
-
-  &--focus {
-    .v-text-field__label {
-      top: -2px;
-      font-size: 14px;
-      padding: 0 4px;
-    }
-  }
-}
-</style>

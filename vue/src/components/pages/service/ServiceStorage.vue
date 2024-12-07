@@ -1,41 +1,53 @@
 <template>
   <div class="files">
     <div class="files__path flex items-center">
-      <div class="files__route flex gap-4 items-center  fw-600 grey-base">
+      <div class="files__route flex gap-4 items-center fw-600 grey-base">
         <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i)">
           <div class="mr-2">{{ value }}</div>
-          <v-icons icon="next"></v-icons>
+
+          <IconNext></IconNext>
         </div>
       </div>
+
       <div>
         <VTextFieldFile @change="onUpload"></VTextFieldFile>
-        <v-dropdown right="0" left="unset" top="0">
+
+        <VDropdown right="0" left="unset" top="0">
           <template #activator="{ on }">
             <v-icons icon="menu" @click="on.click"></v-icons>
           </template>
-          <v-list :list="mainMenu" @click="onEventServise"></v-list>
-        </v-dropdown>
+
+          <VList :list="mainMenu" @click="onEventServise"></VList>
+        </VDropdown>
       </div>
     </div>
+
     <div class="files__list">
-      <v-loader v-if="isLoading" />
+      <VLoader v-if="isLoading" />
+
       <ul class="v-list">
         <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item flex items-center pa-0">
-          <div class="flex items-center v-spacer my-2" @click="onNext(isDir, name)">
+          <div class="flex items-center flex-auto my-2" @click="onNext(isDir, name)">
             <div class="mr-4">
-              <v-icons :icon="isDir ? `folder` : 'file'"></v-icons>
+              <IconFolder v-if="isDir"></IconFolder>
+              <IconFile v-else></IconFile>
             </div>
-            <div class="v-spacer">
-              <div class="text-body-1 fw-600">{{ isDir ? `${name}` : name }}</div>
-              <div v-if="isFile" class="text-caption grey-base">{{ toByte(size) }} ({{ size }})</div>
+
+            <div>
+              <div class="text-body">{{ isDir ? `${name}` : name }}</div>
+
+              <div v-if="isFile" class="text-xsmall text-gray-400">{{ toByte(size) }} ({{ size }})</div>
             </div>
           </div>
-          <v-dropdown right="0" left="unset" top="0">
+
+          <VDropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
-              <v-icons icon="menu" @click="on.click"></v-icons>
+              <button @click="on.click">
+                <IconMenu></IconMenu>
+              </button>
             </template>
-            <v-list :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
-          </v-dropdown>
+            <VList :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
+          </VDropdown>
         </li>
       </ul>
     </div>
@@ -47,6 +59,14 @@ import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject
 import { toByte, debounce } from '@/utils/func/';
 
 import VTextFieldFile from '@/components/general/VTextFieldFile';
+import VDropdown from '@/components/general/VDropdown';
+import VLoader from '@/components/general/VLoader';
+import VList from '@/components/general/VList';
+
+import IconNext from '@/components/icons/IconNext';
+import IconMenu from '@/components/icons/IconMenu';
+import IconFolder from '@/components/icons/IconFolder';
+import IconFile from '@/components/icons/IconFile';
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },

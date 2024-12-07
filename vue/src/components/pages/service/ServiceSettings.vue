@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-expansion label="Wi-Fi" value>
+    <VExpansion label="Wi-Fi" value>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="">
           <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
@@ -35,9 +35,9 @@
 
         <VTextField v-model="wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
       </div>
-    </v-expansion>
+    </VExpansion>
 
-    <v-expansion label="Security">
+    <VExpansion label="Security">
       <div class="col sm12 mb-6">
         <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
       </div>
@@ -54,7 +54,7 @@
           </VTextField>
         </div>
       </div>
-    </v-expansion>
+    </VExpansion>
 
     <div class="row mt-6">
       <div class="col sm12 flex j-end">
@@ -64,19 +64,19 @@
 
     <AppDialog title="SCAN" size="md" :value="showDialog" @close="onClose">
       <div>
-        <v-list v-slot="{ item }" :list="scanList">
+        <VList v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
             <div class="mr-2">
               <WifiIcon v-bind="item" />
             </div>
             <div>
               <div class="text-title1">{{ item.ssid }}</div>
-              <div class="text-gray-400">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+              <div class="text-gray-400 text-body">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
-        </v-list>
-        <div v-if="!scanList.length">
-          <v-loader></v-loader>
+        </VList>
+        <div v-if="!scanList.length" class="flex justify-center">
+          <VLoader class="text-primary"></VLoader>
         </div>
       </div>
       <template #footer>
@@ -93,6 +93,9 @@ import { rules } from '@/utils/validate/';
 import AppDialog from '@/components/app/AppDialog';
 import WifiIcon from '@/components/general/WifiIcon';
 import VTextField from '@/components/general/VTextField';
+import VExpansion from '@/components/general/VExpansion';
+import VLoader from '@/components/general/VLoader';
+import VList from '@/components/general/VList';
 
 import IconSearch from '@/components/icons/IconSearch';
 import IconEyeOpen from '@/components/icons/IconEyeOpen';

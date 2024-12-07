@@ -14,16 +14,16 @@
       <div class="flex-auto"></div>
 
       <div class="hidden lg:flex gap-4">
-        <v-dropdown left="unset" right="0" top="0">
+        <VDropdown left="unset" right="0" top="0">
           <template #activator="{ on }">
             <IconEsp @click="on.click"></IconEsp>
           </template>
 
-          <v-list v-slot="{ item }" :list="listMenu" @click="onMenu">
+          <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
             <component :is="`icon-${item.icon}`"></component>
             {{ item.name }}
-          </v-list>
-        </v-dropdown>
+          </VList>
+        </VDropdown>
       </div>
 
       <div class="flex items-center justify-center lg:hidden" @click.stop="onDrawer">
@@ -37,6 +37,8 @@
 import { computed, defineEmits, defineProps, inject } from 'vue';
 
 import VMainMenu from '@/components/general/VMainMenu';
+import VDropdown from '@/components/general/VDropdown';
+import VList from '@/components/general/VList';
 
 import IconLogo from '@/components/icons/IconLogo';
 import IconBurger from '@/components/icons/IconBurger';

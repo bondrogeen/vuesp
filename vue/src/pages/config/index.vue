@@ -2,12 +2,12 @@
   <div class="container mx-auto">
     <div class="mb-6 flex items-center justify-between">
       <h1>Config</h1>
-      <v-dropdown right="0" left="unset" top="0">
+      <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-icons icon="menu" @click="on.click"></v-icons>
         </template>
-        <v-list :list="listMenu" @click="onUploadFile"></v-list>
-      </v-dropdown>
+        <VList :list="listMenu" @click="onUploadFile"></VList>
+      </VDropdown>
     </div>
 
     <div class="grid grid-cols-1 gap-4">
@@ -42,6 +42,8 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import AppDialog from '@/components/app/AppDialog';
 import VTextField from '@/components/general/VTextField';
+import VDropdown from '@/components/general/VDropdown';
+import VList from '@/components/general/VList';
 
 const webSocketStore = useWebSocketStore();
 const { dallas } = storeToRefs(webSocketStore);
@@ -66,7 +68,6 @@ const getValue = (field, k) => {
 
 const onInput = (name, key, value) => {
   config.value[name][key].name = value;
-  console.log(name, key, value);
 };
 
 onMounted(async () => {
