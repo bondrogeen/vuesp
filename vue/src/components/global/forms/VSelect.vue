@@ -1,5 +1,5 @@
 <template>
-  <v-dropdown class="v-select" v-bind="$attrs">
+  <VDropdown class="v-select" v-bind="$attrs">
     <template #activator="{ on, show }">
       <VTextField :key="value" :model-value="value" :title="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
         <template #icon>
@@ -7,10 +7,10 @@
         </template>
       </VTextField>
     </template>
-    <v-list v-slot="{ item }" :list="list" @click="onChange">
+    <VList v-slot="{ item }" :list="list" @click="onChange">
       <slot :item="item">{{ item.name }}</slot>
-    </v-list>
-  </v-dropdown>
+    </VList>
+  </VDropdown>
 </template>
 
 <script setup>
@@ -18,6 +18,8 @@ import { defineProps, defineEmits } from 'vue';
 
 import IconSelect from '@/components/icons/IconSelect';
 import VTextField from '@/components/general/VTextField';
+import VDropdown from '@/components/general/VDropdown';
+import VList from '@/components/general/VList';
 
 defineProps({
   value: { type: String, default: '' },

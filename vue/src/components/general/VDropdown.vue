@@ -1,10 +1,10 @@
 <template>
-  <div v-outside="outside" class="v-dropdown relative">
+  <div v-outside="outside" class="relative">
     <div class="flex items-center cursor-pointer">
       <slot name="activator" :on="{ click: onClick }" :show="isShown"></slot>
     </div>
     <transition name="slide-up">
-      <div v-if="isShown" class="v-dropdown__content z-10 min-w-full absolute overflow-auto shadow-lg" :style="getStyle" @click="onClick">
+      <div v-if="isShown" class="z-10 min-w-full absolute overflow-auto shadow-lg" :style="getStyle" @click="onClick">
         <slot :show="onShow" :hide="hide" :is-shown="isShown"></slot>
       </div>
     </transition>
@@ -44,11 +44,3 @@ const hide = e => {
   emit('close', e);
 };
 </script>
-
-<style lang="scss">
-.v-dropdown {
-  &__content {
-    top: calc(100% + 5px);
-  }
-}
-</style>

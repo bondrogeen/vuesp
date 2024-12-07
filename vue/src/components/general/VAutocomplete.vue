@@ -1,5 +1,5 @@
 <template>
-  <v-dropdown class="" v-bind="$attrs">
+  <VDropdown class="" v-bind="$attrs">
     <template #activator="{ show, on }">
       <VTextField :value="show ? search : currentUser" :placeholder="show ? 'Поиск' : placeholder" @click="on.click" @input="onInput" @focus="search = ''">
         <template #icon>
@@ -10,18 +10,20 @@
       </VTextField>
     </template>
     <div>
-      <v-list v-slot="{ item }" :list="getList" @click="$emit('change', $event)">
+      <VList v-slot="{ item }" :list="getList" @click="$emit('change', $event)">
         <slot :item="item">{{ item[valueName] }}</slot>
-      </v-list>
+      </VList>
     </div>
     <div v-if="isEmpty" class="p-4 py-2">Not found</div>
-  </v-dropdown>
+  </VDropdown>
 </template>
 
 <script setup>
 import { ref, computed, defineProps, defineEmits } from 'vue';
 
 import VTextField from '@/components/general/VTextField';
+import VDropdown from '@/components/general/VDropdown';
+import VList from '@/components/general/VList';
 
 const props = defineProps({
   value: { type: String, default: '' },
