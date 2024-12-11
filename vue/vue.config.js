@@ -3,6 +3,7 @@ const RemovePlugin = require('remove-files-webpack-plugin');
 const VueAutoRoutingPlugin = require('vue-auto-routing/lib/webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const root = process.env.OUTPUT_DIR;
+const path = require('path');
 
 module.exports = defineConfig({
   transpileDependencies: true,
@@ -35,7 +36,7 @@ module.exports = defineConfig({
       },
     },
   },
-  chainWebpack: () => {},
+  chainWebpack: () => { },
   configureWebpack: {
     performance: {
       hints: false,
