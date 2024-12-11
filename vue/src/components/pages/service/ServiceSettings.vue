@@ -2,63 +2,103 @@
   <div>
     <VExpansion label="Wi-Fi" value>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="">
-          <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
-        </div>
+        <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
 
-        <div class="col-start-1 col-span-1">
-          <VTextField v-model="settings.wifiSsid" label="SSID" :disabled="isWifi" :append-button="!isWifi" :rules="[rules.required, rules.max]" @on-icon="onScan(false)">
-            <template #icon>
-              <IconSearch></IconSearch>
-            </template>
-          </VTextField>
-        </div>
+        <VTextField v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
+          <template #icon>
+            <IconSearch></IconSearch>
+          </template>
+        </VTextField>
 
-        <div class="">
-          <VTextField id="wifiPass" v-model="settings.wifiPass" label="Password" :disabled="isWifi" :type="showPass ? 'text' : 'password'" :rules="[rules.min, rules.max]" @on-icon="showPass = !showPass">
-            <template #icon>
-              <IconEyeOpen v-if="showPass"></IconEyeOpen>
-              <IconEyeClose v-else></IconEyeClose>
-            </template>
-          </VTextField>
-        </div>
+        <VTextField
+          id="wifiPass"
+          v-model="v.wifiPass.value"
+          label="Password"
+          :disabled="isWifi"
+          :type="showPass ? 'text' : 'password'"
+          :message="getError('wifiPass')"
+          @blur="v.wifiPass.blur"
+          @on-icon="showPass = !showPass"
+        >
+          <template #icon>
+            <IconEyeOpen v-if="showPass"></IconEyeOpen>
+            <IconEyeClose v-else></IconEyeClose>
+          </template>
+        </VTextField>
+
+        <VTextField
+          v-model="v.rePassword.value"
+          label="Repeat password"
+          :disabled="isWifi"
+          :message="getError('rePassword')"
+          :type="showPass ? 'text' : 'password'"
+          @blur="v.rePassword.blur"
+          @on-icon="showPass = !showPass"
+        >
+          <template #icon>
+            <IconEyeOpen v-if="showPass"></IconEyeOpen>
+            <IconEyeClose v-else></IconEyeClose>
+          </template>
+        </VTextField>
 
         <div class="col-span-full mb-4">
           <v-checkbox v-model="settings.wifiDhcp">DHCP</v-checkbox>
         </div>
 
-        <VTextField v-model="wifiIp" label="IP" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+        <VTextField v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
 
-        <VTextField v-model="wifiSubnet" label="Subnet" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+        <VTextField v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
 
-        <VTextField v-model="wifiGeteway" label="Geteway" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+        <VTextField v-model="v.wifiGeteway.value" label="Geteway" :message="getError('wifiGeteway')" :disabled="isWifiDHCP" @blur="v.wifiGeteway.blur" />
 
-        <VTextField v-model="wifiDns" label="DNS" :disabled="isWifiDHCP" :rules="[rules.ip]" />
+        <VTextField v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
     </VExpansion>
 
-    <VExpansion label="Security">
-      <div class="col sm12 mb-6">
-        <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
-      </div>
+    <VExpansion label="Security" value>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <VTextField v-model="settings.authLogin" label="Login" :disabled="isAuth" :rules="[rules.required, rules.max12]" />
+        <div class="col-span-full mb-4">
+          <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
         </div>
-        <div>
-          <VTextField v-model="settings.authPass" label="Password" :type="showPass ? 'text' : 'password'" :disabled="isAuth" :rules="[rules.required, rules.max12]" @on-icon="showPass = !showPass">
-            <template #icon>
-              <IconEyeOpen v-if="showPass"></IconEyeOpen>
-              <IconEyeClose v-else></IconEyeClose>
-            </template>
-          </VTextField>
-        </div>
+
+        <VTextField v-model="v.authLogin.value" label="Login" :disabled="isAuth" />
+
+        <VTextField
+          v-model="v.authPass.value"
+          class="col-end-2"
+          label="Password"
+          :type="showAuthPass ? 'text' : 'password'"
+          :disabled="isAuth"
+          :message="getError('authPass')"
+          @blur="v.authPass.blur"
+          @on-icon="showAuthPass = !showAuthPass"
+        >
+          <template #icon>
+            <IconEyeOpen v-if="showAuthPass"></IconEyeOpen>
+            <IconEyeClose v-else></IconEyeClose>
+          </template>
+        </VTextField>
+
+        <VTextField
+          v-model="v.reAuthPassword.value"
+          label="Password"
+          :type="showAuthPass ? 'text' : 'password'"
+          :disabled="isAuth"
+          :message="getError('reAuthPassword')"
+          @blur="v.reAuthPassword.blur"
+          @on-icon="showAuthPass = !showAuthPass"
+        >
+          <template #icon>
+            <IconEyeOpen v-if="showAuthPass"></IconEyeOpen>
+            <IconEyeClose v-else></IconEyeClose>
+          </template>
+        </VTextField>
       </div>
     </VExpansion>
 
     <div class="row mt-6">
       <div class="col sm12 flex j-end">
-        <v-button @click="onSave">Save</v-button>
+        <v-button :disabled="invalid" @click="onSave">Save</v-button>
       </div>
     </div>
 
@@ -87,8 +127,10 @@
 </template>
 
 <script setup>
-import { computed, ref, defineProps, defineEmits, inject } from 'vue';
+import { computed, ref, defineProps, defineEmits, inject, onMounted } from 'vue';
 import { rules } from '@/utils/validate/';
+
+import { useForm } from '@/utils/useForm';
 
 import AppDialog from '@/components/app/AppDialog';
 import WifiIcon from '@/components/general/WifiIcon';
@@ -107,11 +149,18 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'scan', 'save']);
+
 const dialog = inject('dialog');
 const overlay = inject('overlay');
 
 const showPass = ref(false);
+const showAuthPass = ref(false);
 const showDialog = ref(false);
+
+const settings = computed({
+  set: value => emit('update:modelValue', value),
+  get: () => props.modelValue,
+});
 
 const wifiIp = computed({
   set: value => {
@@ -131,11 +180,69 @@ const wifiDns = computed({
   set: value => value.split('.'),
   get: () => (settings?.value?.wifiDns || []).join('.'),
 });
-
-const settings = computed({
-  set: value => emit('update:modelValue', value),
-  get: () => props.modelValue,
+const wifiSsid = computed({
+  set: value => (settings.value.wifiSsid = value),
+  get: () => settings?.value?.wifiSsid,
 });
+const wifiPass = computed({
+  set: value => (settings.value.wifiPass = value),
+  get: () => settings?.value?.wifiPass,
+});
+const authLogin = computed({
+  set: value => (settings.value.authLogin = value),
+  get: () => settings?.value?.authLogin,
+});
+const authPass = computed({
+  set: value => (settings.value.authPass = value),
+  get: () => settings?.value?.authPass,
+});
+
+const rePassword = ref(settings.value.wifiPass);
+const reAuthPassword = ref(settings.value.authPass);
+
+const { required, max, min, sameAs, ip, max12 } = rules;
+
+const form = {
+  wifiSsid,
+  wifiPass,
+  rePassword,
+
+  wifiIp,
+  wifiSubnet,
+  wifiGeteway,
+  wifiDns,
+
+  authLogin,
+  authPass,
+  reAuthPassword,
+};
+
+const validators = {
+  wifiSsid: { required, max },
+  wifiPass: {
+    required,
+    max,
+    min,
+    sameAs: value => sameAs(value, rePassword.value),
+  },
+  rePassword: {
+    required,
+    max,
+    min,
+    sameAs: value => sameAs(value, wifiPass.value),
+  },
+
+  wifiIp: { ip },
+  wifiSubnet: { ip },
+  wifiGeteway: { ip },
+  wifiDns: { ip },
+
+  authLogin: { required, max12 },
+  authPass: { required, max12, sameAs: value => sameAs(value, reAuthPassword.value) },
+  reAuthPassword: { required, max12, sameAs: value => sameAs(value, authPass.value) },
+};
+
+const { v, invalid, data, getError } = useForm(validators, form);
 
 const listWiFi = [
   { name: 'OFF', value: 0 },
@@ -175,4 +282,8 @@ const onScan = value => {
 
 const onChange = value => (settings.value.wifiMode = value);
 const onSureOffWifi = ({ value }) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
+
+onMounted(() => {
+  rePassword.value = settings.value.wifiPass;
+});
 </script>

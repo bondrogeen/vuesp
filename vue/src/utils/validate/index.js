@@ -5,6 +5,7 @@ export const max = (max, v) => v.length <= max;
 
 export const rules = {
     required: value => !!value || 'Required.',
+    sameAs: (value1, value) => value1 === value || 'Passwords do not match',
     ip: v => validateIP(v) || 'Invalid ip address',
     min: v => min(8, v) || 'Min 8 characters',
     max: v => max(32, v) || 'Max 32 characters',

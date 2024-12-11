@@ -13,67 +13,69 @@
       </VDropdown>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <GeneralCard class="flex justify-between col-span-full">
-        <h4>Date</h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <VCard class="flex justify-between col-span-full">
+        <h5>Date</h5>
 
         <div class="flex items-center">
           <input :value="datetime" type="datetime-local" @change="onDate" />
         </div>
-      </GeneralCard>
+      </VCard>
 
       <VCard>
-        <h4 class="mb-6">INPUT</h4>
+        <h5 class="mb-6">INPUT</h5>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
           <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
-            <div class="mb-1">{{ findName('input', `input${i + 1}`) }}</div>
+            <div class="text-body mb-1 text-gray-600">{{ findName('input', `input${i + 1}`) }}</div>
 
-            <v-button disabled>{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
+            <v-button block disabled>{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
       </VCard>
 
       <VCard>
-        <h4 class="mb-6">OUTPUT</h4>
+        <h5 class="mb-6">OUTPUT</h5>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
           <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
-            <div class="mb-1">{{ findName('output', `output${i + 1}`) }}</div>
+            <div class="text-body mb-1 text-gray-600">{{ findName('output', `output${i + 1}`) }}</div>
 
-            <v-button @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
+            <v-button block @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
       </VCard>
 
       <VCard>
-        <h4 class="mb-6">ADC</h4>
+        <h5 class="mb-6">ADC</h5>
 
-        <div class="grid grid-cols-2">
-          <div v-for="(pin, i) of 4" :key="`adc_${pin}`" class="flex gap-4">
-            <div class="mb-1">{{ findName('adc', `adc${pin}`) }}:</div>
-            {{ device[`adc${i + 1}`] }}
+        <div class="grid gap-2 grid-cols-2">
+          <div v-for="(pin, i) of 4" :key="`adc_${pin}`" class="">
+            <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
+            <span class="font-bold">{{ device[`adc${i + 1}`] }}</span>
           </div>
         </div>
       </VCard>
 
       <VCard v-if="isDallas">
-        <h4 class="mb-6">DS18B20</h4>
+        <h5 class="mb-6">DS18B20</h5>
 
-        <div class="grid grid-cols-2">
+        <div class="grid gap-2 grid-cols-1">
           <div v-for="(ds, key) in dallas" :key="`adc_${key}`">
-            <div class="mb-1" :title="key">{{ findName('ds', key) }}:</div>
-            {{ ds.temp }} ℃
+            <span class="text-body text-gray-600 mr-2" :title="key">{{ findName('ds', key) }}:</span>
+            <span class="font-bold">{{ ds.temp.toFixed(2) }} ℃</span>
           </div>
         </div>
       </VCard>
 
       <VCard>
-        <h4 class="mb-6">DAC</h4>
+        <h5 class="mb-6">DAC</h5>
+        <div class="grid grid-cols-1 gap-4">
+          <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="grid gap-2 grid-cols-4">
+            <VTextField v-model="dac[`dac${i + 1}`]" class="col-span-3" :label="findName('dac', `dac${pin}`)" hideMessage />
 
-        <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="flex gap-4">
-          <VTextField v-model.number="dac[`dac${i + 1}`]" :label="findName('dac', `dac${pin}`)" />
-          <v-button :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
+            <v-button block :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
+          </div>
         </div>
       </VCard>
     </div>

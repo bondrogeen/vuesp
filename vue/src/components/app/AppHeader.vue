@@ -1,6 +1,6 @@
 <template>
-  <header class="bg-blue-50 shadow px-4 position-fixed top-0 left-0 w-full z-10">
-    <div class="container mx-auto flex py-4">
+  <header class="bg-blue-50 shadow position-fixed top-0 left-0 w-full z-10">
+    <div class="container mx-auto flex py-4 px-4">
       <div class="h-[30px] me-10">
         <router-link to="/">
           <IconLogo class="h-[30px]"></IconLogo>

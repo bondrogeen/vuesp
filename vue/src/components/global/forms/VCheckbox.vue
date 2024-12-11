@@ -1,8 +1,20 @@
 <template>
-  <label class="v-checkbox" :class="{ 'v-checkbox--disabled': disabled }">
-    <input :checked="modelValue" class="v-checkbox__input" type="checkbox" :disabled="disabled" @change="onChange" />
-    <span class="v-checkbox__mark"></span>
-    <slot></slot>
+  <label class="inline-flex items-center cursor-pointer relative">
+    <input
+      type="checkbox"
+      :checked="modelValue"
+      :disabled="disabled"
+      class="peer h-5 w-5 transition-all appearance-none rounded border border-slate-300 checked:bg-primary checked:border-primary"
+      @change="onChange"
+    />
+    <span class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+      <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" stroke-width="1">
+        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+      </svg>
+    </span>
+    <span class="ms-2">
+      <slot></slot>
+    </span>
   </label>
 </template>
 
@@ -16,57 +28,3 @@ defineProps({
 const emit = defineEmits(['update:modelValue']);
 const onChange = ({ target }) => emit('update:modelValue', target.checked);
 </script>
-
-<style lang="scss">
-$borderRadius: 4px;
-$size: 18px;
-.v-checkbox {
-  position: relative;
-  display: flex;
-  &:not(.v-checkbox--disabled) {
-    cursor: pointer;
-  }
-  &__input {
-    position: absolute;
-    opacity: 0;
-    height: 0;
-    width: 0;
-  }
-
-  &__mark {
-    position: relative;
-    display: block;
-    height: $size;
-    width: $size;
-    border: 1px solid color('app', 'primary');
-    border-radius: $borderRadius;
-    margin-right: 10px;
-    &::after {
-      content: '';
-      display: none;
-      position: absolute;
-      top: 45%;
-      left: 50%;
-      height: calc(60%);
-      width: calc(30%);
-      transform: translate(-50%, -50%) rotate(43deg);
-      border-right: 2px solid color('app', 'white');
-      border-bottom: 2px solid color('app', 'white');
-    }
-  }
-  &__input:checked ~ &__mark {
-    background-color: color('app', 'primary');
-  }
-  &__input:checked ~ &__mark::after {
-    display: block;
-  }
-  &--disabled {
-    .v-checkbox__mark {
-      border-color: var(--border-1);
-    }
-    .v-checkbox__input:checked ~ .v-checkbox__mark {
-      background-color: color('grey', 'darken-1');
-    }
-  }
-}
-</style>
