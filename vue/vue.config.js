@@ -13,7 +13,7 @@ module.exports = defineConfig({
   css: {
     loaderOptions: {
       sass: {
-        additionalData: `@import "@/assets/scss/variables.scss";`,
+        additionalData: `@import "@/assets/scss/index.scss";`,
       },
     },
   },
@@ -78,6 +78,13 @@ module.exports = defineConfig({
               folder: './js',
               method: absoluteItemPath => {
                 return new RegExp(/\.js$/, 'm').test(absoluteItemPath);
+              },
+              recursive: true,
+            },
+            {
+              folder: './',
+              method: absoluteItemPath => {
+                return new RegExp(/\.json$/, 'm').test(absoluteItemPath);
               },
               recursive: true,
             },

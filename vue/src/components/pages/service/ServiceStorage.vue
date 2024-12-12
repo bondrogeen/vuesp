@@ -1,11 +1,16 @@
 <template>
-  <div class="files">
-    <div class="files__path flex items-center">
-      <div class="files__route flex gap-4 items-center fw-600 grey-base">
-        <div v-for="(value, i) of path" :key="value" class="files__route-item" @click="onPrev(i)">
-          <div class="mr-2">{{ value }}</div>
+  <div >
+    <div class="py-2 px-4 flex items-center border-b border-gray-200 dark:border-gray-600">
+      <div class="flex gap-2 items-center font-bold flex-auto">
+        <div
+          v-for="(value, i) of path"
+          :key="value"
+          class="flex items-center gap-2 cursor-pointer text-gray-600 last:cursor-default last:text-gray-900 dark:text-gray-200 dark:last:text-white"
+          @click="onPrev(i)"
+        >
+          <div>{{ value }}</div>
 
-          <IconNext></IconNext>
+          <IconNext v-if="isLast(path, i)" class="h-4 w-4"></IconNext>
         </div>
       </div>
 
@@ -14,7 +19,7 @@
 
         <VDropdown right="0" left="unset" top="0">
           <template #activator="{ on }">
-            <v-icons icon="menu" @click="on.click"></v-icons>
+            <IconMenu @click="on.click"></IconMenu>
           </template>
 
           <VList :list="mainMenu" @click="onEventServise"></VList>
@@ -22,34 +27,33 @@
       </div>
     </div>
 
-    <div class="files__list">
-      <VLoader v-if="isLoading" />
+    <div class="relative min-h-[260px]">
+      <VLoader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
 
-      <ul class="v-list">
-        <li v-for="{ name, size, isDir, isFile } of sortFiles" :key="`file_${name}`" class="v-list__item flex items-center pa-0">
-          <div class="flex items-center flex-auto my-2" @click="onNext(isDir, name)">
-            <div class="mr-4">
-              <IconFolder v-if="isDir"></IconFolder>
-              <IconFile v-else></IconFile>
-            </div>
-
-            <div>
-              <div class="text-body">{{ isDir ? `${name}` : name }}</div>
-
-              <div v-if="isFile" class="text-xsmall text-gray-400">{{ toByte(size) }} ({{ size }})</div>
-            </div>
+      <VList v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
+        <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
+          <div class="mr-4">
+            <IconFolder v-if="isDir"></IconFolder>
+            <IconFile v-else></IconFile>
           </div>
 
-          <VDropdown right="0" left="unset" top="0">
-            <template #activator="{ on }">
-              <button @click="on.click">
-                <IconMenu></IconMenu>
-              </button>
-            </template>
-            <VList :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
-          </VDropdown>
-        </li>
-      </ul>
+          <div>
+            <div class="text-body">{{ isDir ? `${name}` : name }}</div>
+
+            <div v-if="isFile" class="text-xsmall text-gray-400">{{ toByte(size) }} ({{ size }})</div>
+          </div>
+        </div>
+
+        <VDropdown right="0" left="unset" top="0">
+          <template #activator="{ on }">
+            <button @click="on.click">
+              <IconMenu></IconMenu>
+            </button>
+          </template>
+
+          <VList :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
+        </VDropdown>
+      </VList>
     </div>
   </div>
 </template>
@@ -180,6 +184,8 @@ const onDownload = name => {
   link.remove();
 };
 
+const isLast = (path, i) => path.length > i + 1;
+
 const onLoad = debounce(() => {
   filesTemp.value = props.files;
   isLoading.value = false;
@@ -193,39 +199,3 @@ onMounted(() => {
   if (!props.files.length) onUpdate();
 });
 </script>
-
-<style lang="scss">
-.files {
-  min-height: 400px;
-  &__path {
-    width: 100%;
-    border-top: 1px solid var(--border-1);
-    border-bottom: 1px solid var(--border-1);
-  }
-  &__icons {
-    svg {
-      height: 24px;
-    }
-    cursor: pointer;
-  }
-  &__route {
-    width: 100%;
-    user-select: none;
-    height: 60px;
-
-    &-item {
-      display: flex;
-      &:not(:last-child) {
-        cursor: pointer;
-      }
-    }
-    svg {
-      height: 16px;
-    }
-  }
-  &__list {
-    position: relative;
-    margin: 0 0 20px 0;
-  }
-}
-</style>

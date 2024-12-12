@@ -1,9 +1,10 @@
 <template>
   <div class="container mx-auto">
     <h1 class="mb-6">Service</h1>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div>
-        <VTabs>
+        <VTabs class="sticky top-0">
           <VTab label="Settings" icon="connect">
             <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
           </VTab>
@@ -22,8 +23,8 @@
         </VTabs>
       </div>
 
-      <div class="">
-        <ServiceInfo v-bind="info" class="" />
+      <div>
+        <ServiceInfo v-bind="info" />
       </div>
     </div>
   </div>

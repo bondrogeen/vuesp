@@ -4,6 +4,7 @@ const colors = require('tailwindcss/colors')
 module.exports = {
   content: [],
   purge: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     container: {
       screens: {
@@ -35,8 +36,8 @@ module.exports = {
       'lg': ['18px', { lineHeight: '140%', }],
       'xl': ['20px', { lineHeight: '140%', }],
       '2xl': ['24px', { lineHeight: '140%', }],
-      '3xl': ['30px', { lineHeight: '140%', }],
-      '4xl': ['36px', { lineHeight: '140%', }],
+      '3xl': ['28px', { lineHeight: '140%', }],
+      '4xl': ['32px', { lineHeight: '140%', }],
 
     },
     extend: {},

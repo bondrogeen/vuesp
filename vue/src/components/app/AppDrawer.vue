@@ -1,8 +1,11 @@
 <template>
-  <div class="app-drawer h-full overflow-hidden shadow z-[101]" :class="[{ 'translate-x-0': value }, { 'fixed h-[100dvh]': position }]">
+  <div
+    class="left-0 top-0 h-full overflow-hidden shadow z-[101] w-full md:w-[360px] lg:-translate-x-full transition-all"
+    :class="[value ? 'translate-x-0' : '-translate-x-full', { 'fixed h-[100dvh]': position }]"
+  >
     <div class="overflow-auto min-w-[360px] absolute h-full w-full">
-      <div class="bg-blue-50 flex justify-between p-4">
-        <button @click="changeTheme">
+      <div class="bg-blue-50 dark:bg-gray-800 flex justify-between p-4">
+        <button @click="changeTheme()">
           <IconDark v-if="!theme" />
           <IconLight v-else />
         </button>
@@ -15,7 +18,7 @@
           <IconClose></IconClose>
         </button>
       </div>
-      <div class="app-drawer__body px-4 bg-white">
+      <div class="h-[calc(100dvh-62px)] px-4 bg-white dark:bg-gray-900">
         <slot></slot>
       </div>
     </div>
@@ -44,26 +47,3 @@ const onClose = e => {
   }
 };
 </script>
-
-<style lang="scss">
-.app-drawer {
-  left: 0;
-  top: 0;
-  transition: all 0.2s ease-in-out;
-
-  transform: translateX(-100%);
-  width: 100%;
-
-  @include above($sm) {
-    width: 360px;
-  }
-
-  @include above($md) {
-    transform: translateX(-100%);
-  }
-
-  &__body {
-    height: calc(100dvh - 62px);
-  }
-}
-</style>

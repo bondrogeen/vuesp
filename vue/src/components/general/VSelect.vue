@@ -1,5 +1,5 @@
 <template>
-  <VDropdown class="v-select" v-bind="$attrs">
+  <VDropdown class="relative w-full" v-bind="$attrs">
     <template #activator="{ on, show }">
       <VTextField :key="value" :model-value="value" :title="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
         <template #icon>
@@ -7,6 +7,7 @@
         </template>
       </VTextField>
     </template>
+
     <VList v-slot="{ item }" :list="list" @click="onChange">
       <slot :item="item">{{ item.name }}</slot>
     </VList>
@@ -34,17 +35,3 @@ const emit = defineEmits(['change']);
 const onChange = e => emit('change', e);
 const getClass = show => ({ 'rotate-180': show });
 </script>
-
-<style lang="scss">
-.v-select {
-  position: relative;
-  width: 100%;
-  margin-bottom: 30px;
-  &__icon {
-    transition: all 0.3s ease-in-out;
-    &--active {
-      transform: rotateX(180deg);
-    }
-  }
-}
-</style>

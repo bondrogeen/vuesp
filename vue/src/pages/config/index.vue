@@ -4,17 +4,18 @@
       <h1>Config</h1>
       <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <v-icons icon="menu" @click="on.click"></v-icons>
+          <IconMenu @click="on.click"></IconMenu>
         </template>
-        <VList :list="listMenu" @click="onUploadFile"></VList>
+
+        <VList :list="listMenu" class="rounded" @click="onUploadFile"></VList>
       </VDropdown>
     </div>
 
     <div class="grid grid-cols-1 gap-4">
-      <div v-for="(item, key) in config" :key="key" label="key" class="">
+      <div v-for="(item, key) in config" :key="key" label="key">
         <h3 class="mb-6">{{ key }}</h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div v-for="(field, k) in item" :key="`${k}`">
             <VTextField :model-value="getValue(field, k)" :label="`Name`" @update:model-value="onInput(key, k, $event)" />
           </div>
@@ -45,6 +46,8 @@ import VTextField from '@/components/general/VTextField';
 import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
 
+import IconMenu from '@/components/icons/IconMenu';
+
 const webSocketStore = useWebSocketStore();
 const { dallas } = storeToRefs(webSocketStore);
 
@@ -56,10 +59,10 @@ const listMenu = [
   { id: 2, name: 'Remove' },
 ];
 
-const onSave = async e => {
+const onSave = async () => {
   await saveConfig(config.value);
 };
-const onClose = e => {
+const onClose = () => {
   showDialog.value = false;
 };
 const getValue = (field, k) => {

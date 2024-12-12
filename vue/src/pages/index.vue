@@ -50,7 +50,7 @@
         <h5 class="mb-6">ADC</h5>
 
         <div class="grid gap-2 grid-cols-2">
-          <div v-for="(pin, i) of 4" :key="`adc_${pin}`" class="">
+          <div v-for="(pin, i) of 4" :key="`adc_${pin}`" >
             <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
             <span class="font-bold">{{ device[`adc${i + 1}`] }}</span>
           </div>
@@ -79,16 +79,11 @@
         </div>
       </VCard>
     </div>
-    <AppDialog size="lg" title="Config" :value="showDialog" @close="onClose">
-      <template #footer>
-        <v-button @click="onSubmit(true)">Scan</v-button>
-      </template>
-    </AppDialog>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, inject } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
@@ -96,7 +91,6 @@ import { getConfig } from '@/utils/fs/';
 
 import event from '@/assets/js/event';
 
-import AppDialog from '@/components/app/AppDialog';
 import VCard from '@/components/general/VCard';
 import VTextField from '@/components/general/VTextField';
 import VDropdown from '@/components/general/VDropdown';
@@ -106,8 +100,6 @@ import IconMenu from '@/components/icons/IconMenu';
 
 const config = ref();
 
-const showDialog = ref(false);
-
 const webSocketStore = useWebSocketStore();
 const { device, dallas } = storeToRefs(webSocketStore);
 
@@ -115,9 +107,6 @@ const listPage = [
   { id: 1, name: 'Config' },
   { id: 2, name: 'Save default' },
 ];
-const listMenu = [{ id: 1, name: 'Save' }];
-
-const overlay = inject('overlay');
 
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
@@ -145,11 +134,6 @@ const onPage = ({ id }) => {
 };
 const isDac = value => !(value >= 0 && value <= 255);
 
-const onClose = () => {
-  showDialog.value = false;
-  overlay.value = false;
-};
-
 const onSetOutput = (pin, value) => {
   const byte = device.value.output;
   device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
@@ -173,15 +157,6 @@ const onDate = e => {
   const _now = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
   webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
-};
-
-const onUploadFile = async () => {
-  showDialog.value = true;
-  // overlay.value = true;
-};
-
-const onSubmit = async e => {
-  console.log(e);
 };
 
 onMounted(async () => {

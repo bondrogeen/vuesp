@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
     <div v-if="value" class="z-20 fixed top-0 h-[100dvh] w-full left-0 flex flex-col" @wheel.stop>
-      <div class="app-dialog__overlay bg-gray-900 opacity-40" @click="onClose"></div>
+      <div class="absolute h-full w-full top-0 left-0 bg-gray-900 opacity-40" @click="onClose"></div>
       <div class="flex-auto flex align-center p-4">
         <div class="m-auto w-full bg-white shadow-lg flex flex-col rounded-lg z-30" :class="getClass">
           <div class="flex justify-between px-4 py-2 border-b">
@@ -13,7 +13,7 @@
             </button>
           </div>
           <div class="px-4 py-2 flex-auto scroll-none">
-            <v-progressbar v-if="isProgress" :value="percent" />
+            {{ percent }}
             <slot>
               <div v-html="message"></div>
             </slot>
@@ -32,7 +32,6 @@
 <script setup>
 import { defineProps, defineEmits, computed, watch, inject, onMounted } from 'vue';
 
-import VProgressbar from '@/components/general/VProgressbar';
 import IconClose from '@/components/icons/IconClose';
 
 const props = defineProps({
@@ -49,7 +48,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const sizes = { sm: 'max-w-[240px]', md: 'max-w-[600px]', lg: 'max-w-[960px]' };
+const sizes = { sm: 'max-w-[330px]', md: 'max-w-[600px]', lg: 'max-w-[960px]' };
 const percent = computed(() => (props.progress.status ? Math.ceil((props.progress.size * 100) / props.progress.length) : 100));
 const getClass = computed(() => [`${sizes?.[props.size]}`]);
 
@@ -68,15 +67,3 @@ onMounted(() => {
   if (props.value) overlay.value = true;
 });
 </script>
-
-<style lang="scss">
-.app-dialog {
-  &__overlay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-  }
-}
-</style>

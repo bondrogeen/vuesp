@@ -1,8 +1,8 @@
 <template>
-  <div class="service-gpio">
+  <div class="relative">
     <div v-for="pin in ports" :key="pin.gpio">
       <div v-if="pin" class="flex justify-between">
-        <v-select class="service-gpio__select" :value="getMode(pin).name" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)"></v-select>
+        <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
         <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
       </div>
     </div>
@@ -19,6 +19,8 @@
 import { defineProps, defineEmits, onMounted, ref, computed } from 'vue';
 import { getBinary, onUploadBinary } from '@/utils/fs/';
 import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio/';
+
+import VSelect from '@/components/general/VSelect';
 
 const props = defineProps({
   gpios: { type: Object, default: () => ({}) },
@@ -63,6 +65,8 @@ const getMode = ({ data }) => {
   return listMode.find(i => i.value === value) || {};
 };
 
+const getModeName = pin => getMode(pin).name;
+
 const getValue = ({ data }) => Boolean(getKey(data, 'value'));
 
 const getStateValue = ({ gpio }) => getValue(props?.gpios?.[gpio] || {});
@@ -100,12 +104,3 @@ onMounted(async () => {
   onGetPort();
 });
 </script>
-
-<style lang="scss">
-.service-gpio {
-  position: relative;
-  &__select {
-    max-width: 250px;
-  }
-}
-</style>
