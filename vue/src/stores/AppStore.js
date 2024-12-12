@@ -12,11 +12,15 @@ export const useAppStore = defineStore('app', {
   actions: {
     init() {
       this.theme = localStorage.getItem('theme') === 'dark';
-      document.documentElement.setAttribute('data-theme', this.theme ? 'dark' : 'light');
+      document.documentElement.classList.remove(!this.theme ? 'dark' : 'light')
+      document.documentElement.classList.add(this.theme ? 'dark' : 'light')
     },
     changeTheme(value) {
+      console.log(value);
+      
       this.theme = typeof value === 'undefined' ? !this.theme : Boolean(value);
-      document.documentElement.setAttribute('data-theme', this.theme ? 'dark' : 'light');
+      document.documentElement.classList.remove(!this.theme ? 'dark' : 'light')
+      document.documentElement.classList.add(this.theme ? 'dark' : 'light')
       localStorage.setItem('theme', this.theme ? 'dark' : 'light');
     },
     setDialog(data) {

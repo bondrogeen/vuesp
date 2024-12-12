@@ -1,11 +1,16 @@
 <template>
-  <div class="v-tabs">
-    <ul class="v-tabs__header w-full flex border-b border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto">
-      <li v-for="item of tabs" :key="item.label" class="relative transition duration-500 ease-in-out" :class="['v-tabs__item', { 'v-tabs__item--active ': isActive(item.label) }]">
+  <div >
+    <ul class="w-full flex border-b dark:border-gray-700 border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto">
+      <li
+        v-for="item of tabs"
+        :key="item.label"
+        class="relative before:transition-all after:transition-all before:bg-primary after:bg-primary before:right-1/2 after:left-1/2 before:h-1 before:absolute before:bottom-0 after:h-1 after:absolute after:bottom-0"
+        :class="[isActive(item.label) ? 'before:w-1/2 after:w-1/2 ' : 'before:w-0 after:w-0']"
+      >
         <button class="p-4 font-bold" @click="onSelect(item)">{{ item.label }}</button>
       </li>
     </ul>
-    <div class="">
+    <div>
       <slot></slot>
     </div>
   </div>
@@ -44,36 +49,3 @@ onMounted(() => {
   }
 });
 </script>
-
-<style lang="scss">
-.v-tabs {
-  &__item {
-    user-select: none;
-
-    &::before,
-    &::after {
-      content: '';
-      position: absolute;
-      height: 2px;
-      width: 0;
-      bottom: 0;
-      transition: all 0.2s ease-in-out;
-      background-color: color('app', 'primary');
-    }
-
-    &::before {
-      right: 50%;
-    }
-    &::after {
-      left: 50%;
-    }
-    &--active {
-      &::before,
-      &::after {
-        color: color('app', 'primary');
-        width: 50%;
-      }
-    }
-  }
-}
-</style>

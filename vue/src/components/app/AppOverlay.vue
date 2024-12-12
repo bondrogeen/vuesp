@@ -1,25 +1,8 @@
 <template>
-	<div class="v-overlay">
-		<div class="v-overlay__content">
-			<slot></slot>
-		</div>
-	</div>
+  <div class="fixed h-full w-full top-0 left-0 z-20">
+    <div class="absolute h-full w-full top-0 left-0 bg-gray-900 opacity-40"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      <slot></slot>
+    </div>
+  </div>
 </template>
-
-<style lang="scss">
-.v-overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	height: 100%;
-	width: 100%;
-	background-color: var(--overlay);
-	z-index: 11;
-	&__content {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-	}
-}
-</style>

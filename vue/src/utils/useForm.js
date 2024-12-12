@@ -27,6 +27,15 @@ export const useForm = (init = {}, form) => {
         return error ? error : '';
     };
 
+    const validateAll = () => {
+        for (const key in v) {
+            const validate = v[key].validate
+            validate(v[key].value)
+        }
+    }
+
+    watch(v, validateAll)
+
     return {
         v,
         invalid,
@@ -65,6 +74,7 @@ export const useField = (validators = {}, key, form) => {
         valid,
         dirty,
         error: computed(() => dirty.value ? error.value : ''),
-        blur
+        blur,
+        validate
     }
 }

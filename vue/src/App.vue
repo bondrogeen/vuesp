@@ -1,12 +1,11 @@
 <template>
   <div class="h-[100dvh] min-h-full flex flex-col">
-    <!-- <AppOverlay v-if="isOverlay" @click="onClose">
-      <template v-if="!isConnect">
-        <div>Disconnected</div>
-        <VLoader></VLoader>
-
-      </template>
-    </AppOverlay> -->
+    <AppOverlay v-if="isOverlay" @click="onClose">
+      <div class="mb-4">Disconnected</div>
+      <div class="flex justify-center">
+        <VLoader class="text-primary"></VLoader>
+      </div>
+    </AppOverlay>
 
     <AppDialog v-bind="dialog" :progress="progress" @close="dialog = {}" />
 
@@ -16,11 +15,13 @@
 
     <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
 
-    <main class="px-4 py-6 sm:px-6 lg:px-8 flex-auto">
+    <main class="pt-20 px-4 py-6 sm:px-6 lg:px-8 flex-auto">
       <router-view />
     </main>
 
-    <AppFooter v-bind="info" />
+    <AppNavigation class="md:hidden" v-bind="info" />
+
+    <AppFooter v-bind="info" class="pb-20 md:pb-4" />
   </div>
 </template>
 
@@ -40,6 +41,7 @@ import AppHeader from '@/components/app/AppHeader';
 import AppFooter from '@/components/app/AppFooter';
 import AppDrawer from '@/components/app/AppDrawer';
 import AppOverlay from '@/components/app/AppOverlay';
+import AppNavigation from '@/components/app/AppNavigation';
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();

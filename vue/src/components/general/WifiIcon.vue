@@ -1,12 +1,14 @@
 <template>
-  <div class="wifi-icon">
+  <div class="relative flex items-end gap-0.5 w-10">
     <div
-      v-for="(item, i) of ['four', 'three', 'two', 'one']"
+      v-for="(item, i) of [10, 15, 25, 40, 70]"
       :key="item"
-      :class="['wifi-icon__item', `wifi-icon__item--${item}`, { 'wifi-icon__item--active': isActive(i) }]"
+      class="w-1 h-5 rounded-lg"
+      :class="[isActive(item) ? 'bg-gray-900' : 'bg-gray-300']"
+      :style="`height: ${(i + 1) * 5}px`"
       :title="`rssi: ${rssi} channel: ${channel}`"
     ></div>
-    <div class="wifi-icon__channel">{{ channel }}</div>
+    <div class="absolute -top-2 -left-2 text-xsmall bg-blue-100 rounded-full h-4 w-4 flex justify-center items-center">{{ channel }}</div>
   </div>
 </template>
 
@@ -18,44 +20,5 @@ const props = defineProps({
   channel: { type: Number, default: 0 },
 });
 const quality = 2 * (props.rssi + 100);
-const isActive = i => (4 - i) * 15 < quality;
+const isActive = i => i < quality;
 </script>
-
-<style lang="scss">
-.wifi-icon {
-  width: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  &__channel {
-    position: absolute;
-    right: 3px;
-    bottom: -5px;
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 10px;
-  }
-  &__item {
-    height: 3px;
-    background-color: var(--border-1);
-    margin-bottom: 2px;
-    border-radius: 2px;
-    &--four {
-      width: 25px;
-    }
-    &--three {
-      width: 18px;
-    }
-    &--two {
-      width: 12px;
-    }
-    &--one {
-      width: 6px;
-    }
-    &--active {
-      background-color: var(--text-1);
-    }
-  }
-}
-</style>

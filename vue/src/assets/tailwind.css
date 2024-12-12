@@ -9,7 +9,7 @@
     @apply min-h-screen leading-[140%] text-base md:overflow-y-scroll;
   }
   body {
-    @apply min-h-screen min-w-[360px] text-gray-900;
+    @apply min-h-screen min-w-[360px] text-gray-900 bg-white dark:bg-gray-900 dark:text-white;
   }
   input {
     outline: none;
@@ -50,6 +50,14 @@
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
     transition: background-color 9999s ease-in-out 0s;
+  }
+  .dark {
+    input::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+  }
+  input {
+    background: transparent;
   }
 }
 

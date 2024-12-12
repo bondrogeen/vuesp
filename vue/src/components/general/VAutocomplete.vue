@@ -1,5 +1,5 @@
 <template>
-  <VDropdown class="" v-bind="$attrs">
+  <VDropdown v-bind="$attrs">
     <template #activator="{ show, on }">
       <VTextField :value="show ? search : currentUser" :placeholder="show ? 'Поиск' : placeholder" @click="on.click" @input="onInput" @focus="search = ''">
         <template #icon>

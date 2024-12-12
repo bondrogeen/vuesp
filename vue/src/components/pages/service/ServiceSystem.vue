@@ -7,7 +7,7 @@
         <h6 class="text-gray-400">Firmware:</h6>
 
         <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
-          <span class="">{{ getFileNames(files) }}</span>
+          <span>{{ getFileNames(files) }}</span>
         </VTextFieldFile>
       </div>
 
@@ -19,7 +19,7 @@
         <h6 class="text-gray-400">LittleFS:</h6>
 
         <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
-          <span class="">{{ getFileNames(files) }}</span>
+          <span>{{ getFileNames(files) }}</span>
         </VTextFieldFile>
       </div>
 
@@ -80,7 +80,7 @@ const updateLittleFS = () => nextTick(() => onFlash('LittleFS'));
 const onSureFlash = name =>
   dialog({
     value: true,
-    message: `Are you sure you want to update the ${name}? <br/> <p class="grey-base text-body-1 mt-2" >${getName(name)}</p>`,
+    message: `Are you sure you want to update the ${name}? <br/> <p class="mt-2" >${getName(name)}</p>`,
     callback: name === 'firmware' ? updateFirmware : updateLittleFS,
   });
 </script>

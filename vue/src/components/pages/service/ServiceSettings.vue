@@ -2,7 +2,7 @@
   <div>
     <VExpansion label="Wi-Fi" value>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <v-select :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
+        <VSelect :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
 
         <VTextField v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
           <template #icon>
@@ -41,8 +41,8 @@
           </template>
         </VTextField>
 
-        <div class="col-span-full mb-4">
-          <v-checkbox v-model="settings.wifiDhcp">DHCP</v-checkbox>
+        <div class="col-span-full mt-4">
+          <VCheckbox v-model="settings.wifiDhcp">DHCP</VCheckbox>
         </div>
 
         <VTextField v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
@@ -57,8 +57,8 @@
 
     <VExpansion label="Security" value>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="col-span-full mb-4">
-          <v-checkbox v-model="settings.authMode">AUTHENTICATION</v-checkbox>
+        <div class="col-span-full">
+          <VCheckbox v-model="settings.authMode">AUTHENTICATION</VCheckbox>
         </div>
 
         <VTextField v-model="v.authLogin.value" label="Login" :disabled="isAuth" />
@@ -96,13 +96,11 @@
       </div>
     </VExpansion>
 
-    <div class="row mt-6">
-      <div class="col sm12 flex j-end">
-        <v-button :disabled="invalid" @click="onSave">Save</v-button>
-      </div>
+    <div class="mt-6">
+      <v-button :disabled="invalid" @click="onSave">Save</v-button>
     </div>
 
-    <AppDialog title="SCAN" size="md" :value="showDialog" @close="onClose">
+    <AppDialog title="SCAN" size="sm" :value="showDialog" @close="onClose">
       <div>
         <VList v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
@@ -136,6 +134,8 @@ import AppDialog from '@/components/app/AppDialog';
 import WifiIcon from '@/components/general/WifiIcon';
 import VTextField from '@/components/general/VTextField';
 import VExpansion from '@/components/general/VExpansion';
+import VCheckbox from '@/components/general/VCheckbox';
+import VSelect from '@/components/general/VSelect';
 import VLoader from '@/components/general/VLoader';
 import VList from '@/components/general/VList';
 
@@ -163,9 +163,7 @@ const settings = computed({
 });
 
 const wifiIp = computed({
-  set: value => {
-    settings.value.wifiIp = value.split('.').map(i => +i);
-  },
+  set: value => (settings.value.wifiIp = value.split('.').map(i => +i)),
   get: () => (settings?.value?.wifiIp || []).join('.'),
 });
 const wifiSubnet = computed({
@@ -242,7 +240,7 @@ const validators = {
   reAuthPassword: { required, max12, sameAs: value => sameAs(value, authPass.value) },
 };
 
-const { v, invalid, data, getError } = useForm(validators, form);
+const { v, invalid, getError } = useForm(validators, form);
 
 const listWiFi = [
   { name: 'OFF', value: 0 },

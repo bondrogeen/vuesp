@@ -3,7 +3,10 @@ import routes from 'vue-auto-routing';
 
 // const routes = [{ path: '*', component: PageNotFound }];
 
+
 const router = createRouter({
+  linkActiveClass: 'text-primary',
+  linkExactActiveClass: 'text-primary',
   history: createWebHistory(process.env.BASE_URL),
   routes,
   scrollBehavior() {

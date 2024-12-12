@@ -1,6 +1,6 @@
 <template>
   <ul>
-    <li v-for="{ name, path } of routers" :key="name" class="first-letter">
+    <li v-for="{ name, path } of routers" :key="name" class="first-letter:uppercase hover:text-primary transition">
       <router-link :to="path" @click="onRoute">{{ name }}</router-link>
     </li>
   </ul>

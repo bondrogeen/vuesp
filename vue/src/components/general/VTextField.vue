@@ -1,7 +1,7 @@
 <template>
-  <div class="w-full relative">
+  <div class="w-full relative dark:bg-gray-800">
     <label class="relative w-full h-[40px] border flex items-center rounded transition" :class="getClassSlot">
-      <span class="absolute left-4 transition-all duration-300 -translate-y-1/2 bg-white text-gray-600" :class="getClassLabel">
+      <span class="absolute left-4 transition-all rounded duration-300 -translate-y-1/2 text-gray-600 dark:text-gray-400" :class="getClassLabel">
         {{ label }}
       </span>
 
@@ -10,7 +10,7 @@
         :value="modelValue"
         :disabled="disabled"
         :type="type"
-        class="w-full px-4 h-100 outline-none overflow-ellipsis flex-auto overflow-hidden w-[calc(100% - 20px)]"
+        class="w-full px-4 h-100 outline-none overflow-ellipsis flex-auto overflow-hidden w-[calc(100% - 20px)] bg-transparent"
         @focus="onFocus"
         @blur="onBlur"
         @input="onInput"
@@ -56,7 +56,9 @@ const getClassSlot = computed(() => [
 
 const isValue = value => value || value === 0;
 
-const getClassLabel = computed(() => [isFocus.value || isValue(props.modelValue) || props.active ? '-top-1 left-1 text-small px-1 py-0' : 'top-1/2']);
+const after = 'after:absolute after:h-1 after:w-full after:left-0 after:translate-y-[6px] after:-z-10 after:dark:bg-gray-800 after:bg-white';
+
+const getClassLabel = computed(() => [after, isFocus.value || isValue(props.modelValue) || props.active ? 'top-0 left-3 text-small' : 'top-1/2']);
 
 const onInput = ({ target }) => {
   emit('update:modelValue', target.value);
