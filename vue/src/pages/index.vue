@@ -83,11 +83,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, inject } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
 import { getConfig } from '@/utils/fs/';
+
+const notification = inject('notification');
 
 import event from '@/assets/js/event';
 
@@ -135,6 +137,7 @@ const onPage = ({ id }) => {
 const isDac = value => !(value >= 0 && value <= 255);
 
 const onSetOutput = (pin, value) => {
+  notification({ text: 'add' });
   const byte = device.value.output;
   device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
   webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });

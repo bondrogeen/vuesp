@@ -1,5 +1,5 @@
 <template>
-  <ul class="bg-white dark:bg-gray-800 overflow-hidden">
+  <ul class="bg-white dark:bg-gray-800">
     <li
       v-for="(item, i) of list"
       :key="'list_' + i"

@@ -5,6 +5,9 @@
 #include "./include/init.h"
 #include "./include/tasks.h"
 #include "./include/webserver.h"
+// #include "./luas/LuaWrapper.h"
+
+// LuaWrapper lua;
 
 #if defined(ESP8266)
 uint32_t id = ESP.getChipId();
@@ -38,6 +41,9 @@ void setupDelay() {
   setupGPIO();
   setupDevice();
   setupServer();
+
+  // String script = String("local x = 10 local y = 25 local z = x + y print('Sum of x+y =',z)");
+  // Serial.println(lua.Lua_dostring(&script));
 }
 
 void loop() {

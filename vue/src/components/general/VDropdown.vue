@@ -3,7 +3,7 @@
     <div class="flex items-center cursor-pointer">
       <slot name="activator" :on="{ click: onClick }" :show="isShown"></slot>
     </div>
-    <transition name="slide-up">
+    <transition name="slide">
       <div v-if="isShown" class="z-10 min-w-full absolute overflow-auto shadow-lg" :style="getStyle" @click="onClick">
         <slot :show="onShow" :hide="hide" :is-shown="isShown"></slot>
       </div>

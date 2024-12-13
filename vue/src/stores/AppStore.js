@@ -7,6 +7,7 @@ export const useAppStore = defineStore('app', {
     dialog: {
       value: false,
     },
+    notifications: [],
     struct: {},
   }),
   actions: {
@@ -17,7 +18,7 @@ export const useAppStore = defineStore('app', {
     },
     changeTheme(value) {
       console.log(value);
-      
+
       this.theme = typeof value === 'undefined' ? !this.theme : Boolean(value);
       document.documentElement.classList.remove(!this.theme ? 'dark' : 'light')
       document.documentElement.classList.add(this.theme ? 'dark' : 'light')
@@ -26,6 +27,19 @@ export const useAppStore = defineStore('app', {
     setDialog(data) {
       this.dialog = data;
       // this.dialog.value = true;
+    },
+    setNotification(notification) {
+      console.log(notification);
+
+      const id = notification?.id || Date.now()
+      const item = this.notifications.find(i => i.id === id)
+
+      if (item) {
+        this.notifications = this.notifications.map(i => i.id === item.id ? notification : i)
+      } else {
+        this.notifications = [...this.notifications, { ...notification, id }]
+
+      }
     },
   },
 });

@@ -10,8 +10,7 @@
           <span>{{ getFileNames(files) }}</span>
         </VTextFieldFile>
       </div>
-
-      <v-button size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
+      <v-button class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
     </div>
 
     <div class="flex items-center gap-4 mb-4">
@@ -23,7 +22,7 @@
         </VTextFieldFile>
       </div>
 
-      <v-button size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
+      <v-button class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
     </div>
 
     <h5 class="mb-2">Reboot</h5>
@@ -31,7 +30,7 @@
     <div class="flex items-center mb-4">
       <div class="flex-auto text-gray-400">Reboot device</div>
 
-      <v-button size="small" @click="emit('reboot')">Reboot</v-button>
+      <v-button class="min-w-[100px]" size="small" @click="emit('reboot')">Reboot</v-button>
     </div>
 
     <h5 class="mb-2">Reset</h5>
@@ -39,7 +38,7 @@
     <div class="flex items-center mb-4">
       <div class="flex-auto text-gray-400">Reset configuration</div>
 
-      <v-button size="small" @click="emit('reset')">Reset</v-button>
+      <v-button class="min-w-[100px]" size="small" @click="emit('reset')">Reset</v-button>
     </div>
   </div>
 </template>
@@ -54,7 +53,7 @@ const dialog = inject('dialog');
 
 const selectFile = ref({ LittleFS: null, firmware: null });
 const onUpdateFirmware = e => (selectFile.value.firmware = e);
-const onUpdateLittleFS = e => (selectFile.value.littlefs = e);
+const onUpdateLittleFS = e => (selectFile.value.LittleFS = e);
 const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
 const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
 

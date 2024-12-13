@@ -151,7 +151,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'scan', 'save']);
 
 const dialog = inject('dialog');
-const overlay = inject('overlay');
 
 const showPass = ref(false);
 const showAuthPass = ref(false);
@@ -269,12 +268,10 @@ const onSelectSsid = ({ ssid }) => {
 
 const onClose = () => {
   showDialog.value = false;
-  overlay.value = false;
 };
 
 const onScan = value => {
   showDialog.value = true;
-  overlay.value = true;
   emit('scan', value);
 };
 
