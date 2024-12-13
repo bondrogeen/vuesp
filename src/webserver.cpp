@@ -114,6 +114,12 @@ void onRecovery(AsyncWebServerRequest *request) {
   request->send(response);
 }
 
+// void onGetData(AsyncWebServerRequest *request) {
+//   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+//   AsyncResponseStream *response = request->beginResponseStream("application/x-binary", sizeof(infoFS));
+//   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
+//   request->send(response);
+// }
 void onRedirectRecovery(AsyncWebServerRequest *request) {
   request->redirect("/recovery");
 }
@@ -132,6 +138,7 @@ void setupServer() {
   }
 
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
+  // server.on("/get", HTTP_GET, onGetData);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
   server.on("/", HTTP_GET, onRedirectRecovery);

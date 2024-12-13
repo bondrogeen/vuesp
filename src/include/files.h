@@ -9,8 +9,7 @@
 #include "../const/index.h"
 
 void initFS();
-void getInfo(Info& infoFS, u_int32_t id);
-void listDir(const char* dirname, uint8_t levels);
+void getInfo(Info* infoFS);
 uint8_t readFile(const char* path, uint8_t* buf, size_t size);
 void writeFile(const char* path, const uint8_t* buf, size_t size);
 bool createDir(const char* path);

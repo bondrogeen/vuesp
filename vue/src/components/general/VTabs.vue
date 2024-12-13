@@ -1,5 +1,5 @@
 <template>
-  <div >
+  <div>
     <ul class="w-full flex border-b dark:border-gray-700 border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto">
       <li
         v-for="item of tabs"
@@ -17,13 +17,17 @@
 </template>
 
 <script setup>
+import { useRouter, useRoute } from 'vue-router';
 import { ref, defineProps, defineEmits, useSlots, provide, onMounted } from 'vue';
+
 defineProps({
   value: { type: Boolean, default: false },
 });
 const emit = defineEmits(['change']);
 
 const slots = useSlots();
+const router = useRouter();
+const route = useRoute();
 
 const selectedIndex = ref({});
 const tabs = ref([]);
@@ -35,16 +39,19 @@ const isActive = label => selectedIndex.value?.label === label;
 const onSelect = i => {
   selectedIndex.value = i;
   emit('change', i);
+  router.push({ hash: `#${i.label}` });
 };
 
 onMounted(() => {
+  const hash = route?.hash || '';
   if (slots.default) {
     setTimeout(() => {
       tabs.value = slots
         .default()
         .filter(child => child.type.__name === 'VTab')
         .map(i => i.props);
-      selectedIndex.value = tabs.value?.[0] || {};
+
+      selectedIndex.value = tabs.value.find(i => hash.includes(i.label)) || tabs.value?.[0] || {};
     }, 300);
   }
 });

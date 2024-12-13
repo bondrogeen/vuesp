@@ -3,28 +3,28 @@
     <h1 class="mb-6">Service</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div>
-        <VTabs class="sticky top-0">
-          <VTab label="Settings" icon="connect">
-            <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
-          </VTab>
-
-          <VTab label="Storage" icon="storage">
-            <ServiceStorage v-model="path" :files="fileList" :progress="progress" :info="info" @send="onSend" />
-          </VTab>
-
-          <VTab label="System" icon="update">
-            <ServiceSystem @reboot="onSureReboot" @reset="onSureReset" />
-          </VTab>
-
-          <VTab label="GPIO" icon="onher">
-            <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
-          </VTab>
-        </VTabs>
+      <div class="lg:order-last lg:mt-14">
+        <ServiceInfo v-bind="info" />
       </div>
 
       <div>
-        <ServiceInfo v-bind="info" />
+        <VTabs class="sticky top-0">
+          <VTab label="Settings">
+            <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
+          </VTab>
+
+          <VTab label="Storage">
+            <ServiceStorage v-model="path" :files="fileList" :progress="progress" :info="info" @send="onSend" />
+          </VTab>
+
+          <VTab label="System">
+            <ServiceSystem @reboot="onSureReboot" @reset="onSureReset" />
+          </VTab>
+
+          <VTab label="GPIO">
+            <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
+          </VTab>
+        </VTabs>
       </div>
     </div>
   </div>
@@ -88,5 +88,6 @@ event.on('init', () => {
 
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
+  webSocketStore.onSend('INFO');
 });
 </script>
