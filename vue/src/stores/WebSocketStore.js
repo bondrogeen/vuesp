@@ -29,10 +29,8 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.settings = value;
     },
     SET_PROGRESS(value) {
-      if (value.status === 1) {
-        const app = useAppStore();
-        app.setDialog({ title: 'Progress', value: true, isProgress: true });
-      }
+      const app = useAppStore();
+      app.setNotification({ id: 1, text: 'Progress...', ...value, });
       this.progress = value;
     },
     SET_PORT(value) {

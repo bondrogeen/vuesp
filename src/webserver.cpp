@@ -69,10 +69,10 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
+    progress.size = 0;
     progress.length = request->contentLength();
-
     request->_tempFile = LittleFS.open(filename, "w");
-    Serial.println(filename);
+    // Serial.println(filename);
   }
   if (len) request->_tempFile.write(data, len);
   if (final) request->_tempFile.close();
@@ -91,6 +91,7 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
+    progress.size = 0;
     progress.length = request->contentLength();
 #if defined(ESP8266)
     Update.runAsync(true);

@@ -4,11 +4,11 @@
       v-for="(item, i) of [10, 15, 25, 40, 70]"
       :key="item"
       class="w-1 h-5 rounded-lg"
-      :class="[isActive(item) ? 'bg-gray-900' : 'bg-gray-300']"
+      :class="[isActive(item) ? 'bg-gray-900 dark:bg-gray-100' : 'bg-gray-300 dark:bg-gray-700']"
       :style="`height: ${(i + 1) * 5}px`"
       :title="`rssi: ${rssi} channel: ${channel}`"
     ></div>
-    <div class="absolute -top-2 -left-2 text-xsmall bg-blue-100 rounded-full h-4 w-4 flex justify-center items-center">{{ channel }}</div>
+    <div class="absolute -top-1 -left-1 text-xsmall text-gray-600 dark:text-gray-300">{{ channel }}</div>
   </div>
 </template>
 

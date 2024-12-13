@@ -9,7 +9,7 @@
             cy="18"
             r="16"
             fill="none"
-            class="stroke-current text-primary dark:text-blue-500 hover:text-secondary transition"
+            class="stroke-current text-blue-500 hover:text-secondary transition"
             stroke-width="4"
             stroke-dasharray="100"
             :stroke-dashoffset="100 - percent"
@@ -51,12 +51,12 @@ const time = ref(props.uptime);
 const getFirmware = computed(() => props.firmware.join('.'));
 
 const date = computed(() => ({
-  ID: props.id.toString(16),
-  Firmware: getFirmware.value,
   Used: toByte(props.usedBytes),
   Available: toByte(props.totalBytes - props.usedBytes),
   Total: toByte(props.totalBytes),
   Uptime: secToTime(time.value),
+  ID: props.id.toString(16),
+  Firmware: getFirmware.value,
 }));
 
 const percent = computed(() => Math.round((props.usedBytes * 100) / props.totalBytes));

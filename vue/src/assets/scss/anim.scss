@@ -7,7 +7,7 @@
   }
 }
 
-@keyframes slideUpIn {
+@keyframes slideIn {
   0% {
     opacity: 0;
     transform-origin: 0 0;
@@ -20,7 +20,7 @@
   }
 }
 
-@keyframes slideUpOut {
+@keyframes slideOut {
   0% {
     opacity: 1;
     transform-origin: 0% 0%;
@@ -34,10 +34,10 @@
 }
 @keyframes fadeIn {
   0% {
-    opacity: 0;
+    opacity: 1;
   }
   100% {
-    opacity: 1;
+    transition: all 0.5s ease;
   }
 }
 
@@ -50,5 +50,25 @@
   }
 }
 
-@include vue-anim(slide-up, slideUp);
+@keyframes listIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes listOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+
+@include vue-anim(slide, slide);
 @include vue-anim(fade, fade);
+@include vue-anim(list, list);
