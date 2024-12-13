@@ -25,6 +25,9 @@ module.exports = defineConfig({
         target: `ws://${process.env.PROXY}`,
         ws: true,
       },
+      '/get': {
+        target: `http://${process.env.PROXY}`,
+      },
       '/fs': {
         target: `http://${process.env.PROXY}`,
       },

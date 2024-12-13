@@ -13,6 +13,7 @@ uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 24);
 #endif
 
 uint32_t now;
+uint32_t lastTimeMain;
 
 uint8_t isSetup = false;
 uint8_t isInit = false;
@@ -30,7 +31,8 @@ void setupFirst() {
 }
 
 void setupDelay() {
-  getInfo(infoFS, id);
+  infoFS.id = id;
+  getInfo(&infoFS);
   loadConfig(settings, id);
   initWiFi();
   setupGPIO();
@@ -55,5 +57,10 @@ void loop() {
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
+  }
+
+  if (now - lastTimeMain > 1000) {
+    lastTimeMain = now;
+    infoFS.uptime++;
   }
 }

@@ -4,17 +4,16 @@ void initFS() {
   if (!LittleFS.begin() && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
 }
 
-void getInfo(Info& infoFS, u_int32_t id) {
+void getInfo(Info* infoFS) {
 #if defined(ESP8266)
   FSInfo fs_info;
   LittleFS.info(fs_info);
-  infoFS.totalBytes = fs_info.totalBytes;
-  infoFS.usedBytes = fs_info.usedBytes;
+  infoFS->totalBytes = fs_info.totalBytes;
+  infoFS->usedBytes = fs_info.usedBytes;
 #elif defined(ESP32)
-  infoFS.totalBytes = LittleFS.totalBytes();
-  infoFS.usedBytes = LittleFS.usedBytes();
+  infoFS->totalBytes = LittleFS.totalBytes();
+  infoFS->usedBytes = LittleFS.usedBytes();
 #endif
-  infoFS.id = id;
   return;
 }
 

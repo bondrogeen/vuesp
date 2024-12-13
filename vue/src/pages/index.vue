@@ -50,7 +50,7 @@
         <h5 class="mb-6">ADC</h5>
 
         <div class="grid gap-2 grid-cols-2">
-          <div v-for="(pin, i) of 4" :key="`adc_${pin}`" >
+          <div v-for="(pin, i) of 4" :key="`adc_${pin}`">
             <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
             <span class="font-bold">{{ device[`adc${i + 1}`] }}</span>
           </div>
@@ -165,5 +165,8 @@ onMounted(async () => {
 
   dac.value.dac1 = device.value?.dac1 || 0;
   dac.value.dac2 = device.value?.dac2 || 0;
+
+  // const res = await fetch(`/get`, { method: 'GET' });
+  // const content = await res.blob();
 });
 </script>

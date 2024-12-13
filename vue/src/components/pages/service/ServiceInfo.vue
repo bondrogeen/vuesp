@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4 border border-primary rounded-lg max-w-[320px]">
-    <div class="flex justify-center mb-4">
+  <VCard class="grid grid-cols-2 lg:grid-cols-1 gap-8 lg:max-w-[360px]">
+    <div class="flex justify-center">
       <div class="relative size-40">
         <svg class="size-full -rotate-90" viewBox="0 0 36 36">
           <circle cx="18" cy="18" r="16" fill="none" class="stroke-current text-gray-200 dark:text-neutral-700" stroke-width="4"></circle>
@@ -23,24 +23,50 @@
       </div>
     </div>
 
-    <div class="flex justify-between">
-      <div v-for="(item, key) in date" :key="key" class="text-center">
-        <div class="text-gray-400">{{ key }}</div>
-        <div class="font-bold">{{ toByte(item) }}</div>
+    <div class="text-body flex flex-col justify-center gap-2">
+      <div v-for="(item, key) in date" :key="key" class="grid grid-cols-2">
+        <div class="text-gray-400">{{ key }}:</div>
+        <div class="font-bold">{{ item }}</div>
       </div>
     </div>
-  </div>
+  </VCard>
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue';
-import { toByte } from '@/utils/func/';
+import { ref, computed, defineProps, onMounted } from 'vue';
+import { toByte, secToTime } from '@/utils/func/';
+
+import VCard from '@/components/general/VCard';
 
 const props = defineProps({
+  id: { type: Number, default: 0 },
+  firmware: { type: Array, default: () => [] },
   totalBytes: { type: Number, default: 0 },
   usedBytes: { type: Number, default: 0 },
+  uptime: { type: Number, default: 0 },
 });
 
-const date = computed(() => ({ Used: props.usedBytes, Available: props.totalBytes - props.usedBytes, Total: props.totalBytes }));
+const time = ref(props.uptime);
+
+const getFirmware = computed(() => props.firmware.join('.'));
+
+const date = computed(() => ({
+  ID: props.id.toString(16),
+  Firmware: getFirmware.value,
+  Used: toByte(props.usedBytes),
+  Available: toByte(props.totalBytes - props.usedBytes),
+  Total: toByte(props.totalBytes),
+  Uptime: secToTime(time.value),
+}));
+
 const percent = computed(() => Math.round((props.usedBytes * 100) / props.totalBytes));
+
+const timeUp = () => {
+  time.value++;
+  setTimeout(timeUp, 1000);
+};
+
+onMounted(() => {
+  timeUp();
+});
 </script>
