@@ -13,11 +13,12 @@
 
     <div class="grid grid-cols-1 gap-4">
       <div v-for="(item, key) in config" :key="key" label="key">
-        <h3 class="mb-6">{{ key }}</h3>
+        <h3 class="mb-6 first-letter:uppercase">{{ key }}</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <div v-for="(field, k) in item" :key="`${k}`">
-            <VTextField :model-value="getValue(field, k)" :label="`Name`" @update:model-value="onInput(key, k, $event)" />
+          <div v-for="(field, k) in item" :key="`${k}`" class="flex flex-col gap-2">
+            <VTextField :model-value="getValue(field, k)" label="Name" @blur="onName(key, k, $event.target.value)" />
+            <VTextarea v-if="isFunction(field)" :model-value="getFun(field)" label="Value" @blur="onFunction(key, k, $event.target.value)" />
           </div>
         </div>
       </div>
@@ -43,6 +44,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import AppDialog from '@/components/app/AppDialog';
 import VTextField from '@/components/general/VTextField';
+import VTextarea from '@/components/general/VTextarea';
 import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
 
@@ -59,19 +61,21 @@ const listMenu = [
   { id: 2, name: 'Remove' },
 ];
 
+const getFun = field => field?.fun || '(v)=>v*10';
+
+// console.log(eval(text)(15));
+
 const onSave = async () => {
   await saveConfig(config.value);
 };
 const onClose = () => {
   showDialog.value = false;
 };
-const getValue = (field, k) => {
-  return typeof field.name === 'undefined' ? k : '';
-};
+const getValue = (field, k) => field?.name || k;
+const isFunction = field => typeof field?.fun !== 'undefined';
 
-const onInput = (name, key, value) => {
-  config.value[name][key].name = value;
-};
+const onName = (name, key, value) => (config.value[name][key].name = value);
+const onFunction = (name, key, value) => (config.value[name][key].fun = value);
 
 onMounted(async () => {
   const object = dallas?.value || {};

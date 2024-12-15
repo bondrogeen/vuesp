@@ -24,7 +24,7 @@ import VSelect from '@/components/general/VSelect';
 
 const props = defineProps({
   gpios: { type: Object, default: () => ({}) },
-  path: { type: String, default: '/device/gpio.io' },
+  path: { type: String, default: '/tmp/gpio.io' },
 });
 
 const emit = defineEmits(['click', 'send', 'reboot']);

@@ -50,9 +50,9 @@
         <h5 class="mb-6">ADC</h5>
 
         <div class="grid gap-2 grid-cols-2">
-          <div v-for="(pin, i) of 4" :key="`adc_${pin}`">
+          <div v-for="pin of 4" :key="`adc_${pin}`">
             <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
-            <span class="font-bold">{{ device[`adc${i + 1}`] }}</span>
+            <span class="font-bold">{{ findValue('adc', `adc${pin}`) }}</span>
           </div>
         </div>
       </VCard>
@@ -84,6 +84,7 @@
 
 <script setup>
 import { computed, onMounted, ref, inject } from 'vue';
+import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
@@ -99,6 +100,8 @@ import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
 
 import IconMenu from '@/components/icons/IconMenu';
+
+const router = useRouter();
 
 const config = ref();
 
@@ -126,10 +129,16 @@ const findName = (name, key) => {
   const value = config?.value?.[name]?.[key]?.name;
   return typeof value === 'undefined' ? `${key}` : value;
 };
+const findValue = (name, key) => {
+  const f = config?.value?.[name]?.[key]?.fun;
+  const value = device?.value?.[key];
+  return f ? eval(f)(value) : value;
+};
 
 const onPage = ({ id }) => {
-  // if (id === 1) {
-  // }
+  if (id === 1) {
+    router.push('/config');
+  }
   if (id === 2) {
     onSaveDef();
   }

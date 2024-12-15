@@ -1,16 +1,18 @@
 <template>
   <div class="w-full relative dark:bg-gray-800">
-    <label class="relative w-full h-[40px] border flex items-center rounded transition" :class="getClassSlot">
+    <label class="relative w-full min-h-[40px] border flex items-center rounded transition" :class="getClassSlot">
       <span class="absolute left-4 transition-all rounded duration-300 -translate-y-1/2 text-gray-600 dark:text-gray-400" :class="getClassLabel">
         {{ label }}
       </span>
 
-      <input
+      <textarea
         v-bind="$attrs"
         :value="modelValue"
         :disabled="disabled"
         :type="type"
-        class="w-full px-4 outline-none overflow-ellipsis flex-auto overflow-hidden w-[calc(100% - 20px)] bg-transparent"
+        rows="2"
+        wrap
+        class="h-full w-full px-4 py-2 outline-none flex-auto bg-transparent"
         @focus="onFocus"
         @blur="onBlur"
         @input="onInput"
