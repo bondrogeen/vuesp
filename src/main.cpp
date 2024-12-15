@@ -38,7 +38,6 @@ void setupDelay() {
   getInfo(&infoFS);
   loadConfig(settings, id);
   initWiFi();
-  setupGPIO();
   setupDevice();
   setupServer();
 
