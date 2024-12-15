@@ -29,15 +29,14 @@ export const useAppStore = defineStore('app', {
       // this.dialog.value = true;
     },
     setNotification(notification) {
-      console.log(notification);
-
       const id = notification?.id || Date.now()
+      const timeout = notification?.timeout || 10
       const item = this.notifications.find(i => i.id === id)
 
       if (item) {
         this.notifications = this.notifications.map(i => i.id === item.id ? notification : i)
       } else {
-        this.notifications = [...this.notifications, { ...notification, id }]
+        this.notifications = [...this.notifications, { ...notification, id, timeout }]
 
       }
     },

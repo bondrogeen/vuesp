@@ -47,16 +47,15 @@ import VTab from '@/components/general/VTab';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 const dialog = inject('dialog');
+const notification = inject('notification');
+
 const webSocketStore = useWebSocketStore();
 const { fileList, info, path, progress, settings, scanList, gpios } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
   nextTick(() => {
-    dialog({ value: true, title: 'Done', message: 'Reboot...' });
-    setTimeout(() => {
-      dialog({});
-    }, 2000);
+    notification({ text: 'Reboot' });
   });
 };
 const onReset = () => {

@@ -10,7 +10,7 @@
         :value="modelValue"
         :disabled="disabled"
         :type="type"
-        class="w-full px-4 h-100 outline-none overflow-ellipsis flex-auto overflow-hidden w-[calc(100% - 20px)] bg-transparent"
+        class="w-full px-4 outline-none overflow-ellipsis flex-auto overflow-hidden w-[calc(100% - 20px)] bg-transparent"
         @focus="onFocus"
         @blur="onBlur"
         @input="onInput"

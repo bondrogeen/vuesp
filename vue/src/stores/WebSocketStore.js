@@ -30,7 +30,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     },
     SET_PROGRESS(value) {
       const app = useAppStore();
-      app.setNotification({ id: 1, text: 'Progress...', ...value, });
+      app.setNotification({ id: 1, text: 'Progress...', timeout: 60, ...value, });
       this.progress = value;
     },
     SET_PORT(value) {

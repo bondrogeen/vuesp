@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide, computed } from 'vue';
+import { ref, onMounted, onUnmounted, provide } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/AppStore';
 import { useWebSocket } from '@/stores/WebSocket';
