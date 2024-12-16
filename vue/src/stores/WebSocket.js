@@ -33,7 +33,7 @@ export const useWebSocket = defineStore('websocket', {
         const data = struct.get(message.data);
         if (data) {
           const { object, key } = data;
-          // console.log(object);
+          console.log(object);
           if (key !== 'PING') log(object, key);
           const store = useWebSocketStore();
           if (store?.[`SET_${key}`]) {

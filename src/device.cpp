@@ -224,10 +224,10 @@ void getData() {
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-    getData();
-    onSend();
+    // getData();
+    // onSend();
 
-    findDallas();
+    // findDallas();
   }
 
   if (tasks[KEY_DEVICE]) {

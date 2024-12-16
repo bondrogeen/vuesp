@@ -22,7 +22,7 @@
           </VTab>
 
           <VTab label="GPIO">
-            <ServiceGPIO :gpios="gpios" @send="onSend" @reboot="onSureReboot" />
+            <ServiceGPIO :gpio="gpio" @send="onSend" @reboot="onSureReboot" />
           </VTab>
         </VTabs>
       </div>
@@ -50,7 +50,7 @@ const dialog = inject('dialog');
 const notification = inject('notification');
 
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, progress, settings, scanList, gpios } = storeToRefs(webSocketStore);
+const { fileList, info, path, progress, settings, scanList, gpio } = storeToRefs(webSocketStore);
 
 const onReboot = () => {
   webSocketStore.onSend('REBOOT');
