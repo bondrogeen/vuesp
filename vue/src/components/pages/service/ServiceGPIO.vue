@@ -1,8 +1,6 @@
 <template>
   <div class="relative p-4 flex flex-col gap-4">
-    {{ ports }}
     <div v-for="pin in ports" :key="pin.gpio">
-      {{ pin }}
       <div v-if="pin" class="flex justify-between">
         <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
         <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
@@ -89,8 +87,6 @@ const onGetPort = () => {
 
 const onLoadDataGpio = async () => {
   const array = await getBinary(pathGPIO);
-  console.log(array);
-
   return parseDateGPIO(array);
 };
 
@@ -104,8 +100,6 @@ const onSave = async () => {
 
 onMounted(async () => {
   ports.value = await onLoadDataGpio();
-  console.log(ports.value);
-
   portsDef.value = JSON.parse(JSON.stringify(ports.value));
   onGetPort();
 });

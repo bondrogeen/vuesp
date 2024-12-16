@@ -22,59 +22,14 @@
         </div>
       </VCard>
 
-      <VCard>
-        <h5 class="mb-6">INPUT</h5>
+      <VCard class="col-span-full">
+        <h5 class="mb-6">GPIO</h5>
 
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
-            <div class="text-body mb-1 text-gray-600">{{ findName('input', `input${i + 1}`) }}</div>
-
-            <v-button block disabled>{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
-          </div>
-        </div>
-      </VCard>
-
-      <VCard>
-        <h5 class="mb-6">OUTPUT</h5>
-
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
-            <div class="text-body mb-1 text-gray-600">{{ findName('output', `output${i + 1}`) }}</div>
-
-            <v-button block @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
-          </div>
-        </div>
-      </VCard>
-
-      <VCard>
-        <h5 class="mb-6">ADC</h5>
-
-        <div class="grid gap-2 grid-cols-2">
-          <div v-for="pin of 4" :key="`adc_${pin}`">
-            <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
-            <span class="font-bold">{{ findValue('adc', `adc${pin}`) }}</span>
-          </div>
-        </div>
-      </VCard>
-
-      <VCard v-if="isDallas">
-        <h5 class="mb-6">DS18B20</h5>
-
-        <div class="grid gap-2 grid-cols-1">
-          <div v-for="(ds, key) in dallas" :key="`adc_${key}`">
-            <span class="text-body text-gray-600 mr-2" :title="key">{{ findName('ds', key) }}:</span>
-            <span class="font-bold">{{ ds.temp.toFixed(2) }} ℃</span>
-          </div>
-        </div>
-      </VCard>
-
-      <VCard>
-        <h5 class="mb-6">DAC</h5>
-        <div class="grid grid-cols-1 gap-4">
-          <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="grid gap-2 grid-cols-4">
-            <VTextField v-model="dac[`dac${i + 1}`]" class="col-span-3" :label="findName('dac', `dac${pin}`)" hideMessage />
-
-            <v-button block :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
+        <div v-for="pin in ports" :key="pin.gpio">
+          <div v-if="pin" class="flex justify-between">
+            PIN: {{ pin.gpio }}
+            <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+            <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
           </div>
         </div>
       </VCard>
@@ -89,6 +44,13 @@ import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { setBit, getBit, clearBit } from '@/utils/gpio/';
 import { getConfig } from '@/utils/fs/';
+
+import { getBinary, onUploadBinary } from '@/utils/fs/';
+import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio/';
+import { pathGPIO } from '@/utils/const';
+
+const webSocketStore = useWebSocketStore();
+const { device, gpio } = storeToRefs(webSocketStore);
 
 const notification = inject('notification');
 
@@ -105,9 +67,6 @@ const router = useRouter();
 
 const config = ref();
 
-const webSocketStore = useWebSocketStore();
-const { device, dallas } = storeToRefs(webSocketStore);
-
 const listPage = [
   { id: 1, name: 'Config' },
   { id: 2, name: 'Save default' },
@@ -115,25 +74,24 @@ const listPage = [
 
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
-const isDallas = computed(() => Boolean(Object.values(dallas?.value)?.length));
-
 const now = ref(0);
-
-const dac = ref({ dac1: 0, dac2: 0 });
+const ports = ref([]);
+const portsDef = ref([]);
 
 event.on('init', () => {
   webSocketStore.onSend('DEVICE');
 });
 
-const findName = (name, key) => {
-  const value = config?.value?.[name]?.[key]?.name;
-  return typeof value === 'undefined' ? `${key}` : value;
-};
-const findValue = (name, key) => {
-  const f = config?.value?.[name]?.[key]?.fun;
-  const value = device?.value?.[key];
-  return f ? eval(f)(value) : value;
-};
+const listMode = [
+  { name: 'OFF', value: 0 },
+  { name: 'INPUT', value: 8 }, // 0x00
+  { name: 'OUTPUT', value: 9 }, // 0x01
+  { name: 'INPUT_PULLUP', value: 10 }, // 0x02
+  { name: 'OUTPUT_OPEN_DRAIN', value: 11 }, // 0x03
+  // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
+  // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
+  // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07
+];
 
 const onPage = ({ id }) => {
   if (id === 1) {
@@ -143,7 +101,41 @@ const onPage = ({ id }) => {
     onSaveDef();
   }
 };
-const isDac = value => !(value >= 0 && value <= 255);
+
+const onMode = (port, item) => {
+  const obj = getData(port.data);
+  const value = item.value;
+  obj.init = value & 0b00001111 ? 1 : 0;
+  obj.mode = value & 0b00000111;
+  port.data = setData(obj);
+};
+
+const getMode = ({ data }) => {
+  const mode = getKey(data, 'mode');
+  const init = getKey(data, 'init');
+  const value = init * 8 + mode;
+  return listMode.find(i => i.value === value) || {};
+};
+
+const getModeName = pin => getMode(pin).name;
+
+const getValue = ({ data }) => Boolean(getKey(data, 'value'));
+
+const getStateValue = pin => {
+  return getValue(gpio?.value?.[pin.gpio] || {});
+};
+
+const isDisabled = pin => Boolean(![9, 11].includes(getMode(pin).value));
+
+const onSetPort = (port, value) => {
+  console.log(port, value);
+
+  const obj = getData(port.data);
+  obj.value = value;
+  port.data = setData(obj);
+
+  webSocketStore.onSend('PORT', { gpio: port.gpio, command: command.GPIO_COMMAND_SET, data: port.data });
+};
 
 const onSetOutput = (pin, value) => {
   notification({ text: 'add' });
@@ -152,11 +144,6 @@ const onSetOutput = (pin, value) => {
   webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
 };
 
-const onDac = (i, value) => {
-  console.log(i, value);
-  device.value[`dac${i}`] = value;
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 3 });
-};
 const onSaveDef = () => {
   webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
 };
@@ -171,14 +158,20 @@ const onDate = e => {
   webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
 };
 
+const onLoadDataGpio = async () => {
+  const array = await getBinary(pathGPIO);
+  return parseDateGPIO(array);
+};
+
+const onGetPort = () => {
+  webSocketStore.onSend('PORT', { command: command.GPIO_COMMAND_GET_ALL });
+};
+
 onMounted(async () => {
+  onGetPort();
+  ports.value = await onLoadDataGpio();
+  portsDef.value = JSON.parse(JSON.stringify(ports.value));
+
   onSend();
-  config.value = await getConfig();
-
-  dac.value.dac1 = device.value?.dac1 || 0;
-  dac.value.dac2 = device.value?.dac2 || 0;
-
-  // const res = await fetch(`/get`, { method: 'GET' });
-  // const content = await res.blob();
 });
 </script>

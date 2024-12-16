@@ -96,7 +96,6 @@ void loopGPIO(uint32_t now) {
     debounce = now;
   }
   if (btnStatus == 2 && now - debounce > 50) {
-    Serial.println(debounce);
     btnStatus = 0;
     getAll(false);
   }
@@ -106,8 +105,6 @@ void loopGPIO(uint32_t now) {
       getAll(true);
     }
     if (port.command == GPIO_COMMAND_SET) {
-      Serial.println(port.gpio);
-      Serial.println(readBit(port.data, GPIO_VALUE));
       digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
       getAll(true);
     }
