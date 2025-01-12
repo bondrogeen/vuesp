@@ -40,34 +40,27 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, inject } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
-import { setBit, getBit, clearBit } from '@/utils/gpio/';
-import { getConfig } from '@/utils/fs/';
 
-import { getBinary, onUploadBinary } from '@/utils/fs/';
-import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio/';
+import { getBinary } from '@/utils/fs/';
+import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/';
 import { pathGPIO } from '@/utils/const';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);
 
-const notification = inject('notification');
-
 import event from '@/assets/js/event';
 
 import VCard from '@/components/general/VCard';
-import VTextField from '@/components/general/VTextField';
 import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
 
 import IconMenu from '@/components/icons/IconMenu';
 
 const router = useRouter();
-
-const config = ref();
 
 const listPage = [
   { id: 1, name: 'Config' },
@@ -80,9 +73,15 @@ const now = ref(0);
 const ports = ref([]);
 const portsDef = ref([]);
 
-event.on('init', () => {
+const init = async () => {
   webSocketStore.onSend('DEVICE');
-});
+  webSocketStore.onSend('PORT');
+
+  ports.value = await onLoadDataGpio();
+  portsDef.value = JSON.parse(JSON.stringify(ports.value));
+};
+
+event.on('init', init);
 
 const listMode = [
   { name: 'OFF', value: 0 },
@@ -139,19 +138,8 @@ const onSetPort = (port, value) => {
   webSocketStore.onSend('PORT', { gpio: port.gpio, command: command.GPIO_COMMAND_SET, data: port.data });
 };
 
-const onSetOutput = (pin, value) => {
-  notification({ text: 'add' });
-  const byte = device.value.output;
-  device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
-};
-
 const onSaveDef = () => {
   webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
-};
-
-const onSend = () => {
-  webSocketStore.onSend('DEVICE', { now: now.value, command: 0 });
 };
 
 const onDate = e => {
@@ -165,15 +153,7 @@ const onLoadDataGpio = async () => {
   return parseDateGPIO(array);
 };
 
-const onGetPort = () => {
-  webSocketStore.onSend('PORT', { command: command.GPIO_COMMAND_GET_ALL });
-};
-
 onMounted(async () => {
-  onGetPort();
-  ports.value = await onLoadDataGpio();
-  portsDef.value = JSON.parse(JSON.stringify(ports.value));
-
-  onSend();
+  await init();
 });
 </script>

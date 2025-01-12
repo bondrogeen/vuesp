@@ -98,6 +98,7 @@ void loopGPIO(uint32_t now) {
   if (btnStatus == 2 && now - debounce > 50) {
     btnStatus = 0;
     getAll(false);
+    deviceGPIO();
   }
 
   if (tasks[KEY_PORT]) {

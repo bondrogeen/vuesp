@@ -89,4 +89,5 @@ struct Device {
   uint8_t input;
   uint8_t output;
   uint32_t now;
+  char message[32];
 };
