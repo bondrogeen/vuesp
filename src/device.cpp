@@ -9,12 +9,16 @@
 Device device = {
     KEY_DEVICE,
     0,
-    0,
     255,
     0,
-    "test"};
+    0,
+};
 
+uint8_t valueLight = 0;
+uint8_t direction = 0;
+uint8_t start;
 uint8_t task;
+uint32_t lastTimeDeviceLight = 0;
 uint32_t lastTimeDevice = 0;
 
 void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
@@ -41,8 +45,19 @@ void onSend() {
 }
 
 void deviceGPIO() {
-  uint8_t value = digitalRead(13);
-  Serial.println(value);
+  if (digitalRead(13)) {
+    start = 1;
+    direction = !direction;
+  } else {
+    if (start == 5) {
+      start = 2;
+    }
+    if (start == 6) {
+      start = 255;
+    }
+    onSend();
+  }
+  Serial.println(start);
 }
 
 void getDef() {
@@ -63,6 +78,7 @@ void setupFirstDevice() {
 }
 
 void setupDevice() {
+  analogWrite(4, device.light);
 }
 
 void loopDevice(uint32_t now) {
@@ -71,13 +87,47 @@ void loopDevice(uint32_t now) {
     // onSend();
   }
 
+  if (start == 1) {
+    start = 5;
+    lastTimeDeviceLight = now;
+  }
+
+  if ((start == 5) && now - lastTimeDeviceLight > 500) {
+    start = 6;
+    lastTimeDeviceLight = now;
+  }
+  if (start == 6 && now - lastTimeDeviceLight > 10) {
+    lastTimeDeviceLight = now;
+    if (direction && device.light < 255) {
+      device.light++;
+    }
+    if (!direction && device.light > 0) {
+      device.light--;
+    }
+
+    Serial.println(device.light);
+    analogWrite(4, device.light);
+  }
+
+  if (start == 2) {
+    valueLight = !valueLight;
+
+    if (valueLight) {
+      analogWrite(4, device.light);
+    } else {
+      analogWrite(4, 255);
+    }
+    Serial.println(now - lastTimeDeviceLight);
+    start = 255;
+  }
+
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
-    Serial.println(device.now);
     if (device.command == 1) {
-      Serial.println("device");
-      Serial.println(device.now);
-      // writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+    }
+    if (device.command == 2) {
+      analogWrite(4, device.light);
     }
 
     device.command = 0;

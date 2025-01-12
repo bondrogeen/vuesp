@@ -13,6 +13,7 @@
       </VDropdown>
     </div>
 
+    {{ device }}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       <VCard class="flex justify-between col-span-full">
         <h5>Date</h5>
@@ -23,17 +24,8 @@
       </VCard>
 
       <VCard class="col-span-full">
-        <h5 class="mb-6">GPIO</h5>
-
-        <div class="flex flex-col gap-2">
-          <div v-for="pin in ports" :key="pin.gpio">
-            <div v-if="pin" class="flex justify-between">
-              PIN: {{ pin.gpio }}
-              <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
-              <v-button class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
-            </div>
-          </div>
-        </div>
+        <label for="minmax-range" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Brightness</label>
+        <input id="minmax-range" type="range" min="0" max="255" :value="device.light" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" @change="onLight" />
       </VCard>
     </div>
   </div>
@@ -49,6 +41,8 @@ import { getBinary } from '@/utils/fs/';
 import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/';
 import { pathGPIO } from '@/utils/const';
 
+import VSelect from '@/components/general/VSelect';
+
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);
 
@@ -63,6 +57,11 @@ import IconMenu from '@/components/icons/IconMenu';
 const router = useRouter();
 
 const listPage = [
+  { id: 1, name: 'Config' },
+  { id: 2, name: 'Save default' },
+];
+
+const listLight = [
   { id: 1, name: 'Config' },
   { id: 2, name: 'Save default' },
 ];
@@ -139,13 +138,18 @@ const onSetPort = (port, value) => {
 };
 
 const onSaveDef = () => {
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
+  webSocketStore.onSend('DEVICE', { ...device.value, command: 1 });
 };
 
 const onDate = e => {
   const _now = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
-  webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
+  webSocketStore.onSend('DEVICE', { now: now.value, command: 3 });
+};
+
+const onLight = e => {
+  const value = e?.target?.valueAsNumber;
+  webSocketStore.onSend('DEVICE', { light: value, command: 2 });
 };
 
 const onLoadDataGpio = async () => {
