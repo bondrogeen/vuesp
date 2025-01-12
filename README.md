@@ -74,7 +74,7 @@ npm run build
 
 ### 2.0.0 (2023-06-05)
 
-- (bondrogeen) Add tailwindui
+- (bondrogeen) Add tailwind
 
 ### 1.3.0 (2023-06-05)
 
