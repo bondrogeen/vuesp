@@ -12,7 +12,7 @@ Device device = {
     0,
     255,
     0,
-};
+    "test"};
 
 uint8_t task;
 uint32_t lastTimeDevice = 0;
@@ -38,6 +38,11 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
 
 void onSend() {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+}
+
+void deviceGPIO() {
+  uint8_t value = digitalRead(13);
+  Serial.println(value);
 }
 
 void getDef() {
@@ -68,9 +73,11 @@ void loopDevice(uint32_t now) {
 
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
-
+    Serial.println(device.now);
     if (device.command == 1) {
-      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+      Serial.println("device");
+      Serial.println(device.now);
+      // writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
     }
 
     device.command = 0;

@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, watch, onMounted, computed } from 'vue';
+import { defineProps, defineEmits, onMounted, computed } from 'vue';
 
 import IconClose from '@/components/icons/IconClose';
 
@@ -39,8 +39,6 @@ const isProgress = computed(() => Boolean(props.length));
 const isProgressDone = computed(() => Boolean(isProgress.value && getPercent.value === 100 && !props.status));
 
 onMounted(() => {
-  console.log('onMounted');
-  console.log(props.timeout);
   const timeout = props.timeout;
   if (timeout) {
     setTimeout(() => {

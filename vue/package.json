@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npm run recovery && npm run parser && vue-cli-service build && npm run firmware",
+    "build": "npm run increment && npm run recovery && npm run parser && vue-cli-service build && npm run firmware",
     "lint": "vue-cli-service lint",
     "dev": "vue-cli-service serve",
-    "firmware": "cd ../ && sh script.sh build",
+    "increment": "node ../scripts/increment.js",
+    "firmware": "cd ../ && sh scripts/script.sh build",
     "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
     "recovery": "node ./utils/script.js /recovery/ ../src/pages"
   },
