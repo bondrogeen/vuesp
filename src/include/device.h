@@ -5,19 +5,10 @@
 #include "./tasks.h"
 #include "./webserver.h"
 
-#define GPIO_SDA 4
-#define GPIO_SCL 15
-
-#define GPIO_ADC1 36
-#define GPIO_ADC2 39
-#define GPIO_ADC3 34
-#define GPIO_ADC4 35
-
-#define GPIO_HT1 32
-
-#define ADDRESS_RTC 0x68
-#define ADDRESS_OUTPUT 0x24
-#define ADDRESS_INPUT 0x22
+#define GPIO_PWM 4
+#define GPIO_SENSOR1 13
+#define GPIO_SENSOR2 14
+#define GPIO_18B20 12
 
 void setupDevice();
 void setupFirstDevice();

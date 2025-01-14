@@ -24,8 +24,14 @@
       </VCard>
 
       <VCard class="col-span-full">
-        <label for="minmax-range" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Brightness</label>
-        <input id="minmax-range" type="range" min="0" max="255" :value="device.light" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" @change="onLight" />
+        <h5>Brightness</h5>
+        <VRange :modelValue="device.light" min="0" max="254" @change="onLight" />
+
+        <h5 class="mt-6">State</h5>
+        <v-button class="mt-6" @click="onChangeState">{{ device.state ? 'ON' : 'OFF' }}</v-button>
+
+        <h5 class="mt-6">Sensor</h5>
+        <v-button class="mt-6" @click="onScan(true)">Sensor</v-button>
       </VCard>
     </div>
   </div>
@@ -38,10 +44,11 @@ import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import { getBinary } from '@/utils/fs/';
-import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/';
+import { getKey,  parseDateGPIO } from '@/utils/gpio/';
 import { pathGPIO } from '@/utils/const';
 
 import VSelect from '@/components/general/VSelect';
+import VRange from '@/components/general/VRange';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);
@@ -57,11 +64,6 @@ import IconMenu from '@/components/icons/IconMenu';
 const router = useRouter();
 
 const listPage = [
-  { id: 1, name: 'Config' },
-  { id: 2, name: 'Save default' },
-];
-
-const listLight = [
   { id: 1, name: 'Config' },
   { id: 2, name: 'Save default' },
 ];
@@ -102,39 +104,11 @@ const onPage = ({ id }) => {
   }
 };
 
-const onMode = (port, item) => {
-  const obj = getData(port.data);
-  const value = item.value;
-  obj.init = value & 0b00001111 ? 1 : 0;
-  obj.mode = value & 0b00000111;
-  port.data = setData(obj);
-};
-
 const getMode = ({ data }) => {
   const mode = getKey(data, 'mode');
   const init = getKey(data, 'init');
   const value = init * 8 + mode;
   return listMode.find(i => i.value === value) || {};
-};
-
-const getModeName = pin => getMode(pin).name;
-
-const getValue = ({ data }) => Boolean(getKey(data, 'value'));
-
-const getStateValue = pin => {
-  return getValue(gpio?.value?.[pin.gpio] || {});
-};
-
-const isDisabled = pin => Boolean(![9, 11].includes(getMode(pin).value));
-
-const onSetPort = (port, value) => {
-  console.log(port, value);
-
-  const obj = getData(port.data);
-  obj.value = value;
-  port.data = setData(obj);
-
-  webSocketStore.onSend('PORT', { gpio: port.gpio, command: command.GPIO_COMMAND_SET, data: port.data });
 };
 
 const onSaveDef = () => {
@@ -150,6 +124,10 @@ const onDate = e => {
 const onLight = e => {
   const value = e?.target?.valueAsNumber;
   webSocketStore.onSend('DEVICE', { light: value, command: 2 });
+};
+const onChangeState = e => {
+  device.value.state = device.value.state ? 0 : 1
+  webSocketStore.onSend('DEVICE', { state: device.value.state, command: 2 });
 };
 
 const onLoadDataGpio = async () => {
