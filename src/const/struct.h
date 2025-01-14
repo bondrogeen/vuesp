@@ -87,6 +87,10 @@ struct Device {
   uint8_t key;
   uint8_t command;
   uint8_t light;
-  uint8_t output;
+  uint8_t state;
+  uint8_t sensor1;
+  uint8_t sensor2;
+  uint8_t sensor3;
+  uint8_t sensor4;
   uint32_t now;
 };

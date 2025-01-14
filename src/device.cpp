@@ -12,9 +12,12 @@ Device device = {
     255,
     0,
     0,
+    0,
+    0,
+    0,
+    0,
 };
 
-uint8_t valueLight = 0;
 uint8_t direction = 0;
 uint8_t start;
 uint8_t task;
@@ -45,7 +48,9 @@ void onSend() {
 }
 
 void deviceGPIO() {
-  if (digitalRead(13)) {
+  device.sensor1 = digitalRead(GPIO_SENSOR1);
+  device.sensor2 = digitalRead(GPIO_SENSOR2);
+  if (device.sensor1) {
     start = 1;
     direction = !direction;
   } else {
@@ -55,15 +60,12 @@ void deviceGPIO() {
     if (start == 6) {
       start = 255;
     }
-    onSend();
   }
-  Serial.println(start);
+  onSend();
 }
 
 void getDef() {
   uint8_t isOk = readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-  Serial.println("device");
-  Serial.println(device.output);
   if (!isOk) {
     writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
   }
@@ -78,7 +80,7 @@ void setupFirstDevice() {
 }
 
 void setupDevice() {
-  analogWrite(4, device.light);
+  analogWrite(GPIO_PWM, device.state ? device.light : 255);
 }
 
 void loopDevice(uint32_t now) {
@@ -104,20 +106,12 @@ void loopDevice(uint32_t now) {
     if (!direction && device.light > 0) {
       device.light--;
     }
-
-    Serial.println(device.light);
-    analogWrite(4, device.light);
+    analogWrite(GPIO_PWM, device.light);
   }
 
   if (start == 2) {
-    valueLight = !valueLight;
-
-    if (valueLight) {
-      analogWrite(4, device.light);
-    } else {
-      analogWrite(4, 255);
-    }
-    Serial.println(now - lastTimeDeviceLight);
+    device.state = !device.state;
+    analogWrite(GPIO_PWM, device.state ? device.light : 255);
     start = 255;
   }
 
@@ -127,7 +121,7 @@ void loopDevice(uint32_t now) {
       writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
     }
     if (device.command == 2) {
-      analogWrite(4, device.light);
+      analogWrite(GPIO_PWM, device.state ? device.light : 255);
     }
 
     device.command = 0;
