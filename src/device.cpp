@@ -1,10 +1,16 @@
 #include "./include/device.h"
 
+#include <OneWire.h>
+
 #include "./include/UnixTime.h"
 #include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
+
+OneWire ds(GPIO_18B20);
+
+uint8_t address[8];
 
 Device device = {
     KEY_DEVICE,
@@ -71,6 +77,25 @@ void getDef() {
   }
 }
 
+float getTemperature(uint8_t *address1) {
+  uint16_t temp;
+  ds.reset();
+  ds.select(address1);
+  ds.write(0xBE);
+  temp = (ds.read() | ds.read() << 8);
+
+  ds.reset();
+  ds.select(address1);
+  ds.write(0x44, 1);
+  return (float)temp / 16.0;
+}
+
+void findDallas() {
+  while (ds.search(address) == 1) {
+    device.temp = getTemperature(address);
+  }
+}
+
 void getGPIO() {
   onSend();
 }
@@ -80,13 +105,15 @@ void setupFirstDevice() {
 }
 
 void setupDevice() {
+  analogWriteFreq(200);
   analogWrite(GPIO_PWM, device.state ? device.light : 255);
 }
 
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-    // onSend();
+    findDallas();
+    onSend();
   }
 
   if (start == 1) {

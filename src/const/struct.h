@@ -93,4 +93,5 @@ struct Device {
   uint8_t sensor3;
   uint8_t sensor4;
   uint32_t now;
+  float temp;
 };
