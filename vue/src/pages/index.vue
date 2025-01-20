@@ -13,25 +13,25 @@
       </VDropdown>
     </div>
 
-    {{ device }}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      <VCard class="flex justify-between col-span-full">
-        <h5>Date</h5>
+      <VCard class="flex col-span-full gap-4">
+        <h5>Temperature:</h5>
 
-        <div class="flex items-center">
-          <input :value="datetime" type="datetime-local" @change="onDate" />
-        </div>
+        <div class="flex items-center">{{ device.temp }} °C</div>
       </VCard>
 
       <VCard class="col-span-full">
-        <h5>Brightness</h5>
-        <VRange :modelValue="device.light" min="0" max="254" @change="onLight" />
+        <h5 class="mb-4">Brightness</h5>
+        <div class="flex flex-col md:flex-row gap-4 md:items-center">
+          <VRange class="md:w-1/2" :modelValue="device.light" min="0" max="254" @change="onLight" />
+          <v-button @click="onChangeState">{{ device.state ? 'ON' : 'OFF' }}</v-button>
+        </div>
 
-        <h5 class="mt-6">State</h5>
-        <v-button class="mt-6" @click="onChangeState">{{ device.state ? 'ON' : 'OFF' }}</v-button>
-
-        <h5 class="mt-6">Sensor</h5>
-        <v-button class="mt-6" @click="onScan(true)">Sensor</v-button>
+        <h5 class="mt-6">Sensors</h5>
+        <div class="flex gap-4">
+          <v-button class="mt-6" disabled @click="onScan(true)">{{ device.sensor1 ? 'ON' : 'OFF' }}</v-button>
+          <v-button class="mt-6" disabled @click="onScan(true)">{{ device.sensor2 ? 'ON' : 'OFF' }}</v-button>
+        </div>
       </VCard>
     </div>
   </div>
@@ -44,7 +44,7 @@ import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import { getBinary } from '@/utils/fs/';
-import { getKey,  parseDateGPIO } from '@/utils/gpio/';
+import { getKey, parseDateGPIO } from '@/utils/gpio/';
 import { pathGPIO } from '@/utils/const';
 
 import VSelect from '@/components/general/VSelect';
@@ -126,7 +126,7 @@ const onLight = e => {
   webSocketStore.onSend('DEVICE', { light: value, command: 2 });
 };
 const onChangeState = e => {
-  device.value.state = device.value.state ? 0 : 1
+  device.value.state = device.value.state ? 0 : 1;
   webSocketStore.onSend('DEVICE', { state: device.value.state, command: 2 });
 };
 
