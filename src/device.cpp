@@ -1,6 +1,8 @@
 #include "./include/device.h"
 
+#include <ModbusMaster.h>
 #include <OneWire.h>
+#include <SoftwareSerial.h>
 #include <Wire.h>
 
 #include "./include/UnixTime.h"
@@ -8,6 +10,10 @@
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
+
+EspSoftwareSerial::UART ModbusSerial;
+
+ModbusMaster node;
 
 OneWire ds(GPIO_HT1);
 
@@ -150,12 +156,19 @@ void getGPIO() {
   onSend();
 }
 
+void setModbusSetup() {
+  ModbusSerial.begin(9600, EspSoftwareSerial::SWSERIAL_8N2, GPIO_485RX, GPIO_485TX);
+  node.begin(1, ModbusSerial);
+}
+
 void setupFirstDevice() {
   getDef();
 }
 
 void setupDevice() {
   Wire.begin(GPIO_SDA, GPIO_SCL);
+
+  setModbusSetup();
   setOutput();
   setDAC();
   getADC();
@@ -221,13 +234,29 @@ void getData() {
   getDate();
 }
 
+void readHoldingRegistersDemo() {
+  uint8_t result;
+  uint16_t data[2];  // Буфер для данных
+
+  // Чтение 2 регистров начиная с адреса 0
+  result = node.readInputRegisters(0x00, 1);
+
+  if (result == node.ku8MBSuccess) {
+    Serial.print("Data: ");
+    Serial.print(node.getResponseBuffer(0));
+  } else {
+    Serial.print("Error: ");
+    Serial.println(result, HEX);
+  }
+}
+
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     getData();
     onSend();
 
-    findDallas();
+    readHoldingRegistersDemo();  // Пример чтения регистров
   }
 
   if (tasks[KEY_DEVICE]) {
