@@ -20,6 +20,8 @@ OneWire ds(GPIO_HT1);
 UnixTime stamp(0);
 
 Dallas ht1 = {KEY_DALLAS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+DDS6619 ec = {KEY_DDS6619, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+Modbus modbus = {KEY_MODBUS, 0, 255, 0};
 
 Device device = {
     KEY_DEVICE,
@@ -38,6 +40,7 @@ Device device = {
 
 uint8_t task;
 uint32_t lastTimeDevice = 0;
+uint32_t lastTimeModbus = 0;
 
 void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -48,6 +51,12 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
     }
     if (info->len == sizeof(device)) {
       uint8_t *address = (uint8_t *)&device;
+      for (size_t i = 0; i < len; i++) {
+        *(address + i + info->index) = *(data + i);
+      }
+    }
+    if (info->len == sizeof(modbus)) {
+      uint8_t *address = (uint8_t *)&modbus;
       for (size_t i = 0; i < len; i++) {
         *(address + i + info->index) = *(data + i);
       }
@@ -63,6 +72,9 @@ void onSend() {
 }
 void onSendTemp() {
   send((uint8_t *)&ht1, sizeof(ht1), KEY_DALLAS);
+}
+void onSendModbus() {
+  send((uint8_t *)&modbus, sizeof(modbus), KEY_MODBUS);
 }
 
 void getDef() {
@@ -234,29 +246,78 @@ void getData() {
   getDate();
 }
 
-void readHoldingRegistersDemo() {
-  uint8_t result;
-  uint16_t data[2];  // Буфер для данных
+// uint8_t readModbus(uint16_t *value, uint16_t address, uint8_t length) {
+//   uint8_t result = node.readInputRegisters(address, length);
+//   Serial.println(result);
+//   if (result == node.ku8MBSuccess) {
+//     *value = node.getResponseBuffer(0);
+//   }
+//   return result;
+// }
 
-  // Чтение 2 регистров начиная с адреса 0
-  result = node.readInputRegisters(0x00, 1);
+// void readHoldingRegistersDemo() {
+//   readModbus(&ec.voltage, 0x00, 1);
+//   readModbus(&ec.current, 0x03, 1);
+//   readModbus(&ec.power, 0x08, 1);
+//   readModbus(&ec.cos, 0x14, 1);
+//   readModbus(&ec.frequency, 0x1A, 1);
+// }
 
-  if (result == node.ku8MBSuccess) {
-    Serial.print("Data: ");
-    Serial.print(node.getResponseBuffer(0));
-  } else {
-    Serial.print("Error: ");
-    Serial.println(result, HEX);
+#define BUFFER_SIZE 64
+
+uint8_t bufferIndex = 0;
+char serialBuffer[BUFFER_SIZE];
+bool dataReady = false;
+
+void receiveData() {
+  if (!ModbusSerial.available()) return;
+  modbus.size = ModbusSerial.available();
+  while (ModbusSerial.available() > 0) {
+    modbus.data[bufferIndex] = ModbusSerial.read();
+    bufferIndex++;
   }
+  bufferIndex = 0;
+  onSendModbus();
+}
+
+void transmitData() {
+  // byte message[] = {0x01, 0x04, 0x00, 0x00, 0x00, 0x01, 0x31, 0xca};
+  // ModbusSerial.print(0x01 04 00 00 00 01 31 ca);
+  // 01 04 00 00 00 01 31 ca
+  // 01 04 02 08 8a 3f 57
+  // 01 04 00 03 00 01 c1 ca
+  // 01 04 02 00 1c b8 f9
+  // 01 04 00 08 00 01 b0 08
+  // 01 04 02 00 37 f8 e6
+  // 01 04 00 14 00 01 71
+  ModbusSerial.write(modbus.data, modbus.size);
+
+  Serial.print(modbus.data[0], 16);
+  Serial.println("");
 }
 
 void loopDevice(uint32_t now) {
+  if (now - lastTimeModbus > 300) {
+    lastTimeModbus = now;
+    receiveData();
+  }
+
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     getData();
     onSend();
+    // readHoldingRegistersDemo();
+    // onSendEc();
+  }
 
-    readHoldingRegistersDemo();  // Пример чтения регистров
+  if (tasks[KEY_MODBUS]) {
+    Serial.println("KEY_MODBUS");
+    Serial.println(modbus.command);
+    tasks[KEY_MODBUS] = 0;
+    if (modbus.command == 1) {
+      Serial.println("KEY_MODBUS1");
+      transmitData();
+    }
   }
 
   if (tasks[KEY_DEVICE]) {

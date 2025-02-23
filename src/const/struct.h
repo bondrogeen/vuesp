@@ -11,6 +11,8 @@ enum keys {
   KEY_PORT,
   KEY_DEVICE,
   KEY_DALLAS,
+  KEY_MODBUS,
+  KEY_DDS6619,
   KEY_END
 };
 
@@ -98,10 +100,32 @@ struct Device {
   uint32_t now;
 };
 
+struct DDS6619 {
+  uint8_t key;
+  uint8_t command;
+  uint16_t voltage;
+  uint16_t current;
+  uint16_t power;
+  uint16_t cos;
+  uint16_t frequency;
+  uint32_t totalActiveEnergy;
+  uint32_t positiveTotalActiveEnergy;
+  uint32_t reverseTotalActiveEnergy;
+  uint32_t totalReactiveEnergy;
+};
+
 struct Dallas {
   uint8_t key;
   uint8_t comm;
   uint16_t comm2;
   uint8_t address[8];
   float temp;
+};
+
+struct Modbus {
+  uint8_t key;
+  uint8_t command;
+  uint8_t size;
+  uint8_t empty;
+  uint8_t data[256];
 };
