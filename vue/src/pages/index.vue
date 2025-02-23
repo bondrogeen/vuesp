@@ -78,6 +78,25 @@
           </div>
         </div>
       </VCard>
+
+      <VCard>
+        <h5 class="mb-6">Modbus</h5>
+        <div class="grid grid-cols-1 gap-4">
+          <VTextField class="col-span-3" hideMessage />
+          <v-button block @click="onSendModbus">Send</v-button>
+        </div>
+      </VCard>
+
+      <VCard>
+        <h5 class="mb-6">Electric counter</h5>
+        <div class="grid gap-2 grid-cols-1">
+          <div v-for="(value, key) in getModbus(modbus)" :key="`modbus_${key}`">
+            <span class="text-body text-gray-600 mr-2">{{ key }}:</span>
+
+            <span class="font-bold">{{ value }}</span>
+          </div>
+        </div>
+      </VCard>
     </div>
   </div>
 </template>
@@ -106,7 +125,7 @@ const router = useRouter();
 const config = ref();
 
 const webSocketStore = useWebSocketStore();
-const { device, dallas } = storeToRefs(webSocketStore);
+const { device, dallas, modbus } = storeToRefs(webSocketStore);
 
 const listPage = [
   { id: 1, name: 'Config' },
@@ -143,7 +162,10 @@ const onPage = ({ id }) => {
     onSaveDef();
   }
 };
+
 const isDac = value => !(value >= 0 && value <= 255);
+
+const getModbus = ({ voltage, power, frequency, current, cos }) => ({ voltage, power, frequency, current, cos });
 
 const onSetOutput = (pin, value) => {
   notification({ text: 'add' });
@@ -163,6 +185,11 @@ const onSaveDef = () => {
 
 const onSend = () => {
   webSocketStore.onSend('DEVICE', { now: now.value, command: 0 });
+};
+
+const onSendModbus = () => {
+  const data = [0x01, 0x04, 0x00, 0x00, 0x00, 0x01, 0x31, 0xca];
+  webSocketStore.onSend('MODBUS', { command: 1, data, size: data.length });
 };
 
 const onDate = e => {
