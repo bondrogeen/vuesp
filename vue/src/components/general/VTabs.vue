@@ -10,6 +10,7 @@
         <button class="p-4 font-bold" @click="onSelect(item)">{{ item.label }}</button>
       </li>
     </ul>
+    
     <div>
       <slot></slot>
     </div>

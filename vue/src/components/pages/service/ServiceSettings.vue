@@ -22,6 +22,7 @@
         >
           <template #icon>
             <IconEyeOpen v-if="showPass"></IconEyeOpen>
+            
             <IconEyeClose v-else></IconEyeClose>
           </template>
         </VTextField>
@@ -37,6 +38,7 @@
         >
           <template #icon>
             <IconEyeOpen v-if="showPass"></IconEyeOpen>
+
             <IconEyeClose v-else></IconEyeClose>
           </template>
         </VTextField>
@@ -49,7 +51,7 @@
 
         <VTextField v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
 
-        <VTextField v-model="v.wifiGeteway.value" label="Geteway" :message="getError('wifiGeteway')" :disabled="isWifiDHCP" @blur="v.wifiGeteway.blur" />
+        <VTextField v-model="v.wifiGateway.value" label="Geteway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
 
         <VTextField v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
@@ -75,6 +77,7 @@
         >
           <template #icon>
             <IconEyeOpen v-if="showAuthPass"></IconEyeOpen>
+
             <IconEyeClose v-else></IconEyeClose>
           </template>
         </VTextField>
@@ -90,6 +93,7 @@
         >
           <template #icon>
             <IconEyeOpen v-if="showAuthPass"></IconEyeOpen>
+
             <IconEyeClose v-else></IconEyeClose>
           </template>
         </VTextField>
@@ -107,16 +111,20 @@
             <div class="mr-2">
               <WifiIcon v-bind="item" />
             </div>
+
             <div>
               <div class="text-title1">{{ item.ssid }}</div>
+
               <div class="text-gray-400 text-body">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
         </VList>
+
         <div v-if="!scanList.length" class="flex justify-center">
           <VLoader class="text-primary"></VLoader>
         </div>
       </div>
+
       <template #footer>
         <v-button @click="onScan(true)">Scan</v-button>
       </template>
@@ -169,9 +177,9 @@ const wifiSubnet = computed({
   set: value => value.split('.'),
   get: () => (settings?.value?.wifiSubnet || []).join('.'),
 });
-const wifiGeteway = computed({
+const wifiGateway = computed({
   set: value => value.split('.'),
-  get: () => (settings?.value?.wifiGeteway || []).join('.'),
+  get: () => (settings?.value?.wifiGateway || []).join('.'),
 });
 const wifiDns = computed({
   set: value => value.split('.'),
@@ -206,7 +214,7 @@ const form = {
 
   wifiIp,
   wifiSubnet,
-  wifiGeteway,
+  wifiGateway,
   wifiDns,
 
   authLogin,
@@ -231,7 +239,7 @@ const validators = {
 
   wifiIp: { ip },
   wifiSubnet: { ip },
-  wifiGeteway: { ip },
+  wifiGateway: { ip },
   wifiDns: { ip },
 
   authLogin: { required, max12 },

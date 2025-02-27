@@ -1,11 +1,13 @@
 <template>
-  <div class="h-100 flex flex-col">
+  <div class="h-full flex flex-col">
     <div class="flex-1 mt-6">
       <VMainMenu class="flex items-center flex-col gap-6" @route="onClose" />
     </div>
+
     <div class="flex items-center flex-col mb-6">
       <div v-for="(item, key) in data" :key="key">
         {{ key }}:
+        
         <span class="text-gray-400 text-body">{{ item }}</span>
       </div>
     </div>
