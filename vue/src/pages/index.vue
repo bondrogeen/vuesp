@@ -80,14 +80,6 @@
       </VCard>
 
       <VCard>
-        <h5 class="mb-6">Modbus</h5>
-        <div class="grid grid-cols-1 gap-4">
-          <VTextField class="col-span-3" hideMessage />
-          <v-button block @click="onSendModbus">Send</v-button>
-        </div>
-      </VCard>
-
-      <VCard>
         <h5 class="mb-6">Electric counter</h5>
         <div class="grid gap-2 grid-cols-1">
           <div v-for="(value, key) in getModbus(modbus)" :key="`modbus_${key}`">
@@ -95,6 +87,15 @@
 
             <span class="font-bold">{{ value }}</span>
           </div>
+        </div>
+      </VCard>
+    </div>
+
+    <div class="mt-4">
+      <VCard>
+        <h5 class="mb-6">Modbus (master)</h5>
+        <div class="grid grid-cols-1 gap-4">
+          <BlockModbus :modbus="modbus" @send="onSendModBus" />
         </div>
       </VCard>
     </div>
@@ -117,6 +118,7 @@ import VCard from '@/components/general/VCard';
 import VTextField from '@/components/general/VTextField';
 import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
+import BlockModbus from '@/components/blocks/BlockModbus';
 
 import IconMenu from '@/components/icons/IconMenu';
 
@@ -187,8 +189,7 @@ const onSend = () => {
   webSocketStore.onSend('DEVICE', { now: now.value, command: 0 });
 };
 
-const onSendModbus = () => {
-  const data = [0x01, 0x04, 0x00, 0x00, 0x00, 0x01, 0x31, 0xca];
+const onSendModBus = data => {
   webSocketStore.onSend('MODBUS', { command: 1, data, size: data.length });
 };
 

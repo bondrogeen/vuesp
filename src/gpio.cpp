@@ -48,10 +48,7 @@ void initGpio() {
 }
 
 void setupFirstGPIO() {
-  uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-  if (!isOk) {
-    writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-  }
+  getLoadDef(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
 }
 
 void setupGPIO() {
