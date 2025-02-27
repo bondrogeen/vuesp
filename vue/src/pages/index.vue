@@ -9,6 +9,7 @@
         <template #activator="{ on }">
           <IconMenu @click="on.click"></IconMenu>
         </template>
+
         <VList :list="listPage" @click="onPage"></VList>
       </VDropdown>
     </div>
@@ -29,7 +30,9 @@
           <div v-for="pin in ports" :key="pin.gpio">
             <div v-if="pin" class="flex justify-between">
               PIN: {{ pin.gpio }}
+              
               <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+
               <v-button class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
             </div>
           </div>
