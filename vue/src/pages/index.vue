@@ -9,6 +9,7 @@
         <template #activator="{ on }">
           <IconMenu @click="on.click"></IconMenu>
         </template>
+
         <VList :list="listPage" @click="onPage"></VList>
       </VDropdown>
     </div>
@@ -27,10 +28,16 @@
           <v-button @click="onChangeState">{{ device.state ? 'ON' : 'OFF' }}</v-button>
         </div>
 
-        <h5 class="mt-6">Sensors</h5>
-        <div class="flex gap-4">
-          <v-button class="mt-6" disabled @click="onScan(true)">{{ device.sensor1 ? 'ON' : 'OFF' }}</v-button>
-          <v-button class="mt-6" disabled @click="onScan(true)">{{ device.sensor2 ? 'ON' : 'OFF' }}</v-button>
+        <div class="flex flex-col gap-2">
+          <div v-for="pin in ports" :key="pin.gpio">
+            <div v-if="pin" class="flex justify-between">
+              PIN: {{ pin.gpio }}
+              
+              <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+
+              <v-button class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
+            </div>
+          </div>
         </div>
       </VCard>
     </div>

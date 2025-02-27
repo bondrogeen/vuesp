@@ -27,7 +27,7 @@ struct Settings {
 
   uint8_t wifiIp[4];
   uint8_t wifiSubnet[4];
-  uint8_t wifiGeteway[4];
+  uint8_t wifiGateway[4];
   uint8_t wifiDns[4];
 
   char wifiSsid[32];

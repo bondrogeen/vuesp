@@ -3,12 +3,15 @@
     <div v-for="pin in ports" :key="pin.gpio">
       <div v-if="pin" class="flex justify-between">
         <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+
         <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
       </div>
     </div>
+
     <div class="mt-6">
       <div class="flex j-end">
         <v-button class="mr-4" @click="onGetPort">Update</v-button>
+        
         <v-button :disabled="!isDifferent" @click="onSave">Save</v-button>
       </div>
     </div>
