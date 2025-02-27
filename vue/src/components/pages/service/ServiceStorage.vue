@@ -1,6 +1,6 @@
 <template>
   <div >
-    <div class="py-4 px-4 flex items-center border-b border-gray-200 dark:border-gray-600">
+    <div class="p-4 flex items-center border-b border-gray-200 dark:border-gray-600">
       <div class="flex gap-2 items-center font-bold flex-auto">
         <div
           v-for="(value, i) of path"

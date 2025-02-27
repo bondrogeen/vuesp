@@ -1,6 +1,7 @@
 <template>
   <label class="flex items-center cursor-pointer">
     <input type="file" class="hidden" v-bind="$attrs" @change="onChange" />
+    
     <slot v-bind="selectFiles"></slot>
   </label>
 </template>

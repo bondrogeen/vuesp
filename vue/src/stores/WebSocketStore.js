@@ -10,7 +10,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
     fileList: [],
     path: ['root'],
     settings: {},
-    gpios: {},
+    gpio: {},
     unknown: {},
     device: {},
     dallas: {},
@@ -35,7 +35,7 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.progress = value;
     },
     SET_PORT(value) {
-      this.gpios[value.gpio] = value;
+      this.gpio[value.gpio] = value;
     },
     SET_DEVICE(value) {
       this.device = value;

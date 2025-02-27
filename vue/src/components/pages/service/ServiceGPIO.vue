@@ -1,14 +1,17 @@
 <template>
-  <div class="relative">
+  <div class="relative p-4 flex flex-col gap-4">
     <div v-for="pin in ports" :key="pin.gpio">
       <div v-if="pin" class="flex justify-between">
         <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+
         <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
       </div>
     </div>
+
     <div class="mt-6">
       <div class="flex j-end">
         <v-button class="mr-4" @click="onGetPort">Update</v-button>
+        
         <v-button :disabled="!isDifferent" @click="onSave">Save</v-button>
       </div>
     </div>
@@ -19,12 +22,12 @@
 import { defineProps, defineEmits, onMounted, ref, computed } from 'vue';
 import { getBinary, onUploadBinary } from '@/utils/fs/';
 import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio/';
+import { pathGPIO } from '@/utils/const';
 
 import VSelect from '@/components/general/VSelect';
 
 const props = defineProps({
-  gpios: { type: Object, default: () => ({}) },
-  path: { type: String, default: '/tmp/gpio.io' },
+  gpio: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['click', 'send', 'reboot']);
@@ -69,7 +72,7 @@ const getModeName = pin => getMode(pin).name;
 
 const getValue = ({ data }) => Boolean(getKey(data, 'value'));
 
-const getStateValue = ({ gpio }) => getValue(props?.gpios?.[gpio] || {});
+const getStateValue = ({ gpio }) => getValue(props?.gpio?.[gpio] || {});
 
 const isDisabled = pin => Boolean(![9, 11].includes(getMode(pin).value));
 
@@ -86,14 +89,14 @@ const onGetPort = () => {
 };
 
 const onLoadDataGpio = async () => {
-  const array = await getBinary(props.path);
+  const array = await getBinary(pathGPIO);
   return parseDateGPIO(array);
 };
 
 const onSave = async () => {
   const data = stringifyDateGPIO(ports.value);
   const buffer = new Uint8Array(data).buffer;
-  await onUploadBinary(props.path, buffer);
+  await onUploadBinary(pathGPIO, buffer);
   portsDef.value = JSON.parse(JSON.stringify(ports.value));
   emit('reboot');
 };

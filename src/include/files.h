@@ -13,5 +13,6 @@ void getInfo(Info* infoFS);
 uint8_t readFile(const char* path, uint8_t* buf, size_t size);
 void writeFile(const char* path, const uint8_t* buf, size_t size);
 bool createDir(const char* path);
+void getLoadDef(const char* path, uint8_t* buf, size_t size);
 
 #endif

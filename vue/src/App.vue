@@ -2,6 +2,7 @@
   <div class="h-[100dvh] min-h-full flex flex-col">
     <AppOverlay v-if="!isConnect" @click="onClose">
       <div class="mb-4">Disconnected</div>
+      
       <div class="flex justify-center">
         <VLoader class="text-primary"></VLoader>
       </div>

@@ -15,7 +15,6 @@
 #include "./tasks.h"
 #include "./webserver.h"
 
-void setupGPIO();
 void setupFirstGPIO();
 void loopGPIO(uint32_t now);
 

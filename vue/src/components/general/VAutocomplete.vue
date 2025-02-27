@@ -9,11 +9,13 @@
         </template>
       </VTextField>
     </template>
+
     <div>
       <VList v-slot="{ item }" :list="getList" @click="$emit('change', $event)">
         <slot :item="item">{{ item[valueName] }}</slot>
       </VList>
     </div>
+    
     <div v-if="isEmpty" class="p-4 py-2">Not found</div>
   </VDropdown>
 </template>
