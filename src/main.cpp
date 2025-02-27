@@ -62,6 +62,7 @@ void loop() {
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
+    loopWiFi(now);
   }
 
   if (now - lastTimeMain > 1000) {
