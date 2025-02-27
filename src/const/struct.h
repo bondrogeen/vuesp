@@ -97,8 +97,14 @@ struct Device {
   uint8_t command;
   uint8_t input;
   uint8_t output;
+  uint8_t dac1;
+  uint8_t dac2;
+  uint16_t temp;
+  uint16_t adc1;
+  uint16_t adc2;
+  uint16_t adc3;
+  uint16_t adc4;
   uint32_t now;
-  char message[32];
 };
 
 struct DDS6619 {

@@ -5,7 +5,7 @@
 #include "./include/init.h"
 #include "./include/tasks.h"
 
-uint8_t gpio[5] = {4, 5, 12, 13, 14};
+uint8_t gpio[0] = {};
 uint8_t ports[sizeof(gpio)][2] = {};
 
 uint8_t btnStatus = 0;
@@ -41,21 +41,10 @@ uint8_t getPort(uint8_t gpio) {
 }
 
 void initGpio() {
-  for (uint8_t i = 0; i < sizeof(gpio); i++) {
-    uint8_t data = ports[i][1];
+  pinMode(13, INPUT);
+  digitalWrite(13, LOW);
 
-    uint8_t init = (data & GPIO_INIT) >> 7;
-    uint8_t mode = (data & GPIO_MODE) >> 4;
-    uint8_t value = (data & GPIO_VALUE) >> 0;
-
-    if (init) {
-      pinMode(gpio[i], mode);
-      digitalWrite(gpio[i], value);
-    }
-    if (mode == INPUT_PULLUP) {
-      attachInterrupt(gpio[i], btnIsr, CHANGE);
-    }
-  }
+  attachInterrupt(13, btnIsr, FALLING);
 }
 
 void setupFirstGPIO() {
@@ -96,9 +85,10 @@ void loopGPIO(uint32_t now) {
     debounce = now;
   }
   if (btnStatus == 2 && now - debounce > 50) {
+    Serial.println(debounce);
     btnStatus = 0;
-    getAll(false);
-    deviceGPIO();
+    // getAll(false);
+    getGPIO();
   }
 
   if (tasks[KEY_PORT]) {
