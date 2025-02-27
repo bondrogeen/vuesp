@@ -1,5 +1,7 @@
 #include "./include/init.h"
 
+uint8_t isFirstWifi = 0;
+
 WiFiUDP udp;
 
 Info infoFS = {KEY_INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
@@ -43,7 +45,9 @@ void initWiFi() {
   if (settings.wifiMode) {
     WiFi.setHostname(settings.wifiSsid);
     WiFi.mode((WiFiMode_t)settings.wifiMode);
-    if (!settings.wifiDhcp) WiFi.config(settings.wifiIp, settings.wifiGeteway, settings.wifiSubnet, settings.wifiDns);
+    if (!settings.wifiDhcp) {
+      WiFi.config(settings.wifiIp, settings.wifiGateway, settings.wifiSubnet, settings.wifiDns);
+    }
     if (settings.wifiMode == WIFI_STA) WiFi.begin(settings.wifiSsid, settings.wifiPass);
     if (settings.wifiMode == WIFI_AP) WiFi.softAP(settings.wifiSsid, settings.wifiPass);
     WiFi.onEvent(WiFiEvent);
@@ -55,6 +59,22 @@ void udpSend(uint8_t *message, size_t len) {
   udp.beginPacket(UDP_IP, UDP_PORT);
   udp.write(message, len);
   udp.endPacket();
+}
+
+void copyIp(uint8_t saveIp[4], IPAddress ip) {
+  for (size_t i = 0; i < 4; i++) {
+    saveIp[i] = ip[i];
+  }
+}
+
+void updateIp() {
+  if (!isFirstWifi && settings.wifiDhcp) {
+    isFirstWifi = 1;
+    copyIp(settings.wifiIp, WiFi.localIP());
+    copyIp(settings.wifiGateway, WiFi.gatewayIP());
+    copyIp(settings.wifiSubnet, WiFi.subnetMask());
+    copyIp(settings.wifiDns, WiFi.dnsIP());
+  }
 }
 
 void udpIncoming() {
@@ -74,5 +94,6 @@ void loopWiFi(uint32_t now) {
   }
   if (isConnected) {
     udpIncoming();
+    updateIp();
   }
 }
