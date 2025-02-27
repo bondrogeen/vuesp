@@ -30,7 +30,7 @@ struct Settings {
 
   uint8_t wifiIp[4];
   uint8_t wifiSubnet[4];
-  uint8_t wifiGeteway[4];
+  uint8_t wifiGateway[4];
   uint8_t wifiDns[4];
 
   char wifiSsid[32];
@@ -86,19 +86,19 @@ struct Port {
   uint8_t data;
 };
 
+struct FindUDP {
+  uint8_t command;
+  uint32_t id;
+  uint16_t crc;
+};
+
 struct Device {
   uint8_t key;
   uint8_t command;
   uint8_t input;
   uint8_t output;
-  uint8_t dac1;
-  uint8_t dac2;
-  uint16_t temp;
-  uint16_t adc1;
-  uint16_t adc2;
-  uint16_t adc3;
-  uint16_t adc4;
   uint32_t now;
+  char message[32];
 };
 
 struct DDS6619 {

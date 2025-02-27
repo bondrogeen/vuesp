@@ -38,7 +38,6 @@ void setupDelay() {
   getInfo(&infoFS);
   loadConfig(settings, id);
   initWiFi();
-  setupGPIO();
   setupDevice();
   setupServer();
 
@@ -63,6 +62,7 @@ void loop() {
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
+    loopWiFi(now);
   }
 
   if (now - lastTimeMain > 1000) {

@@ -72,6 +72,10 @@ http://localhost:3000/
 npm run build
 ```
 
+### 2.0.0 (2023-06-05)
+
+- (bondrogeen) Add tailwind
+
 ### 1.3.0 (2023-06-05)
 
 - (bondrogeen) Add example

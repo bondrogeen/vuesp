@@ -4,11 +4,14 @@
       <div class="flex-auto">
         {{ text }}
       </div>
+
       <span v-if="isProgressDone" class="text-green-600">Done</span>
+
       <button class="transition text-gray-400 self-start hover:text-gray-600" @click="emit('close', item)">
         <IconClose class="h-4 w-4"></IconClose>
       </button>
     </div>
+    
     <div v-if="isProgress" class="w-full bg-gray-200 rounded-full dark:bg-gray-700 mt-2">
       <div class="bg-blue-600 text-small font-medium text-blue-100 text-center leading-none rounded-full" :style="`width: ${getPercent}%`">{{ getPercent }}%</div>
     </div>
@@ -16,7 +19,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, watch, onMounted, computed } from 'vue';
+import { defineProps, defineEmits, onMounted, computed } from 'vue';
 
 import IconClose from '@/components/icons/IconClose';
 
@@ -39,8 +42,6 @@ const isProgress = computed(() => Boolean(props.length));
 const isProgressDone = computed(() => Boolean(isProgress.value && getPercent.value === 100 && !props.status));
 
 onMounted(() => {
-  console.log('onMounted');
-  console.log(props.timeout);
   const timeout = props.timeout;
   if (timeout) {
     setTimeout(() => {

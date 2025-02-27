@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-blue-50 dark:bg-gray-800 shadow fixed top-0 left-0 w-full z-10">
+  <header class="bg-blue-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 fixed top-0 left-0 w-full z-10">
     <div class="container mx-auto flex py-4 px-4">
       <div class="h-[30px] me-10">
         <router-link to="/">
@@ -21,8 +21,11 @@
 
           <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
             <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
+
             <IconDark v-if="item.icon === 'dark'"></IconDark>
+
             <IconLight v-if="item.icon === 'light'"></IconLight>
+            
             <span class="ms-2">{{ item.name }}</span>
           </VList>
         </VDropdown>
