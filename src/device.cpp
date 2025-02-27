@@ -32,7 +32,14 @@ Device device = {
     0,
     255,
     0,
-    "test"};
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+};
 
 uint8_t task;
 uint32_t lastTimeDevice = 0;
@@ -151,6 +158,7 @@ uint32_t getDate() {
 }
 
 void getGPIO() {
+  getInput();
   onSend();
 }
 
@@ -297,11 +305,19 @@ void loopDevice(uint32_t now) {
 
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
-    Serial.println(device.now);
+
     if (device.command == 1) {
-      Serial.println("device");
-      Serial.println(device.now);
-      // writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+      setDate(device.now);
+    } else if (device.command == 2) {
+      setOutput();
+    } else if (device.command == 3) {
+      setDAC();
+    } else if (device.command == 4) {
+      device.command = 0;
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+    } else {
+      getData();
+      findDallas();
     }
 
     device.command = 0;
