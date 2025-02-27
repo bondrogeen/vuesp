@@ -83,6 +83,12 @@ struct Port {
   uint8_t data;
 };
 
+struct FindUDP {
+  uint8_t command;
+  uint32_t id;
+  uint16_t crc;
+};
+
 struct Device {
   uint8_t key;
   uint8_t command;
