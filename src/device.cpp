@@ -45,21 +45,12 @@ void deviceGPIO() {
   Serial.println(value);
 }
 
-void getDef() {
-  uint8_t isOk = readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-  Serial.println("device");
-  Serial.println(device.output);
-  if (!isOk) {
-    writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-  }
-}
-
 void getGPIO() {
   onSend();
 }
 
 void setupFirstDevice() {
-  getDef();
+  getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
 }
 
 void setupDevice() {
