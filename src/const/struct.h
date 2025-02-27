@@ -12,6 +12,7 @@ enum keys {
   KEY_DEVICE,
   KEY_DALLAS,
   KEY_MODBUS,
+  KEY_MODBUS_SETTING,
   KEY_DDS6619,
   KEY_END
 };
@@ -122,6 +123,12 @@ struct Dallas {
   float temp;
 };
 
+struct ModbusSetting {
+  uint8_t key;
+  uint8_t config;
+  uint16_t empty;
+  uint32_t baud;
+};
 struct Modbus {
   uint8_t key;
   uint8_t command;

@@ -25,6 +25,7 @@
 
 #define DEF_DIR_DEVICE "/tmp"
 #define DEF_PATH_CONFIG DEF_DIR_DEVICE"/config.io"
+#define DEF_PATH_MODBUS DEF_DIR_DEVICE"/modbus.io"
 #define DEF_PATH_GPIO DEF_DIR_DEVICE"/gpio.io"
 
 #ifndef DEF_DEVICE_FIRMWARE
