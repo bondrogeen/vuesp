@@ -2,6 +2,8 @@ export const validateIP = ip => /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-
 
 export const min = (min, v) => v.length >= min;
 export const max = (max, v) => v.length <= max;
+export const minValue = (min, v) => v >= min;
+export const maxValue = (max, v) => v <= max;
 
 export const rules = {
     required: value => !!value || 'Required.',
@@ -11,4 +13,7 @@ export const rules = {
     max: v => max(32, v) || 'Max 32 characters',
     max12: v => max(12, v) || 'Max 12 characters',
     isPort: v => (typeof +v === 'number' && !isNaN(+v) && +v < 65536) || 'Invalid port',
+
+    minValue: (i) => (v) => minValue(i, v) || `Min value ${i}`,
+    maxValue: (i) => (v) => maxValue(i, v) || `Max value ${i}`,
 };
