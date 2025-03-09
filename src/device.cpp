@@ -267,7 +267,7 @@ void getData() {
 // 01 04 02 00 37 f8 e6
 // 01 04 00 14 00 01 71
 
-void transmitData() {
+uint8_t transmitData() {
   ModbusSerial.write(modbus.data, modbus.size);
   uint8_t bufferIndex = 0;
   u_int8_t status = 1;
@@ -278,14 +278,15 @@ void transmitData() {
       modbus.data[bufferIndex] = ModbusSerial.read();
       bufferIndex++;
       modbus.size = bufferIndex;
-      if (!ModbusSerial.available() && bufferIndex) {
-        status = 0;
-      }
+      // if (!ModbusSerial.available() && bufferIndex) {
+      //   status = 0;
+      // }
     }
     if (millis() - lastTimeModbus > 300) {
       status = 0;
     }
   }
+  return bufferIndex;
 }
 
 void loopDevice(uint32_t now) {
@@ -298,8 +299,7 @@ void loopDevice(uint32_t now) {
   if (tasks[KEY_MODBUS]) {
     tasks[KEY_MODBUS] = 0;
     if (modbus.command == 1) {
-      transmitData();
-      onSendModbus();
+      if (transmitData()) onSendModbus();
     }
   }
 

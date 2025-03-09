@@ -95,7 +95,7 @@
       <VCard>
         <h5 class="mb-6">Modbus (master)</h5>
         <div class="grid grid-cols-1 gap-4">
-          <BlockModbus :modbus="modbus" @send="onSendModBus" />
+          <BlockModbus :data="modbus" @send="onSendModBus" />
         </div>
       </VCard>
     </div>
@@ -118,7 +118,7 @@ import VCard from '@/components/general/VCard';
 import VTextField from '@/components/general/VTextField';
 import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
-import BlockModbus from '@/components/blocks/BlockModbus';
+import BlockModbus from '@/components/blocks/modbus/BlockModbus';
 
 import IconMenu from '@/components/icons/IconMenu';
 
