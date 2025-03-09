@@ -6,7 +6,7 @@ export const minValue = (min, v) => v >= min;
 export const maxValue = (max, v) => v <= max;
 
 export const rules = {
-    required: value => !!value || 'Required.',
+    required: value => (!!value || value === 0) || 'Required.',
     sameAs: (value1, value) => value1 === value || 'Passwords do not match',
     ip: v => validateIP(v) || 'Invalid ip address',
     min: v => min(8, v) || 'Min 8 characters',
