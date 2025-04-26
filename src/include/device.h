@@ -8,9 +8,6 @@
 #define GPIO_SDA 4
 #define GPIO_SCL 15
 
-#define GPIO_485TX 27
-#define GPIO_485RX 14
-
 #define GPIO_ADC1 36
 #define GPIO_ADC2 39
 #define GPIO_ADC3 34

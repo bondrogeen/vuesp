@@ -2,6 +2,7 @@
 
 #include "./include/device.h"
 #include "./include/files.h"
+#include "./include/modbus.h"
 #include "./include/tasks.h"
 
 AsyncWebServer server(80);
@@ -79,6 +80,48 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   sendProgress();
 }
 
+void onReqModbus(AsyncWebServerRequest *request) {
+  if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+  uint8_t len = 0;
+  if (request->hasParam("data")) {
+    AsyncWebParameter *p = request->getParam("data");
+
+    const char *hexStr = p->value().c_str();
+    uint8_t length = strlen(hexStr) / 2;
+
+    for (int i = 0; i < length; i++) {
+      char pair[3];
+      strncpy(pair, hexStr + (i * 2), 2);
+      pair[2] = '\0';
+      uint8_t byteValue = (uint8_t)strtol(pair, nullptr, 16);
+      modbus.data[i] = byteValue;
+    }
+
+    uint16_t crc = getCrc16(modbus.data, length);
+
+    uint8_t a = static_cast<uint8_t>((crc & 0xFF00) >> 8);
+    uint8_t b = static_cast<uint8_t>(crc & 0x00FF);
+
+    Serial.print(a, 16);
+    Serial.print(' ');
+    Serial.println(b, 16);
+
+    len = transmitData(modbus.data, length);
+    Serial.print(len);
+
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+    for (int i = 0; i < len; i++) {
+      if (modbus.data[i] < 16) {
+        response->print('0');
+      }
+      response->print(modbus.data[i], 16);
+    }
+    request->send(response);
+    return;
+  }
+  return request->send(422, RES_TYPE_JSON, status(0));
+}
+
 void onReqUpdate(AsyncWebServerRequest *request) {
   uint8_t isReboot = !Update.hasError();
   AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
@@ -140,6 +183,7 @@ void setupServer() {
 
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
   // server.on("/get", HTTP_GET, onGetData);
+  server.on("/modbus", HTTP_GET, onReqModbus);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
   server.on("/", HTTP_GET, onRedirectRecovery);
