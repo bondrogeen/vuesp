@@ -1,16 +1,14 @@
 #include "./include/device.h"
 
 #include <OneWire.h>
-#include <SoftwareSerial.h>
 #include <Wire.h>
 
 #include "./include/UnixTime.h"
 #include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
+#include "./include/modbus.h"
 #include "./include/tasks.h"
-
-EspSoftwareSerial::UART ModbusSerial;
 
 OneWire ds(GPIO_HT1);
 
@@ -18,13 +16,6 @@ UnixTime stamp(0);
 
 Dallas ht1 = {KEY_DALLAS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 DDS6619 sinotimer = {KEY_DDS6619, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-Modbus modbus = {KEY_MODBUS, 0, 255, 0};
-ModbusSetting modbusSetting = {
-    KEY_MODBUS_SETTING,
-    EspSoftwareSerial::SWSERIAL_8N2,
-    9600,
-    0,
-};
 
 Device device = {
     KEY_DEVICE,
@@ -43,7 +34,6 @@ Device device = {
 
 uint8_t task;
 uint32_t lastTimeDevice = 0;
-uint32_t lastTimeModbus = 0;
 
 void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -162,13 +152,9 @@ void getGPIO() {
   onSend();
 }
 
-void setModbusSetup() {
-  ModbusSerial.begin(9600, EspSoftwareSerial::SWSERIAL_8N2, GPIO_485RX, GPIO_485TX);
-}
-
 void setupFirstDevice() {
   getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-  getLoadDef(DEF_PATH_MODBUS, (uint8_t *)&modbusSetting, sizeof(modbusSetting));
+  // getLoadDef(DEF_PATH_MODBUS, (uint8_t *)&modbusSetting, sizeof(modbusSetting));
 }
 
 void setupDevice() {
@@ -240,55 +226,6 @@ void getData() {
   getDate();
 }
 
-// uint8_t readModbus(uint16_t *value, uint16_t address, uint8_t length) {
-//   uint8_t result = node.readInputRegisters(address, length);
-//   Serial.println(result);
-//   if (result == node.ku8MBSuccess) {
-//     *value = node.getResponseBuffer(0);
-//   }
-//   return result;
-// }
-
-// void readHoldingRegistersDemo() {
-//   readModbus(&ec.voltage, 0x00, 1);
-//   readModbus(&ec.current, 0x03, 1);
-//   readModbus(&ec.power, 0x08, 1);
-//   readModbus(&ec.cos, 0x14, 1);
-//   readModbus(&ec.frequency, 0x1A, 1);
-// }
-
-// byte message[] = {0x01, 0x04, 0x00, 0x00, 0x00, 0x01, 0x31, 0xca};
-// ModbusSerial.print(0x01 04 00 00 00 01 31 ca);
-// 01 04 00 00 00 01 31 ca
-// 01 04 02 08 8a 3f 57
-// 01 04 00 03 00 01 c1 ca
-// 01 04 02 00 1c b8 f9
-// 01 04 00 08 00 01 b0 08
-// 01 04 02 00 37 f8 e6
-// 01 04 00 14 00 01 71
-
-uint8_t transmitData() {
-  ModbusSerial.write(modbus.data, modbus.size);
-  uint8_t bufferIndex = 0;
-  u_int8_t status = 1;
-  lastTimeModbus = millis();
-
-  while (status) {
-    if (ModbusSerial.available() > 0) {
-      modbus.data[bufferIndex] = ModbusSerial.read();
-      bufferIndex++;
-      modbus.size = bufferIndex;
-      // if (!ModbusSerial.available() && bufferIndex) {
-      //   status = 0;
-      // }
-    }
-    if (millis() - lastTimeModbus > 300) {
-      status = 0;
-    }
-  }
-  return bufferIndex;
-}
-
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
@@ -299,7 +236,11 @@ void loopDevice(uint32_t now) {
   if (tasks[KEY_MODBUS]) {
     tasks[KEY_MODBUS] = 0;
     if (modbus.command == 1) {
-      if (transmitData()) onSendModbus();
+      uint8_t len = transmitData(modbus.data, modbus.size);
+      if (len) {
+        modbus.size = len;
+        onSendModbus();
+      }
     }
   }
 
