@@ -97,17 +97,19 @@ void onReqModbus(AsyncWebServerRequest *request) {
       modbus.data[i] = byteValue;
     }
 
-    uint16_t crc = getCrc16(modbus.data, length);
+    bool isCheck = request->hasParam("crc");
 
-    uint8_t a = static_cast<uint8_t>((crc & 0xFF00) >> 8);
-    uint8_t b = static_cast<uint8_t>(crc & 0x00FF);
-
-    Serial.print(a, 16);
-    Serial.print(' ');
-    Serial.println(b, 16);
-
-    len = transmitData(modbus.data, length);
-    Serial.print(len);
+    if (isCheck) {
+      uint16_t crc = getCrc16(modbus.data, length);
+      uint8_t bytes[2];
+      uint16ToByte(crc, bytes);
+      modbus.data[length] = bytes[0];
+      modbus.data[length + 1] = bytes[1];
+      length += 2;
+    }
+    
+    len = transmitData(modbus.data, length, isCheck);
+    if (!len) return request->send(422, RES_TYPE_JSON, status(0));
 
     AsyncResponseStream *response = request->beginResponseStream("text/html");
     for (int i = 0; i < len; i++) {

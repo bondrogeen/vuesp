@@ -236,7 +236,7 @@ void loopDevice(uint32_t now) {
   if (tasks[KEY_MODBUS]) {
     tasks[KEY_MODBUS] = 0;
     if (modbus.command == 1) {
-      uint8_t len = transmitData(modbus.data, modbus.size);
+      uint8_t len = transmitData(modbus.data, modbus.size, 0);
       if (len) {
         modbus.size = len;
         onSendModbus();
