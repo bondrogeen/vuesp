@@ -1,5 +1,9 @@
 <template>
-  <button class="flex justify-center items-center px-4 transition disabled:opacity-50 disabled:text-gray-400 disabled:border-gray-400" :class="getClass" @click="onClick">
+  <button
+    class="flex justify-center font-medium items-center px-4 transition disabled:opacity-50 disabled:text-gray-400 disabled:bg-transparent disabled:border-gray-400 hover:bg-secondary hover:text-white"
+    :class="getClass"
+    @click="onClick"
+  >
     <slot></slot>
   </button>
 </template>

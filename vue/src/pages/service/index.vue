@@ -8,7 +8,7 @@
       </div>
 
       <div>
-        <VTabs class="sticky top-0">
+        <VTabs>
           <VTab label="Settings">
             <ServiceSettings v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
           </VTab>

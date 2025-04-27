@@ -1,38 +1,40 @@
 <template>
   <header class="bg-blue-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 fixed top-0 left-0 w-full z-10">
-    <div class="container mx-auto flex py-4 px-4">
-      <div class="h-[30px] me-10">
-        <router-link to="/">
-          <IconLogo class="h-[30px]"></IconLogo>
-        </router-link>
-      </div>
+    <div class="px-4 py-4 sm:px-6 lg:px-8">
+      <div class="container mx-auto flex flex-auto">
+        <div class="h-[30px] me-10">
+          <router-link to="/">
+            <IconLogo class="h-[30px]"></IconLogo>
+          </router-link>
+        </div>
 
-      <div class="hidden lg:flex">
-        <VMainMenu class="flex items-center gap-6 font-bold" />
-      </div>
+        <div class="hidden lg:flex">
+          <VMainMenu class="flex items-center gap-6 font-bold" />
+        </div>
 
-      <div class="flex-auto"></div>
+        <div class="flex-auto"></div>
 
-      <div class="hidden lg:flex gap-4">
-        <VDropdown left="unset" right="0" top="0">
-          <template #activator="{ on }">
-            <IconEsp @click="on.click"></IconEsp>
-          </template>
+        <div class="hidden lg:flex gap-4">
+          <VDropdown left="unset" right="0" top="calc(100%)">
+            <template #activator="{ on }">
+              <IconEsp @click="on.click"></IconEsp>
+            </template>
 
-          <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
-            <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
+            <VList v-slot="{ item }" class="py-2 rounded-lg" :list="listMenu" @click="onMenu">
+              <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
 
-            <IconDark v-if="item.icon === 'dark'"></IconDark>
+              <IconDark v-if="item.icon === 'dark'"></IconDark>
 
-            <IconLight v-if="item.icon === 'light'"></IconLight>
-            
-            <span class="ms-2">{{ item.name }}</span>
-          </VList>
-        </VDropdown>
-      </div>
+              <IconLight v-if="item.icon === 'light'"></IconLight>
 
-      <div class="flex items-center justify-center lg:hidden" @click.stop="onDrawer">
-        <IconBurger></IconBurger>
+              <span class="ms-2">{{ item.name }}</span>
+            </VList>
+          </VDropdown>
+        </div>
+
+        <div class="flex items-center justify-center lg:hidden" @click.stop="onDrawer">
+          <IconBurger></IconBurger>
+        </div>
       </div>
     </div>
   </header>

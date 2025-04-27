@@ -29,9 +29,10 @@
         <div class="flex flex-col gap-2">
           <div v-for="pin in ports" :key="pin.gpio">
             <div v-if="pin" class="flex justify-between">
-              PIN: {{ pin.gpio }}
-              
-              <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+              <div>
+                PIN: {{ pin.gpio }}
+                <span class="text-gray-500 text-small">( {{ getModeName(pin) }} )</span>
+              </div>
 
               <v-button class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
             </div>
@@ -51,6 +52,8 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 import { getBinary } from '@/utils/fs/';
 import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/';
 import { pathGPIO } from '@/utils/const';
+
+import VSelect from '@/components/general/VSelect';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);
