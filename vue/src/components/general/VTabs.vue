@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ul class="w-full flex border-b dark:border-gray-700 border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto">
+    <ul class="sticky top-[63px] w-full flex border-b dark:border-gray-700 border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto bg-white z-10">
       <li
         v-for="item of tabs"
         :key="item.label"
@@ -10,7 +10,7 @@
         <button class="p-4 font-bold" @click="onSelect(item)">{{ item.label }}</button>
       </li>
     </ul>
-    
+
     <div>
       <slot></slot>
     </div>
