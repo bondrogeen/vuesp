@@ -101,7 +101,7 @@
     </VExpansion>
 
     <div class="mt-6">
-      <v-button :disabled="invalid" @click="onSave">Save</v-button>
+      <VButton :disabled="invalid" @click="onSave">Save</VButton>
     </div>
 
     <AppDialog title="SCAN" size="sm" :value="showDialog" @close="onClose">
@@ -115,7 +115,7 @@
             <div>
               <div class="text-title1">{{ item.ssid }}</div>
 
-              <div class="text-gray-400 text-body">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+              <div class="text-gray-400 text-sm">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
         </VList>
@@ -126,7 +126,7 @@
       </div>
 
       <template #footer>
-        <v-button @click="onScan(true)">Scan</v-button>
+        <VButton @click="onScan(true)">Scan</VButton>
       </template>
     </AppDialog>
   </div>
@@ -146,6 +146,7 @@ import VCheckbox from '@/components/general/VCheckbox';
 import VSelect from '@/components/general/VSelect';
 import VLoader from '@/components/general/VLoader';
 import VList from '@/components/general/VList';
+import VButton from '@/components/general/VButton';
 
 import IconSearch from '@/components/icons/IconSearch';
 import IconEyeOpen from '@/components/icons/IconEyeOpen';

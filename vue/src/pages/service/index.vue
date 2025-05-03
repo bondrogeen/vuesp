@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto">
+  <div>
     <h1 class="mb-6">Service</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
+import { changeTheme, localGet } from '@/utils/helpers.js'
 
 export const useAppStore = defineStore('app', {
   state: () => ({
     isLoading: false,
-    theme: localStorage.getItem('theme') === 'dark',
+    theme: 'dark',
     dialog: {
       value: false,
     },
@@ -11,22 +12,19 @@ export const useAppStore = defineStore('app', {
     struct: {},
   }),
   actions: {
-    init() {
-      this.theme = localStorage.getItem('theme') === 'dark';
-      document.documentElement.classList.remove(!this.theme ? 'dark' : 'light')
-      document.documentElement.classList.add(this.theme ? 'dark' : 'light')
+    init({ theme }) {
+      this.theme = localGet('theme') || 'dark';
+      if (['light', 'dark'].includes(theme)) {
+        this.theme = theme
+      }
+      changeTheme(this.theme)
     },
-    changeTheme(value) {
-      console.log(value);
-
-      this.theme = typeof value === 'undefined' ? !this.theme : Boolean(value);
-      document.documentElement.classList.remove(!this.theme ? 'dark' : 'light')
-      document.documentElement.classList.add(this.theme ? 'dark' : 'light')
-      localStorage.setItem('theme', this.theme ? 'dark' : 'light');
+    changeTheme() {
+      this.theme = this.theme === 'light' ? 'dark' : 'light'
+      changeTheme(this.theme)
     },
     setDialog(data) {
       this.dialog = data;
-      // this.dialog.value = true;
     },
     setNotification(notification) {
       const id = notification?.id || Date.now()

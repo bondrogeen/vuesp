@@ -38,9 +38,9 @@
           </div>
 
           <div>
-            <div class="text-body">{{ isDir ? `${name}` : name }}</div>
+            <div class="text-sm">{{ isDir ? `${name}` : name }}</div>
 
-            <div v-if="isFile" class="text-xsmall text-gray-400">{{ toByte(size) }} ({{ size }})</div>
+            <div v-if="isFile" class="text-xs text-gray-400">{{ toByte(size) }} ({{ size }})</div>
           </div>
         </div>
 

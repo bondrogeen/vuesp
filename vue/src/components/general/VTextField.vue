@@ -23,7 +23,7 @@
       </button>
     </label>
 
-    <div v-if="!hideMessage && message" class="text-red-500 h-[24px] px-2 text-small">
+    <div v-if="!hideMessage && message" class="text-red-500 h-[24px] px-2 text-xs">
       <slot name="message">
         {{ message }}
       </slot>
@@ -58,7 +58,7 @@ const isValue = value => value || value === 0;
 
 const after = 'after:absolute after:h-1 after:w-full after:left-0 after:translate-y-[6px] after:-z-10 after:dark:bg-gray-800 after:bg-white';
 
-const getClassLabel = computed(() => [after, isFocus.value || isValue(props.modelValue) || props.active ? 'top-0 left-3 text-small' : 'top-1/2']);
+const getClassLabel = computed(() => [after, isFocus.value || isValue(props.modelValue) || props.active ? 'top-0 left-3 text-xs' : 'top-1/2']);
 
 const onInput = ({ target }) => {
   emit('update:modelValue', target.value);

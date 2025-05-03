@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ul class="sticky top-[63px] w-full flex border-b dark:border-gray-700 border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto bg-white z-10">
+    <ul class="sticky top-[63px] w-full flex border-b dark:border-gray-700 border-gray-200 no-scrollbar overflow-y-hidden overflow-x-auto bg-white dark:bg-gray-900 z-10">
       <li
         v-for="item of tabs"
         :key="item.label"

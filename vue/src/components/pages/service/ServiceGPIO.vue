@@ -4,15 +4,15 @@
       <div v-if="pin" class="flex justify-between">
         <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
 
-        <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
+        <VButton class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</VButton>
       </div>
     </div>
 
     <div class="mt-6">
       <div class="flex j-end">
-        <v-button class="mr-4" @click="onGetPort">Update</v-button>
+        <VButton class="mr-4" @click="onGetPort">Update</VButton>
         
-        <v-button :disabled="!isDifferent" @click="onSave">Save</v-button>
+        <VButton :disabled="!isDifferent" @click="onSave">Save</VButton>
       </div>
     </div>
   </div>
@@ -25,6 +25,7 @@ import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } f
 import { pathGPIO } from '@/utils/const';
 
 import VSelect from '@/components/general/VSelect';
+import VButton from '@/components/general/VButton';
 
 const props = defineProps({
   gpio: { type: Object, default: () => ({}) },
