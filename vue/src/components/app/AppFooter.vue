@@ -1,7 +1,7 @@
 <template>
   <footer class="py-4 px-4 bg-blue-50 dark:bg-gray-800">
     <div class="flex items-center justify-between container mx-auto">
-      <div class="md:flex items-center flex-wrap gap-4 text-body">
+      <div class="md:flex items-center flex-wrap gap-4 text-sm">
         <div>© 2021 - {{ new Date().getFullYear() }} <span class="font-bold">Vuesp</span></div>
 
         <div>

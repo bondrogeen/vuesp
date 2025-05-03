@@ -23,7 +23,7 @@
       </div>
     </div>
 
-    <div class="text-body flex flex-col justify-center gap-2">
+    <div class="text-sm flex flex-col justify-center gap-2">
       <div v-for="(item, key) in date" :key="key" class="grid grid-cols-2">
         <div class="text-gray-400">{{ key }}:</div>
         <div class="font-bold">{{ item }}</div>

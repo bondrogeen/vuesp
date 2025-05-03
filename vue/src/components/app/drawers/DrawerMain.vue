@@ -8,7 +8,7 @@
       <div v-for="(item, key) in data" :key="key">
         {{ key }}:
         
-        <span class="text-gray-400 text-body">{{ item }}</span>
+        <span class="text-gray-400 text-sm">{{ item }}</span>
       </div>
     </div>
   </div>

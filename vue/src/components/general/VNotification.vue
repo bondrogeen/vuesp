@@ -1,6 +1,6 @@
 <template>
   <div class="w-full min-w-[260px] max-w-xs p-4 bg-white rounded-lg shadow-lg dark:bg-gray-800" role="alert">
-    <div class="flex items-center gap-4 text-body">
+    <div class="flex items-center gap-4 text-sm">
       <div class="flex-auto">
         {{ text }}
       </div>
@@ -13,7 +13,7 @@
     </div>
     
     <div v-if="isProgress" class="w-full bg-gray-200 rounded-full dark:bg-gray-700 mt-2">
-      <div class="bg-blue-600 text-small font-medium text-blue-100 text-center leading-none rounded-full" :style="`width: ${getPercent}%`">{{ getPercent }}%</div>
+      <div class="bg-blue-600 text-sm font-medium text-blue-100 text-center leading-none rounded-full" :style="`width: ${getPercent}%`">{{ getPercent }}%</div>
     </div>
   </div>
 </template>

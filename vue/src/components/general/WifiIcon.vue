@@ -8,7 +8,7 @@
       :style="`height: ${(i + 1) * 5}px`"
       :title="`rssi: ${rssi} channel: ${channel}`"
     ></div>
-    <div class="absolute -top-1 -left-1 text-xsmall text-gray-600 dark:text-gray-300">{{ channel }}</div>
+    <div class="absolute -top-1 -left-1 text-xs text-gray-600 dark:text-gray-300">{{ channel }}</div>
   </div>
 </template>
 

@@ -14,7 +14,7 @@
       </svg>
     </span>
     
-    <span class="text-body ms-2">
+    <span class="text-sm ms-2">
       <slot></slot>
     </span>
   </label>

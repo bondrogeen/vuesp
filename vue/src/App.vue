@@ -2,7 +2,7 @@
   <div class="h-[100dvh] min-h-full flex flex-col">
     <AppOverlay v-if="!isConnect" @click="onClose">
       <div class="mb-4">Disconnected</div>
-      
+
       <div class="flex justify-center">
         <VLoader class="text-primary"></VLoader>
       </div>
@@ -14,17 +14,25 @@
       <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
     </AppDrawer>
 
-    <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
+    <div class="flex h-screen overflow-hidden">
+      <AppAside v-bind="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
-    <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
+      <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <AppHeader v-if="!isIframe" :state="isConnect" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
 
-    <main class="pt-20 px-4 py-6 sm:px-6 lg:px-8 flex-auto">
-      <router-view />
-    </main>
+        <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
 
-    <AppNavigation class="md:hidden" v-bind="info" />
+        <main class="px-4 py-6 sm:px-6 lg:px-8 flex-auto">
+          <div :class="isIframe ? '' : 'container mx-auto'">
+            <router-view />
+          </div>
+        </main>
 
-    <AppFooter v-bind="info" class="pb-20 md:pb-4" />
+        <!-- <AppNavigation class="md:hidden" v-bind="info" /> -->
+
+        <!-- <AppFooter v-if="!isIframe" v-bind="info" class="" /> -->
+      </div>
+    </div>
   </div>
 </template>
 
@@ -39,6 +47,7 @@ import DrawerMain from '@/components/app/drawers/DrawerMain';
 
 import VLoader from '@/components/general/VLoader';
 
+import AppAside from '@/components/app/AppAside.vue';
 import AppDialog from '@/components/app/AppDialog';
 import AppHeader from '@/components/app/AppHeader';
 import AppFooter from '@/components/app/AppFooter';
@@ -46,6 +55,9 @@ import AppDrawer from '@/components/app/AppDrawer';
 import AppOverlay from '@/components/app/AppOverlay';
 import AppNavigation from '@/components/app/AppNavigation';
 import AppNotification from '@/components/app/AppNotification';
+import { useRoute } from 'vue-router';
+
+import { menu } from '@/temp.js';
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
@@ -55,14 +67,21 @@ const { socket, isConnect } = storeToRefs(webSocket);
 const { info } = storeToRefs(webSocketStore);
 
 const drawer = ref(false);
+const isIframe = ref(false);
+const sidebarToggle = ref(false);
 
 let ping = null;
+
+const route = useRoute();
 
 provide('theme', theme);
 provide('dialog', appStore.setDialog);
 provide('notification', appStore.setNotification);
 
-const host = process.env.NODE_ENV === 'production' ? window.location.host : process.env.PROXY;
+const mode = import.meta.env.MODE;
+const proxy = import.meta.env.VITE_PROXY;
+
+const host = mode === 'production' ? window.location.host : proxy;
 
 const connect = () => {
   const instance = new WebSocket(`ws://${host}/esp`);
@@ -91,7 +110,22 @@ const onNotifications = item => {
 onMounted(() => {
   ping = setInterval(webSocket.onPing, 1000);
   setTimeout(connect, 100);
-  appStore.init();
+  appStore.init(route.query);
+
+  if (window.self !== window.top) {
+    isIframe.value = true;
+
+    console.log('isIframe:');
+
+    window.addEventListener('message', event => {
+      // if (event.origin !== 'https://parent-domain.com') return;
+
+      console.log('Данные:', event);
+      if (event.data.type === 'myEvent') {
+        console.log('Данные:', event.data.data);
+      }
+    });
+  }
 });
 
 onUnmounted(() => {
@@ -99,7 +133,3 @@ onUnmounted(() => {
   socket.value.close(1000);
 });
 </script>
-
-<style lang="scss">
-@import '@/assets/scss/index.scss';
-</style>

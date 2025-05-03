@@ -10,7 +10,7 @@
           <span>{{ getFileNames(files) }}</span>
         </VTextFieldFile>
       </div>
-      <v-button class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
+      <VButton class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</VButton>
     </div>
 
     <div class="flex items-center gap-4 mb-4">
@@ -22,7 +22,7 @@
         </VTextFieldFile>
       </div>
 
-      <v-button class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
+      <VButton class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</VButton>
     </div>
 
     <h5 class="mb-2">Reboot</h5>
@@ -30,7 +30,7 @@
     <div class="flex items-center mb-4">
       <div class="flex-auto text-gray-400">Reboot device</div>
 
-      <v-button class="min-w-[100px]" size="small" @click="emit('reboot')">Reboot</v-button>
+      <VButton class="min-w-[100px]" size="small" @click="emit('reboot')">Reboot</VButton>
     </div>
 
     <h5 class="mb-2">Reset</h5>
@@ -38,7 +38,7 @@
     <div class="flex items-center mb-4">
       <div class="flex-auto text-gray-400">Reset configuration</div>
 
-      <v-button class="min-w-[100px]" size="small" @click="emit('reset')">Reset</v-button>
+      <VButton class="min-w-[100px]" size="small" @click="emit('reset')">Reset</VButton>
     </div>
   </div>
 </template>
@@ -47,6 +47,7 @@
 import { computed, ref, defineEmits, inject, nextTick } from 'vue';
 
 import VTextFieldFile from '@/components/general/VTextFieldFile';
+import VButton from '@/components/general/VButton';
 
 const emit = defineEmits(['done', 'reboot', 'reset']);
 const dialog = inject('dialog');

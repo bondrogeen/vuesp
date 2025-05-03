@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto">
+  <div>
     <div class="mb-6 flex items-center justify-between">
       <h1>Main</h1>
 
@@ -31,10 +31,10 @@
             <div v-if="pin" class="flex justify-between">
               <div>
                 PIN: {{ pin.gpio }}
-                <span class="text-gray-500 text-small">( {{ getModeName(pin) }} )</span>
+                <span class="text-gray-500 text-sm">( {{ getModeName(pin) }} )</span>
               </div>
 
-              <v-button class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
+              <VButton class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</VButton>
             </div>
           </div>
         </div>
@@ -54,6 +54,7 @@ import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/'
 import { pathGPIO } from '@/utils/const';
 
 import VSelect from '@/components/general/VSelect';
+import VButton from '@/components/general/VButton';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);
