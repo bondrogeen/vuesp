@@ -1,45 +1,43 @@
 <template>
-  <div class="p-4">
-    <h5 class="mb-2">Update</h5>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <CardGray title="Update">
+      <div class="mb-4 flex items-center">
+        <div class="md:flex flex-auto gap-4">
+          <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
 
-    <div class="mb-4 flex items-center">
-      <div class="md:flex flex-auto gap-4">
-        <h6 class="text-gray-400">Firmware:</h6>
-
-        <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
-          <span>{{ getFileNames(files) }}</span>
-        </VTextFieldFile>
-      </div>
-      <VButton class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</VButton>
-    </div>
-
-    <div class="flex items-center gap-4 mb-4">
-      <div class="md:flex flex-auto gap-4">
-        <h6 class="text-gray-400">LittleFS:</h6>
-
-        <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
-          <span>{{ getFileNames(files) }}</span>
-        </VTextFieldFile>
+          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
+            <span>{{ getFileNames(files) }}</span>
+          </VTextFieldFile>
+        </div>
+        <VButton class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</VButton>
       </div>
 
-      <VButton class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</VButton>
-    </div>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="md:flex flex-auto gap-4">
+          <h6 class="text-gray-600 bg:text-gray-400">LittleFS:</h6>
 
-    <h5 class="mb-2">Reboot</h5>
+          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
+            <span>{{ getFileNames(files) }}</span>
+          </VTextFieldFile>
+        </div>
 
-    <div class="flex items-center mb-4">
-      <div class="flex-auto text-gray-400">Reboot device</div>
+        <VButton class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</VButton>
+      </div>
+    </CardGray>
 
-      <VButton class="min-w-[100px]" size="small" @click="emit('reboot', $event)">Reboot</VButton>
-    </div>
+    <CardGray title="System">
+      <div class="flex items-center mb-4">
+        <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
-    <h5 class="mb-2">Reset</h5>
+        <VButton class="min-w-[100px]" size="small" @click="emit('reboot', $event)">Reboot</VButton>
+      </div>
 
-    <div class="flex items-center mb-4">
-      <div class="flex-auto text-gray-400">Reset configuration</div>
+      <div class="flex items-center mb-4">
+        <div class="flex-auto text-gray-600 bg:text-gray-400">Reset configuration</div>
 
-      <VButton class="min-w-[100px]" size="small" @click="emit('reset', $event)">Reset</VButton>
-    </div>
+        <VButton class="min-w-[100px]" size="small" @click="emit('reset', $event)">Reset</VButton>
+      </div>
+    </CardGray>
   </div>
 </template>
 
@@ -48,6 +46,7 @@ import { computed, ref, defineEmits, inject, nextTick } from 'vue';
 
 import VTextFieldFile from '@/components/general/VTextFieldFile.vue';
 import VButton from '@/components/general/VButton.vue';
+import CardGray from '@/components/cards/CardGray.vue';
 
 import type { TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
 

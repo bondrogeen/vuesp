@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-2 lg:grid-cols-1 gap-8 lg:max-w-[360px]">
+  <div class="grid grid-cols-1 gap-8 lg:max-w-[360px]">
     <div class="flex flex-col w-full items-center gap-3">
       <div class="relative block h-2 w-full rounded-sm bg-gray-200 dark:bg-gray-800">
         <div class="absolute left-0 top-0 flex h-full items-center justify-center rounded-sm bg-blue-600 text-xs font-medium text-white" :style="`width: ${percent}%;`"></div>

@@ -55,14 +55,14 @@ import data from '../public/menu.json';
 // @ts-ignore
 const menu: MenuType[] = data?.menu || [];
 
-import { ThemeKey, DialogKey, NotificationKey } from '@/simbol/index.ts';
+import { DialogKey, NotificationKey } from '@/simbol/index.ts';
 
 console.log(menu);
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
-const { dialog, theme, notifications } = storeToRefs(appStore);
+const { dialog, notifications } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
 const { info } = storeToRefs(webSocketStore);
 
@@ -74,7 +74,6 @@ let ping: ReturnType<typeof setTimeout> | null = null;
 
 const route = useRoute();
 
-provide(ThemeKey, theme);
 provide(DialogKey, appStore.setDialog);
 provide(NotificationKey, appStore.setNotification);
 

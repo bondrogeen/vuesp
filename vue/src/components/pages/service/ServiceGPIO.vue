@@ -1,21 +1,29 @@
 <template>
-  <div class="relative p-4 flex flex-col gap-4">
-    <div v-for="pin in ports" :key="pin.gpio">
-      <div v-if="pin" class="flex justify-between">
-        <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+  <CardGray title="Ports">
+    <template #header>
+      <VDropdown left="unset" right="0" top="calc(100%)">
+        <template #activator="{ on }">
+          <VButtonIcon class="flex" @click="on.click()">
+            <IconDots />
+          </VButtonIcon>
+        </template>
 
-        <VButton class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</VButton>
+        <VList v-slot="{ item }" class="py-2 rounded-lg" :list="listMenu" @click="onMenu">
+          <component :is="item.icon"></component>
+          <span class="ms-2">{{ item.name }}</span>
+        </VList>
+      </VDropdown>
+    </template>
+    <div class="relative flex flex-col gap-4">
+      <div v-for="pin in ports" :key="pin.gpio">
+        <div v-if="pin" class="flex justify-between">
+          <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+
+          <VButton class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</VButton>
+        </div>
       </div>
     </div>
-
-    <div class="mt-6">
-      <div class="flex j-end">
-        <VButton class="mr-4" @click="onGetPort">Update</VButton>
-        
-        <VButton :disabled="!isDifferent" @click="onSave">Save</VButton>
-      </div>
-    </div>
-  </div>
+  </CardGray>
 </template>
 
 <script setup>
@@ -26,6 +34,13 @@ import { pathGPIO } from '@/utils/const';
 
 import VSelect from '@/components/general/VSelect';
 import VButton from '@/components/general/VButton';
+import VList from '@/components/general/VList';
+import VDropdown from '@/components/general/VDropdown';
+import VButtonIcon from '@/components/general/VButtonIcon';
+import CardGray from '@/components/cards/CardGray';
+import IconDots from '@/components/icons/IconDots';
+import IconSave from '@/components/icons/IconSave';
+import IconUpdate from '@/components/icons/IconUpdate';
 
 const props = defineProps({
   gpio: { type: Object, default: () => ({}) },
@@ -35,6 +50,11 @@ const emit = defineEmits(['click', 'send', 'reboot']);
 
 const ports = ref([]);
 const portsDef = ref([]);
+
+const listMenu = [
+  { name: 'Update', icon: IconUpdate },
+  { name: 'Save', icon: IconSave },
+];
 
 const isDifferent = computed(() => {
   for (let i = 0; i < ports.value.length; i++) {
