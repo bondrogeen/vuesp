@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-4 flex items-center justify-between">
       <h1 class="first-letter:uppercase text-gray-800 font-semibold dark:text-white/90">{{ page }}</h1>
 
       <!-- <div x-data="{openDropDown: false}" class="relative">

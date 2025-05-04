@@ -1,9 +1,8 @@
 <template>
   <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-    <slot name="header">
-      <div class="mb-6 flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ title }}</h3>
-
+    <div class="mb-6 flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ title }}</h3>
+      <slot name="header">
         <!-- <div x-data="{openDropDown: false}" class="relative">
               <button
                 :class="openDropDown ? 'text-gray-700 dark:text-white' : 'text-gray-400 hover:text-gray-700 dark:hover:text-white'"
@@ -20,8 +19,8 @@
                 </svg>
               </button>
             </div> -->
-      </div>
-    </slot>
+      </slot>
+    </div>
 
     <div class="max-w-full">
       <slot></slot>

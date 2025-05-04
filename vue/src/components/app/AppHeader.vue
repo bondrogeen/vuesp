@@ -1,13 +1,10 @@
 <template>
-  <header class="bg-blue-50 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 top-0 left-0 w-full z-99999 sticky top-0">
+  <header class="bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 top-0 left-0 w-full z-99999 sticky top-0">
     <div class="px-4 py-4 sm:px-6 lg:px-8">
       <div class="container mx-auto flex flex-auto items-center">
-        <button
-          class="me-6 hover:text-dark-900 relative flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-          @click="onSidebar"
-        >
+        <VButtonIcon class="me-6" @click="onSidebar">
           <IconBurger class="fill-current" />
-        </button>
+        </VButtonIcon>
 
         <div class="lg:hidden flex-auto"></div>
 
@@ -15,10 +12,6 @@
           <router-link to="/">
             <IconLogo class="h-[30px]"></IconLogo>
           </router-link>
-        </div>
-
-        <div class="hidden lg:flex">
-          <!-- <VMainMenu class="flex items-center gap-6 font-bold" /> -->
         </div>
 
         <!-- <div class="hidden lg:block">
@@ -55,16 +48,13 @@
         <div class="flex-auto"></div>
 
         <div class="flex gap-4">
-          <button
-            class="hidden lg:flex hover:text-dark-900 relative h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            @click="changeTheme"
-          >
+          <VButtonIcon class="hidden md:flex" @click="changeTheme">
             <IconDark class="hidden dark:block" />
             <IconLight class="dark:hidden" />
-          </button>
+          </VButtonIcon>
 
-          <button
-            class="hover:text-dark-900 relative flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+          <VButtonIcon
+            class="hidden md:flex"
             @click.prevent="
               dropdownOpen = !dropdownOpen;
               notifying = false;
@@ -74,33 +64,26 @@
               <span class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
             </span>
             <IconNoti />
-          </button>
+          </VButtonIcon>
+
+          <VButtonIcon class="hidden md:flex" @click.prevent="">
+            <IconLogout />
+          </VButtonIcon>
         </div>
 
-        <div class="hidden lg:flex gap-4">
+        <div class="md:hidden flex gap-4">
           <VDropdown left="unset" right="0" top="calc(100%)">
             <template #activator="{ on }">
-              <button
-                class="flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
-                :class="menuToggle ? 'bg-gray-100 dark:bg-gray-800' : ''"
-                @click="on.click()"
-              >
-                <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M5.99902 10.4951C6.82745 10.4951 7.49902 11.1667 7.49902 11.9951V12.0051C7.49902 12.8335 6.82745 13.5051 5.99902 13.5051C5.1706 13.5051 4.49902 12.8335 4.49902 12.0051V11.9951C4.49902 11.1667 5.1706 10.4951 5.99902 10.4951ZM17.999 10.4951C18.8275 10.4951 19.499 11.1667 19.499 11.9951V12.0051C19.499 12.8335 18.8275 13.5051 17.999 13.5051C17.1706 13.5051 16.499 12.8335 16.499 12.0051V11.9951C16.499 11.1667 17.1706 10.4951 17.999 10.4951ZM13.499 11.9951C13.499 11.1667 12.8275 10.4951 11.999 10.4951C11.1706 10.4951 10.499 11.1667 10.499 11.9951V12.0051C10.499 12.8335 11.1706 13.5051 11.999 13.5051C12.8275 13.5051 13.499 12.8335 13.499 12.0051V11.9951Z"
-                  ></path>
-                </svg>
-              </button>
+              <VButtonIcon class="flex" @click="on.click()">
+                <IconDots />
+              </VButtonIcon>
             </template>
 
             <VList v-slot="{ item }" class="py-2 rounded-lg" :list="listMenu" @click="onMenu">
               <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
 
-              <IconDark v-if="item.icon === 'dark'"></IconDark>
-
-              <IconLight v-if="item.icon === 'light'"></IconLight>
+              <IconDark v-if="item.icon === 'theme'" class="hidden dark:block" />
+              <IconLight v-if="item.icon === 'theme'" class="dark:hidden" />
 
               <span class="ms-2">{{ item.name }}</span>
             </VList>
@@ -117,6 +100,7 @@ import { ref, computed, defineEmits, defineProps, inject } from 'vue';
 import VMainMenu from '@/components/general/VMainMenu.vue';
 import VDropdown from '@/components/general/VDropdown.vue';
 import VList from '@/components/general/VList.vue';
+import VButtonIcon from '@/components/general/VButtonIcon.vue';
 
 import IconLogo from '@/components/icons/IconLogo.vue';
 import IconBurger from '@/components/icons/IconBurger.vue';
@@ -124,20 +108,20 @@ import IconNoti from '@/components/icons/IconNoti.vue';
 import IconLogout from '@/components/icons/IconLogout.vue';
 import IconDark from '@/components/icons/IconDark.vue';
 import IconLight from '@/components/icons/IconLight.vue';
+import IconDots from '@/components/icons/IconDots.vue';
 
 const props = defineProps({
   state: { type: Boolean, default: false },
   changeTheme: { type: Function, default: () => {} },
 });
 const emit = defineEmits(['sidebar']);
-const theme = inject('theme');
 
 const dropdownOpen = ref(false);
 const menuToggle = ref(false);
 const notifying = ref(false);
 
 const listMenu = computed(() => [
-  { name: 'Theme', icon: !theme.value ? 'dark' : 'light' },
+  { name: 'Theme', icon: 'theme' },
   { name: 'Logout', icon: 'logout' },
 ]);
 

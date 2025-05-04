@@ -18,7 +18,7 @@
         @keypress.enter="onEnter"
       />
 
-      <button v-if="$slots.icon" :disabled="disabled" style="flex: 0 0 50px" class="h-full flex items-center justify-center text-gray-400 border-l border-primary" @click="onIcon">
+      <button v-if="$slots.icon" :disabled="disabled" style="flex: 0 0 50px" class="h-full flex items-center justify-center text-gray-400 border-l border-gray-300" @click="onIcon">
         <slot name="icon"></slot>
       </button>
     </label>
@@ -51,7 +51,7 @@ const isFocus = ref(false);
 
 const getClassSlot = computed(() => [
   props.message ? 'border-red-500 hover:border-red-400' : '',
-  props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-primary hover:border-secondary',
+  props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-gray-300 hover:border-secondary',
 ]);
 
 const isValue = value => value || value === 0;

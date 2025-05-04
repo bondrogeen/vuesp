@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #24c0eb;
   --color-secondary: #66d3f1;
@@ -15,7 +17,7 @@
     @apply overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-600 dark:[&::-webkit-scrollbar-track]:bg-blue-700 dark:[&::-webkit-scrollbar-thumb]:bg-blue-500;
   }
   body {
-    @apply min-h-screen min-w-[360px] text-gray-900 bg-white dark:bg-gray-900 dark:text-white;
+    @apply min-h-screen min-w-[360px] text-gray-900 bg-gray-50 dark:bg-gray-900 dark:text-white;
   }
   input {
     outline: none;
