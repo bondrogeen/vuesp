@@ -1,18 +1,31 @@
 import { defineStore } from 'pinia';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import VuespStruct from 'vuesp-struct';
-import { useWebSocketStore } from './WebSocketStore';
-import event from '@/assets/js/event';
-import log from '@/utils/other/debug';
+
+import { useWebSocketStore } from './WebSocketStore.ts';
+
+import event from '@/assets/js/event.ts';
+import log from '@/utils/other/debug.ts';
 
 const struct = new VuespStruct();
 
+interface TypeWebSocket {
+  socket: any;
+  pingClient: number;
+  pingDevice: number;
+  struct: any;
+}
+
+const state: TypeWebSocket = {
+  socket: null,
+  pingClient: 5000,
+  pingDevice: 0,
+  struct: null,
+};
+
 export const useWebSocket = defineStore('websocket', {
-  state: () => ({
-    socket: null,
-    pingClient: 5000,
-    pingDevice: 0,
-    struct: null,
-  }),
+  state: () => state,
   actions: {
     async onStruct() {
       const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
@@ -27,7 +40,7 @@ export const useWebSocket = defineStore('websocket', {
       event.emit('init');
       event.emit('connected', true);
     },
-    onmessage(message) {
+    onmessage(message: any) {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
         const data = struct.get(message.data);
@@ -36,25 +49,24 @@ export const useWebSocket = defineStore('websocket', {
           // console.log(object);
           if (key !== 'PING') log(object, key);
           const store = useWebSocketStore();
-          if (store?.[`SET_${key}`]) {
-            store?.[`SET_${key}`](object);
-          } else {
-            store.SET_UNKNOWN(data);
-          }
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          if (store?.[`SET_${key}`]) store?.[`SET_${key}`](object);
+          else store.SET_UNKNOWN(data);
         }
       }
     },
-    onclose(data) {
+    onclose(data: string) {
       event.emit('connected', false);
       log(data);
     },
-    onerror(data) {
+    onerror(data: string) {
       event.emit('connected', false);
       log(data);
     },
-    onSend(comm, data) {
+    onSend(comm: string, data?: any) {
       log(comm, data);
-      if (this?.socket?.send && this.isConnect) {
+      if (this?.socket?.readyState && this?.socket?.send && this.isConnect) {
         const buffer = struct.set(comm, data);
         if (buffer) this.socket.send(buffer);
       }

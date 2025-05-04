@@ -13,7 +13,7 @@
       </router-link>
     </div>
 
-    <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
+    <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear h-full">
       <nav>
         <div v-for="{ title, items } of menu" :key="title">
           <h3 class="mb-4 text-xs leading-[20px] text-gray-400 uppercase">
@@ -54,21 +54,7 @@
 
       <div class="flex-auto"></div>
 
-      <div :class="sidebarToggle ? 'lg:hidden' : ''" class="mx-auto mb-10 w-full max-w-60 rounded-2xl bg-gray-50 px-4 py-5 text-center dark:bg-white/[0.03]">
-        <h3 class="mb-2 font-semibold text-gray-900 dark:text-white">Vuesp</h3>
-
-        <p class="text-theme-sm mb-4 text-gray-500 dark:text-gray-400">Template for your projects with a web interface.</p>
-
-        <div>
-          Firmware:
-          <span class="text-gray-400">(ver.{{ getFirmware }})</span>
-        </div>
-
-        <div class="mb-6">
-          ID:
-          <span class="text-gray-400">{{ id.toString(16) }}</span>
-        </div>
-
+      <ServiceInfo v-bind="info" class="mb-4 w-full rounded-2xl bg-gray-50 px-4 py-4 text-center dark:bg-white/[0.03]" :class="sidebarToggle ? 'lg:hidden' : ''">
         <a
           href="https://github.com/bondrogeen/vuesp"
           target="_blank"
@@ -77,18 +63,18 @@
         >
           Github
         </a>
-      </div>
+      </ServiceInfo>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { MenuType, MenuItemType, MenuChildType } from '@/types/types.ts';
+import type { MenuType, MenuItemType, MenuChildType, TypeStateInfo } from '@/types/types.ts';
+
+import ServiceInfo from '@/components/pages/service/ServiceInfo.vue';
 
 import IconLogo from '@/components/icons/IconLogo.vue';
 import IconLogoMini from '@/components/icons/IconLogoMini.vue';
@@ -99,13 +85,12 @@ import IconDevice from '@/components/icons/IconDevice.vue';
 import IconVideo from '@/components/icons/IconVideo.vue';
 
 interface Props {
-  id?: number;
   sidebarToggle?: boolean;
   menu?: MenuType[];
-  firmware?: number[];
+  info?: TypeStateInfo;
 }
 
-const { firmware = [], id = 0, sidebarToggle = false, menu = [] } = defineProps<Props>();
+const { info = {}, sidebarToggle = false, menu = [] } = defineProps<Props>();
 
 const emit = defineEmits<{
   (e: 'sidebar', value: boolean): void;
@@ -118,8 +103,6 @@ const components: any = {
 };
 
 const route = useRoute();
-
-const getFirmware = computed(() => firmware.join('.'));
 
 const getComponent = (name: string = 'IconDashboard') => components[name];
 

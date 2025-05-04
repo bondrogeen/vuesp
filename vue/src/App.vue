@@ -10,12 +10,8 @@
 
     <AppDialog v-bind="dialog" @close="dialog = {}" />
 
-    <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
-      <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
-    </AppDrawer>
-
     <div class="flex h-screen overflow-hidden">
-      <AppAside v-bind="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
+      <AppAside v-if="!isIframe" :info="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
       <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <AppHeader v-if="!isIframe" :state="isConnect" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
@@ -29,35 +25,39 @@
         </main>
 
         <!-- <AppNavigation class="md:hidden" v-bind="info" /> -->
-
-        <!-- <AppFooter v-if="!isIframe" v-bind="info" class="" /> -->
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, provide } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useAppStore } from '@/stores/AppStore';
-import { useWebSocket } from '@/stores/WebSocket';
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { useAppStore } from '@/stores/AppStore.js';
+import { useWebSocket } from '@/stores/WebSocket.js';
+import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import DrawerMain from '@/components/app/drawers/DrawerMain';
-
-import VLoader from '@/components/general/VLoader';
+import VLoader from '@/components/general/VLoader.vue';
 
 import AppAside from '@/components/app/AppAside.vue';
-import AppDialog from '@/components/app/AppDialog';
-import AppHeader from '@/components/app/AppHeader';
-import AppFooter from '@/components/app/AppFooter';
-import AppDrawer from '@/components/app/AppDrawer';
-import AppOverlay from '@/components/app/AppOverlay';
-import AppNavigation from '@/components/app/AppNavigation';
-import AppNotification from '@/components/app/AppNotification';
+import AppDialog from '@/components/app/AppDialog.vue';
+import AppHeader from '@/components/app/AppHeader.vue';
+import AppOverlay from '@/components/app/AppOverlay.vue';
+import AppNotification from '@/components/app/AppNotification.vue';
+
 import { useRoute } from 'vue-router';
 
-import { menu } from '@/temp.js';
+import type { MenuType, TypeNotificationItem } from '@/types/types.ts';
+
+import data from '../public/menu.json';
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const menu: MenuType[] = data?.menu || [];
+
+import { ThemeKey, DialogKey, NotificationKey } from '@/simbol/index.ts';
+
+console.log(menu);
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
@@ -70,13 +70,13 @@ const drawer = ref(false);
 const isIframe = ref(false);
 const sidebarToggle = ref(false);
 
-let ping = null;
+let ping: ReturnType<typeof setTimeout> | null = null;
 
 const route = useRoute();
 
-provide('theme', theme);
-provide('dialog', appStore.setDialog);
-provide('notification', appStore.setNotification);
+provide(ThemeKey, theme);
+provide(DialogKey, appStore.setDialog);
+provide(NotificationKey, appStore.setNotification);
 
 const mode = import.meta.env.MODE;
 const proxy = import.meta.env.VITE_PROXY;
@@ -84,11 +84,11 @@ const proxy = import.meta.env.VITE_PROXY;
 const host = mode === 'production' ? window.location.host : proxy;
 
 const connect = () => {
-  const instance = new WebSocket(`ws://${host}/esp`);
+  const instance: any = new WebSocket(`ws://${host}/esp`);
   instance.binaryType = 'arraybuffer';
   instance.onopen = webSocket.onopen;
   instance.onmessage = webSocket.onmessage;
-  instance.onclose = e => {
+  instance.onclose = (e: any) => {
     webSocket.onclose(e);
     if (e.code !== 1000) connect();
   };
@@ -101,9 +101,7 @@ const onClose = () => {
   dialog.value = {};
 };
 
-const onNotifications = item => {
-  console.log(item);
-
+const onNotifications = (item: TypeNotificationItem) => {
   notifications.value = notifications.value.filter(i => i.id !== item.id);
 };
 
@@ -129,7 +127,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  clearInterval(ping);
+  if (ping) clearInterval(ping);
   socket.value.close(1000);
 });
 </script>

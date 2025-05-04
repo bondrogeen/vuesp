@@ -1,14 +1,19 @@
+interface TypeEvent {
+  [key: string]: any;
+}
+
 class Event {
+  events: TypeEvent;
   constructor() {
     this.events = {};
   }
 
-  on(name, fn) {
+  on(name: string, fn: () => void) {
     this.events[name] = this.events[name] || [];
     this.events[name].push(fn);
   }
 
-  off(name, fn) {
+  off(name: string, fn: () => void) {
     if (this.events[name]) {
       for (var i = 0; i < this.events[name].length; i++) {
         if (this.events[name][i] === fn) {
@@ -19,9 +24,9 @@ class Event {
     }
   }
 
-  emit(name, data) {
+  emit(name: string, data?: any) {
     if (this.events[name]) {
-      this.events[name].forEach(function (fn) {
+      this.events[name].forEach(function (fn: any) {
         fn(data);
       });
     }

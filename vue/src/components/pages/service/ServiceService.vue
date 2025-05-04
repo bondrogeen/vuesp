@@ -30,7 +30,7 @@
     <div class="flex items-center mb-4">
       <div class="flex-auto text-gray-400">Reboot device</div>
 
-      <VButton class="min-w-[100px]" size="small" @click="emit('reboot')">Reboot</VButton>
+      <VButton class="min-w-[100px]" size="small" @click="emit('reboot', $event)">Reboot</VButton>
     </div>
 
     <h5 class="mb-2">Reset</h5>
@@ -38,30 +38,41 @@
     <div class="flex items-center mb-4">
       <div class="flex-auto text-gray-400">Reset configuration</div>
 
-      <VButton class="min-w-[100px]" size="small" @click="emit('reset')">Reset</VButton>
+      <VButton class="min-w-[100px]" size="small" @click="emit('reset', $event)">Reset</VButton>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, defineEmits, inject, nextTick } from 'vue';
 
-import VTextFieldFile from '@/components/general/VTextFieldFile';
-import VButton from '@/components/general/VButton';
+import VTextFieldFile from '@/components/general/VTextFieldFile.vue';
+import VButton from '@/components/general/VButton.vue';
 
-const emit = defineEmits(['done', 'reboot', 'reset']);
-const dialog = inject('dialog');
+import type { TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
 
-const selectFile = ref({ LittleFS: null, firmware: null });
-const onUpdateFirmware = e => (selectFile.value.firmware = e);
-const onUpdateLittleFS = e => (selectFile.value.LittleFS = e);
+import { DialogKey } from '@/simbol/index.ts';
+
+const emit = defineEmits<{
+  (e: 'reset', value: Event): void;
+  (e: 'reboot', value: Event): void;
+}>();
+
+const dialog = inject(DialogKey, ({}) => {});
+
+const data = { LittleFS: null, firmware: null };
+
+const selectFile = ref<any>(data);
+
+const onUpdateFirmware = (e: TypeTextFieldEvent) => (selectFile.value.firmware = e);
+const onUpdateLittleFS = (e: TypeTextFieldEvent) => (selectFile.value.LittleFS = e);
 const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
 const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
 
-const getFileNames = files => (files.length ? files.map(i => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
-const getName = name => (selectFile.value?.[name]?.info?.files || []).map(i => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
+const getFileNames = (files: TypeTextFieldFile[]) => (files.length ? files.map(i => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
+const getName = (name: string) => (selectFile.value?.[name]?.info?.files || []).map((i: TypeTextFieldFile) => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
 
-const onFlash = async name => {
+const onFlash = async (name: string) => {
   if (!selectFile.value?.[name]) return;
   const { files } = selectFile.value[name];
   const date = new FormData();
@@ -77,7 +88,7 @@ const onFlash = async name => {
 const updateFirmware = () => nextTick(() => onFlash('firmware'));
 const updateLittleFS = () => nextTick(() => onFlash('LittleFS'));
 
-const onSureFlash = name =>
+const onSureFlash = (name: string) =>
   dialog({
     value: true,
     message: `Are you sure you want to update the ${name}? <br/> <p class="mt-2" >${getName(name)}</p>`,

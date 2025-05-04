@@ -1,6 +1,6 @@
 <template>
-  <div >
-    <div class="p-4 flex items-center border-b border-gray-200 dark:border-gray-600">
+  <CardGray title="File system">
+    <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
       <div class="flex gap-2 items-center font-bold flex-auto">
         <div
           v-for="(value, i) of path"
@@ -22,7 +22,7 @@
             <IconMenu @click="on.click"></IconMenu>
           </template>
 
-          <VList :list="mainMenu" @click="onEventServise"></VList>
+          <VList :list="mainMenu" @click="onEventService"></VList>
         </VDropdown>
       </div>
     </div>
@@ -40,7 +40,7 @@
           <div>
             <div class="text-sm">{{ isDir ? `${name}` : name }}</div>
 
-            <div v-if="isFile" class="text-xs text-gray-400">{{ toByte(size) }} ({{ size }})</div>
+            <div v-if="isFile" class="text-sm text-[10px] text-gray-400">{{ toByte(size) }} ({{ size }})</div>
           </div>
         </div>
 
@@ -55,56 +55,66 @@
         </VDropdown>
       </VList>
     </div>
-  </div>
+  </CardGray>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
 import { toByte, debounce } from '@/utils/func/';
 
-import VTextFieldFile from '@/components/general/VTextFieldFile';
-import VDropdown from '@/components/general/VDropdown';
-import VLoader from '@/components/general/VLoader';
-import VList from '@/components/general/VList';
+import VTextFieldFile from '@/components/general/VTextFieldFile.vue';
+import VDropdown from '@/components/general/VDropdown.vue';
+import VLoader from '@/components/general/VLoader.vue';
+import VList from '@/components/general/VList.vue';
+import CardGray from '@/components/cards/CardGray.vue';
 
-import IconNext from '@/components/icons/IconNext';
-import IconMenu from '@/components/icons/IconMenu';
-import IconFolder from '@/components/icons/IconFolder';
-import IconFile from '@/components/icons/IconFile';
+import IconNext from '@/components/icons/IconNext.vue';
+import IconMenu from '@/components/icons/IconMenu.vue';
+import IconFolder from '@/components/icons/IconFolder.vue';
+import IconFile from '@/components/icons/IconFile.vue';
 
-const props = defineProps({
-  modelValue: { type: Array, default: () => [] },
-  files: { type: Array, default: () => [] },
-  info: { type: Object, default: () => ({}) },
-  progress: { type: Object, default: () => ({}) },
-  url: { type: String, default: '/fs' },
-});
+import { DialogKey } from '@/simbol/index.ts';
 
-const emit = defineEmits(['update:modelValue', 'send']);
-const dialog = inject('dialog');
+import type { TypeMenu, TypeTextFieldEvent, TypeStateInfo, TypeStateFile } from '@/types/types.ts';
 
-const mainMenu = [
+interface Props {
+  files: TypeStateFile[];
+  modelValue?: string[];
+  info?: TypeStateInfo;
+  progress?: [];
+  url?: string;
+}
+
+const { url = '/fs', modelValue = [], info = {}, files = [] } = defineProps<Props>();
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string[]): void;
+  (e: 'send', value: { comm: string; data?: any }): void;
+}>();
+
+const dialog = inject(DialogKey, ({}) => {});
+
+const mainMenu: TypeMenu[] = [
   { id: 2, name: 'Upload' },
   { id: 3, name: 'Reload' },
   { id: 4, name: 'Format' },
 ];
-const listMenu = [
+const listMenu: TypeMenu[] = [
   { id: 1, name: 'Download' },
   { id: 2, name: 'Remove' },
 ];
 
-const filesTemp = ref([]);
 const isLoading = ref(false);
 
 const path = computed({
-  set: value => emit('update:modelValue', value),
-  get: () => props.modelValue,
+  set: (value: string[]) => emit('update:modelValue', value),
+  get: () => modelValue,
 });
 
-const getListMenu = isDir => listMenu.filter(i => (isDir ? i.id !== 1 : true));
-const sortFiles = computed(() => JSON.parse(JSON.stringify(filesTemp.value)).sort((a, b) => (a.isFile > b.isFile ? 1 : -1)));
+const getListMenu = (isDir: boolean) => listMenu.filter(i => (isDir ? i.id !== 1 : true));
+const sortFiles = computed(() => JSON.parse(JSON.stringify(files)).sort((a: TypeStateFile, b: TypeStateFile) => (a.isFile > b.isFile ? 1 : -1)));
 const getFullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
-const fileName = name => `${getFullPath.value}${name}`;
+const fileName = (name: string) => `${getFullPath.value}${name}`;
 
 const onUpdate = () => {
   isLoading.value = true;
@@ -112,62 +122,71 @@ const onUpdate = () => {
   emit('send', { comm: 'INFO' });
 };
 
-const onPrev = index => {
+const onPrev = (index: number) => {
   if (path.value.length > index + 1) {
     path.value = path.value.filter((_, i) => i < index + 1);
     nextTick(() => onUpdate());
   }
 };
 
-const onNext = (isDir, value) => {
+const onNext = (isDir: boolean, value: string) => {
   if (isDir && path) {
     path.value.push(value);
     onUpdate();
   }
 };
 
-const onEventServise = ({ id }) => {
-  if (id === 2) document.querySelector('input[type="file"]').click();
+const onEventService = ({ id }: TypeMenu) => {
+  if (id === 2) {
+    const input: HTMLInputElement | null = document.querySelector('input[type="file"]');
+    if (input) {
+      input.click();
+    }
+  }
   if (id === 3) onUpdate();
   if (id === 4) onSureFormat();
 };
 
-const onEventList = (name, { id }) => {
+const onEventList = (name: string, { id }: TypeMenu) => {
   if (id === 1) onDownload(name);
   if (id === 2) onSureDelete(name);
 };
 
 const onFormat = async () => {
-  const res = await (await fetch(`${props.url}?format=true`, { method: 'POST' })).json();
+  const res = await (await fetch(`${url}?format=true`, { method: 'POST' })).json();
   if (res?.state) onUpdate();
 };
 
 const onSureFormat = () => dialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
 
-const onUpload = async ({ files, info }) => {
-  const totalSize = info?.totalSize || 0;
+const onUpload = async (data: TypeTextFieldEvent) => {
+  const totalSize = data?.info?.totalSize || 0;
+  const files = data?.files || [];
+
   const date = new FormData();
   for (let i = 0; i < files.length; i++) {
-    const file = files.item(i);
-    const fileName = `${getFullPath.value}${file.name}`;
-    date.append(`file[${i}]`, file, fileName);
+    const file: File | null = files.item(i);
+    if (file) {
+      const fileName = `${getFullPath.value}${file.name}`;
+      date.append(`file[${i}]`, file, fileName);
+    }
   }
-  const { totalBytes, usedBytes } = props.info;
+  const { totalBytes = 0, usedBytes = 0 }: TypeStateInfo = info;
   if (totalSize < totalBytes - usedBytes) {
-    const res = await (await fetch(props.url, { method: 'POST', body: date })).json();
+    const res = await (await fetch(url, { method: 'POST', body: date })).json();
     if (res?.state) onUpdate();
   } else {
     dialog({ value: true, message: 'No free space' });
   }
 };
 
-const onDelete = async name => {
-  const res = await (await fetch(`${props.url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
+const onDelete = async (name: string) => {
+  const res = await (await fetch(`${url}?file=${fileName(name)}`, { method: 'DELETE' })).json();
   if (res?.state) onUpdate();
   else dialog({ value: true, message: 'Directory is not empty' });
 };
 
-const onSureDelete = name => {
+const onSureDelete = (name: string) => {
   if (fileName(name).includes('www')) {
     dialog({ value: true, message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
   } else {
@@ -175,27 +194,26 @@ const onSureDelete = name => {
   }
 };
 
-const onDownload = name => {
+const onDownload = (name: string) => {
   const link = document.createElement('a');
   link.setAttribute('download', name);
-  link.href = `${props.url}?file=${fileName(name)}`;
+  link.href = `${url}?file=${fileName(name)}`;
   document.body.appendChild(link);
   link.click();
   link.remove();
 };
 
-const isLast = (path, i) => path.length > i + 1;
+const isLast = (path: string[], i: number) => path.length > i + 1;
 
 const onLoad = debounce(() => {
-  filesTemp.value = props.files;
   isLoading.value = false;
 }, 300);
 
 watchEffect(() => {
-  onLoad(props.files);
+  onLoad(files);
 });
 
 onMounted(() => {
-  if (!props.files.length) onUpdate();
+  if (!files.length) onUpdate();
 });
 </script>
