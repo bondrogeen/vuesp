@@ -47,7 +47,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
 import { getBinary } from '@/utils/fs/';
 import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/';

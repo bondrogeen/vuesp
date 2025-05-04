@@ -12,12 +12,12 @@ import router from '@/router/index.ts';
 import '@/assets/tailwind.css';
 
 // import { add } from "./components/global";
-// import directives from "@/utils/directives";
+import directives from '@/utils/directives/index.ts';
 
 const pinia = createPinia();
 const app = createApp(App);
 
-// directives.forEach((directive) => app.directive(directive.name, directive));
+directives.forEach(({ name, directive }) => app.directive(name, directive));
 // add(app);
 
 (async () => {
