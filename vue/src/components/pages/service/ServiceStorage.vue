@@ -1,71 +1,77 @@
 <template>
-  <CardGray title="File system">
-    <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
-      <div class="flex gap-2 items-center font-bold flex-auto">
-        <div
-          v-for="(value, i) of path"
-          :key="value"
-          class="flex items-center gap-2 cursor-pointer text-gray-600 last:cursor-default last:text-gray-900 dark:text-gray-200 dark:last:text-white"
-          @click="onPrev(i)"
-        >
-          <div>{{ value }}</div>
+  <div>
+    <CardGray title="File system">
+      <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
+        <div class="flex gap-2 items-center font-bold flex-auto">
+          <div
+            v-for="(value, i) of path"
+            :key="value"
+            class="flex items-center gap-2 cursor-pointer text-gray-600 last:cursor-default last:text-gray-900 dark:text-gray-200 dark:last:text-white"
+            @click="onPrev(i)"
+          >
+            <div>{{ value }}</div>
 
-          <IconNext v-if="isLast(path, i)" class="h-4 w-4"></IconNext>
-        </div>
-      </div>
-
-      <div>
-        <VTextFieldFile @change="onUpload"></VTextFieldFile>
-
-        <VDropdown right="0" left="unset" top="0">
-          <template #activator="{ on }">
-            <IconMenu @click="on.click"></IconMenu>
-          </template>
-
-          <VList :list="mainMenu" @click="onEventService"></VList>
-        </VDropdown>
-      </div>
-    </div>
-
-    <div class="relative min-h-[260px]">
-      <VLoader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
-
-      <VList v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
-        <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
-          <div class="mr-4">
-            <IconFolder v-if="isDir"></IconFolder>
-            <IconFile v-else></IconFile>
-          </div>
-
-          <div>
-            <div class="text-sm">{{ isDir ? `${name}` : name }}</div>
-
-            <div v-if="isFile" class="text-sm text-[10px] text-gray-400">{{ toByte(size) }} ({{ size }})</div>
+            <IconNext v-if="isLast(path, i)" class="h-4 w-4"></IconNext>
           </div>
         </div>
 
-        <VDropdown right="0" left="unset" top="0">
-          <template #activator="{ on }">
-            <button @click="on.click">
-              <IconMenu></IconMenu>
-            </button>
-          </template>
+        <div>
+          <VTextFieldFile @change="onUpload"></VTextFieldFile>
+        </div>
+      </div>
 
-          <VList :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
-        </VDropdown>
-      </VList>
-    </div>
-  </CardGray>
+      <div class="relative min-h-[260px]">
+        <VLoader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
+
+        <VList v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
+          <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
+            <div class="mr-4">
+              <IconFolder v-if="isDir"></IconFolder>
+              <IconFile v-else></IconFile>
+            </div>
+
+            <div>
+              <div class="text-sm">{{ isDir ? `${name}` : name }}</div>
+
+              <div v-if="isFile" class="text-sm text-[10px] text-gray-400">{{ toByte(size) }} ({{ size }})</div>
+            </div>
+          </div>
+
+          <VDropdown right="0" left="unset" top="0">
+            <template #activator="{ on }">
+              <button @click="on.click">
+                <IconMenu></IconMenu>
+              </button>
+            </template>
+
+            <VList :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
+          </VDropdown>
+        </VList>
+      </div>
+    </CardGray>
+    <Teleport to="[data-slot='device']">
+      <VDropdown right="0" left="unset" top="0">
+        <template #activator="{ on }">
+          <VButton type="" @click="on.click">
+            <IconMenu></IconMenu>
+          </VButton>
+        </template>
+
+        <VList :list="mainMenu" @click="onEventService"></VList>
+      </VDropdown>
+    </Teleport>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
-import { toByte, debounce } from '@/utils/func/';
+import { toByte, debounce } from '@/utils/func/index.ts';
 
 import VTextFieldFile from '@/components/general/VTextFieldFile.vue';
 import VDropdown from '@/components/general/VDropdown.vue';
 import VLoader from '@/components/general/VLoader.vue';
 import VList from '@/components/general/VList.vue';
+import VButton from '@/components/general/VButton.vue';
 import CardGray from '@/components/cards/CardGray.vue';
 
 import IconNext from '@/components/icons/IconNext.vue';
@@ -81,7 +87,6 @@ interface Props {
   files: TypeStateFile[];
   modelValue?: string[];
   info?: TypeStateInfo;
-  progress?: [];
   url?: string;
 }
 
@@ -111,7 +116,7 @@ const path = computed({
   get: () => modelValue,
 });
 
-const getListMenu = (isDir: boolean) => listMenu.filter(i => (isDir ? i.id !== 1 : true));
+const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.id !== 1 : true));
 const sortFiles = computed(() => JSON.parse(JSON.stringify(files)).sort((a: TypeStateFile, b: TypeStateFile) => (a.isFile > b.isFile ? 1 : -1)));
 const getFullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const fileName = (name: string) => `${getFullPath.value}${name}`;

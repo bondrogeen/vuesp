@@ -8,25 +8,25 @@
       </div>
     </AppOverlay>
 
-    <AppDialog v-bind="dialog" @close="dialog = {}" />
+    <template v-else>
+      <div class="flex h-screen overflow-hidden">
+        <AppAside v-if="!isIframe" :info="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
-    <div class="flex h-screen overflow-hidden">
-      <AppAside v-if="!isIframe" :info="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
+        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
 
-      <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        <AppHeader v-if="!isIframe" :state="isConnect" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
+          <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
 
-        <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
-
-        <main class="px-4 py-6 sm:px-6 lg:px-8 flex-auto">
-          <div :class="isIframe ? '' : 'container mx-auto'">
-            <router-view />
-          </div>
-        </main>
-
-        <!-- <AppNavigation class="md:hidden" v-bind="info" /> -->
+          <main class="px-4 py-6 sm:px-6 lg:px-8 flex-auto">
+            <div :class="isIframe ? '' : 'container mx-auto'">
+              <router-view />
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </template>
+
+    <AppDialog v-bind="dialog" @close="dialog = {}" />
   </div>
 </template>
 
@@ -37,6 +37,10 @@ import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocket } from '@/stores/WebSocket.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
+import type { MenuType, TypeNotificationItem } from '@/types/types.ts';
+
+import { useRoute } from 'vue-router';
+
 import VLoader from '@/components/general/VLoader.vue';
 
 import AppAside from '@/components/app/AppAside.vue';
@@ -45,24 +49,12 @@ import AppHeader from '@/components/app/AppHeader.vue';
 import AppOverlay from '@/components/app/AppOverlay.vue';
 import AppNotification from '@/components/app/AppNotification.vue';
 
-import { useRoute } from 'vue-router';
-
-import type { MenuType, TypeNotificationItem } from '@/types/types.ts';
-
-import data from '../public/menu.json';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const menu: MenuType[] = data?.menu || [];
-
 import { DialogKey, NotificationKey } from '@/simbol/index.ts';
-
-console.log(menu);
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
-const { dialog, notifications } = storeToRefs(appStore);
+const { menu, dialog, notifications } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
 const { info } = storeToRefs(webSocketStore);
 
@@ -101,7 +93,7 @@ const onClose = () => {
 };
 
 const onNotifications = (item: TypeNotificationItem) => {
-  notifications.value = notifications.value.filter(i => i.id !== item.id);
+  notifications.value = notifications.value.filter((i) => i.id !== item.id);
 };
 
 onMounted(() => {
@@ -112,9 +104,7 @@ onMounted(() => {
   if (window.self !== window.top) {
     isIframe.value = true;
 
-    console.log('isIframe:');
-
-    window.addEventListener('message', event => {
+    window.addEventListener('message', (event) => {
       // if (event.origin !== 'https://parent-domain.com') return;
 
       console.log('Данные:', event);

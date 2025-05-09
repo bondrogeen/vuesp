@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="sidebarToggle ? 'translate-x-0 lg:w-[90px]' : '-translate-x-full'"
-    class="sidebar fixed top-0 left-0 z-9999 flex h-screen w-[290px] flex-col overflow-y-auto border-r border-gray-200 px-5 transition-all duration-300 lg:static lg:translate-x-0 dark:border-gray-800 bg-white dark:bg-gray-900 -translate-x-full"
+    class="sidebar fixed top-0 left-0 z-10 flex h-screen w-[290px] flex-col overflow-y-auto border-r border-gray-200 px-5 transition-all duration-300 lg:static lg:translate-x-0 dark:border-gray-800 bg-white dark:bg-gray-900 -translate-x-full"
     @mouseenter="onHover(true)"
     @mouseleave="onHover(false)"
   >
@@ -108,22 +108,24 @@ const getComponent = (name: string = 'IconDashboard') => components[name];
 
 const onSelect = (name: string = '') => (selected.value = selected.value === name ? '' : name);
 
-const isActive = (path: string = '') => route.fullPath.includes(path);
+const isActive = (path: string = '') => route.fullPath === path;
 
 const selected = ref('');
 
 const onHover = (value: boolean) => {
   if (sidebarToggle) {
-    // emit('sidebar', value);
+    emit('sidebar', value);
   }
 };
 
 onMounted(() => {
-  menu.forEach(({ items }) => {
-    items.forEach((item: MenuItemType) => {
-      const el = (item?.children || []).find((i: MenuChildType) => route.fullPath.includes(i?.path || ''));
-      if (el) selected.value = item.name;
+  setTimeout(() => {
+    menu.forEach(({ items }) => {
+      items.forEach((item: MenuItemType) => {
+        const el = (item?.children || []).find((i: MenuChildType) => isActive(i?.path));
+        if (el) selected.value = item.name;
+      });
     });
-  });
+  }, 300);
 });
 </script>

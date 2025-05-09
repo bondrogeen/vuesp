@@ -18,7 +18,7 @@
         @keypress.enter="onEnter"
       />
 
-      <button v-if="$slots.icon" :disabled="disabled" style="flex: 0 0 50px" class="h-full flex items-center justify-center text-gray-400 border-l border-gray-300" @click="onIcon">
+      <button v-if="$slots.icon" :disabled="disabled" style="flex: 0 0 50px" class="h-full flex items-center justify-center text-gray-400 border-l border-gray-300 dark:border-gray-600" @click="onIcon">
         <slot name="icon"></slot>
       </button>
     </label>
@@ -51,12 +51,12 @@ const isFocus = ref(false);
 
 const getClassSlot = computed(() => [
   props.message ? 'border-red-500 hover:border-red-400' : '',
-  props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-gray-300 hover:border-secondary',
+  props.disabled ? 'border-gray-400 opacity-50 hover:border-gray-400' : 'border-gray-300 dark:border-gray-600 hover:border-secondary',
 ]);
 
 const isValue = value => value || value === 0;
 
-const after = 'after:absolute after:h-1 after:w-full after:left-0 after:translate-y-[6px] after:-z-10 after:dark:bg-gray-800 after:bg-white';
+const after = 'after:absolute after:h-1 after:w-full after:left-0 after:translate-y-[6px] after:-z-10 dark:after:bg-gray-800 after:bg-white';
 
 const getClassLabel = computed(() => [after, isFocus.value || isValue(props.modelValue) || props.active ? 'top-0 left-3 text-xs' : 'top-1/2']);
 

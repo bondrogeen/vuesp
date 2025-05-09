@@ -27,6 +27,12 @@ const state: TypeWebSocket = {
 export const useWebSocket = defineStore('websocket', {
   state: () => state,
   actions: {
+    init() {
+      event.emit('init');
+      this.onSend('INFO');
+      this.onSend('DEVICE');
+      this.onSend('PORT');
+    },
     async onStruct() {
       const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
       // console.log(res);
@@ -36,8 +42,7 @@ export const useWebSocket = defineStore('websocket', {
     onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
-      this.onSend('INFO');
-      event.emit('init');
+      this.init();
       event.emit('connected', true);
     },
     onmessage(message: any) {
@@ -76,6 +81,6 @@ export const useWebSocket = defineStore('websocket', {
     },
   },
   getters: {
-    isConnect: state => state.pingClient - state.pingDevice < 10000,
+    isConnect: (state) => state.pingClient - state.pingDevice < 10000,
   },
 });

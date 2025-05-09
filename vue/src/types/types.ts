@@ -1,3 +1,8 @@
+export interface TypeWSSend {
+  comm: string;
+  data?: any;
+}
+
 export interface MenuChildType {
   name: string;
   path?: string;
@@ -118,6 +123,7 @@ export interface TypeNotificationItem {
   timeout?: number;
 }
 export interface TypeStateApp {
+  menu: MenuType[];
   isLoading: boolean;
   theme: string;
   dialog: TypeDialog;

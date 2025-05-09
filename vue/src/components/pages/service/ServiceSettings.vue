@@ -100,9 +100,17 @@
       </div>
     </CardGray>
 
-    <div class="mt-6">
-      <VButton :disabled="invalid" @click="onSave">Save</VButton>
-    </div>
+    <Teleport to="[data-slot='device']">
+      <VDropdown right="0" left="unset" top="0">
+        <template #activator="{ on }">
+          <VButton type="" @click="on.click">
+            <IconMenu></IconMenu>
+          </VButton>
+        </template>
+
+        <VList :list="listMenu" @click="onMenu"></VList>
+      </VDropdown>
+    </Teleport>
 
     <AppDialog title="SCAN" size="sm" :value="showDialog" @close="onClose">
       <div>
@@ -150,9 +158,12 @@ import VSelect from '@/components/general/VSelect.vue';
 import VLoader from '@/components/general/VLoader.vue';
 import VList from '@/components/general/VList.vue';
 import VButton from '@/components/general/VButton.vue';
+import VDropdown from '@/components/general/VDropdown.vue';
 
 import CardGray from '@/components/cards/CardGray.vue';
 
+import IconSave from '@/components/icons/IconSave.vue';
+import IconMenu from '@/components/icons/IconMenu.vue';
 import IconSearch from '@/components/icons/IconSearch.vue';
 import IconEyeOpen from '@/components/icons/IconEyeOpen.vue';
 import IconEyeClose from '@/components/icons/IconEyeClose.vue';
@@ -171,6 +182,8 @@ const emit = defineEmits<{
 }>();
 
 const dialog = inject(DialogKey, ({}) => {});
+
+const listMenu = [{ name: 'Save', icon: IconSave }];
 
 const showPass = ref(false);
 const showAuthPass = ref(false);
@@ -279,6 +292,11 @@ const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 const onSave = () => emit('save', settings.value);
+
+const onMenu = () => {
+  if (invalid.value) return;
+  onSave();
+};
 
 const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
