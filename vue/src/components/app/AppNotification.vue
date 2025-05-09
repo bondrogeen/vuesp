@@ -6,14 +6,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
 
-import VNotification from '@/components/general/VNotification';
+import type { TypeNotificationItem } from '@/types/types.ts';
 
-defineProps({
-  notifications: { type: Array, default: () => [] },
-});
+import VNotification from '@/components/general/VNotification.vue';
 
-const emit = defineEmits(['close']);
+interface Props {
+  notifications?: TypeNotificationItem[];
+}
+
+const { notifications = [] } = defineProps<Props>();
+
+const emit = defineEmits<{
+  (e: 'close', value: TypeNotificationItem): void;
+}>();
 </script>

@@ -7,7 +7,9 @@
 
       <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <IconMenu @click="on.click"></IconMenu>
+          <VButton type="" @click="on.click">
+            <IconMenu></IconMenu>
+          </VButton>
         </template>
 
         <VList :list="listPage" @click="onPage"></VList>
@@ -15,17 +17,15 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      <VCard class="flex justify-between col-span-full">
-        <h5>Date</h5>
+      <div class="col-span-full">
+        <CardGray title="Date">
+          <div class="flex items-center">
+            <input :value="datetime" type="datetime-local" @change="onDate" />
+          </div>
+        </CardGray>
+      </div>
 
-        <div class="flex items-center">
-          <input :value="datetime" type="datetime-local" @change="onDate" />
-        </div>
-      </VCard>
-
-      <VCard class="col-span-full">
-        <h5 class="mb-6">GPIO</h5>
-
+      <CardGray class="col-span-full" title="GPIO">
         <div class="flex flex-col gap-2">
           <div v-for="pin in ports" :key="pin.gpio">
             <div v-if="pin" class="flex justify-between">
@@ -34,38 +34,33 @@
                 <span class="text-gray-500 text-sm">( {{ getModeName(pin) }} )</span>
               </div>
 
-              <VButton class="min-w-[100px] ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</VButton>
+              <VButton color="blue" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
             </div>
           </div>
         </div>
-      </VCard>
+      </CardGray>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import { getBinary } from '@/utils/fs/';
-import { command, getKey, getData, setData, parseDateGPIO } from '@/utils/gpio/';
-import { pathGPIO } from '@/utils/const';
+import { usePorts } from '@/composables/usePorts.ts';
 
-import VSelect from '@/components/general/VSelect';
-import VButton from '@/components/general/VButton';
+import VButton from '@/components/general/VButton.vue';
+import VDropdown from '@/components/general/VDropdown.vue';
+import VList from '@/components/general/VList.vue';
+
+import CardGray from '@/components/cards/CardGray.vue';
+
+import IconMenu from '@/components/icons/IconMenu.vue';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);
-
-import event from '@/assets/js/event';
-
-import VCard from '@/components/general/VCard';
-import VDropdown from '@/components/general/VDropdown';
-import VList from '@/components/general/VList';
-
-import IconMenu from '@/components/icons/IconMenu';
 
 const router = useRouter();
 
@@ -77,31 +72,14 @@ const listPage = [
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
 
 const now = ref(0);
-const ports = ref([]);
-const portsDef = ref([]);
 
-const init = async () => {
-  webSocketStore.onSend('DEVICE');
-  webSocketStore.onSend('PORT');
-
-  ports.value = await onLoadDataGpio();
-  portsDef.value = JSON.parse(JSON.stringify(ports.value));
+const onSend = ({ comm, data }: any) => {
+  webSocketStore.onSend(comm, data);
 };
 
-event.on('init', init);
+const { ports, init, isDisabled, getModeName, getStateValue, onSetPort } = usePorts(onSend);
 
-const listMode = [
-  { name: 'OFF', value: 0 },
-  { name: 'INPUT', value: 8 }, // 0x00
-  { name: 'OUTPUT', value: 9 }, // 0x01
-  { name: 'INPUT_PULLUP', value: 10 }, // 0x02
-  { name: 'OUTPUT_OPEN_DRAIN', value: 11 }, // 0x03
-  // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
-  // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
-  // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07
-];
-
-const onPage = ({ id }) => {
+const onPage = ({ id }: any) => {
   if (id === 1) {
     router.push('/config');
   }
@@ -110,54 +88,14 @@ const onPage = ({ id }) => {
   }
 };
 
-const onMode = (port, item) => {
-  const obj = getData(port.data);
-  const value = item.value;
-  obj.init = value & 0b00001111 ? 1 : 0;
-  obj.mode = value & 0b00000111;
-  port.data = setData(obj);
-};
-
-const getMode = ({ data }) => {
-  const mode = getKey(data, 'mode');
-  const init = getKey(data, 'init');
-  const value = init * 8 + mode;
-  return listMode.find(i => i.value === value) || {};
-};
-
-const getModeName = pin => getMode(pin).name;
-
-const getValue = ({ data }) => Boolean(getKey(data, 'value'));
-
-const getStateValue = pin => {
-  return getValue(gpio?.value?.[pin.gpio] || {});
-};
-
-const isDisabled = pin => Boolean(![9, 11].includes(getMode(pin).value));
-
-const onSetPort = (port, value) => {
-  console.log(port, value);
-
-  const obj = getData(port.data);
-  obj.value = value;
-  port.data = setData(obj);
-
-  webSocketStore.onSend('PORT', { gpio: port.gpio, command: command.GPIO_COMMAND_SET, data: port.data });
-};
-
 const onSaveDef = () => {
   webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
 };
 
-const onDate = e => {
-  const _now = e?.target?.valueAsNumber;
+const onDate = (e: any) => {
+  const _now: number = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
   webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
-};
-
-const onLoadDataGpio = async () => {
-  const array = await getBinary(pathGPIO);
-  return parseDateGPIO(array);
 };
 
 onMounted(async () => {
