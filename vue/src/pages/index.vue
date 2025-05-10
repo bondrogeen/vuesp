@@ -8,7 +8,7 @@
       <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <VButton type="" @click="on.click">
-            <IconMenu></IconMenu>
+            <IconDots class="rotate-90"></IconDots>
           </VButton>
         </template>
 
@@ -34,7 +34,7 @@
                 <span class="text-gray-500 text-sm">( {{ getModeName(pin) }} )</span>
               </div>
 
-              <VButton color="blue" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
+              <VButton color="blue" class="min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
             </div>
           </div>
         </div>
@@ -57,7 +57,7 @@ import VList from '@/components/general/VList.vue';
 
 import CardGray from '@/components/cards/CardGray.vue';
 
-import IconMenu from '@/components/icons/IconMenu.vue';
+import IconDots from '@/components/icons/IconDots.vue';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-4 flex items-center justify-between">
-      <h1>{{ page }}</h1>
+      <h1>{{ title }}</h1>
 
       <div data-slot="device"></div>
     </div>
@@ -19,6 +19,11 @@
 <script setup lang="ts">
 import { computed, onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
+
+import type { TypeStateSettings } from '@/types/types.ts';
+
+import { getPageTitle } from '@/utils/helpers';
+
 import event from '@/assets/js/event';
 
 import ServiceGPIO from '@/components/pages/service/ServiceGPIO.vue';
@@ -27,15 +32,19 @@ import ServiceSettings from '@/components/pages/service/ServiceSettings.vue';
 
 import ServiceService from '@/components/pages/service/ServiceService.vue';
 
-import type { TypeStateSettings } from '@/types/types.ts';
-
+import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
+
 import { useRoute } from 'vue-router';
 
 import { DialogKey, NotificationKey } from '@/simbol/index.ts';
 
-const webSocketStore = useWebSocketStore();
+const appStore = useAppStore();
+const { menu } = storeToRefs(appStore);
 
+const title = computed(() => getPageTitle(menu.value, route.fullPath).name);
+
+const webSocketStore = useWebSocketStore();
 const { fileList, info, path, settings, scanList, gpio } = storeToRefs(webSocketStore);
 
 const route = useRoute();

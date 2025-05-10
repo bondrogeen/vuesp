@@ -1,3 +1,5 @@
+import type { TypeMenu } from '@/types/types.ts';
+
 export const jsonParse = (data: string | null) => {
   try {
     return data ? JSON.parse(data) : null;
@@ -24,3 +26,7 @@ export const changeTheme = (value: string) => {
   document.documentElement.classList.remove('light');
   document.documentElement.classList.add(value);
 };
+
+export const findMenuTitle = (items: any, path: string) => items.reduce((acc: any, i: any) => (i.path === path ? i : i.children ? findMenuTitle(i.children, path) : acc), null);
+
+export const getPageTitle = (menu: TypeMenu[], path: string) => menu.reduce((acc: any, i: TypeMenu) => findMenuTitle(i.items, path) || acc, {});

@@ -1,16 +1,26 @@
 <template>
-  <div class="grid grid-cols-1 gap-8 lg:max-w-[360px]">
-    <div class="flex flex-col w-full items-center gap-3">
-      <div class="relative block h-2 w-full rounded-sm bg-gray-200 dark:bg-gray-800">
-        <div class="absolute left-0 top-0 flex h-full items-center justify-center rounded-sm bg-blue-600 text-xs font-medium text-white" :style="`width: ${percent}%;`"></div>
+  <div class="grid grid-cols-1 gap-4 lg:max-w-[360px]">
+    <div class="flex flex-col w-full items-center gap-2">
+      
+      <div class="flex justify-between w-full text-xs">
+        <div v-for="(item, key) in store" :key="key" class="">
+          <div class="text-gray-400">{{ key }}:</div>
+          
+          <div>{{ item }}</div>
+        </div>
       </div>
-      <p class="text-theme-sm font-medium text-gray-700 dark:text-gray-400">{{ percent }}%</p>
+      <div class="relative block h-4 w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
+        <div class="absolute left-0 top-0 flex h-full items-center justify-center bg-blue-600 hover:bg-blue-500" :style="`width: ${percent}%;`" :title="`${percent}%`"></div>
+
+        <span class="absolute left-1/2 -translate-x-1/2 top-0 text-xs font-medium text-gray-700 dark:text-gray-400">{{ percent }}%</span>
+      </div>
     </div>
 
-    <div class="text-sm flex flex-col justify-center gap-2">
+    <div class="text-sm">
       <div v-for="(item, key) in date" :key="key" class="grid grid-cols-2">
-        <div class="text-gray-400">{{ key }}:</div>
-        <div class="font-medium">{{ item }}</div>
+        <div class="text-gray-400 text-left">{{ key }}:</div>
+
+        <div class="text-right">{{ item }}</div>
       </div>
     </div>
 
@@ -32,10 +42,13 @@ const time = ref(uptime);
 
 const getFirmware = computed(() => firmware.join('.'));
 
-const date = computed(() => ({
+const store = computed(() => ({
   Used: toByte(usedBytes),
   Available: toByte(totalBytes - usedBytes),
   Total: toByte(totalBytes),
+}));
+
+const date = computed(() => ({
   Uptime: secToTime(time.value),
   ID: id.toString(16),
   Firmware: getFirmware.value,

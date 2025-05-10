@@ -51,7 +51,7 @@
 
         <VTextField v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
 
-        <VTextField v-model="v.wifiGateway.value" label="Geteway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
+        <VTextField v-model="v.wifiGateway.value" label="Gateway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
 
         <VTextField v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
@@ -104,7 +104,7 @@
       <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <VButton type="" @click="on.click">
-            <IconMenu></IconMenu>
+            <IconDots class="rotate-90"></IconDots>
           </VButton>
         </template>
 
@@ -134,7 +134,7 @@
       </div>
 
       <template #footer>
-        <VButton @click="onScan(true)">Scan</VButton>
+        <VButton color="blue" @click="onScan(true)">Scan</VButton>
       </template>
     </AppDialog>
   </div>
@@ -148,7 +148,7 @@ import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/simbol/index.ts';
 
-import type { TypeStateScan, TypeStateSettings } from '@/types/types.ts';
+import type { TypeStateScan, TypeStateSettings, TypelistWiFi } from '@/types/types.ts';
 
 import AppDialog from '@/components/app/AppDialog.vue';
 import WifiIcon from '@/components/general/WifiIcon.vue';
@@ -163,7 +163,7 @@ import VDropdown from '@/components/general/VDropdown.vue';
 import CardGray from '@/components/cards/CardGray.vue';
 
 import IconSave from '@/components/icons/IconSave.vue';
-import IconMenu from '@/components/icons/IconMenu.vue';
+import IconDots from '@/components/icons/IconDots.vue';
 import IconSearch from '@/components/icons/IconSearch.vue';
 import IconEyeOpen from '@/components/icons/IconEyeOpen.vue';
 import IconEyeClose from '@/components/icons/IconEyeClose.vue';
@@ -190,40 +190,40 @@ const showAuthPass = ref(false);
 const showDialog = ref(false);
 
 const settings = computed({
-  set: value => emit('update:modelValue', value),
+  set: (value) => emit('update:modelValue', value),
   get: () => modelValue,
 });
 
 const wifiIp = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiIp || []).join('.'),
 });
 const wifiSubnet = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiSubnet || []).join('.'),
 });
 const wifiGateway = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiGateway || []).join('.'),
 });
 const wifiDns = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiDns || []).join('.'),
 });
 const wifiSsid = computed({
-  set: value => (settings.value.wifiSsid = value),
+  set: (value) => (settings.value.wifiSsid = value),
   get: () => settings?.value?.wifiSsid,
 });
 const wifiPass = computed({
-  set: value => (settings.value.wifiPass = value),
+  set: (value) => (settings.value.wifiPass = value),
   get: () => settings?.value?.wifiPass,
 });
 const authLogin = computed({
-  set: value => (settings.value.authLogin = value),
+  set: (value) => (settings.value.authLogin = value),
   get: () => settings?.value?.authLogin,
 });
 const authPass = computed({
-  set: value => (settings.value.authPass = value),
+  set: (value) => (settings.value.authPass = value),
   get: () => settings?.value?.authPass,
 });
 
@@ -274,11 +274,6 @@ const validators = {
 
 const { v, invalid, getError } = useForm(validators, form);
 
-interface TypelistWiFi {
-  name: string;
-  value: number;
-}
-
 const listWiFi: TypelistWiFi[] = [
   { name: 'OFF', value: 0 },
   { name: 'STA', value: 1 },
@@ -286,7 +281,7 @@ const listWiFi: TypelistWiFi[] = [
   // { name: 'STA + AP', value: 3 },
 ];
 
-const getMode = computed(() => listWiFi.find(i => i.value === settings.value.wifiMode)?.name || '');
+const getMode = computed(() => listWiFi.find((i) => i.value === settings.value.wifiMode)?.name || '');
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
@@ -298,7 +293,7 @@ const onMenu = () => {
   onSave();
 };
 
-const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
+const listEncryption: string[] = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
 const onSelectSsid = ({ ssid }: TypeStateScan) => {
   settings.value.wifiMode = 1;

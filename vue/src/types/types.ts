@@ -3,25 +3,25 @@ export interface TypeWSSend {
   data?: any;
 }
 
-export interface MenuChildType {
+export interface TypeMenuChild {
   name: string;
   path?: string;
 }
 
-export interface MenuItemType {
+export interface TypeMenuItem {
   name: string;
   icon: string;
   path: string;
-  children?: MenuChildType[];
+  children?: TypeMenuChild[];
 }
 
-export interface MenuType {
+export interface TypeMenu {
   title: string;
   path: string;
-  items: MenuItemType[];
+  items: TypeMenuItem[];
 }
 
-export interface BreadcrumbType {
+export interface TypeBreadcrumb {
   name: string;
   path?: string;
 }
@@ -33,7 +33,7 @@ export interface TypeDialog {
   callback?: () => void;
 }
 
-export interface TypeMenu {
+export interface TypeListMenu {
   id: number;
   name: string;
 }
@@ -76,6 +76,11 @@ export interface TypeGpio {
 
 export interface TypeStateGpio {
   [key: string]: TypeGpio;
+}
+
+export interface TypelistWiFi {
+  name: string;
+  value: number;
 }
 
 export interface TypeStateScan {
@@ -123,7 +128,7 @@ export interface TypeNotificationItem {
   timeout?: number;
 }
 export interface TypeStateApp {
-  menu: MenuType[];
+  menu: TypeMenu[];
   isLoading: boolean;
   theme: string;
   dialog: TypeDialog;
