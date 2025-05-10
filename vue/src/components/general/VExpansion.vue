@@ -4,7 +4,7 @@
       <h4>{{ label }}</h4>
       
       <div class="transition text-gray-400" :class="{ 'rotate-180': isActive }">
-        <IconSelect></IconSelect>
+        <IconChevron></IconChevron>
       </div>
     </div>
 
@@ -18,7 +18,7 @@
 <script setup>
 import { ref, defineProps, onMounted } from 'vue';
 
-import IconSelect from '@/components/icons/IconSelect';
+import IconChevron from '@/components/icons/IconChevron';
 
 const props = defineProps({
   label: { type: String, default: '' },

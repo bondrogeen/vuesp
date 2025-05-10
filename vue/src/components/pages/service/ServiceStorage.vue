@@ -11,7 +11,7 @@
           >
             <div>{{ value }}</div>
 
-            <IconNext v-if="isLast(path, i)" class="h-4 w-4"></IconNext>
+            <IconChevron v-if="isLast(path, i)" class="h-5 w-4 -rotate-90"></IconChevron>
           </div>
         </div>
 
@@ -25,7 +25,7 @@
 
         <VList v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
-            <div class="mr-4">
+            <div class="mr-4 text-gray-400">
               <IconFolder v-if="isDir"></IconFolder>
               <IconFile v-else></IconFile>
             </div>
@@ -40,7 +40,7 @@
           <VDropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <button @click="on.click">
-                <IconMenu></IconMenu>
+                <IconDots class="rotate-90"></IconDots>
               </button>
             </template>
 
@@ -49,11 +49,12 @@
         </VList>
       </div>
     </CardGray>
+
     <Teleport to="[data-slot='device']">
       <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <VButton type="" @click="on.click">
-            <IconMenu></IconMenu>
+            <IconDots class="rotate-90"></IconDots>
           </VButton>
         </template>
 
@@ -74,14 +75,14 @@ import VList from '@/components/general/VList.vue';
 import VButton from '@/components/general/VButton.vue';
 import CardGray from '@/components/cards/CardGray.vue';
 
-import IconNext from '@/components/icons/IconNext.vue';
-import IconMenu from '@/components/icons/IconMenu.vue';
+import IconChevron from '@/components/icons/IconChevron.vue';
+import IconDots from '@/components/icons/IconDots.vue';
 import IconFolder from '@/components/icons/IconFolder.vue';
 import IconFile from '@/components/icons/IconFile.vue';
 
 import { DialogKey } from '@/simbol/index.ts';
 
-import type { TypeMenu, TypeTextFieldEvent, TypeStateInfo, TypeStateFile } from '@/types/types.ts';
+import type { TypeListMenu, TypeTextFieldEvent, TypeStateInfo, TypeStateFile } from '@/types/types.ts';
 
 interface Props {
   files: TypeStateFile[];
@@ -99,12 +100,12 @@ const emit = defineEmits<{
 
 const dialog = inject(DialogKey, ({}) => {});
 
-const mainMenu: TypeMenu[] = [
+const mainMenu: TypeListMenu[] = [
   { id: 2, name: 'Upload' },
   { id: 3, name: 'Reload' },
   { id: 4, name: 'Format' },
 ];
-const listMenu: TypeMenu[] = [
+const listMenu: TypeListMenu[] = [
   { id: 1, name: 'Download' },
   { id: 2, name: 'Remove' },
 ];
@@ -141,7 +142,7 @@ const onNext = (isDir: boolean, value: string) => {
   }
 };
 
-const onEventService = ({ id }: TypeMenu) => {
+const onEventService = ({ id }: TypeListMenu) => {
   if (id === 2) {
     const input: HTMLInputElement | null = document.querySelector('input[type="file"]');
     if (input) {
@@ -152,7 +153,7 @@ const onEventService = ({ id }: TypeMenu) => {
   if (id === 4) onSureFormat();
 };
 
-const onEventList = (name: string, { id }: TypeMenu) => {
+const onEventList = (name: string, { id }: TypeListMenu) => {
   if (id === 1) onDownload(name);
   if (id === 2) onSureDelete(name);
 };
@@ -219,6 +220,8 @@ watchEffect(() => {
 });
 
 onMounted(() => {
-  if (!files.length) onUpdate();
+  setTimeout(() => {
+    onUpdate();
+  }, 100);
 });
 </script>

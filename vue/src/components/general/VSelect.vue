@@ -3,7 +3,7 @@
     <template #activator="{ on, show }">
       <VTextField :key="value" :model-value="value" :title="value" readonly active hide-message :label="label" @click="on.click" @on-icon="on.click">
         <template #icon>
-          <IconSelect class="transition duration-500 ease-in-out" :class="getClass(show)"></IconSelect>
+          <IconChevron class="transition-all" :class="getClass(show)"></IconChevron>
         </template>
       </VTextField>
     </template>
@@ -17,7 +17,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 
-import IconSelect from '@/components/icons/IconSelect';
+import IconChevron from '@/components/icons/IconChevron';
 import VTextField from '@/components/general/VTextField';
 import VDropdown from '@/components/general/VDropdown';
 import VList from '@/components/general/VList';
@@ -32,6 +32,6 @@ defineProps({
 
 const emit = defineEmits(['change']);
 
-const onChange = e => emit('change', e);
-const getClass = show => ({ 'rotate-180': show });
+const onChange = (e) => emit('change', e);
+const getClass = (show) => ({ 'rotate-x-180': show });
 </script>

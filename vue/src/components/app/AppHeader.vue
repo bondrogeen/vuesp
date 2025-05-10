@@ -43,14 +43,14 @@
         </div>
 
         <div class="md:hidden flex gap-4">
-          <VDropdown left="unset" right="0" top="calc(100%)">
+          <VDropdown left="unset" right="0" top="0">
             <template #activator="{ on }">
               <VButton type="icon" color="gray" class="flex" @click="on.click()">
                 <IconDots />
               </VButton>
             </template>
 
-            <VList v-slot="{ item }" class="py-2 rounded-lg" :list="listMenu" @click="onMenu">
+            <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
               <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
 
               <IconDark v-if="item.icon === 'theme'" class="hidden dark:block" />

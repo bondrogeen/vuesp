@@ -15,7 +15,7 @@
         <slot :item="item">{{ item[valueName] }}</slot>
       </VList>
     </div>
-    
+
     <div v-if="isEmpty" class="p-4 py-2">Not found</div>
   </VDropdown>
 </template>
@@ -40,10 +40,10 @@ const search = ref('');
 const currentUser = computed(() => props.value);
 const getList = computed(() => {
   const list = props?.list || [];
-  return list.filter(i => (search.value ? i[props.valueName].toLowerCase().includes(search.value.toLowerCase()) : true));
+  return list.filter((i) => (search.value ? i[props.valueName].toLowerCase().includes(search.value.toLowerCase()) : true));
 });
 const placeholder = computed(() => props.placeholder);
 const isEmpty = computed(() => Boolean(!getList?.value?.length));
 
-const onInput = e => (search.value = e.target.value);
+const onInput = (e) => (search.value = e.target.value);
 </script>

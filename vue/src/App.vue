@@ -37,7 +37,7 @@ import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocket } from '@/stores/WebSocket.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import type { MenuType, TypeNotificationItem } from '@/types/types.ts';
+import type { TypeNotificationItem } from '@/types/types.ts';
 
 import { useRoute } from 'vue-router';
 

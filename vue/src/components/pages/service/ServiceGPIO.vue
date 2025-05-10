@@ -6,7 +6,7 @@
           <div v-if="pin" class="flex justify-between">
             <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
 
-            <VButton color="blue" class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
+            <VButton color="blue" class="ml-2 min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
           </div>
         </div>
       </div>
@@ -16,11 +16,11 @@
       <VDropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <VButton type="" @click="on.click">
-            <IconMenu></IconMenu>
+            <IconDots class="rotate-90"></IconDots>
           </VButton>
         </template>
 
-        <VList v-slot="{ item }" class="py-2 rounded-lg" :list="listMenu" @click="onMenu">
+        <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
           <component :is="item.icon"></component>
           <span class="ms-2">{{ item.name }}</span>
         </VList>
@@ -44,7 +44,7 @@ import VList from '@/components/general/VList.vue';
 import VDropdown from '@/components/general/VDropdown.vue';
 import CardGray from '@/components/cards/CardGray.vue';
 
-import IconMenu from '@/components/icons/IconMenu.vue';
+import IconDots from '@/components/icons/IconDots.vue';
 import IconSave from '@/components/icons/IconSave.vue';
 import IconUpdate from '@/components/icons/IconUpdate.vue';
 

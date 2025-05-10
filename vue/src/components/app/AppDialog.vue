@@ -23,7 +23,7 @@
 
           <div v-if="$slots.footer || callback" class="px-4 py-2 flex justify-end">
             <slot name="footer">
-              <VButton size="small" @click="onButton">{{ button }}</VButton>
+              <VButton color="blue" size="small" @click="onButton">{{ button }}</VButton>
             </slot>
           </div>
         </div>

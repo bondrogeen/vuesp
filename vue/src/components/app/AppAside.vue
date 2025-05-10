@@ -55,14 +55,7 @@
       <div class="flex-auto"></div>
 
       <ServiceInfo v-bind="info" class="mb-4 w-full rounded-2xl bg-gray-50 px-4 py-4 text-center dark:bg-white/[0.03]" :class="sidebarToggle ? 'lg:hidden' : ''">
-        <a
-          href="https://github.com/bondrogeen/vuesp"
-          target="_blank"
-          rel="nofollow"
-          class="bg-blue-100/50 text-theme-sm hover:bg-blue-500 transition-all flex items-center justify-center rounded-lg p-3 font-medium"
-        >
-          Github
-        </a>
+        <VButton href="https://github.com/bondrogeen/vuesp" class="w-full" target="_blank" color="blue">Github</VButton>
       </ServiceInfo>
     </div>
   </aside>
@@ -72,9 +65,10 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import type { MenuType, MenuItemType, MenuChildType, TypeStateInfo } from '@/types/types.ts';
+import type { TypeMenu, TypeMenuItem, TypeMenuChild, TypeStateInfo } from '@/types/types.ts';
 
 import ServiceInfo from '@/components/pages/service/ServiceInfo.vue';
+import VButton from '@/components/general/VButton.vue';
 
 import IconLogo from '@/components/icons/IconLogo.vue';
 import IconLogoMini from '@/components/icons/IconLogoMini.vue';
@@ -86,7 +80,7 @@ import IconVideo from '@/components/icons/IconVideo.vue';
 
 interface Props {
   sidebarToggle?: boolean;
-  menu?: MenuType[];
+  menu?: TypeMenu[];
   info?: TypeStateInfo;
 }
 
@@ -121,8 +115,8 @@ const onHover = (value: boolean) => {
 onMounted(() => {
   setTimeout(() => {
     menu.forEach(({ items }) => {
-      items.forEach((item: MenuItemType) => {
-        const el = (item?.children || []).find((i: MenuChildType) => isActive(i?.path));
+      items.forEach((item: TypeMenuItem) => {
+        const el = (item?.children || []).find((i: TypeMenuChild) => isActive(i?.path));
         if (el) selected.value = item.name;
       });
     });
