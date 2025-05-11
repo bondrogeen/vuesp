@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <CardGray title="Update">
+    <VCardGray title="Update">
       <div class="mb-4 flex items-center">
         <div class="md:flex flex-auto gap-4">
           <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
@@ -23,9 +23,9 @@
 
         <VButton class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</VButton>
       </div>
-    </CardGray>
+    </VCardGray>
 
-    <CardGray title="System">
+    <VCardGray title="System">
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
@@ -37,16 +37,12 @@
 
         <VButton class="min-w-[100px]" size="small" @click="emit('reset', $event)">Reset</VButton>
       </div>
-    </CardGray>
+    </VCardGray>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, defineEmits, inject, nextTick } from 'vue';
-
-import VTextFieldFile from '@/components/general/VTextFieldFile.vue';
-import VButton from '@/components/general/VButton.vue';
-import CardGray from '@/components/cards/CardGray.vue';
 
 import type { TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
 
@@ -68,7 +64,7 @@ const onUpdateLittleFS = (e: TypeTextFieldEvent) => (selectFile.value.LittleFS =
 const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
 const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
 
-const getFileNames = (files: TypeTextFieldFile[]) => (files.length ? files.map(i => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
+const getFileNames = (files: TypeTextFieldFile[]) => (files.length ? files.map((i) => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
 const getName = (name: string) => (selectFile.value?.[name]?.info?.files || []).map((i: TypeTextFieldFile) => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
 
 const onFlash = async (name: string) => {

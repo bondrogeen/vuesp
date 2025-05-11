@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <CardGray title="Wi-Fi">
+    <VCardGray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <VSelect :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
 
@@ -55,9 +55,9 @@
 
         <VTextField v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
-    </CardGray>
+    </VCardGray>
 
-    <CardGray title="Security">
+    <VCardGray title="Security">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="col-span-full">
           <VCheckbox v-model="settings.authMode">AUTHENTICATION</VCheckbox>
@@ -98,7 +98,7 @@
           </template>
         </VTextField>
       </div>
-    </CardGray>
+    </VCardGray>
 
     <Teleport to="[data-slot='device']">
       <VDropdown right="0" left="unset" top="0">
@@ -151,22 +151,6 @@ import { DialogKey } from '@/simbol/index.ts';
 import type { TypeStateScan, TypeStateSettings, TypelistWiFi } from '@/types/types.ts';
 
 import AppDialog from '@/components/app/AppDialog.vue';
-import WifiIcon from '@/components/general/WifiIcon.vue';
-import VTextField from '@/components/general/VTextField.vue';
-import VCheckbox from '@/components/general/VCheckbox.vue';
-import VSelect from '@/components/general/VSelect.vue';
-import VLoader from '@/components/general/VLoader.vue';
-import VList from '@/components/general/VList.vue';
-import VButton from '@/components/general/VButton.vue';
-import VDropdown from '@/components/general/VDropdown.vue';
-
-import CardGray from '@/components/cards/CardGray.vue';
-
-import IconSave from '@/components/icons/IconSave.vue';
-import IconDots from '@/components/icons/IconDots.vue';
-import IconSearch from '@/components/icons/IconSearch.vue';
-import IconEyeOpen from '@/components/icons/IconEyeOpen.vue';
-import IconEyeClose from '@/components/icons/IconEyeClose.vue';
 
 interface Props {
   modelValue?: TypeStateSettings;
@@ -183,7 +167,7 @@ const emit = defineEmits<{
 
 const dialog = inject(DialogKey, ({}) => {});
 
-const listMenu = [{ name: 'Save', icon: IconSave }];
+const listMenu = [{ name: 'Save', icon: 'IconSave' }];
 
 const showPass = ref(false);
 const showAuthPass = ref(false);

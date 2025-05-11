@@ -25,9 +25,9 @@ export const useAppStore = defineStore('app', {
       changeTheme(this.theme);
       this.menu = await (await fetch(`/menu.json`, { method: 'GET' })).json();
     },
-    changeTheme() {
+    changeTheme(value?: string) {
       this.theme = this.theme === 'light' ? 'dark' : 'light';
-      changeTheme(this.theme);
+      changeTheme(value || this.theme);
     },
     setDialog(data: TypeDialog) {
       this.dialog = data;

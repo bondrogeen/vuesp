@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CardGray title="File system">
+    <VCardGray title="File system">
       <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
@@ -48,7 +48,7 @@
           </VDropdown>
         </VList>
       </div>
-    </CardGray>
+    </VCardGray>
 
     <Teleport to="[data-slot='device']">
       <VDropdown right="0" left="unset" top="0">
@@ -67,18 +67,6 @@
 <script setup lang="ts">
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
 import { toByte, debounce } from '@/utils/func/index.ts';
-
-import VTextFieldFile from '@/components/general/VTextFieldFile.vue';
-import VDropdown from '@/components/general/VDropdown.vue';
-import VLoader from '@/components/general/VLoader.vue';
-import VList from '@/components/general/VList.vue';
-import VButton from '@/components/general/VButton.vue';
-import CardGray from '@/components/cards/CardGray.vue';
-
-import IconChevron from '@/components/icons/IconChevron.vue';
-import IconDots from '@/components/icons/IconDots.vue';
-import IconFolder from '@/components/icons/IconFolder.vue';
-import IconFile from '@/components/icons/IconFile.vue';
 
 import { DialogKey } from '@/simbol/index.ts';
 

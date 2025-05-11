@@ -35,9 +35,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, computed } from 'vue';
 
-import IconClose from '@/components/icons/IconClose.vue';
-import VButton from '@/components/general/VButton.vue';
-
 interface Props {
   value?: boolean;
   title?: string;

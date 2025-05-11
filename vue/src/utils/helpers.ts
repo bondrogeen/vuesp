@@ -1,4 +1,4 @@
-import type { TypeMenu } from '@/types/types.ts';
+import type { TypeMenuItem } from '@/types/types.ts';
 
 export const jsonParse = (data: string | null) => {
   try {
@@ -29,4 +29,4 @@ export const changeTheme = (value: string) => {
 
 export const findMenuTitle = (items: any, path: string) => items.reduce((acc: any, i: any) => (i.path === path ? i : i.children ? findMenuTitle(i.children, path) : acc), null);
 
-export const getPageTitle = (menu: TypeMenu[], path: string) => menu.reduce((acc: any, i: TypeMenu) => findMenuTitle(i.items, path) || acc, {});
+export const getPageTitle = (menu: TypeMenuItem[], path: string) => findMenuTitle(menu, path);
