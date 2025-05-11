@@ -4,7 +4,7 @@
       <div class="mb-4">Disconnected</div>
 
       <div class="flex justify-center">
-        <VLoader class="text-primary"></VLoader>
+        <v-loader class="text-primary"></v-loader>
       </div>
     </AppOverlay>
 
@@ -40,8 +40,6 @@ import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 import type { TypeNotificationItem } from '@/types/types.ts';
 
 import { useRoute } from 'vue-router';
-
-import VLoader from '@/components/general/VLoader.vue';
 
 import AppAside from '@/components/app/AppAside.vue';
 import AppDialog from '@/components/app/AppDialog.vue';
@@ -105,11 +103,9 @@ onMounted(() => {
     isIframe.value = true;
 
     window.addEventListener('message', (event) => {
-      // if (event.origin !== 'https://parent-domain.com') return;
-
       console.log('Данные:', event);
-      if (event.data.type === 'myEvent') {
-        console.log('Данные:', event.data.data);
+      if (event?.data?.type === 'theme') {
+        appStore.changeTheme(event.data.value);
       }
     });
   }

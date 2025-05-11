@@ -1,22 +1,17 @@
 [
   {
-    "title": "ESP8266",
-    "items": [
-      {
-        "name": "Home",
-        "path": "/"
-      },
-      {
-        "name": "Device",
-        "icon": "IconDevice",
-        "path": "/device/",
-        "children": [
-          { "name": "Settings", "path": "/device/settings/" },
-          { "name": "Storage", "path": "/device/storage/" },
-          { "name": "Service", "path": "/device/service/" },
-          { "name": "GPIO", "path": "/device/gpio/" }
-        ]
-      }
+    "name": "Home",
+    "path": "/"
+  },
+  {
+    "name": "Device",
+    "icon": "IconDevice",
+    "path": "/device/",
+    "children": [
+      { "name": "Settings", "path": "/device/settings/" },
+      { "name": "Storage", "path": "/device/storage/" },
+      { "name": "Service", "path": "/device/service/" },
+      { "name": "GPIO", "path": "/device/gpio/" }
     ]
   }
 ]

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CardGray title="Ports">
+    <VCardGray title="Ports">
       <div class="relative flex flex-col gap-4">
         <div v-for="pin in ports" :key="pin.gpio">
           <div v-if="pin" class="flex justify-between">
@@ -10,7 +10,7 @@
           </div>
         </div>
       </div>
-    </CardGray>
+    </VCardGray>
 
     <Teleport to="[data-slot='device']">
       <VDropdown right="0" left="unset" top="0">
@@ -38,16 +38,6 @@ import type { TypeWSSend } from '@/types/types.ts';
 
 import { usePorts } from '@/composables/usePorts.ts';
 
-import VSelect from '@/components/general/VSelect.vue';
-import VButton from '@/components/general/VButton.vue';
-import VList from '@/components/general/VList.vue';
-import VDropdown from '@/components/general/VDropdown.vue';
-import CardGray from '@/components/cards/CardGray.vue';
-
-import IconDots from '@/components/icons/IconDots.vue';
-import IconSave from '@/components/icons/IconSave.vue';
-import IconUpdate from '@/components/icons/IconUpdate.vue';
-
 interface Props {
   gpio?: any;
 }
@@ -61,8 +51,8 @@ const emit = defineEmits<{
 }>();
 
 const listMenu = [
-  { name: 'Update', icon: IconUpdate },
-  { name: 'Save', icon: IconSave },
+  { name: 'Update', icon: 'IconUpdate' },
+  { name: 'Save', icon: 'IconSave' },
 ];
 
 const onSend = (data: any) => {

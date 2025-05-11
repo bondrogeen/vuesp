@@ -18,14 +18,14 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       <div class="col-span-full">
-        <CardGray title="Date">
+        <VCardGray title="Date">
           <div class="flex items-center">
             <input :value="datetime" type="datetime-local" @change="onDate" />
           </div>
-        </CardGray>
+        </VCardGray>
       </div>
 
-      <CardGray class="col-span-full" title="GPIO">
+      <VCardGray class="col-span-full" title="GPIO">
         <div class="flex flex-col gap-2">
           <div v-for="pin in ports" :key="pin.gpio">
             <div v-if="pin" class="flex justify-between">
@@ -38,7 +38,7 @@
             </div>
           </div>
         </div>
-      </CardGray>
+      </VCardGray>
     </div>
   </div>
 </template>
@@ -50,14 +50,6 @@ import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
 import { usePorts } from '@/composables/usePorts.ts';
-
-import VButton from '@/components/general/VButton.vue';
-import VDropdown from '@/components/general/VDropdown.vue';
-import VList from '@/components/general/VList.vue';
-
-import CardGray from '@/components/cards/CardGray.vue';
-
-import IconDots from '@/components/icons/IconDots.vue';
 
 const webSocketStore = useWebSocketStore();
 const { device, gpio } = storeToRefs(webSocketStore);

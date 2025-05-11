@@ -1,18 +1,18 @@
 <template>
   <div class="grid grid-cols-1 gap-4 lg:max-w-[360px]">
     <div class="flex flex-col w-full items-center gap-2">
-      
-      <div class="flex justify-between w-full text-xs">
-        <div v-for="(item, key) in store" :key="key" class="">
-          <div class="text-gray-400">{{ key }}:</div>
-          
-          <div>{{ item }}</div>
-        </div>
-      </div>
       <div class="relative block h-4 w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
         <div class="absolute left-0 top-0 flex h-full items-center justify-center bg-blue-600 hover:bg-blue-500" :style="`width: ${percent}%;`" :title="`${percent}%`"></div>
 
         <span class="absolute left-1/2 -translate-x-1/2 top-0 text-xs font-medium text-gray-700 dark:text-gray-400">{{ percent }}%</span>
+      </div>
+
+      <div class="flex justify-center gap-4 w-full text-xs">
+        <div v-for="(item, key) in store" :key="key" class="">
+          <div class="text-gray-400">{{ key }}:</div>
+
+          <div>{{ item }}</div>
+        </div>
       </div>
     </div>
 

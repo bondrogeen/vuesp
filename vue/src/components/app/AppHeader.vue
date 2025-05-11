@@ -3,7 +3,7 @@
     <div class="px-4 py-4 sm:px-6 lg:px-8">
       <div class="container mx-auto flex flex-auto items-center">
         <VButton type="icon" color="gray" class="me-6" @click="onSidebar">
-          <IconBurger class="fill-current" />
+          <icon-burger class="fill-current" />
         </VButton>
 
         <div class="lg:hidden flex-auto"></div>
@@ -17,7 +17,7 @@
         <div class="flex-auto"></div>
 
         <div class="flex gap-4">
-          <VButton type="icon" color="gray" class="hidden md:flex" @click="changeTheme">
+          <VButton type="icon" color="gray" class="hidden md:flex" @click="onChangeTheme">
             <IconDark class="hidden dark:block" />
             <IconLight class="dark:hidden" />
           </VButton>
@@ -38,7 +38,7 @@
           </VButton>
 
           <VButton type="icon" color="gray" class="hidden md:flex" @click.prevent="">
-            <IconLogout />
+            <icon-logout />
           </VButton>
         </div>
 
@@ -50,13 +50,14 @@
               </VButton>
             </template>
 
-            <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
-              <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
+            <VList v-slot="data" :list="listMenu" @click="onMenu">
+              {{ data }}
+              <!-- <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
 
               <IconDark v-if="item.icon === 'theme'" class="hidden dark:block" />
               <IconLight v-if="item.icon === 'theme'" class="dark:hidden" />
 
-              <span class="ms-2">{{ item.name }}</span>
+              <span class="ms-2">{{ item.name }}</span> -->
             </VList>
           </VDropdown>
         </div>
@@ -68,20 +69,8 @@
 <script setup lang="ts">
 import { ref, computed, defineEmits, defineProps } from 'vue';
 
-import VDropdown from '@/components/general/VDropdown.vue';
-import VList from '@/components/general/VList.vue';
-import VButton from '@/components/general/VButton.vue';
-
-import IconLogo from '@/components/icons/IconLogo.vue';
-import IconBurger from '@/components/icons/IconBurger.vue';
-import IconNoti from '@/components/icons/IconNoti.vue';
-import IconLogout from '@/components/icons/IconLogout.vue';
-import IconDark from '@/components/icons/IconDark.vue';
-import IconLight from '@/components/icons/IconLight.vue';
-import IconDots from '@/components/icons/IconDots.vue';
-
 interface Props {
-  changeTheme?: () => void;
+  changeTheme?: (value?: string) => void;
 }
 
 const { changeTheme } = defineProps<Props>();
@@ -106,8 +95,12 @@ const onLogout = async () =>
     headers: { Authorization: 'Basic AAAAAAAAAAAAAAAAAAA=' },
   });
 
+const onChangeTheme = () => {
+  if (changeTheme) changeTheme();
+};
+
 const onMenu = ({ name }: any) => {
   if (name == 'Logout') onLogout();
-  if (name == 'Theme' && changeTheme) changeTheme();
+  if (name == 'Theme') onChangeTheme();
 };
 </script>

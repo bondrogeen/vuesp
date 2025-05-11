@@ -9,6 +9,14 @@ import { useWebSocket } from '@/stores/WebSocket';
 import App from '@/App.vue';
 import router from '@/router/index.ts';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+// import VuespComponents from '../../../vuesp-components/dist/vuesp-components.es';
+// import '../../../vuesp-components/dist/vuesp-components.css';
+
+import VuespComponents from 'vuesp-components';
+import 'vuesp-components/dist/vuesp-components.css';
+
 import '@/assets/tailwind.css';
 
 // import { add } from "./components/global";
@@ -22,6 +30,7 @@ directives.forEach(({ name, directive }) => app.directive(name, directive));
 
 (async () => {
   app.use(pinia);
+  app.use(VuespComponents);
   const store = useWebSocket();
   await store.onStruct();
   app.use(router);

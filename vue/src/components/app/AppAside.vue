@@ -15,15 +15,15 @@
 
     <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear h-full">
       <nav>
-        <div v-for="{ title, items } of menu" :key="title">
+        <div>
           <h3 class="mb-4 text-xs leading-[20px] text-gray-400 uppercase">
-            <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">{{ title }}</span>
+            <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">name</span>
 
             <IconDots :class="sidebarToggle ? 'lg:block hidden' : 'hidden'" class="menu-group-icon mx-auto fill-current hidden" />
           </h3>
 
           <ul class="mb-6 flex flex-col gap-4">
-            <li v-for="{ name, path, icon, children } of items" :key="name">
+            <li v-for="{ name, path, icon, children } of menu" :key="name">
               <component
                 :is="!children ? 'router-link' : 'span'"
                 :to="path"
@@ -65,22 +65,13 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import type { TypeMenu, TypeMenuItem, TypeMenuChild, TypeStateInfo } from '@/types/types.ts';
+import type { TypeMenuItem, TypeMenuChild, TypeStateInfo } from '@/types/types.ts';
 
 import ServiceInfo from '@/components/pages/service/ServiceInfo.vue';
-import VButton from '@/components/general/VButton.vue';
-
-import IconLogo from '@/components/icons/IconLogo.vue';
-import IconLogoMini from '@/components/icons/IconLogoMini.vue';
-import IconDots from '@/components/icons/IconDots.vue';
-import IconChevron from '@/components/icons/IconChevron.vue';
-import IconDashboard from '@/components/icons/IconDashboard.vue';
-import IconDevice from '@/components/icons/IconDevice.vue';
-import IconVideo from '@/components/icons/IconVideo.vue';
 
 interface Props {
   sidebarToggle?: boolean;
-  menu?: TypeMenu[];
+  menu?: TypeMenuItem[];
   info?: TypeStateInfo;
 }
 
@@ -91,9 +82,9 @@ const emit = defineEmits<{
 }>();
 
 const components: any = {
-  IconDashboard,
-  IconDevice,
-  IconVideo,
+  IconDashboard: 'IconDashboard',
+  IconDevice: 'IconDevice',
+  IconVideo: 'IconVideo',
 };
 
 const route = useRoute();
@@ -114,11 +105,9 @@ const onHover = (value: boolean) => {
 
 onMounted(() => {
   setTimeout(() => {
-    menu.forEach(({ items }) => {
-      items.forEach((item: TypeMenuItem) => {
-        const el = (item?.children || []).find((i: TypeMenuChild) => isActive(i?.path));
-        if (el) selected.value = item.name;
-      });
+    menu.forEach((item: TypeMenuItem) => {
+      const el = (item?.children || []).find((i: TypeMenuChild) => isActive(i?.path));
+      if (el) selected.value = item.name;
     });
   }, 300);
 });

@@ -128,7 +128,7 @@ export interface TypeNotificationItem {
   timeout?: number;
 }
 export interface TypeStateApp {
-  menu: TypeMenu[];
+  menu: TypeMenuItem[];
   isLoading: boolean;
   theme: string;
   dialog: TypeDialog;
