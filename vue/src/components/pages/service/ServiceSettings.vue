@@ -101,23 +101,23 @@
     </VCardGray>
 
     <Teleport to="[data-slot='device']">
-      <VDropdown right="0" left="unset" top="0">
+      <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <VButton type="" @click="on.click">
-            <IconDots class="rotate-90"></IconDots>
-          </VButton>
+          <v-button type="" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
         </template>
 
-        <VList :list="listMenu" @click="onMenu"></VList>
-      </VDropdown>
+        <v-list :list="listMenu" @click="onMenu"></v-list>
+      </v-dropdown>
     </Teleport>
 
     <AppDialog title="SCAN" size="sm" :value="showDialog" @close="onClose">
       <div>
-        <VList v-slot="{ item }" :list="scanList">
+        <v-list v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
             <div class="mr-2">
-              <WifiIcon v-bind="item" />
+              <wifi-icon v-bind="item" />
             </div>
 
             <div>
@@ -126,15 +126,15 @@
               <div class="text-gray-400 text-sm">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
-        </VList>
+        </v-list>
 
         <div v-if="!scanList.length" class="flex justify-center">
-          <VLoader class="text-primary"></VLoader>
+          <v-loader class="text-primary"></v-loader>
         </div>
       </div>
 
       <template #footer>
-        <VButton color="blue" @click="onScan(true)">Scan</VButton>
+        <v-button color="blue" @click="onScan(true)">Scan</v-button>
       </template>
     </AppDialog>
   </div>

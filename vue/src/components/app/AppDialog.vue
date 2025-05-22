@@ -11,7 +11,7 @@
             </h4>
 
             <button class="transition dark:text-gray-600 dark:hover:text-gray-400 text-gray-300 hover:text-gray-600">
-              <IconClose class="h-5 w-5" @click="onClose"></IconClose>
+              <icon-close class="h-5 w-5" @click="onClose"></icon-close>
             </button>
           </div>
 
@@ -23,7 +23,7 @@
 
           <div v-if="$slots.footer || callback" class="px-4 py-2 flex justify-end">
             <slot name="footer">
-              <VButton color="blue" size="small" @click="onButton">{{ button }}</VButton>
+              <v-button color="blue" size="small" @click="onButton">{{ button }}</v-button>
             </slot>
           </div>
         </div>

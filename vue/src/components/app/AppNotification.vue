@@ -1,7 +1,7 @@
 <template>
   <div>
     <TransitionGroup name="list" tag="ul" class="flex flex-col gap-2">
-      <VNotification v-for="item of notifications" :key="item.id" v-bind="item" @close="emit('close', item)"></VNotification>
+      <v-notification v-for="item of notifications" :key="item.id" v-bind="item" @close="emit('close', item)"></v-notification>
     </TransitionGroup>
   </div>
 </template>
