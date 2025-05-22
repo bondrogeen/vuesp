@@ -6,25 +6,25 @@
           <div v-if="pin" class="flex justify-between">
             <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
 
-            <VButton color="blue" class="ml-2 min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
+            <v-button color="blue" class="ml-2 min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</v-button>
           </div>
         </div>
       </div>
     </VCardGray>
 
     <Teleport to="[data-slot='device']">
-      <VDropdown right="0" left="unset" top="0">
+      <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <VButton type="" @click="on.click">
-            <IconDots class="rotate-90"></IconDots>
-          </VButton>
+          <v-button type="" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
         </template>
 
-        <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
+        <v-list v-slot="{ item }" :list="listMenu" @click="onMenu">
           <component :is="item.icon"></component>
           <span class="ms-2">{{ item.name }}</span>
-        </VList>
-      </VDropdown>
+        </v-list>
+      </v-dropdown>
     </Teleport>
   </div>
 </template>

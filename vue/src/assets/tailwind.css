@@ -2,6 +2,8 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@source inline("dark:{flex,hidden} ");
+
 @theme {
   --color-primary: #24c0eb;
   --color-secondary: #66d3f1;

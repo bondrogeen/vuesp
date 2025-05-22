@@ -5,15 +5,15 @@
 
       <div class="v-spacer"></div>
 
-      <VDropdown right="0" left="unset" top="0">
+      <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <VButton type="" @click="on.click">
-            <IconDots class="rotate-90"></IconDots>
-          </VButton>
+          <v-button type="" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
         </template>
 
-        <VList :list="listPage" @click="onPage"></VList>
-      </VDropdown>
+        <v-list :list="listPage" @click="onPage"></v-list>
+      </v-dropdown>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -34,7 +34,7 @@
                 <span class="text-gray-500 text-sm">( {{ getModeName(pin) }} )</span>
               </div>
 
-              <VButton color="blue" class="min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</VButton>
+              <v-button color="blue" class="min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</v-button>
             </div>
           </div>
         </div>

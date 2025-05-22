@@ -11,23 +11,23 @@
           >
             <div>{{ value }}</div>
 
-            <IconChevron v-if="isLast(path, i)" class="h-5 w-4 -rotate-90"></IconChevron>
+            <icon-chevron v-if="isLast(path, i)" class="h-5 w-4 -rotate-90"></icon-chevron>
           </div>
         </div>
 
         <div>
-          <VTextFieldFile @change="onUpload"></VTextFieldFile>
+          <v-text-field-file @change="onUpload"></v-text-field-file>
         </div>
       </div>
 
       <div class="relative min-h-[260px]">
-        <VLoader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
+        <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
 
-        <VList v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
+        <v-list v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
-              <IconFolder v-if="isDir"></IconFolder>
-              <IconFile v-else></IconFile>
+              <icon-folder v-if="isDir"></icon-folder>
+              <icon-file v-else></icon-file>
             </div>
 
             <div>
@@ -37,29 +37,29 @@
             </div>
           </div>
 
-          <VDropdown right="0" left="unset" top="0">
+          <v-dropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <button @click="on.click">
-                <IconDots class="rotate-90"></IconDots>
+                <icon-dots class="rotate-90"></icon-dots>
               </button>
             </template>
 
-            <VList :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
-          </VDropdown>
-        </VList>
+            <v-list :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
+          </v-dropdown>
+        </v-list>
       </div>
     </VCardGray>
 
     <Teleport to="[data-slot='device']">
-      <VDropdown right="0" left="unset" top="0">
+      <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <VButton type="" @click="on.click">
-            <IconDots class="rotate-90"></IconDots>
-          </VButton>
+          <v-button type="" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
         </template>
 
-        <VList :list="mainMenu" @click="onEventService"></VList>
-      </VDropdown>
+        <v-list :list="mainMenu" @click="onEventService"></v-list>
+      </v-dropdown>
     </Teleport>
   </div>
 </template>

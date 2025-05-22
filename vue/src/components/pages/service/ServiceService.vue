@@ -5,23 +5,23 @@
         <div class="md:flex flex-auto gap-4">
           <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
 
-          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
+          <v-text-field-file v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
             <span>{{ getFileNames(files) }}</span>
-          </VTextFieldFile>
+          </v-text-field-file>
         </div>
-        <VButton class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</VButton>
+        <v-button class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
       </div>
 
       <div class="flex items-center gap-4 mb-4">
         <div class="md:flex flex-auto gap-4">
           <h6 class="text-gray-600 bg:text-gray-400">LittleFS:</h6>
 
-          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
+          <v-text-field-file v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
             <span>{{ getFileNames(files) }}</span>
-          </VTextFieldFile>
+          </v-text-field-file>
         </div>
 
-        <VButton class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</VButton>
+        <v-button class="min-w-[100px]" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
       </div>
     </VCardGray>
 
@@ -29,13 +29,13 @@
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
-        <VButton class="min-w-[100px]" size="small" @click="emit('reboot', $event)">Reboot</VButton>
+        <v-button class="min-w-[100px]" size="small" @click="emit('reboot', $event)">Reboot</v-button>
       </div>
 
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reset configuration</div>
 
-        <VButton class="min-w-[100px]" size="small" @click="emit('reset', $event)">Reset</VButton>
+        <v-button class="min-w-[100px]" size="small" @click="emit('reset', $event)">Reset</v-button>
       </div>
     </VCardGray>
   </div>

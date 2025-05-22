@@ -2,14 +2,12 @@
   <aside
     :class="sidebarToggle ? 'translate-x-0 lg:w-[90px]' : '-translate-x-full'"
     class="sidebar fixed top-0 left-0 z-10 flex h-screen w-[290px] flex-col overflow-y-auto border-r border-gray-200 px-5 transition-all duration-300 lg:static lg:translate-x-0 dark:border-gray-800 bg-white dark:bg-gray-900 -translate-x-full"
-    @mouseenter="onHover(true)"
-    @mouseleave="onHover(false)"
   >
     <div :class="sidebarToggle ? 'justify-center' : 'justify-between'" class="sidebar-header flex items-center gap-2 pt-6 pb-6 justify-between">
       <router-link to="/">
-        <IconLogoMini v-if="sidebarToggle" class="h-[30px]" />
+        <icon-logo-mini v-if="sidebarToggle" class="h-[30px]" />
 
-        <IconLogo v-else class="h-[30px]" />
+        <icon-logo v-else class="h-[30px]" />
       </router-link>
     </div>
 
@@ -19,7 +17,7 @@
           <h3 class="mb-4 text-xs leading-[20px] text-gray-400 uppercase">
             <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">name</span>
 
-            <IconDots :class="sidebarToggle ? 'lg:block hidden' : 'hidden'" class="menu-group-icon mx-auto fill-current hidden" />
+            <icon-dots :class="sidebarToggle ? 'lg:block hidden' : 'hidden'" class="menu-group-icon mx-auto fill-current hidden" />
           </h3>
 
           <ul class="mb-6 flex flex-col gap-4">
@@ -35,7 +33,7 @@
 
                 <span class="flex-1 first-letter:uppercase" :class="sidebarToggle ? 'lg:hidden' : ''">{{ name }}</span>
 
-                <IconChevron v-if="children" :class="[sidebarToggle ? 'lg:hidden' : '']" />
+                <icon-chevron v-if="children" :class="[sidebarToggle ? 'lg:hidden' : '']" />
               </component>
 
               <div v-if="children" class="translate transform overflow-hidden" :class="selected === name ? 'block' : 'hidden'">
@@ -55,7 +53,7 @@
       <div class="flex-auto"></div>
 
       <ServiceInfo v-bind="info" class="mb-4 w-full rounded-2xl bg-gray-50 px-4 py-4 text-center dark:bg-white/[0.03]" :class="sidebarToggle ? 'lg:hidden' : ''">
-        <VButton href="https://github.com/bondrogeen/vuesp" class="w-full" target="_blank" color="blue">Github</VButton>
+        <v-button href="https://github.com/bondrogeen/vuesp" class="w-full" target="_blank" color="blue">Github</v-button>
       </ServiceInfo>
     </div>
   </aside>
