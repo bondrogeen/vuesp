@@ -7,7 +7,7 @@
 
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <v-button type="" @click="on.click">
+          <v-button color="" type="icon" @click="on.click">
             <icon-dots class="rotate-90"></icon-dots>
           </v-button>
         </template>

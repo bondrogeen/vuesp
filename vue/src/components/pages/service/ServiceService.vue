@@ -9,7 +9,7 @@
             <span>{{ getFileNames(files) }}</span>
           </v-text-field-file>
         </div>
-        <v-button class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
+        <v-button color="" class="min-w-[100px]" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
       </div>
 
       <div class="flex items-center gap-4 mb-4">
