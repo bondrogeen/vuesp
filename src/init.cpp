@@ -6,8 +6,13 @@ WiFiUDP udp;
 
 Info infoFS = {KEY_INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
 
-FindUDP udpPacket = {
-    0,
+struct FindUDP {
+  uint8_t command;
+  uint8_t firmware[3];
+  uint32_t deviceId;
+  char name[20];
+} udpPacket = {
+    99,
 };
 
 Settings settings = {
@@ -81,9 +86,14 @@ void udpIncoming() {
   int size = udp.parsePacket();
   if (!size) return;
   udp.read((uint8_t *)&udpPacket, sizeof(udpPacket));
-  if (udpPacket.command == 255) {
-    udpPacket.id = infoFS.id;
-    udpPacket.command = 254;
+  if (udpPacket.command == 99) {
+    Serial.println(udpPacket.deviceId);
+    udpPacket.deviceId = infoFS.id;
+    udpPacket.firmware[0] = infoFS.firmware[0];
+    udpPacket.firmware[1] = infoFS.firmware[1];
+    udpPacket.firmware[2] = infoFS.firmware[2];
+    strcpy(udpPacket.name, infoFS.name);
+    udpPacket.command = 98;
     udpSend((uint8_t *)&udpPacket, sizeof(udpPacket));
   }
 }
