@@ -9,7 +9,6 @@
   "bracketSpacing": true,
   "endOfLine": "lf",
   "printWidth": 200,
-  "arrowParens": "avoid",
+  "arrowParens": "always",
   "stackElements": ["destruct"]
 }
-

@@ -1,7 +1,7 @@
-const fs = require('fs').promises;
-var path = require('path');
-const { gzip } = require('node-gzip');
-const { minify } = require('html-minifier-terser');
+import { promises as fs } from 'fs';
+import path from 'path'
+import { gzip } from 'node-gzip'
+import { minify } from 'html-minifier-terser'
 
 const args = process.argv;
 const inputFile = args[2];

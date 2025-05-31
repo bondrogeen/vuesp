@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <VExpansion label="Wi-Fi" value>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <VCardGray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <VSelect :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
 
@@ -22,7 +22,7 @@
         >
           <template #icon>
             <IconEyeOpen v-if="showPass"></IconEyeOpen>
-            
+
             <IconEyeClose v-else></IconEyeClose>
           </template>
         </VTextField>
@@ -51,13 +51,13 @@
 
         <VTextField v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
 
-        <VTextField v-model="v.wifiGateway.value" label="Geteway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
+        <VTextField v-model="v.wifiGateway.value" label="Gateway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
 
         <VTextField v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
-    </VExpansion>
+    </VCardGray>
 
-    <VExpansion label="Security" value>
+    <VCardGray title="Security">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="col-span-full">
           <VCheckbox v-model="settings.authMode">AUTHENTICATION</VCheckbox>
@@ -98,114 +98,123 @@
           </template>
         </VTextField>
       </div>
-    </VExpansion>
+    </VCardGray>
 
-    <div class="mt-6">
-      <v-button :disabled="invalid" @click="onSave">Save</v-button>
-    </div>
+    <Teleport to="[data-slot='device']">
+      <v-dropdown right="0" left="unset" top="0">
+        <template #activator="{ on }">
+          <v-button color="" type="icon" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
+        </template>
+
+        <v-list :list="listMenu" @click="onMenu"></v-list>
+      </v-dropdown>
+    </Teleport>
 
     <AppDialog title="SCAN" size="sm" :value="showDialog" @close="onClose">
       <div>
-        <VList v-slot="{ item }" :list="scanList">
+        <v-list v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
             <div class="mr-2">
-              <WifiIcon v-bind="item" />
+              <wifi-icon v-bind="item" />
             </div>
 
             <div>
               <div class="text-title1">{{ item.ssid }}</div>
 
-              <div class="text-gray-400 text-body">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+              <div class="text-gray-400 text-sm">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
-        </VList>
+        </v-list>
 
         <div v-if="!scanList.length" class="flex justify-center">
-          <VLoader class="text-primary"></VLoader>
+          <v-loader class="text-primary"></v-loader>
         </div>
       </div>
 
       <template #footer>
-        <v-button @click="onScan(true)">Scan</v-button>
+        <v-button color="blue" @click="onScan(true)">Scan</v-button>
       </template>
     </AppDialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, defineProps, defineEmits, inject, onMounted } from 'vue';
-import { rules } from '@/utils/validate/';
+import { rules } from '@/utils/validate/index.js';
 
-import { useForm } from '@/utils/useForm';
+import { useForm } from '@/composables/useForm.js';
 
-import AppDialog from '@/components/app/AppDialog';
-import WifiIcon from '@/components/general/WifiIcon';
-import VTextField from '@/components/general/VTextField';
-import VExpansion from '@/components/general/VExpansion';
-import VCheckbox from '@/components/general/VCheckbox';
-import VSelect from '@/components/general/VSelect';
-import VLoader from '@/components/general/VLoader';
-import VList from '@/components/general/VList';
+import { DialogKey } from '@/simbol/index.ts';
 
-import IconSearch from '@/components/icons/IconSearch';
-import IconEyeOpen from '@/components/icons/IconEyeOpen';
-import IconEyeClose from '@/components/icons/IconEyeClose';
+import type { TypeStateScan, TypeStateSettings, TypelistWiFi } from '@/types/types.ts';
 
-const props = defineProps({
-  modelValue: { type: Object, default: () => ({}) },
-  scanList: { type: Array, default: () => [] },
-});
+import AppDialog from '@/components/app/AppDialog.vue';
 
-const emit = defineEmits(['update:modelValue', 'scan', 'save']);
+interface Props {
+  modelValue?: TypeStateSettings;
+  scanList: TypeStateScan[];
+}
 
-const dialog = inject('dialog');
+const { modelValue = {}, scanList = [] } = defineProps<Props>();
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: TypeStateSettings): void;
+  (e: 'scan', value: boolean): void;
+  (e: 'save', value: TypeStateSettings): void;
+}>();
+
+const dialog = inject(DialogKey, ({}) => {});
+
+const listMenu = [{ name: 'Save', icon: 'IconSave' }];
 
 const showPass = ref(false);
 const showAuthPass = ref(false);
 const showDialog = ref(false);
 
 const settings = computed({
-  set: value => emit('update:modelValue', value),
-  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value),
+  get: () => modelValue,
 });
 
 const wifiIp = computed({
-  set: value => (settings.value.wifiIp = value.split('.').map(i => +i)),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiIp || []).join('.'),
 });
 const wifiSubnet = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiSubnet || []).join('.'),
 });
 const wifiGateway = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiGateway || []).join('.'),
 });
 const wifiDns = computed({
-  set: value => value.split('.'),
+  set: (value) => value.split('.'),
   get: () => (settings?.value?.wifiDns || []).join('.'),
 });
 const wifiSsid = computed({
-  set: value => (settings.value.wifiSsid = value),
+  set: (value) => (settings.value.wifiSsid = value),
   get: () => settings?.value?.wifiSsid,
 });
 const wifiPass = computed({
-  set: value => (settings.value.wifiPass = value),
+  set: (value) => (settings.value.wifiPass = value),
   get: () => settings?.value?.wifiPass,
 });
 const authLogin = computed({
-  set: value => (settings.value.authLogin = value),
+  set: (value) => (settings.value.authLogin = value),
   get: () => settings?.value?.authLogin,
 });
 const authPass = computed({
-  set: value => (settings.value.authPass = value),
+  set: (value) => (settings.value.authPass = value),
   get: () => settings?.value?.authPass,
 });
 
 const rePassword = ref(settings.value.wifiPass);
 const reAuthPassword = ref(settings.value.authPass);
 
-const { required, max, min, sameAs, ip, max12 } = rules;
+const { required, max, min, sameAs, ip } = rules;
 
 const form = {
   wifiSsid,
@@ -223,18 +232,18 @@ const form = {
 };
 
 const validators = {
-  wifiSsid: { required, max },
+  wifiSsid: { required, max: max(32) },
   wifiPass: {
     required,
-    max,
-    min,
-    sameAs: value => sameAs(value, rePassword.value),
+    max: max(32),
+    min: min(8),
+    sameAs: (value: string) => sameAs(value, rePassword.value || ''),
   },
   rePassword: {
     required,
-    max,
-    min,
-    sameAs: value => sameAs(value, wifiPass.value),
+    max: max(32),
+    min: min(8),
+    sameAs: (value: string) => sameAs(value, wifiPass.value || ''),
   },
 
   wifiIp: { ip },
@@ -242,35 +251,42 @@ const validators = {
   wifiGateway: { ip },
   wifiDns: { ip },
 
-  authLogin: { required, max12 },
-  authPass: { required, max12, sameAs: value => sameAs(value, reAuthPassword.value) },
-  reAuthPassword: { required, max12, sameAs: value => sameAs(value, authPass.value) },
+  authLogin: { required, max: max(12) },
+  authPass: { required, max: max(12), sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
+  reAuthPassword: { required, max: max(12), sameAs: (value: string) => sameAs(value, authPass.value || '') },
 };
 
 const { v, invalid, getError } = useForm(validators, form);
 
-const listWiFi = [
+const listWiFi: TypelistWiFi[] = [
   { name: 'OFF', value: 0 },
   { name: 'STA', value: 1 },
   { name: 'AP', value: 2 },
   // { name: 'STA + AP', value: 3 },
 ];
 
-const getMode = computed(() => listWiFi.find(i => i.value === settings.value.wifiMode)?.name || '');
+const getMode = computed(() => listWiFi.find((i) => i.value === settings.value.wifiMode)?.name || '');
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 const onSave = () => emit('save', settings.value);
 
-const listEncryption = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
+const onMenu = () => {
+  if (invalid.value) return;
+  onSave();
+};
 
-const onSelectSsid = ({ ssid }) => {
+const listEncryption: string[] = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
+
+const onSelectSsid = ({ ssid }: TypeStateScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
-  const input = document.querySelector('#wifiPass input');
-  input.select();
-  input.focus();
+  const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
+  if (input) {
+    input.select();
+    input.focus();
+  }
   onClose();
 };
 
@@ -278,13 +294,13 @@ const onClose = () => {
   showDialog.value = false;
 };
 
-const onScan = value => {
+const onScan = (value: boolean) => {
   showDialog.value = true;
   emit('scan', value);
 };
 
-const onChange = value => (settings.value.wifiMode = value);
-const onSureOffWifi = ({ value }) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
+const onChange = (value: number) => (settings.value.wifiMode = value);
+const onSureOffWifi = ({ value }: TypelistWiFi) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
 
 onMounted(() => {
   rePassword.value = settings.value.wifiPass;

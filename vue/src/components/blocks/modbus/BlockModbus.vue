@@ -47,20 +47,16 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, computed, watch } from 'vue';
-import { rules } from '@/utils/validate/';
-import { useForm } from '@/utils/useForm';
-import { CRC, getInt16Bytes, functionList, listBaudRate, listParity, listStopBits, intToHex, getBytesInt16 } from './modbus';
-
-import VTextField from '@/components/general/VTextField';
-import VSelect from '@/components/general/VSelect';
-import VCard from '@/components/general/VCard';
+import { rules } from '@/utils/validate/index.ts';
+import { useForm } from '@/composables/useForm.ts';
+import { CRC, getInt16Bytes, functionList, listBaudRate, listParity, listStopBits, intToHex, getBytesInt16 } from './modbus.js';
 
 const props = defineProps({
   data: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(['send']);
 
-const { required, max, min, sameAs, ip, max12, minValue, maxValue } = rules;
+const { required, max, min } = rules;
 
 const modbus = ref({
   port: 1,
@@ -85,9 +81,9 @@ const dataPack = computed(() => [...pack.value, ...getInt16Bytes(CRC(pack.value)
 const form = { slaveID, address, length };
 
 const validators = {
-  slaveID: { required, min: minValue(0), max: maxValue(65535) },
-  address: { required, min: minValue(0), max: maxValue(65535) },
-  length: { required, min: minValue(0), max: maxValue(64) },
+  slaveID: { required, min: min(0), max: max(65535) },
+  address: { required, min: min(0), max: max(65535) },
+  length: { required, min: min(0), max: max(64) },
 };
 
 const { v, invalid, getError } = useForm(validators, form);
@@ -96,7 +92,7 @@ const { v, invalid, getError } = useForm(validators, form);
 
 watch(
   () => props.data,
-  value => {
+  (value) => {
     data.value = value;
   }
 );
@@ -105,13 +101,13 @@ const getData = computed(() => props?.data?.data || []);
 const getSize = computed(() => props?.data?.size || []);
 
 const onSend = () => emit('send', dataPack.value);
-const getDataByte = i => data?.value?.data?.[i] || 0;
+const getDataByte = (i) => data?.value?.data?.[i] || 0;
 
-const onFunction = item => {
+const onFunction = (item) => {
   code.value = item;
 };
 
-const onBaudRate = item => (modbus.value.baudRate = item.value);
-const onParity = item => (modbus.value.parity = item.value);
-const onStopBits = item => (modbus.value.stopBits = item.value);
+const onBaudRate = (item) => (modbus.value.baudRate = item.value);
+const onParity = (item) => (modbus.value.parity = item.value);
+const onStopBits = (item) => (modbus.value.stopBits = item.value);
 </script>

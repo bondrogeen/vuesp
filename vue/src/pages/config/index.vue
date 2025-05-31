@@ -42,13 +42,7 @@ import { getConfig, saveConfig } from '@/utils/fs/';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-import AppDialog from '@/components/app/AppDialog';
-import VTextField from '@/components/general/VTextField';
-import VTextarea from '@/components/general/VTextarea';
-import VDropdown from '@/components/general/VDropdown';
-import VList from '@/components/general/VList';
-
-import IconMenu from '@/components/icons/IconMenu';
+import AppDialog from '@/components/app/AppDialog.vue';
 
 const webSocketStore = useWebSocketStore();
 const { dallas } = storeToRefs(webSocketStore);
@@ -61,7 +55,7 @@ const listMenu = [
   { id: 2, name: 'Remove' },
 ];
 
-const getFun = field => field?.fun || '(v)=>v*10';
+const getFun = (field) => field?.fun || '(v)=>v*10';
 
 // console.log(eval(text)(15));
 
@@ -72,7 +66,7 @@ const onClose = () => {
   showDialog.value = false;
 };
 const getValue = (field, k) => field?.name || k;
-const isFunction = field => typeof field?.fun !== 'undefined';
+const isFunction = (field) => typeof field?.fun !== 'undefined';
 
 const onName = (name, key, value) => (config.value[name][key].name = value);
 const onFunction = (name, key, value) => (config.value[name][key].fun = value);

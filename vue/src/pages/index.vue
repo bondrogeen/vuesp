@@ -1,30 +1,29 @@
 <template>
-  <div class="container mx-auto">
+  <div>
     <div class="mb-6 flex items-center justify-between">
       <h1>Main</h1>
 
       <div class="v-spacer"></div>
 
-      <VDropdown right="0" left="unset" top="0">
+      <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <IconMenu @click="on.click"></IconMenu>
+          <v-button color="" type="icon" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
         </template>
         <VList :list="listPage" @click="onPage"></VList>
-      </VDropdown>
+      </v-dropdown>
     </div>
 
+    {{ device }}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      <VCard class="flex justify-between col-span-full">
-        <h5>Date</h5>
-
+      <VCardGray class="flex justify-between col-span-full" title="Date">
         <div class="flex items-center">
           <input :value="datetime" type="datetime-local" @change="onDate" />
         </div>
-      </VCard>
+      </VCardGray>
 
-      <VCard>
-        <h5 class="mb-6">INPUT</h5>
-
+      <VCardGray title="INPUT">
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
           <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
             <div class="text-body mb-1 text-gray-600">{{ findName('input', `input${i + 1}`) }}</div>
@@ -32,11 +31,9 @@
             <v-button block disabled>{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
-      </VCard>
+      </VCardGray>
 
-      <VCard>
-        <h5 class="mb-6">OUTPUT</h5>
-
+      <VCardGray title="OUTPUT">
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
           <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
             <div class="text-body mb-1 text-gray-600">{{ findName('output', `output${i + 1}`) }}</div>
@@ -44,32 +41,27 @@
             <v-button block @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
-      </VCard>
+      </VCardGray>
 
-      <VCard>
-        <h5 class="mb-6">ADC</h5>
-
+      <VCardGray title="ADC">
         <div class="grid gap-2 grid-cols-2">
           <div v-for="pin of 4" :key="`adc_${pin}`">
             <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
             <span class="font-bold">{{ findValue('adc', `adc${pin}`) }}</span>
           </div>
         </div>
-      </VCard>
+      </VCardGray>
 
-      <VCard v-if="isDallas">
-        <h5 class="mb-6">DS18B20</h5>
-
+      <VCardGray v-if="isDallas" title="DS18B20">
         <div class="grid gap-2 grid-cols-1">
           <div v-for="(ds, key) in dallas" :key="`adc_${key}`">
             <span class="text-body text-gray-600 mr-2" :title="key">{{ findName('ds', key) }}:</span>
             <span class="font-bold">{{ ds.temp.toFixed(2) }} ℃</span>
           </div>
         </div>
-      </VCard>
+      </VCardGray>
 
-      <VCard>
-        <h5 class="mb-6">DAC</h5>
+      <VCardGray title="DAC">
         <div class="grid grid-cols-1 gap-4">
           <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="grid gap-2 grid-cols-4">
             <VTextField v-model="dac[`dac${i + 1}`]" class="col-span-3" :label="findName('dac', `dac${pin}`)" hideMessage />
@@ -77,9 +69,9 @@
             <v-button block :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
           </div>
         </div>
-      </VCard>
+      </VCardGray>
 
-      <VCard>
+      <!-- <VCardGray>
         <h5 class="mb-6">Electric counter</h5>
         <div class="grid gap-2 grid-cols-1">
           <div v-for="(value, key) in getModbus(modbus)" :key="`modbus_${key}`">
@@ -88,17 +80,17 @@
             <span class="font-bold">{{ value }}</span>
           </div>
         </div>
-      </VCard>
+      </VCardGray> -->
     </div>
 
-    <div class="mt-4">
-      <VCard>
+    <!-- <div class="mt-4">
+      <VCardGray>
         <h5 class="mb-6">Modbus (master)</h5>
         <div class="grid grid-cols-1 gap-4">
           <BlockModbus :data="modbus" @send="onSendModBus" />
         </div>
-      </VCard>
-    </div>
+      </VCardGray>
+    </div> -->
   </div>
 </template>
 
@@ -114,13 +106,7 @@ const notification = inject('notification');
 
 import event from '@/assets/js/event';
 
-import VCard from '@/components/general/VCard';
-import VTextField from '@/components/general/VTextField';
-import VDropdown from '@/components/general/VDropdown';
-import VList from '@/components/general/VList';
-import BlockModbus from '@/components/blocks/modbus/BlockModbus';
-
-import IconMenu from '@/components/icons/IconMenu';
+import BlockModbus from '@/components/blocks/modbus/BlockModbus.vue';
 
 const router = useRouter();
 
@@ -165,12 +151,12 @@ const onPage = ({ id }) => {
   }
 };
 
-const isDac = value => !(value >= 0 && value <= 255);
+const isDac = (value) => !(value >= 0 && value <= 255);
 
 const getModbus = ({ voltage, power, frequency, current, cos }) => ({ voltage, power, frequency, current, cos });
 
 const onSetOutput = (pin, value) => {
-  notification({ text: 'add' });
+  // notification({ text: 'add' });
   const byte = device.value.output;
   device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
   webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
@@ -186,25 +172,27 @@ const onSaveDef = () => {
 };
 
 const onSend = () => {
-  webSocketStore.onSend('DEVICE', { now: now.value, command: 0 });
+  webSocketStore.onSend('DEVICE');
 };
 
-const onSendModBus = data => {
+const onSendModBus = (data) => {
   webSocketStore.onSend('MODBUS', { command: 1, data, size: data.length });
 };
 
-const onDate = e => {
+const onDate = (e) => {
   const _now = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
   webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
 };
 
 onMounted(async () => {
-  onSend();
-  config.value = await getConfig();
+  setTimeout(() => {
+    onSend();
+  }, 2000);
+  // config.value = await getConfig();
 
-  dac.value.dac1 = device.value?.dac1 || 0;
-  dac.value.dac2 = device.value?.dac2 || 0;
+  // dac.value.dac1 = device.value?.dac1 || 0;
+  // dac.value.dac2 = device.value?.dac2 || 0;
 
   // const res = await fetch(`/get`, { method: 'GET' });
   // const content = await res.blob();
