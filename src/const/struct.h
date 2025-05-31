@@ -46,6 +46,7 @@ struct Info {
   uint32_t usedBytes;
   uint32_t id;
   uint32_t uptime;
+  char name[20];
 };
 
 struct Ping {
@@ -84,12 +85,6 @@ struct Port {
   uint8_t command;
   uint8_t gpio;
   uint8_t data;
-};
-
-struct FindUDP {
-  uint8_t command;
-  uint32_t id;
-  uint16_t crc;
 };
 
 struct Device {

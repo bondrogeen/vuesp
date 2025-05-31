@@ -1,72 +1,100 @@
 <template>
-  <header class="bg-blue-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 fixed top-0 left-0 w-full z-10">
-    <div class="container mx-auto flex py-4 px-4">
-      <div class="h-[30px] me-10">
-        <router-link to="/">
-          <IconLogo class="h-[30px]"></IconLogo>
-        </router-link>
-      </div>
+  <header class="bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 left-0 w-full z-10 sticky top-0">
+    <div class="px-4 py-4 sm:px-6 lg:px-8">
+      <div class="container mx-auto flex flex-auto items-center">
+        <v-button type="icon" color="gray" class="me-6" @click="onSidebar">
+          <icon-burger class="fill-current" />
+        </v-button>
 
-      <div class="hidden lg:flex">
-        <VMainMenu class="flex items-center gap-6 font-bold" />
-      </div>
+        <div class="lg:hidden flex-auto"></div>
 
-      <div class="flex-auto"></div>
+        <div class="lg:hidden h-[30px] me-10">
+          <router-link to="/">
+            <icon-logo class="h-[30px]"></icon-logo>
+          </router-link>
+        </div>
 
-      <div class="hidden lg:flex gap-4">
-        <VDropdown left="unset" right="0" top="0">
-          <template #activator="{ on }">
-            <IconEsp @click="on.click"></IconEsp>
-          </template>
+        <div class="flex-auto"></div>
 
-          <VList v-slot="{ item }" :list="listMenu" @click="onMenu">
-            <IconLogout v-if="item.icon === 'logout'" class="h-4"></IconLogout>
+        <div class="flex gap-4">
+          <v-button type="icon" color="gray" class="hidden md:flex" @click="onChangeTheme">
+            <IconTheme />
+          </v-button>
 
-            <IconDark v-if="item.icon === 'dark'"></IconDark>
+          <v-button
+            type="icon"
+            color="gray"
+            class="hidden md:flex"
+            @click.prevent="
+              dropdownOpen = !dropdownOpen;
+              notifying = false;
+            "
+          >
+            <span :class="!notifying ? 'hidden' : 'flex'" class="absolute right-0 top-0.5 z-1 h-2 w-2 rounded-full bg-orange-400 flex">
+              <span class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
+            </span>
+            <icon-noti />
+          </v-button>
 
-            <IconLight v-if="item.icon === 'light'"></IconLight>
-            
-            <span class="ms-2">{{ item.name }}</span>
-          </VList>
-        </VDropdown>
-      </div>
+          <v-button type="icon" color="gray" class="hidden md:flex" @click.prevent="onLogout">
+            <icon-logout />
+          </v-button>
+        </div>
 
-      <div class="flex items-center justify-center lg:hidden" @click.stop="onDrawer">
-        <IconBurger></IconBurger>
+        <div class="md:hidden flex gap-4">
+          <v-dropdown left="unset" right="0" top="0">
+            <template #activator="{ on }">
+              <v-button type="icon" color="gray" class="flex" @click="on.click()">
+                <icon-dots />
+              </v-button>
+            </template>
+
+            <v-list v-slot="{ item }" :list="listMenu" @click="onMenu">
+              <component :is="item.icon"></component>
+              <span class="ms-2">{{ item.name }}</span>
+            </v-list>
+          </v-dropdown>
+        </div>
       </div>
     </div>
   </header>
 </template>
 
-<script setup>
-import { computed, defineEmits, defineProps, inject } from 'vue';
+<script setup lang="ts">
+import { ref, computed, defineEmits, defineProps } from 'vue';
 
-import VMainMenu from '@/components/general/VMainMenu';
-import VDropdown from '@/components/general/VDropdown';
-import VList from '@/components/general/VList';
+interface Props {
+  changeTheme?: (value?: string) => void;
+}
 
-import IconLogo from '@/components/icons/IconLogo';
-import IconBurger from '@/components/icons/IconBurger';
-import IconEsp from '@/components/icons/IconEsp';
-import IconLogout from '@/components/icons/IconLogout';
-import IconDark from '@/components/icons/IconDark';
-import IconLight from '@/components/icons/IconLight';
+const { changeTheme } = defineProps<Props>();
 
-const props = defineProps({
-  state: { type: Boolean, default: false },
-  changeTheme: { type: Function, default: () => {} },
-});
-const emit = defineEmits(['drawer']);
-const theme = inject('theme');
+const emit = defineEmits<{
+  (e: 'sidebar', value: Event): void;
+}>();
+
+const dropdownOpen = ref(false);
+const notifying = ref(false);
 
 const listMenu = computed(() => [
-  { name: 'Theme', icon: !theme.value ? 'dark' : 'light' },
-  { name: 'Logout', icon: 'logout' },
+  { name: 'Theme', icon: 'icon-theme' },
+  { name: 'Logout', icon: 'icon-logout' },
 ]);
-const onDrawer = e => emit('drawer', e);
-const onLogout = async () => await fetch('/', { method: 'get', headers: { Authorization: 'Basic AAAAAAAAAAAAAAAAAAA=' } });
-const onMenu = ({ name }) => {
+
+const onSidebar = (e: Event) => emit('sidebar', e);
+
+const onLogout = async () =>
+  await fetch('/', {
+    method: 'get',
+    headers: { Authorization: 'Basic AAAAAAAAAAAAAAAAAAA=' },
+  });
+
+const onChangeTheme = () => {
+  if (changeTheme) changeTheme();
+};
+
+const onMenu = ({ name }: any) => {
   if (name == 'Logout') onLogout();
-  if (name == 'Theme') props.changeTheme();
+  if (name == 'Theme') onChangeTheme();
 };
 </script>
