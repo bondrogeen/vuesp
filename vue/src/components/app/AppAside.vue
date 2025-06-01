@@ -29,7 +29,7 @@
                 :class="isActive(path) ? 'bg-blue-500/10' : 'hover:bg-gray-500/10'"
                 @click.prevent="onSelect(name)"
               >
-                <component :is="getComponent(icon)" class="flex-[0_0_24px]" />
+                <component :is="getComponent(icon)" class="h-5 w-5 flex-[0_0_24px]" />
 
                 <span class="flex-1 first-letter:uppercase" :class="sidebarToggle ? 'lg:hidden' : ''">{{ name }}</span>
 
@@ -81,8 +81,9 @@ const { info = {}, sidebarToggle = false, menu = [] } = defineProps<Props>();
 
 const components: any = {
   IconDashboard: 'IconDashboard',
-  IconDevice: 'IconDevice',
-  IconVideo: 'IconVideo',
+  IconStore: 'IconStore',
+  IconGpio: 'IconGpio',
+  IconSetting: 'IconSetting',
 };
 
 const route = useRoute();
