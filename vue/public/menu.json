@@ -9,8 +9,7 @@
     "path": "/device/",
     "children": [
       { "name": "Settings", "path": "/device/settings/" },
-      { "name": "Storage", "path": "/device/storage/" },
-      { "name": "Service", "path": "/device/service/" }
+      { "name": "Storage", "path": "/device/storage/" }
     ]
   }
 ]

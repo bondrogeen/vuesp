@@ -15,7 +15,7 @@
       <nav>
         <div>
           <h3 class="mb-4 text-xs leading-[20px] text-gray-400 uppercase">
-            <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">name</span>
+            <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">{{ info.name }}</span>
 
             <icon-dots :class="sidebarToggle ? 'lg:block hidden' : 'hidden'" class="menu-group-icon mx-auto fill-current hidden" />
           </h3>
