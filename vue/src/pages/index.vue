@@ -11,12 +11,12 @@
             <icon-dots class="rotate-90"></icon-dots>
           </v-button>
         </template>
-        <VList :list="listPage" @click="onPage"></VList>
+
+        <v-list :list="listPage" @click="onPage"></v-list>
       </v-dropdown>
     </div>
 
-    {{ device }}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
       <VCardGray class="flex justify-between col-span-full" title="Date">
         <div class="flex items-center">
           <input :value="datetime" type="datetime-local" @change="onDate" />
@@ -64,9 +64,9 @@
       <VCardGray title="DAC">
         <div class="grid grid-cols-1 gap-4">
           <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="grid gap-2 grid-cols-4">
-            <VTextField v-model="dac[`dac${i + 1}`]" class="col-span-3" :label="findName('dac', `dac${pin}`)" hideMessage />
+            <VTextField v-model="dac[`dac${i + 1}`]" class="col-span-2" :label="findName('dac', `dac${pin}`)" hideMessage />
 
-            <v-button block :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
+            <v-button class="col-span-2" block :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
           </div>
         </div>
       </VCardGray>

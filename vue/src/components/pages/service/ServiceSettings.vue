@@ -1,7 +1,7 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
     <VCardGray title="Wi-Fi">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <VSelect :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
 
         <VTextField v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
@@ -42,11 +42,17 @@
             <IconEyeClose v-else></IconEyeClose>
           </template>
         </VTextField>
+      </div>
+    </VCardGray>
 
-        <div class="col-span-full mt-4">
+    <VCardGray title="IP Settings">
+      <template #header>
+        <div class="col-span-full">
           <VCheckbox v-model="settings.wifiDhcp">DHCP</VCheckbox>
         </div>
+      </template>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <VTextField v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
 
         <VTextField v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
@@ -58,11 +64,13 @@
     </VCardGray>
 
     <VCardGray title="Security">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <template #header>
         <div class="col-span-full">
           <VCheckbox v-model="settings.authMode">AUTHENTICATION</VCheckbox>
         </div>
+      </template>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <VTextField v-model="v.authLogin.value" label="Login" :disabled="isAuth" />
 
         <VTextField
@@ -100,6 +108,45 @@
       </div>
     </VCardGray>
 
+    <VCardGray title="Update">
+      <div class="mb-4 flex items-center">
+        <div class="md:flex flex-auto gap-4">
+          <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
+
+          <v-text-field-file v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
+            <span>{{ getFileNames(files) }}</span>
+          </v-text-field-file>
+        </div>
+        <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
+      </div>
+
+      <div class="flex items-center gap-4 mb-4">
+        <div class="md:flex flex-auto gap-4">
+          <h6 class="text-gray-600 bg:text-gray-400">LittleFS:</h6>
+
+          <v-text-field-file v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
+            <span>{{ getFileNames(files) }}</span>
+          </v-text-field-file>
+        </div>
+
+        <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
+      </div>
+    </VCardGray>
+
+    <VCardGray title="System">
+      <div class="flex items-center mb-4">
+        <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
+
+        <v-button class="min-w-[100px]" color="gray" size="small" @click="emit('reboot', $event)">Reboot</v-button>
+      </div>
+
+      <div class="flex items-center mb-4">
+        <div class="flex-auto text-gray-600 bg:text-gray-400">Reset configuration</div>
+
+        <v-button class="min-w-[100px]" color="red" size="small" @click="emit('reset', $event)">Reset</v-button>
+      </div>
+    </VCardGray>
+
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
@@ -112,7 +159,7 @@
       </v-dropdown>
     </Teleport>
 
-    <AppDialog title="SCAN" size="sm" :value="showDialog" @close="onClose">
+    <AppDialog v-if="showDialog" title="SCAN" size="sm" @close="onClose">
       <div>
         <v-list v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
@@ -141,14 +188,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, defineProps, defineEmits, inject, onMounted } from 'vue';
+import { computed, ref, defineProps, defineEmits, inject, onMounted, nextTick } from 'vue';
 import { rules } from '@/utils/validate/index.js';
 
 import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/simbol/index.ts';
 
-import type { TypeStateScan, TypeStateSettings, TypelistWiFi } from '@/types/types.ts';
+import type { TypeStateScan, TypeStateSettings, TypelistWiFi, TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
 
 import AppDialog from '@/components/app/AppDialog.vue';
 
@@ -163,6 +210,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: TypeStateSettings): void;
   (e: 'scan', value: boolean): void;
   (e: 'save', value: TypeStateSettings): void;
+  (e: 'reset', value: Event): void;
+  (e: 'reboot', value: Event): void;
 }>();
 
 const dialog = inject(DialogKey, ({}) => {});
@@ -235,14 +284,14 @@ const validators = {
   wifiSsid: { required, max: max(32) },
   wifiPass: {
     required,
-    max: max(32),
-    min: min(8),
+    max,
+    min,
     sameAs: (value: string) => sameAs(value, rePassword.value || ''),
   },
   rePassword: {
     required,
-    max: max(32),
-    min: min(8),
+    max,
+    min,
     sameAs: (value: string) => sameAs(value, wifiPass.value || ''),
   },
 
@@ -305,4 +354,39 @@ const onSureOffWifi = ({ value }: TypelistWiFi) => (!value ? dialog({ value: tru
 onMounted(() => {
   rePassword.value = settings.value.wifiPass;
 });
+
+const data = { LittleFS: null, firmware: null };
+
+const selectFile = ref<any>(data);
+
+const onUpdateFirmware = (e: TypeTextFieldEvent) => (selectFile.value.firmware = e);
+const onUpdateLittleFS = (e: TypeTextFieldEvent) => (selectFile.value.LittleFS = e);
+const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
+const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
+
+const getFileNames = (files: TypeTextFieldFile[]) => (files.length ? files.map((i) => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
+const getName = (name: string) => (selectFile.value?.[name]?.info?.files || []).map((i: TypeTextFieldFile) => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
+
+const onFlash = async (name: string) => {
+  if (!selectFile.value?.[name]) return;
+  const { files } = selectFile.value[name];
+  const date = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    const file = files.item(i);
+    date.append(`file[${i}]`, file, `${name}.bin`);
+  }
+  if (!files.length) return;
+  const res = await (await fetch('/update', { method: 'POST', body: date })).json();
+  if (res?.state) dialog({ value: true, title: 'Done', message: 'Reboot...' });
+};
+
+const updateFirmware = () => nextTick(() => onFlash('firmware'));
+const updateLittleFS = () => nextTick(() => onFlash('LittleFS'));
+
+const onSureFlash = (name: string) =>
+  dialog({
+    value: true,
+    message: `Are you sure you want to update the ${name}? <br/> <p class="mt-2" >${getName(name)}</p>`,
+    callback: name === 'firmware' ? updateFirmware : updateLittleFS,
+  });
 </script>
