@@ -26,7 +26,7 @@
       </div>
     </template>
 
-    <AppDialog v-bind="dialog" @close="dialog = {}" />
+    <AppDialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
   </div>
 </template>
 

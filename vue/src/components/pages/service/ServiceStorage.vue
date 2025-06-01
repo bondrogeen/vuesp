@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="grid grid-cols-1 xl:grid-cols-2">
     <VCardGray title="File system">
       <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
         <div class="flex gap-2 items-center font-bold flex-auto">
