@@ -15,7 +15,7 @@
       <nav>
         <div>
           <h3 class="mb-4 text-xs leading-[20px] text-gray-400 uppercase">
-            <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">name</span>
+            <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">{{ info.name }}</span>
 
             <icon-dots :class="sidebarToggle ? 'lg:block hidden' : 'hidden'" class="menu-group-icon mx-auto fill-current hidden" />
           </h3>
@@ -75,9 +75,9 @@ interface Props {
 
 const { info = {}, sidebarToggle = false, menu = [] } = defineProps<Props>();
 
-const emit = defineEmits<{
-  (e: 'sidebar', value: boolean): void;
-}>();
+// const emit = defineEmits<{
+//   (e: 'sidebar', value: boolean): void;
+// }>();
 
 const components: any = {
   IconDashboard: 'IconDashboard',
@@ -95,11 +95,11 @@ const isActive = (path: string = '') => route.fullPath === path;
 
 const selected = ref('');
 
-const onHover = (value: boolean) => {
-  if (sidebarToggle) {
-    emit('sidebar', value);
-  }
-};
+// const onHover = (value: boolean) => {
+//   if (sidebarToggle) {
+//     emit('sidebar', value);
+//   }
+// };
 
 onMounted(() => {
   setTimeout(() => {

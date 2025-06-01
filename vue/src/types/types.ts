@@ -57,6 +57,7 @@ export interface TypeStateInfo {
   totalBytes?: number;
   usedBytes?: number;
   uptime?: number;
+  name?: string;
 }
 export interface TypeStateFile {
   key: number;

@@ -1,7 +1,7 @@
 <template>
   <div>
     <VCardGray title="Ports">
-      <div class="relative flex flex-col gap-4">
+      <div class="relative flex flex-col">
         <div v-for="pin in ports" :key="pin.gpio">
           <div v-if="pin" class="flex justify-between">
             <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />

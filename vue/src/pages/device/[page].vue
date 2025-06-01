@@ -6,18 +6,18 @@
       <div data-slot="device"></div>
     </div>
 
-    <ServiceSettings v-if="isPage('settings')" v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" />
+    <template v-if="show">
+      <ServiceSettings v-if="isPage('settings')" v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" @reboot="onSureReboot" @reset="onSureReset" />
 
-    <ServiceStorage v-if="isPage('storage')" v-model="path" :files="fileList" :info="info" @send="onSend" />
+      <ServiceStorage v-if="isPage('storage')" v-model="path" :files="fileList" :info="info" @send="onSend" />
 
-    <ServiceService v-if="isPage('service')" @reboot="onSureReboot" @reset="onSureReset" />
-
-    <ServiceGPIO v-if="isPage('gpio')" :gpio="gpio" @reboot="onSureReboot" @send="onSend" />
+      <ServiceGPIO v-if="isPage('gpio')" :gpio="gpio" @reboot="onSureReboot" @send="onSend" />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, inject, nextTick } from 'vue';
+import { ref, computed, onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import type { TypeStateSettings } from '@/types/types.ts';
@@ -29,8 +29,6 @@ import event from '@/assets/js/event';
 import ServiceGPIO from '@/components/pages/service/ServiceGPIO.vue';
 import ServiceStorage from '@/components/pages/service/ServiceStorage.vue';
 import ServiceSettings from '@/components/pages/service/ServiceSettings.vue';
-
-import ServiceService from '@/components/pages/service/ServiceService.vue';
 
 import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
@@ -48,6 +46,8 @@ const webSocketStore = useWebSocketStore();
 const { fileList, info, path, settings, scanList, gpio } = storeToRefs(webSocketStore);
 
 const route = useRoute();
+
+const show = ref(false);
 
 const page = computed(() => route.params.page);
 const isSettings = computed(() => settings.value?.key);
@@ -94,5 +94,9 @@ event.on('init', () => {
 onMounted(() => {
   webSocketStore.onSend('SETTINGS');
   webSocketStore.onSend('INFO');
+
+  setTimeout(() => {
+    show.value = true;
+  }, 100);
 });
 </script>
