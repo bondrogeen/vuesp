@@ -4,13 +4,18 @@
     "path": "/"
   },
   {
-    "name": "Device",
-    "icon": "IconDevice",
-    "path": "/device/",
-    "children": [
-      { "name": "Settings", "path": "/device/settings/" },
-      { "name": "Storage", "path": "/device/storage/" },
-      { "name": "GPIO", "path": "/device/gpio/" }
-    ]
+    "name": "Settings",
+    "icon": "IconSetting",
+    "path": "/device/settings/"
+  },
+  {
+    "name": "Storage",
+    "icon": "IconStore",
+    "path": "/device/storage/"
+  },
+  {
+    "name": "GPIO",
+    "icon": "IconGpio",
+    "path": "/device/gpio/"
   }
 ]
