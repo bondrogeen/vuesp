@@ -4,12 +4,13 @@
     "path": "/"
   },
   {
-    "name": "Device",
-    "icon": "IconDevice",
-    "path": "/device/",
-    "children": [
-      { "name": "Settings", "path": "/device/settings/" },
-      { "name": "Storage", "path": "/device/storage/" }
-    ]
+    "name": "Settings",
+    "icon": "IconSetting",
+    "path": "/device/settings/"
+  },
+  {
+    "name": "Storage",
+    "icon": "IconStore",
+    "path": "/device/storage/"
   }
 ]
