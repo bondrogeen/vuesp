@@ -186,13 +186,12 @@ const onDate = (e) => {
 };
 
 onMounted(async () => {
-  setTimeout(() => {
-    onSend();
-  }, 2000);
-  // config.value = await getConfig();
+  onSend();
 
-  // dac.value.dac1 = device.value?.dac1 || 0;
-  // dac.value.dac2 = device.value?.dac2 || 0;
+  config.value = await getConfig();
+
+  dac.value.dac1 = device.value?.dac1 || 0;
+  dac.value.dac2 = device.value?.dac2 || 0;
 
   // const res = await fetch(`/get`, { method: 'GET' });
   // const content = await res.blob();
