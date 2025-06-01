@@ -3,7 +3,7 @@
     <div class="px-4 py-4 sm:px-6 lg:px-8">
       <div class="container mx-auto flex flex-auto items-center">
         <v-button type="icon" color="gray" class="me-6" @click="onSidebar">
-          <icon-burger class="fill-current" />
+          <icon-burger class="h-5 w-5" />
         </v-button>
 
         <div class="lg:hidden flex-auto"></div>
@@ -33,11 +33,11 @@
             <span :class="!notifying ? 'hidden' : 'flex'" class="absolute right-0 top-0.5 z-1 h-2 w-2 rounded-full bg-orange-400 flex">
               <span class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
             </span>
-            <icon-noti />
+            <icon-noti class="h-5 w-5" />
           </v-button>
 
           <v-button type="icon" color="gray" class="hidden md:flex" @click.prevent="onLogout">
-            <icon-logout />
+            <icon-logout class="h-5 w-5" />
           </v-button>
         </div>
 
