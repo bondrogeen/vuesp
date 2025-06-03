@@ -17,7 +17,7 @@
 
           <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
 
-          <main class="px-4 py-6 sm:px-6 lg:px-8 flex-auto">
+          <main :class="isIframe ? '' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
             <div :class="isIframe ? '' : 'container mx-auto'">
               <router-view />
             </div>
