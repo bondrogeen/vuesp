@@ -31,5 +31,5 @@ directives.forEach(({ name, directive }) => app.directive(name, directive));
   const store = useWebSocket();
   await store.onStruct();
   app.use(router);
-  app.mount('body');
+  app.mount('#appVuesp');
 })();
