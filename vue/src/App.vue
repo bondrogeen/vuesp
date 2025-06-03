@@ -17,7 +17,7 @@
 
           <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
 
-          <main :class="isIframe ? '' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
+          <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
             <div :class="isIframe ? '' : 'container mx-auto'">
               <router-view />
             </div>
@@ -39,7 +39,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
 import type { TypeNotificationItem } from '@/types/types.ts';
 
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import AppAside from '@/components/app/AppAside.vue';
 import AppDialog from '@/components/app/AppDialog.vue';
@@ -63,6 +63,7 @@ const sidebarToggle = ref(false);
 let ping: ReturnType<typeof setTimeout> | null = null;
 
 const route = useRoute();
+const router = useRouter();
 
 provide(DialogKey, appStore.setDialog);
 provide(NotificationKey, appStore.setNotification);
@@ -101,11 +102,19 @@ onMounted(() => {
 
   if (window.self !== window.top) {
     isIframe.value = true;
+    const html = document.querySelector('html');
+    if (html) {
+      html.classList.add('no-scrollbar');
+    }
 
     window.addEventListener('message', (event) => {
       console.log('Данные:', event);
       if (event?.data?.type === 'theme') {
         appStore.changeTheme(event.data.value);
+      }
+      if (event?.data?.type === 'route') {
+        const data = event.data.data;
+        router.push(data);
       }
     });
   }
