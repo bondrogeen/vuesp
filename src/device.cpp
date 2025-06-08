@@ -61,13 +61,13 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
 }
 
 void onSend() {
-  send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+  sendAll((uint8_t *)&device, sizeof(device), KEY_DEVICE);
 }
 void onSendTemp() {
-  send((uint8_t *)&ht1, sizeof(ht1), KEY_DALLAS);
+  sendAll((uint8_t *)&ht1, sizeof(ht1), KEY_DALLAS);
 }
 void onSendModbus() {
-  send((uint8_t *)&modbus, sizeof(modbus), KEY_MODBUS);
+  sendAll((uint8_t *)&modbus, sizeof(modbus), KEY_MODBUS);
 }
 
 void getInput() {

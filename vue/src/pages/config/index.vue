@@ -18,6 +18,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div v-for="(field, k) in item" :key="`${k}`" class="flex flex-col gap-2">
             <VTextField :model-value="getValue(field, k)" label="Name" @blur="onName(key, k, $event.target.value)" />
+
             <VTextarea v-if="isFunction(field)" :model-value="getFun(field)" label="Value" @blur="onFunction(key, k, $event.target.value)" />
           </div>
         </div>
