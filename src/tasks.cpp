@@ -87,6 +87,10 @@ void send(uint8_t *message, size_t len, uint8_t task) {
   wsSend(message, len);
   tasks[task] = false;
 }
+void sendAll(uint8_t *message, size_t len, uint8_t task) {
+  wsSendAll(message, len);
+  tasks[task] = false;
+}
 
 void loopTask(uint32_t now) {
   if (tasks[KEY_SETTINGS]) send((uint8_t *)&settings, sizeof(settings), KEY_SETTINGS);

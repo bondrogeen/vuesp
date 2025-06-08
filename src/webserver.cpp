@@ -24,6 +24,9 @@ String status(uint8_t state) {
 void wsSend(uint8_t *message, size_t len) {
   ws.binary(clientID, message, len);
 }
+void wsSendAll(uint8_t *message, size_t len) {
+  ws.binaryAll(message, len);
+}
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
