@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, computed, watch } from 'vue';
-import { rules } from '@/utils/validate/index.ts';
+import { required, max, min } from '@/utils/validate.js';
 import { useForm } from '@/composables/useForm.ts';
 import { CRC, getInt16Bytes, functionList, listBaudRate, listParity, listStopBits, intToHex, getBytesInt16 } from './modbus.js';
 
@@ -55,8 +55,6 @@ const props = defineProps({
   data: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(['send']);
-
-const { required, max, min } = rules;
 
 const modbus = ref({
   port: 1,
