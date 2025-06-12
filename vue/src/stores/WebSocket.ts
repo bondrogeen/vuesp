@@ -6,7 +6,7 @@ import VuespStruct from 'vuesp-struct';
 import { useWebSocketStore } from './WebSocketStore.ts';
 
 import event from '@/assets/js/event.ts';
-import log from '@/utils/other/debug.ts';
+import { log } from '@/utils/debug.ts';
 
 const struct = new VuespStruct();
 

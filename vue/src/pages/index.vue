@@ -99,8 +99,8 @@ import { computed, onMounted, ref, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
-import { setBit, getBit, clearBit } from '@/utils/gpio/';
-import { getConfig } from '@/utils/fs/';
+import { setBit, getBit, clearBit } from '@/utils/gpio';
+// import { getConfig } from '@/utils/fs';
 
 const notification = inject('notification');
 
@@ -188,7 +188,7 @@ const onDate = (e) => {
 onMounted(async () => {
   onSend();
 
-  config.value = await getConfig();
+  // config.value = await getConfig();
 
   dac.value.dac1 = device.value?.dac1 || 0;
   dac.value.dac2 = device.value?.dac2 || 0;

@@ -189,7 +189,7 @@
 
 <script setup lang="ts">
 import { computed, ref, defineProps, defineEmits, inject, onMounted, nextTick } from 'vue';
-import { rules } from '@/utils/validate/index.js';
+import { required, max, min, sameAs, ip } from '@/utils/validate.js';
 
 import { useForm } from '@/composables/useForm.js';
 
@@ -262,8 +262,6 @@ const authPass = computed({
 
 const rePassword = ref(settings.value.wifiPass);
 const reAuthPassword = ref(settings.value.authPass);
-
-const { required, max, min, sameAs, ip } = rules;
 
 const form = {
   wifiSsid,
