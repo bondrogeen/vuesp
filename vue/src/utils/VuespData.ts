@@ -1,83 +1,194 @@
-interface TypeProperty {
+export interface TypeProperty {
+  id: string;
   name: string;
   key: string;
-  get?: (obj: any) => string;
-  set?: (obj: any) => string;
+  get?: (output: any) => any;
+  set?: (output: any, value: any) => any;
+  getItem?: (output: any) => any;
+  setItem?: (output: any, value: any) => any;
 }
 
-class Property {
+export interface TypePropertyString {
+  id: string;
   name: string;
   key: string;
-  setProperty?: (obj: any, value: any) => string;
-  getProperty?: (obj: any) => string;
-  constructor({ name, key, get, set }: TypeProperty) {
+  get?: string;
+  set?: string;
+}
+
+export const saveObjectWithFunctions = (obj: any) => {
+  const processValue = (value: any) => {
+    if (typeof value === 'function') return `${value.toString()}`;
+    if (Array.isArray(value)) {
+      const items: any = value.map((v) => processValue(v));
+      return `[${items.join(',')}]`;
+    }
+    if (typeof value === 'object' && value !== null) {
+      const entries: any = Object.entries(value).map(([key, val]) => `${JSON.stringify(key)}: ${processValue(val)}`);
+      return `{${entries.join(',')}}`;
+    }
+    return JSON.stringify(value);
+  };
+  return processValue(obj);
+};
+
+export const safeEval = (code: any) => {
+  if (typeof code !== 'string' || code.trim() === '') {
+    return null;
+  }
+  try {
+    return eval(code);
+  } catch (error) {
+    return null;
+  }
+};
+
+export const stringToFunction = ({ set, get, ...all }: any) => {
+  if (set && typeof set === 'string') {
+    set = safeEval(set);
+  }
+  if (get && typeof get === 'string') {
+    get = safeEval(get);
+  }
+  return { ...all, set, get };
+};
+
+export const functionToString = ({ set, get, ...arg }: TypeProperty) => {
+  const obj: TypePropertyString = { ...arg };
+  if (set) obj.set = set.toString();
+  if (get) obj.get = get.toString();
+  return obj;
+};
+
+class Property implements TypeProperty {
+  id: string;
+  name: string;
+  key: string;
+  set?: (obj: any, value: any) => any;
+  get?: (obj: any) => any;
+
+  constructor({ id, name, key, get, set }: TypeProperty) {
+    this.id = id;
     this.name = name;
     this.key = key;
-    this.getProperty = get;
-    this.setProperty = set;
+    this.set = set;
+    this.get = get;
   }
 
-  getValue(name = '', obj = {}) {
-    const keys = name.split('.');
-    let current: any = obj;
-    for (const key of keys) {
-      if (current !== null && typeof current === 'object' && key in current) {
-        current = current[key];
-      } else {
-        return undefined;
-      }
+  getItem(value: any) {
+    if (this.get) {
+      return this.get(value);
     }
-    return current;
+    return null;
   }
 
-  get(obj: any) {
-    const value = this.getValue(this.key, obj);
-    if (this.getProperty) {
-      return this.getProperty(value);
-    }
-    return value;
-  }
+  setItem(data: any, value: any) {
+    console.log(data, value);
 
-  set(obj: any, value: any) {
-    const byte = this.getValue(this.key, obj);
-    if (this.setProperty) {
-      return this.setProperty(byte, value);
+    if (this.set) {
+      return this.set(data, value);
     }
     return null;
   }
 }
 
-export class VuespData {
-  list;
+export interface TypeVuespData {
+  listDef: TypeProperty[];
+  items: Map<string, TypeProperty>;
   data: any;
-  constructor(list: any[]) {
-    this.list = new Map();
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i];
-      this.list.set(item.id, new Property(item));
+  removeItem: (id: string) => void;
+  editItem: (id: string, item: TypePropertyString) => void;
+  setData: (data: any) => TypeVuespData;
+  getData: () => any;
+  saveList: () => string;
+  getList: () => TypePropertyString[];
+
+  get: (id: string) => any;
+  set: (id: string, value: any) => any;
+}
+
+export class VuespData implements TypeVuespData {
+  listDef: TypeProperty[];
+  items: Map<string, TypeProperty>;
+  data: any;
+
+  constructor(list: TypeProperty[]) {
+    this.listDef = list;
+    this.items = new Map();
+    this.init();
+  }
+
+  init() {
+    for (let i = 0; i < this.listDef.length; i++) {
+      const item: TypeProperty = this.listDef[i];
+      this.items.set(item.id, new Property(item));
     }
   }
 
-  setDate(data: any) {
-    this.data = { ...this.data, ...data };
+  setDataValue({ key }: TypeProperty, value: any) {
+    const keys = key.split('.');
+    let current = this.data;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+  }
+
+  getDataValue({ key }: TypeProperty) {
+    const keys = key.split('.');
+
+    let current: any = this.data;
+    for (const key of keys) {
+      if (current !== null && typeof current === 'object' && key in current) current = current[key];
+      else return undefined;
+    }
+    return current;
+  }
+
+  setData(data: any) {
+    this.data = { ...data };
     return this;
   }
 
-  get(name: string, object: any) {
-    const data = this.list.get(name);
-    return data ? data.get(object) : null;
+  getData() {
+    return this.data;
   }
 
-  set(name: string, object: any, value: any) {
-    const data = this.list.get(name);
-    return data ? data.set(object, value) : null;
+  get(id: string) {
+    const item = this.items.get(id);
+    if (!item) return false;
+    const data = this.getDataValue(item);
+    return item?.getItem ? item.getItem(data) : null;
+  }
+
+  set(id: string, value: any) {
+    const item = this.items.get(id);
+    if (!item) return false;
+    const data = this.getDataValue(item);
+    const update = item?.setItem ? item.setItem(data, value) : null;
+    if (update !== null) {
+      this.setDataValue(item, update);
+    }
+    return update;
+  }
+
+  editItem(id: string, item: TypePropertyString) {
+    if (item) {
+      this.items.set(id, stringToFunction(item));
+    }
+  }
+
+  removeItem(id: string) {
+    this.items.delete(id);
+  }
+
+  saveList() {
+    const list = Array.from(this.items, ([_, item]) => ({ ...item }));
+    let content = saveObjectWithFunctions(list);
+    return `export default ${content};`;
   }
 
   getList() {
-    const list = [];
-    for (let [key] of this.list) {
-      list.push(key);
-    }
-    return list;
+    return Array.from(this.items, ([_, item]) => functionToString(item));
   }
 }

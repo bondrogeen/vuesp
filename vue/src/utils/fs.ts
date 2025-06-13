@@ -1,6 +1,3 @@
-import { pathListDef, pathList } from '@/utils/const.ts';
-import { saveObjectWithFunctions } from '@/utils/func.ts';
-
 export const getFile = (path: string) => fetch(`/fs?file=${path}`);
 
 export const fetchJson = async (path: string, init?: RequestInit) => {
@@ -9,20 +6,15 @@ export const fetchJson = async (path: string, init?: RequestInit) => {
 };
 export const fetchText = async (path: string, init?: RequestInit) => {
   const res = await fetch(path, init);
-  console.log(res);
   return await res.text();
 };
 
 export const loadModule = async (path: string, init?: RequestInit) => {
   const text = await fetchText(path, init);
-  console.log(text);
-  
   return await import('data:text/javascript,' + text);
 };
 
-export const saveModule = async (path: string, obj: any) => {
-  let content = saveObjectWithFunctions(obj);
-  content = `export const list = ${content};`;
+export const saveModule = async (path: string, content: string) => {
   return onUploadBinary(path, content);
 };
 

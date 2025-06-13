@@ -1,4 +1,4 @@
-export const list = [
+export default [
   {
     id: 'device.input.1',
     name: 'input.1',
@@ -81,7 +81,7 @@ export const list = [
     id: 'device.adc.1',
     name: 'adc.1',
     key: 'device.adc1',
-    get: (adc1) => adc1 * 10,
+    get: (adc1) => adc1 / 10,
   },
   {
     id: 'device.adc.2',
@@ -105,20 +105,21 @@ export const list = [
     id: 'device.dac.1',
     name: 'dac.1',
     key: 'device.dac1',
+    set: (output, value) => value,
     get: (dac1) => dac1,
-    set: (value) => value,
   },
   {
     id: 'device.dac.2',
     name: 'dac.2',
     key: 'device.dac2',
+    set: (output, value) => value,
     get: (dac2) => dac2,
-    set: (value) => value,
   },
   {
     id: 'device.now',
     name: 'now',
     key: 'device.now',
-    get: (now) => new Date(now),
+    set: (output, value) => value,
+    get: (now) => now,
   },
 ]

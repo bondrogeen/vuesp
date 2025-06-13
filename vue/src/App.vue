@@ -12,7 +12,7 @@
       <div class="flex h-screen overflow-hidden">
         <AppAside v-if="!isIframe" :info="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
-        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
           <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
 
           <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
