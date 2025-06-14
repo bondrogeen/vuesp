@@ -16,8 +16,20 @@
       </v-dropdown>
     </div>
 
+    <!-- <div class="grid grid-cols-[repeat(auto-fill,_minmax(100px,_1fr))] gap-4">
+      <div v-for="(item, i) of list" :key="item.id" class="">
+        <ItemInfo v-bind="item" :value="data.get(item.id)" @click="setState" />
+      </div>
+    </div> -->
+
+    <VCardGray title="INPUT">
+      <div class="relative">
+        <VListObject :items="{ dallas, device }" @click="console.log"></VListObject>
+      </div>
+    </VCardGray>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-      <VCardGray class="flex justify-between col-span-full" title="Date">
+      <VCardGray class="col-span-full" title="Date">
         <div class="flex items-center">
           <input :value="datetime" type="datetime-local" @change="onDate" />
         </div>
@@ -25,29 +37,29 @@
 
       <VCardGray title="INPUT">
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`input_${pin}`">
-            <div class="text-body mb-1 text-gray-600">{{ findName('input', `input${i + 1}`) }}</div>
+          <div v-for="item of getListItems('input')" :key="item.id">
+            <div class="text-body mb-1 text-gray-600">{{ item.name }}</div>
 
-            <v-button block disabled>{{ getBit(device.input, pin) ? 'OFF' : 'ON' }}</v-button>
+            <v-button block disabled>{{ getState(item.id) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
       </VCardGray>
 
       <VCardGray title="OUTPUT">
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          <div v-for="(pin, i) of [1, 2, 4, 8, 16, 32]" :key="`output_${pin}`">
-            <div class="text-body mb-1 text-gray-600">{{ findName('output', `output${i + 1}`) }}</div>
+          <div v-for="item of getListItems('output')" :key="item.id">
+            <div class="text-body mb-1 text-gray-600">{{ item.name }}</div>
 
-            <v-button block @click="onSetOutput(pin, !getBit(device.output, pin))">{{ getBit(device.output, pin) ? 'OFF' : 'ON' }}</v-button>
+            <v-button block @click="setState(item.id, getState(item.id) ? 0 : 1, 2)">{{ getState(item.id) ? 'OFF' : 'ON' }}</v-button>
           </div>
         </div>
       </VCardGray>
 
       <VCardGray title="ADC">
         <div class="grid gap-2 grid-cols-2">
-          <div v-for="pin of 4" :key="`adc_${pin}`">
-            <span class="text-body text-gray-600 mr-2">{{ findName('adc', `adc${pin}`) }}:</span>
-            <span class="font-bold">{{ findValue('adc', `adc${pin}`) }}</span>
+          <div v-for="item of getListItems('adc')" :key="item.id">
+            <span class="text-body text-gray-600 mr-2">{{ item.name }}:</span>
+            <span class="font-bold">{{ getState(item.id) }}</span>
           </div>
         </div>
       </VCardGray>
@@ -55,7 +67,7 @@
       <VCardGray v-if="isDallas" title="DS18B20">
         <div class="grid gap-2 grid-cols-1">
           <div v-for="(ds, key) in dallas" :key="`adc_${key}`">
-            <span class="text-body text-gray-600 mr-2" :title="key">{{ findName('ds', key) }}:</span>
+            <span class="text-body text-gray-600 mr-2">{{ key }}:</span>
             <span class="font-bold">{{ ds.temp.toFixed(2) }} ℃</span>
           </div>
         </div>
@@ -63,10 +75,10 @@
 
       <VCardGray title="DAC">
         <div class="grid grid-cols-1 gap-4">
-          <div v-for="(pin, i) of 2" :key="`dac_${pin}`" class="grid gap-2 grid-cols-4">
-            <VTextField v-model="dac[`dac${i + 1}`]" class="col-span-2" :label="findName('dac', `dac${pin}`)" hideMessage />
+          <div v-for="item of getListItems('dac')" :key="item.id" class="grid gap-2 grid-cols-4">
+            <VTextField :modelValue="getState(item.id)" class="col-span-2" :label="item.name" hideMessage @keypress.enter="setState(item.id, $event.target.value, 3)" />
 
-            <v-button class="col-span-2" block :disabled="isDac(dac[`dac${i + 1}`])" @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button>
+            <!-- <v-button class="col-span-2" block  @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button> -->
           </div>
         </div>
       </VCardGray>
@@ -94,106 +106,48 @@
   </div>
 </template>
 
-<script setup>
-import { computed, onMounted, ref, inject } from 'vue';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
-import { setBit, getBit, clearBit } from '@/utils/gpio';
-// import { getConfig } from '@/utils/fs';
 
-const notification = inject('notification');
+import { useModule } from '@/composables/useModule.ts';
 
 import event from '@/assets/js/event';
 
-import BlockModbus from '@/components/blocks/modbus/BlockModbus.vue';
+import VListObject from '@/components/general/VListObject.vue';
 
 const router = useRouter();
 
-const config = ref();
-
 const webSocketStore = useWebSocketStore();
-const { device, dallas, modbus } = storeToRefs(webSocketStore);
+const { device, dallas } = storeToRefs(webSocketStore);
 
 const listPage = [
   { id: 1, name: 'Config' },
   { id: 2, name: 'Save default' },
 ];
 
+const { getList, getState, setState, onSaveDef, onSend } = useModule();
+
 const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
-
 const isDallas = computed(() => Boolean(Object.values(dallas?.value)?.length));
-
 const now = ref(0);
 
-const dac = ref({ dac1: 0, dac2: 0 });
-
 event.on('init', () => {
-  webSocketStore.onSend('DEVICE');
+  onSend('DEVICE');
 });
-
-const findName = (name, key) => {
-  const value = config?.value?.[name]?.[key]?.name;
-  return typeof value === 'undefined' ? `${key}` : value;
-};
-const findValue = (name, key) => {
-  const f = config?.value?.[name]?.[key]?.fun;
-  const value = device?.value?.[key];
-  return f ? eval(f)(value) : value;
-};
 
 const onPage = ({ id }) => {
-  if (id === 1) {
-    router.push('/config');
-  }
-  if (id === 2) {
-    onSaveDef();
-  }
+  if (id === 1) router.push('/config');
+  if (id === 2) onSaveDef();
 };
 
-const isDac = (value) => !(value >= 0 && value <= 255);
+const getListItems = (find: string) => getList.value?.filter((i) => i.id.includes(find));
 
-const getModbus = ({ voltage, power, frequency, current, cos }) => ({ voltage, power, frequency, current, cos });
-
-const onSetOutput = (pin, value) => {
-  // notification({ text: 'add' });
-  const byte = device.value.output;
-  device.value.output = !value ? clearBit(byte, pin) : setBit(byte, pin);
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 2 });
-};
-
-const onDac = (i, value) => {
-  console.log(i, value);
-  device.value[`dac${i}`] = value;
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 3 });
-};
-const onSaveDef = () => {
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
-};
-
-const onSend = () => {
-  webSocketStore.onSend('DEVICE');
-};
-
-const onSendModBus = (data) => {
-  webSocketStore.onSend('MODBUS', { command: 1, data, size: data.length });
-};
-
-const onDate = (e) => {
+const onDate = (e: any) => {
   const _now = e?.target?.valueAsNumber;
   if (_now) now.value = _now / 1000;
-  webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
+  onSend('DEVICE', { now: now.value, command: 1 });
 };
-
-onMounted(async () => {
-  onSend();
-
-  // config.value = await getConfig();
-
-  dac.value.dac1 = device.value?.dac1 || 0;
-  dac.value.dac2 = device.value?.dac2 || 0;
-
-  // const res = await fetch(`/get`, { method: 'GET' });
-  // const content = await res.blob();
-});
 </script>
