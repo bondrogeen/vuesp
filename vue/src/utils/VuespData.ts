@@ -60,6 +60,29 @@ export const functionToString = ({ set, get, ...arg }: TypeProperty) => {
   return obj;
 };
 
+export const createObjectFromPaths = (paths: string[], delimiter = '.') => {
+  const result = {};
+
+  for (const path of paths) {
+    const keys = path.split(delimiter);
+    let current: any = result;
+
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      if (!current[key]) {
+        current[key] = i === keys.length - 1 ? path : {};
+      } else if (current[key] === true && i < keys.length - 1) {
+        current[key] = {};
+      }
+      if (i < keys.length - 1) {
+        current = current[key];
+      }
+    }
+  }
+
+  return result;
+};
+
 class Property implements TypeProperty {
   id: string;
   name: string;
@@ -190,5 +213,32 @@ export class VuespData implements TypeVuespData {
 
   getList() {
     return Array.from(this.items, ([_, item]) => functionToString(item));
+  }
+
+  getObjectList() {
+    const paths = Array.from(this.items, ([_, item]) => item.id);
+    return createObjectFromPaths(paths);
+  }
+
+  getPaths() {
+    const result: string[] = [];
+
+    const traverse = (currentObj: any, currentPath: string) => {
+      for (const key in currentObj) {
+        if (Object.hasOwnProperty.call(currentObj, key)) {
+          const value = currentObj[key];
+          const newPath = currentPath ? `${currentPath}.${key}` : key;
+
+          if (typeof value === 'object' && value !== null) {
+            traverse(value, newPath);
+          } else {
+            result.push(newPath);
+          }
+        }
+      }
+    };
+
+    traverse(this.data, '');
+    return result;
   }
 }

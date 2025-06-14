@@ -14,16 +14,11 @@
       </v-dropdown>
     </div>
 
-    <!-- <div class="grid grid-cols-[repeat(auto-fill,_minmax(100px,_1fr))] gap-4">
-      <div v-for="(item, i) of list" :key="item.id" class="">
-        <ItemInfo v-bind="item" :value="data.get(item.id)" @click="setState" />
-      </div>
-    </div> -->
     <div class="h-[calc(100vh-200px)] overflow-auto scrollbar">
       <VTable :headers="headers" :items="getList">
         <template #name="{ item }">
           <div>
-            <div class="text-white">{{ item.name }}</div>
+            <div class="text-gray-900 dark:text-white">{{ item.name }}</div>
 
             <div class="text-sm">{{ item.id }}</div>
           </div>
@@ -31,16 +26,16 @@
 
         <template #value="{ item }">
           <div v-if="item.id.includes('input')">
-            <v-button color="gray" disabled>{{ data?.get(item.id) ? 'OFF' : 'ON' }}</v-button>
+            <v-button class="min-w-16" color="gray" disabled>{{ getState(item.id) ? 'OFF' : 'ON' }}</v-button>
           </div>
 
           <div v-else-if="item.id.includes('output')">
-            <v-button color="blue" @click="setState(item.id, data?.get(item.id) ? 0 : 1, 2)">{{ data?.get(item.id) ? 'OFF' : 'ON' }}</v-button>
+            <v-button class="min-w-16" color="gray" @click="setState(item.id, getState(item.id) ? 0 : 1, 2)">{{ getState(item.id) ? 'OFF' : 'ON' }}</v-button>
           </div>
           <div v-else-if="item.id.includes('dac')">
-            <v-text-field :modelValue="data?.get(item.id)" class="max-w-20 0" :label="item.name" @blur="setState(item.id, $event.target.value, 3)"></v-text-field>
+            <v-text-field :modelValue="getState(item.id)" class="max-w-20 0" hideMessage :label="item.name" @blur="setState(item.id, $event.target.value, 3)"></v-text-field>
           </div>
-          <span v-else>{{ data?.get(item.id) }}</span>
+          <span v-else>{{ getState(item.id) }}</span>
         </template>
 
         <template #action="{ item }">
@@ -79,34 +74,17 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeVuespData, TypePropertyString } from '@/utils/VuespData.ts';
+import type { TypePropertyString } from '@/utils/VuespData.ts';
 import type { Ref } from 'vue';
 
-import { onMounted, ref, computed, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-
-import { loadModule, saveModule } from '@/utils/fs.ts';
-import { VuespData } from '@/utils/VuespData.ts';
-import { pathListDef, pathList } from '@/utils/const.ts';
-
-import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
-
+import { ref } from 'vue';
 import AppDialog from '@/components/app/AppDialog.vue';
-import ItemInfo from '@/components/dashboard/ItemInfo.vue';
 
-const webSocketStore = useWebSocketStore();
-const { dallas, device } = storeToRefs(webSocketStore);
+import { useModule } from '@/composables/useModule.ts';
 
-const data: Ref<TypeVuespData | null> = ref(null);
-const item: Ref<TypePropertyString> = ref({
-  id: 'device.test.1',
-  name: 'device.test',
-  key: 'device.test',
-});
+const item: Ref<TypePropertyString> = ref({ id: 'device.test.1', name: 'device.test', key: 'device.test' });
 
 const dialogItem = ref(false);
-
-const getList = computed(() => data.value?.getList?.());
 
 interface TypeList {
   id?: number;
@@ -131,33 +109,18 @@ const listMenuItem: TypeList[] = [
   { id: 2, name: 'Remove' },
 ];
 
+const { getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
+
 const onMenuEvent = async ({ id }: TypeList) => {
-  if (id === 1) {
-    dialogItem.value = true;
-  }
-  if (id === 2) {
-    const module = await loadModule(pathListDef);
-    data.value = new VuespData(module.default);
-    webSocketStore.onSend('DEVICE');
-  }
-  if (id === 3) {
-    const content = data?.value?.saveList();
-    if (content) {
-      await saveModule(pathList, content);
-    }
-  }
-  if (id === 4) {
-    onSaveDef();
-  }
+  if (id === 1) dialogItem.value = true;
+  if (id === 2) onRestore();
+  if (id === 3) onSaveModule();
+  if (id === 4) onSaveDef();
 };
 
 const onMenuItemEvent = ({ id }: TypeList, item: TypePropertyString) => {
-  if (id === 1) {
-    onDialog(item);
-  }
-  if (id === 2) {
-    data.value?.removeItem(item.id);
-  }
+  if (id === 1) onDialog(item);
+  if (id === 2) onRemoveItem(item.id);
 };
 
 const onClose = () => {
@@ -169,48 +132,8 @@ const onDialog = (data: TypePropertyString) => {
   dialogItem.value = true;
 };
 
-const setState = (id: string, value: number, command: number) => {
-  data.value?.set(id, value);
-  const { device } = data.value?.getData();
-  webSocketStore.onSend('DEVICE', { ...device, command });
-};
-
 const onSave = () => {
-  const i: TypePropertyString = item.value;
-  data.value?.editItem(i.id, { ...i });
+  onEditItem(item.value);
   dialogItem.value = false;
 };
-
-const onSaveDef = () => {
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
-};
-
-watch(
-  () => [dallas.value, device.value],
-  ([dallas, device]) => {
-    data.value?.setData({ dallas, device });
-  }
-);
-
-const initModule = async (path: string) => {
-  try {
-    let module: { default: any };
-    module = await loadModule(path);
-    return module;
-  } catch (error) {
-    console.warn(error);
-    return;
-  }
-};
-
-onMounted(async () => {
-  let module: { default: any } | undefined;
-
-  module = await initModule(`/fs?file=${pathList}`);
-  if (!module) {
-    module = await initModule(pathListDef);
-  }
-  data.value = new VuespData(module?.default);
-  webSocketStore.onSend('DEVICE');
-});
 </script>
