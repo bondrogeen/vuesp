@@ -111,7 +111,6 @@ export interface TypeStateSettings {
 }
 
 export interface TypeStateWebSocket {
-  info?: TypeStateInfo;
   fileList: TypeStateFile[];
   gpio: TypeStateGpio;
   scanList: TypeStateScan[];
@@ -119,8 +118,11 @@ export interface TypeStateWebSocket {
   settings: TypeStateSettings;
   progress: any;
   unknown: any;
-  device: any;
-  dallas: any;
+  main: {
+    info?: TypeStateInfo;
+    device: any;
+    dallas: any;
+  };
 }
 
 export interface TypeNotificationItem {

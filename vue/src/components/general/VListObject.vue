@@ -3,7 +3,7 @@
     <li v-for="(item, key) of items" :key="key" class="" :class="typeof item === 'object' ? '' : `flex items-center ${getClass()}`">
       <div class="flex items-center cursor-pointer ps-2 h-8" :class="typeof item === 'object' ? `${getClass()}` : ''" @click="onClick(key)">
         <div v-if="typeof item === 'object'" class="me-1">
-          <icon-folder class="size-4" />
+          <icon-folder class="size-5" />
         </div>
 
         <div>{{ key }}</div>
