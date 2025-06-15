@@ -10,7 +10,7 @@
 
     <template v-else>
       <div class="flex h-screen overflow-hidden">
-        <AppAside v-if="!isIframe" :info="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
+        <AppAside v-if="!isIframe" :info="main.info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
         <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
           <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
@@ -54,7 +54,7 @@ const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
 const { menu, dialog, notifications } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
-const { info } = storeToRefs(webSocketStore);
+const { main } = storeToRefs(webSocketStore);
 
 const drawer = ref(false);
 const isIframe = ref(false);

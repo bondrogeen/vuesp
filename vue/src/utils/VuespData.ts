@@ -1,19 +1,12 @@
-export interface TypeProperty {
-  id: string;
-  name: string;
-  key: string;
-  get?: (output: any) => any;
-  set?: (output: any, value: any) => any;
-  getItem?: (output: any) => any;
-  setItem?: (output: any, value: any) => any;
-}
-
 export interface TypePropertyString {
   id: string;
   name: string;
   key: string;
   get?: string;
   set?: string;
+  modifyValue?: string;
+  type?: string;
+  minMax?: number[];
 }
 
 export const saveObjectWithFunctions = (obj: any) => {
@@ -53,10 +46,13 @@ export const stringToFunction = ({ set, get, ...all }: any) => {
   return { ...all, set, get };
 };
 
-export const functionToString = ({ set, get, ...arg }: TypeProperty) => {
+export const functionToString = ({ set, get, modifyValue, ...arg }: TypeProperty) => {
+  console.log(arg);
+
   const obj: TypePropertyString = { ...arg };
   if (set) obj.set = set.toString();
   if (get) obj.get = get.toString();
+  if (modifyValue) obj.get = modifyValue.toString();
   return obj;
 };
 
@@ -83,19 +79,42 @@ export const createObjectFromPaths = (paths: string[], delimiter = '.') => {
   return result;
 };
 
+export interface TypeProperty {
+  id: string;
+  name: string;
+  key: string;
+  type?: string;
+  icon?: string;
+  value?: any;
+  minMax?: number[];
+  get?: (output: any) => any;
+  set?: (output: any, value: any) => any;
+  modifyValue?: (value: any) => any;
+  getItem?: (output: any) => any;
+  setItem?: (output: any, value: any) => any;
+}
+
 class Property implements TypeProperty {
   id: string;
   name: string;
   key: string;
+  type?: string;
+  icon?: string;
+  minMax?: number[];
   set?: (obj: any, value: any) => any;
   get?: (obj: any) => any;
+  modifyValue?: (obj: any) => any;
 
-  constructor({ id, name, key, get, set }: TypeProperty) {
+  constructor({ id, name, key, type, icon, minMax, get, set, modifyValue }: TypeProperty) {
     this.id = id;
     this.name = name;
     this.key = key;
+    this.type = type;
+    this.icon = icon;
+    this.minMax = minMax;
     this.set = set;
     this.get = get;
+    this.modifyValue = modifyValue;
   }
 
   getItem(value: any) {
@@ -106,8 +125,6 @@ class Property implements TypeProperty {
   }
 
   setItem(data: any, value: any) {
-    console.log(data, value);
-
     if (this.set) {
       return this.set(data, value);
     }
@@ -124,7 +141,7 @@ export interface TypeVuespData {
   setData: (data: any) => TypeVuespData;
   getData: () => any;
   saveList: () => string;
-  getList: () => TypePropertyString[];
+  getList: () => TypeProperty[];
 
   get: (id: string) => any;
   set: (id: string, value: any) => any;
@@ -212,7 +229,7 @@ export class VuespData implements TypeVuespData {
   }
 
   getList() {
-    return Array.from(this.items, ([_, item]) => functionToString(item));
+    return Array.from(this.items, ([_, item]) => item);
   }
 
   getObjectList() {

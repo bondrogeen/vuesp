@@ -1,9 +1,7 @@
 <template>
-  <div>
+  <div class="container mx-auto">
     <div class="mb-6 flex items-center justify-between">
-      <h1>Main</h1>
-
-      <div class="v-spacer"></div>
+      <h1>Home</h1>
 
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
@@ -12,142 +10,128 @@
           </v-button>
         </template>
 
-        <v-list :list="listPage" @click="onPage"></v-list>
+        <v-list :list="listMenu" @click="onMenuEvent"></v-list>
       </v-dropdown>
     </div>
 
-    <!-- <div class="grid grid-cols-[repeat(auto-fill,_minmax(100px,_1fr))] gap-4">
-      <div v-for="(item, i) of list" :key="item.id" class="">
-        <ItemInfo v-bind="item" :value="data.get(item.id)" @click="setState" />
+    <div class="grid grid-cols-[repeat(auto-fit,_minmax(120px,_1fr))] gap-4">
+      <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
+        <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
       </div>
-    </div> -->
-
-    <VCardGray title="INPUT">
-      <div class="relative">
-        <VListObject :items="{ dallas, device }" @click="console.log"></VListObject>
-      </div>
-    </VCardGray>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-      <VCardGray class="col-span-full" title="Date">
-        <div class="flex items-center">
-          <input :value="datetime" type="datetime-local" @change="onDate" />
-        </div>
-      </VCardGray>
-
-      <VCardGray title="INPUT">
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          <div v-for="item of getListItems('input')" :key="item.id">
-            <div class="text-body mb-1 text-gray-600">{{ item.name }}</div>
-
-            <v-button block disabled>{{ getState(item.id) ? 'OFF' : 'ON' }}</v-button>
-          </div>
-        </div>
-      </VCardGray>
-
-      <VCardGray title="OUTPUT">
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          <div v-for="item of getListItems('output')" :key="item.id">
-            <div class="text-body mb-1 text-gray-600">{{ item.name }}</div>
-
-            <v-button block @click="setState(item.id, getState(item.id) ? 0 : 1, 2)">{{ getState(item.id) ? 'OFF' : 'ON' }}</v-button>
-          </div>
-        </div>
-      </VCardGray>
-
-      <VCardGray title="ADC">
-        <div class="grid gap-2 grid-cols-2">
-          <div v-for="item of getListItems('adc')" :key="item.id">
-            <span class="text-body text-gray-600 mr-2">{{ item.name }}:</span>
-            <span class="font-bold">{{ getState(item.id) }}</span>
-          </div>
-        </div>
-      </VCardGray>
-
-      <VCardGray v-if="isDallas" title="DS18B20">
-        <div class="grid gap-2 grid-cols-1">
-          <div v-for="(ds, key) in dallas" :key="`adc_${key}`">
-            <span class="text-body text-gray-600 mr-2">{{ key }}:</span>
-            <span class="font-bold">{{ ds.temp.toFixed(2) }} ℃</span>
-          </div>
-        </div>
-      </VCardGray>
-
-      <VCardGray title="DAC">
-        <div class="grid grid-cols-1 gap-4">
-          <div v-for="item of getListItems('dac')" :key="item.id" class="grid gap-2 grid-cols-4">
-            <VTextField :modelValue="getState(item.id)" class="col-span-2" :label="item.name" hideMessage @keypress.enter="setState(item.id, $event.target.value, 3)" />
-
-            <!-- <v-button class="col-span-2" block  @click="onDac(i + 1, dac[`dac${i + 1}`])">Send</v-button> -->
-          </div>
-        </div>
-      </VCardGray>
-
-      <!-- <VCardGray>
-        <h5 class="mb-6">Electric counter</h5>
-        <div class="grid gap-2 grid-cols-1">
-          <div v-for="(value, key) in getModbus(modbus)" :key="`modbus_${key}`">
-            <span class="text-body text-gray-600 mr-2">{{ key }}:</span>
-
-            <span class="font-bold">{{ value }}</span>
-          </div>
-        </div>
-      </VCardGray> -->
     </div>
 
-    <!-- <div class="mt-4">
-      <VCardGray>
-        <h5 class="mb-6">Modbus (master)</h5>
-        <div class="grid grid-cols-1 gap-4">
-          <BlockModbus :data="modbus" @send="onSendModBus" />
+    <AppDialog v-if="dialogItem" size="md" title="Edit item" @close="dialogItem = false">
+      <div class="mt-6">
+        <v-text-field v-model="item.id" label="id" :disabled="!isNew" @click="dialogObject = true"></v-text-field>
+        <v-text-field v-model="item.name" label="name"></v-text-field>
+        <v-text-field v-model="item.key" label="key"></v-text-field>
+        <v-text-field v-if="item.set" v-model="item.set" label="set"></v-text-field>
+        <v-text-field v-model="item.get" label="get"></v-text-field>
+      </div>
+
+      <template #footer>
+        <div class="flex gap-4">
+          <v-button class="px-8" color="red" @click="onRemove(item)">Remove</v-button>
+          <v-button class="px-8" color="gry" @click="onSave">Cancel</v-button>
+          <v-button class="px-8" color="blue" @click="onSave">Save</v-button>
         </div>
-      </VCardGray>
-    </div> -->
+      </template>
+    </AppDialog>
+
+    <AppDialog v-if="dialogObject" size="md" title="Edit item" @close="dialogObject = false">
+      <div class="relative min-h-[200px] max-h-[400px] overflow-auto scrollbar">
+        <VListObject :items="main" @click="onSelectId"></VListObject>
+      </div>
+    </AppDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import type { TypeProperty } from '@/utils/VuespData.ts';
+import type { Ref } from 'vue';
+
+import { ref } from 'vue';
+import AppDialog from '@/components/app/AppDialog.vue';
 
 import { useModule } from '@/composables/useModule.ts';
 
-import event from '@/assets/js/event';
-
 import VListObject from '@/components/general/VListObject.vue';
+import CardButton from '@/components/dashboard/CardButton.vue';
+import CardInfo from '@/components/dashboard/CardInfo.vue';
 
-const router = useRouter();
+const item: Ref<TypePropertyString> = ref({ id: 'device.test.1', name: 'device.test', key: 'device.test' });
 
-const webSocketStore = useWebSocketStore();
-const { device, dallas } = storeToRefs(webSocketStore);
+const dialogItem = ref(false);
+const dialogObject = ref(false);
+const isNew = ref(false);
 
-const listPage = [
-  { id: 1, name: 'Config' },
+interface TypeList {
+  id?: number;
+  name: string;
+  key?: string;
+  className?: string;
+}
+
+const listMenu: TypeList[] = [
+  { id: 1, name: 'Add' },
+  { id: 2, name: 'Restore' },
+  { id: 3, name: 'Save' },
   { id: 2, name: 'Save default' },
 ];
+const listMenuItem: TypeList[] = [
+  { id: 1, name: 'Edit' },
+  { id: 2, name: 'Remove' },
+];
 
-const { getList, getState, setState, onSaveDef, onSend } = useModule();
+const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
 
-const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
-const isDallas = computed(() => Boolean(Object.values(dallas?.value)?.length));
-const now = ref(0);
-
-event.on('init', () => {
-  onSend('DEVICE');
-});
-
-const onPage = ({ id }) => {
-  if (id === 1) router.push('/config');
-  if (id === 2) onSaveDef();
+const onMenuEvent = async ({ id }: TypeList) => {
+  if (id === 1) {
+    dialogObject.value = true;
+    isNew.value = true;
+    item.value = { id: 'device.test.1', name: 'device.test', key: 'device.test' };
+  }
+  if (id === 2) onRestore();
+  if (id === 3) onSaveModule();
+  if (id === 4) onSaveDef();
 };
 
-const getListItems = (find: string) => getList.value?.filter((i) => i.id.includes(find));
+const getComponent = ({ type = 'info' }) => {
+  const components: { [key: string]: any } = {
+    button: CardButton,
+    info: CardInfo,
+  };
+  return components?.[type] || CardInfo;
+};
 
-const onDate = (e: any) => {
-  const _now = e?.target?.valueAsNumber;
-  if (_now) now.value = _now / 1000;
-  onSend('DEVICE', { now: now.value, command: 1 });
+const setStateValue = ({ id, value, type }) => {
+  console.log(item);
+  if (type === 'button') {
+    setState(id, value ? 0 : 1, { command: 2 });
+  }
+};
+const onDialog = (data: TypeProperty) => {
+  item.value = data;
+  dialogItem.value = true;
+  isNew.value = false;
+};
+
+const onSave = () => {
+  onEditItem(item.value);
+  dialogItem.value = false;
+};
+const onRemove = () => {
+  onRemoveItem(item.value.id);
+  dialogItem.value = false;
+};
+
+const onSelectId = (id: string) => {
+  item.value.id = id;
+  item.value.key = id;
+  item.value.name = id;
+  item.value.get = '(value) => value';
+
+  dialogObject.value = false;
+  dialogItem.value = true;
 };
 </script>

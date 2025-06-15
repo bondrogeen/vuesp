@@ -1,11 +1,12 @@
 <template>
-  <div class="border aspect-square rounded-sm border-gray-700 p-2" @click="onClick">
-    <h6 class="text-sm text-gray-500">{{ name }}</h6>
-    {{ value }}
-  </div>
+  <CardBase :name="name" :value="value" :id="id" @click="onClick">
+    <slot name="dialog"></slot>
+  </CardBase>
 </template>
 
 <script setup lang="ts">
+import CardBase from '@/components/dashboard/CardBase.vue';
+
 interface Props {
   id: string;
   name?: string;

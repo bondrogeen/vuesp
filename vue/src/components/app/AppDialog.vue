@@ -9,18 +9,20 @@
       leave-to-class="transform opacity-0 -translate-y-2"
     >
       <div v-if="show" class="z-20 fixed top-0 h-[100dvh] w-full left-0 flex flex-col" @wheel.stop>
-        <div class="absolute h-full w-full top-0 left-0 bg-gray-900/70" @click="onClose"></div>
+        <div class="absolute h-full w-full top-0 left-0 bg-black/60" @click="onClose"></div>
 
         <div class="flex-auto flex align-center p-4">
-          <div class="m-auto w-full bg-white dark:bg-gray-800 shadow-lg flex flex-col rounded-lg z-30" :class="getClass">
-            <div class="flex justify-between px-4 py-2 border-b dark:border-gray-700 border-gray-200">
-              <h4>
-                <slot name="header">{{ title }}</slot>
-              </h4>
+          <div class="m-auto w-full bg-white dark:bg-gray-900 shadow-lg flex flex-col rounded-lg z-30" :class="getClass">
+            <div class="flex items-center justify-between px-4 py-2 border-b dark:border-gray-700 border-gray-200">
+              <slot name="header">
+                <h4>
+                  {{ title }}
+                </h4>
+              </slot>
 
-              <button class="transition dark:text-gray-600 dark:hover:text-gray-400 text-gray-300 hover:text-gray-600" @click="onClose">
+              <v-button type="icon" size="" @click="onClose">
                 <icon-close class="h-5 w-5"></icon-close>
-              </button>
+              </v-button>
             </div>
 
             <div class="px-4 py-2 flex-auto scroll-none">
