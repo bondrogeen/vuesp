@@ -4,10 +4,10 @@
     @click="onClick"
   >
     <div class="flex-auto flex justify-between">
-      <div>
+      <div class="text-gray-400">
         <component :is="getIcon" class="size-8" />
       </div>
-      <slot name="header"></slot>
+      <slot name="header" v-bind="bind"></slot>
     </div>
 
     <div>
@@ -19,10 +19,6 @@
     <AppDialog v-if="dialog" size="sm" :title="name" @close="dialog = false">
       <template #header>
         <div class="flex-auto flex items-center justify-between gap-6 me-2">
-          <div class="flex justify-center">
-            <component :is="getIcon" class="size-11" />
-          </div>
-
           <v-button type="icon" size="" @click="onEdit">
             <icon-dots />
           </v-button>
@@ -30,12 +26,12 @@
       </template>
 
       <div class="min-h-60 relative">
-        <div class="pt-10">
+        <div class="pt-6">
           <h3 class="text-center text-3xl text-ellipsis overflow-hidden">{{ name }}</h3>
 
-          <slot name="dialog"></slot>
+          <slot name="dialog" v-bind="bind"></slot>
 
-          <p class="text-center text-xl">{{ getModifyValue(value) }}</p>
+          <p class="text-center text-xl mt-4">{{ getModifyValue(value) }}</p>
         </div>
       </div>
     </AppDialog>
@@ -54,7 +50,7 @@ const emit = defineEmits<{
   (e: 'edit', event: Event): void;
 }>();
 
-const { name, value, icon, modifyValue } = defineProps<TypeProperty>();
+const { name, value, icon, minMax, modifyValue } = defineProps<TypeProperty>();
 
 const getIcon = computed(() => (icon ? `icon-${icon}` : 'icon-therm'));
 
@@ -63,4 +59,14 @@ const onEdit = (e: Event) => emit('edit', e);
 const onClick = () => (dialog.value = true);
 
 const getModifyValue = (value: any) => modifyValue?.(value) || value;
+
+const [min, max] = minMax || [];
+
+const bind = computed(() => ({
+  value: value,
+  min,
+  max,
+  modify: getModifyValue(value),
+  icon: getIcon.value,
+}));
 </script>
