@@ -31,7 +31,7 @@
 
       <template #footer>
         <div class="flex gap-4">
-          <v-button class="px-8" color="red" @click="onRemove(item)">Remove</v-button>
+          <v-button class="px-8" color="red" @click="onRemove">Remove</v-button>
           <v-button class="px-8" color="gry" @click="onSave">Cancel</v-button>
           <v-button class="px-8" color="blue" @click="onSave">Save</v-button>
         </div>
@@ -58,6 +58,8 @@ import { useModule } from '@/composables/useModule.ts';
 import VListObject from '@/components/general/VListObject.vue';
 import CardButton from '@/components/dashboard/CardButton.vue';
 import CardInfo from '@/components/dashboard/CardInfo.vue';
+import CardSwitch from '@/components/dashboard/CardSwitch.vue';
+import CardDimmer from '@/components/dashboard/CardDimmer.vue';
 
 const item: Ref<TypePropertyString> = ref({ id: 'device.test.1', name: 'device.test', key: 'device.test' });
 
@@ -99,6 +101,8 @@ const onMenuEvent = async ({ id }: TypeList) => {
 const getComponent = ({ type = 'info' }) => {
   const components: { [key: string]: any } = {
     button: CardButton,
+    switch: CardSwitch,
+    dimmer: CardDimmer,
     info: CardInfo,
   };
   return components?.[type] || CardInfo;
@@ -108,6 +112,9 @@ const setStateValue = ({ id, value, type }) => {
   console.log(item);
   if (type === 'button') {
     setState(id, value ? 0 : 1, { command: 2 });
+  }
+  if (type === 'dimmer') {
+    setState(id, value, { command: 3 });
   }
 };
 const onDialog = (data: TypeProperty) => {

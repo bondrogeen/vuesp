@@ -2,9 +2,6 @@
   <CardBase v-bind="props" @click="onClick">
     <template #header>
       <div class="flex justify-end">
-        <v-button type="icon" size="sm" @click.stop="setState" :class="props.value ? 'text-blue-600 dark:text-blue-400' : 'text-amber-500'">
-          <icon-power class="size-10" />
-        </v-button>
       </div>
     </template>
     <template #dialog>
