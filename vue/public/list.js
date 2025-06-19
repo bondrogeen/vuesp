@@ -150,6 +150,7 @@ export default [
     minMax: [0, 255],
     set: (output, value) => value,
     get: (dac1) => dac1,
+    modifyValue: (v) => `${(((100 * v) / 255) / 10).toFixed(1)} V`,
   },
   {
     id: 'device.dac.2',
@@ -160,6 +161,7 @@ export default [
     minMax: [0, 255],
     set: (output, value) => value,
     get: (dac2) => dac2,
+    modifyValue: (v) => `${(((100 * v) / 255) / 10).toFixed(1)} V`,
   },
   {
     id: 'device.now',
