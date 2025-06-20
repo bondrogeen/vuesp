@@ -1,98 +1,6 @@
-export interface TypePropertyString {
-  id: string;
-  name: string;
-  key: string;
-  get?: string;
-  set?: string;
-  modifyValue?: string;
-  type?: string;
-  minMax?: number[];
-}
+import type { TypeProperty, TypePropertyString, TypeVuespData } from './types.ts';
 
-export const saveObjectWithFunctions = (obj: any) => {
-  const processValue = (value: any) => {
-    if (typeof value === 'function') return `${value.toString()}`;
-    if (Array.isArray(value)) {
-      const items: any = value.map((v) => processValue(v));
-      return `[${items.join(',')}]`;
-    }
-    if (typeof value === 'object' && value !== null) {
-      const entries: any = Object.entries(value).map(([key, val]) => `${JSON.stringify(key)}: ${processValue(val)}`);
-      return `{${entries.join(',')}}`;
-    }
-    return JSON.stringify(value);
-  };
-  return processValue(obj);
-};
-
-export const safeEval = (code: any) => {
-  if (typeof code !== 'string' || code.trim() === '') {
-    return null;
-  }
-  try {
-    return eval(code);
-  } catch (error) {
-    return null;
-  }
-};
-
-export const stringToFunction = ({ set, get, ...all }: any) => {
-  if (set && typeof set === 'string') {
-    set = safeEval(set);
-  }
-  if (get && typeof get === 'string') {
-    get = safeEval(get);
-  }
-  return { ...all, set, get };
-};
-
-export const functionToString = ({ set, get, modifyValue, ...arg }: TypeProperty) => {
-  console.log(arg);
-
-  const obj: TypePropertyString = { ...arg };
-  if (set) obj.set = set.toString();
-  if (get) obj.get = get.toString();
-  if (modifyValue) obj.get = modifyValue.toString();
-  return obj;
-};
-
-export const createObjectFromPaths = (paths: string[], delimiter = '.') => {
-  const result = {};
-
-  for (const path of paths) {
-    const keys = path.split(delimiter);
-    let current: any = result;
-
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (!current[key]) {
-        current[key] = i === keys.length - 1 ? path : {};
-      } else if (current[key] === true && i < keys.length - 1) {
-        current[key] = {};
-      }
-      if (i < keys.length - 1) {
-        current = current[key];
-      }
-    }
-  }
-
-  return result;
-};
-
-export interface TypeProperty {
-  id: string;
-  name: string;
-  key: string;
-  type?: string;
-  icon?: string;
-  value?: any;
-  minMax?: number[];
-  get?: (output: any) => any;
-  set?: (output: any, value: any) => any;
-  modifyValue?: (value: any) => any;
-  getItem?: (output: any) => any;
-  setItem?: (output: any, value: any) => any;
-}
+import { stringToFunction, saveObjectWithFunctions, createObjectFromPaths } from './utils.ts';
 
 class Property implements TypeProperty {
   id: string;
@@ -130,21 +38,6 @@ class Property implements TypeProperty {
     }
     return null;
   }
-}
-
-export interface TypeVuespData {
-  listDef: TypeProperty[];
-  items: Map<string, TypeProperty>;
-  data: any;
-  removeItem: (id: string) => void;
-  editItem: (id: string, item: TypePropertyString) => void;
-  setData: (data: any) => TypeVuespData;
-  getData: () => any;
-  saveList: () => string;
-  getList: () => TypeProperty[];
-
-  get: (id: string) => any;
-  set: (id: string, value: any) => any;
 }
 
 export class VuespData implements TypeVuespData {

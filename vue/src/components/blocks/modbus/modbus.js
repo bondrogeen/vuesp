@@ -10,25 +10,6 @@ export const functionList = [
     { name: 'Preset Multiple Registers 0x10', type: '', access: 'write', value: 0x10 },
 ];
 
-export const listBaudRate = [
-    { name: '1200', value: 1200 },
-    { name: '9600', value: 9600 },
-    { name: '14400', value: 14400 },
-    { name: '19220', value: 19220 },
-    { name: '28800', value: 28800 },
-    { name: '38400', value: 38400 },
-    { name: '57600', value: 57600 },
-    { name: '115200', value: 115200 },
-];
-export const listParity = [
-    { name: 'None', value: 'None' },
-    { name: 'Event', value: 'Event' },
-    { name: 'Odd', value: 'Odd' },
-];
-export const listStopBits = [
-    { name: '1', value: 1 },
-    { name: '2', value: 2 },
-];
 
 
 
