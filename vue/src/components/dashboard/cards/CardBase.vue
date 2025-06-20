@@ -4,7 +4,7 @@
     @click="onClick"
   >
     <div class="flex-auto flex justify-between">
-      <div class="text-gray-400">
+      <div :class="!value ? 'text-amber-500' : 'text-gray-400'">
         <component :is="getIcon" class="size-8" />
       </div>
       <slot name="header" v-bind="bind"></slot>
@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty } from '@/utils/VuespData.ts';
+import type { TypeProperty } from '@/vuesp-data/types.ts';
 import { ref, computed } from 'vue';
 
 import AppDialog from '@/components/app/AppDialog.vue';

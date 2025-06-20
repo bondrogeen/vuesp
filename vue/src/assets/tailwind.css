@@ -80,9 +80,7 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-}
 
-@layer utilities {
   .scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;

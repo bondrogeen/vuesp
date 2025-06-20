@@ -1,11 +1,11 @@
-import type { TypeVuespData, TypePropertyString } from '@/utils/VuespData.ts';
+import type { TypeVuespData, TypePropertyString } from '@/vuesp-data/types.ts';
 import type { Ref } from 'vue';
 
 import { onMounted, ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import { loadModule, saveModule } from '@/utils/fs.ts';
-import { VuespData } from '@/utils/VuespData.ts';
+import { VuespData } from '@/vuesp-data/VuespData';
 import { pathListDef, pathList } from '@/utils/const.ts';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
@@ -31,11 +31,13 @@ export const useModule = () => {
   };
 
   const onEditItem = (item: TypePropertyString) => {
+    if (!item.id) return;
     data.value?.editItem(item.id, { ...item });
   };
 
-  const onRemoveItem = (id: string) => {
-    data.value?.removeItem(id);
+  const onRemoveItem = (item: TypePropertyString) => {
+    if (!item.id) return;
+    data.value?.removeItem(item.id);
   };
 
   const onRestore = async () => {

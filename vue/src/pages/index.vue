@@ -20,22 +20,17 @@
       </div>
     </div>
 
-    <AppDialog v-if="dialogItem" size="md" title="Edit item" @close="dialogItem = false">
-      <div class="mt-6">
-        <v-text-field v-model="item.id" label="id" :disabled="!isNew" @click="dialogObject = true"></v-text-field>
-        <v-text-field v-model="item.name" label="name"></v-text-field>
-        <v-text-field v-model="item.key" label="key"></v-text-field>
-        <v-text-field v-if="item.set" v-model="item.set" label="set"></v-text-field>
-        <v-text-field v-model="item.get" label="get"></v-text-field>
-      </div>
-
-      <template #footer>
-        <div class="flex gap-4">
-          <v-button class="px-8" color="red" @click="onRemove">Remove</v-button>
-          <v-button class="px-8" color="gry" @click="onSave">Cancel</v-button>
-          <v-button class="px-8" color="blue" @click="onSave">Save</v-button>
+    <div class="mt-4">
+      <VCardGray title="Modbus (master)">
+        <h5 class="mb-6"></h5>
+        <div class="grid grid-cols-1 gap-4">
+          <BlockModBus :data="modbus" @send="onSendModBus" />
         </div>
-      </template>
+      </VCardGray>
+    </div>
+
+    <AppDialog v-if="dialogItem" size="md" :title="isNew ? 'Add item' : 'Edit item'" @close="dialogItem = false">
+      <BlockItemEdit :item="item" :isNew="isNew" @save="onSave" @remove="onRemove"></BlockItemEdit>
     </AppDialog>
 
     <AppDialog v-if="dialogObject" size="md" title="Edit item" @close="dialogObject = false">
@@ -47,31 +42,42 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty } from '@/utils/VuespData.ts';
+import type { TypeProperty, TypePropertyString } from '@/vuesp-data/types.ts';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
-import AppDialog from '@/components/app/AppDialog.vue';
 
 import { useModule } from '@/composables/useModule.ts';
 
-import VListObject from '@/components/general/VListObject.vue';
-import CardButton from '@/components/dashboard/CardButton.vue';
-import CardInfo from '@/components/dashboard/CardInfo.vue';
-import CardSwitch from '@/components/dashboard/CardSwitch.vue';
-import CardDimmer from '@/components/dashboard/CardDimmer.vue';
+import { storeToRefs } from 'pinia';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-const item: Ref<TypePropertyString> = ref({ id: 'device.test.1', name: 'device.test', key: 'device.test' });
+import { functionToString } from '@/vuesp-data/utils.ts';
+
+import AppDialog from '@/components/app/AppDialog.vue';
+import VListObject from '@/components/general/VListObject.vue';
+
+import CardButton from '@/components/dashboard/cards/CardButton.vue';
+import CardInfo from '@/components/dashboard/cards/CardInfo.vue';
+import CardSwitch from '@/components/dashboard/cards/CardSwitch.vue';
+import CardDimmer from '@/components/dashboard/cards/CardDimmer.vue';
+
+import BlockItemEdit from '@/components/dashboard/BlockItemEdit.vue';
+
+import BlockModBus from '@/components/blocks/modbus/BlockModBus.vue';
+
+const webSocketStore = useWebSocketStore();
+const { modbus } = storeToRefs(webSocketStore);
 
 const dialogItem = ref(false);
 const dialogObject = ref(false);
 const isNew = ref(false);
 
+const item: Ref<TypePropertyString> = ref({ id: 'test.id', name: '', key: '' });
+
 interface TypeList {
-  id?: number;
+  id: number;
   name: string;
-  key?: string;
-  className?: string;
 }
 
 const listMenu: TypeList[] = [
@@ -80,10 +86,6 @@ const listMenu: TypeList[] = [
   { id: 3, name: 'Save' },
   { id: 2, name: 'Save default' },
 ];
-const listMenuItem: TypeList[] = [
-  { id: 1, name: 'Edit' },
-  { id: 2, name: 'Remove' },
-];
 
 const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
 
@@ -91,7 +93,7 @@ const onMenuEvent = async ({ id }: TypeList) => {
   if (id === 1) {
     dialogObject.value = true;
     isNew.value = true;
-    item.value = { id: 'device.test.1', name: 'device.test', key: 'device.test' };
+    item.value = { id: 'device.test.1', name: 'device.test', key: 'device.test', type: 'info', icon: 'light' };
   }
   if (id === 2) onRestore();
   if (id === 3) onSaveModule();
@@ -108,27 +110,24 @@ const getComponent = ({ type = 'info' }) => {
   return components?.[type] || CardInfo;
 };
 
-const setStateValue = ({ id, value, type }) => {
-  console.log(item);
-  if (type === 'button') {
-    setState(id, value ? 0 : 1, { command: 2 });
-  }
-  if (type === 'dimmer') {
-    setState(id, value, { command: 3 });
-  }
+const setStateValue = ({ id, value, type }: any) => {
+  if (type === 'button') setState(id, value ? 0 : 1, { command: 2 });
+  if (type === 'dimmer') setState(id, value, { command: 3 });
 };
+
 const onDialog = (data: TypeProperty) => {
-  item.value = data;
+  item.value = functionToString({ ...data });
   dialogItem.value = true;
   isNew.value = false;
 };
 
-const onSave = () => {
-  onEditItem(item.value);
+const onSave = (item: TypePropertyString) => {
+  onEditItem(item);
   dialogItem.value = false;
 };
-const onRemove = () => {
-  onRemoveItem(item.value.id);
+
+const onRemove = (item: TypePropertyString) => {
+  onRemoveItem(item);
   dialogItem.value = false;
 };
 
@@ -140,5 +139,9 @@ const onSelectId = (id: string) => {
 
   dialogObject.value = false;
   dialogItem.value = true;
+};
+
+const onSendModBus = (data: any) => {
+  webSocketStore.onSend('MODBUS', { command: 1, data, size: data.length });
 };
 </script>

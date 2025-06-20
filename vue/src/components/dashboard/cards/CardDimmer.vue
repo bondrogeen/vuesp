@@ -20,6 +20,7 @@
         </div>
       </div>
     </template>
+
     <template #dialog="{ min, max, value }">
       <div class="flex justify-center relative mx-2">
         <div class="absolute h-10 w-full top-0 left-0 bg-gray-400 dark:bg-gray-800 z-0 rounded-md"></div>
@@ -35,9 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty } from '@/utils/VuespData.ts';
+import type { TypeProperty } from '@/vuesp-data/types.ts';
 
-import CardBase from '@/components/dashboard/CardBase.vue';
+import CardBase from '@/components/dashboard/cards/CardBase.vue';
 
 const emit = defineEmits<{
   (e: 'click', event: Event): void;
