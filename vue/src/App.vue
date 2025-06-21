@@ -42,10 +42,6 @@ import type { TypeNotificationItem } from '@/types/types.ts';
 import { useRoute, useRouter } from 'vue-router';
 
 import AppAside from '@/components/app/AppAside.vue';
-import AppDialog from '@/components/app/AppDialog.vue';
-import AppHeader from '@/components/app/AppHeader.vue';
-import AppOverlay from '@/components/app/AppOverlay.vue';
-import AppNotification from '@/components/app/AppNotification.vue';
 
 import { DialogKey, NotificationKey } from '@/simbol/index.ts';
 

@@ -42,17 +42,7 @@ import { useModule } from '@/composables/useModule.ts';
 
 import { functionToString } from '@/vuesp-data/utils.ts';
 
-import AppDialog from '@/components/app/AppDialog.vue';
 import VListObject from '@/components/general/VListObject.vue';
-
-import CardButton from '@/components/dashboard/cards/CardButton.vue';
-import CardInfo from '@/components/dashboard/cards/CardInfo.vue';
-import CardSwitch from '@/components/dashboard/cards/CardSwitch.vue';
-import CardDimmer from '@/components/dashboard/cards/CardDimmer.vue';
-import CardDate from '@/components/dashboard/cards/CardDate.vue';
-import CardInput from '@/components/dashboard/cards/CardInput.vue';
-
-import BlockItemEdit from '@/components/dashboard/BlockItemEdit.vue';
 
 const dialogItem = ref(false);
 const dialogObject = ref(false);
@@ -67,9 +57,9 @@ interface TypeList {
 
 const listMenu: TypeList[] = [
   { id: 1, name: 'Add item' },
-  { id: 2, name: 'Restore' },
-  { id: 3, name: 'Save' },
-  { id: 2, name: 'Save default' },
+  { id: 2, name: 'Restore items' },
+  { id: 3, name: 'Save items' },
+  { id: 2, name: 'Default state' },
 ];
 
 const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
@@ -85,17 +75,7 @@ const onMenuEvent = async ({ id }: TypeList) => {
   if (id === 4) onSaveDef();
 };
 
-const getComponent = ({ type = 'info' }) => {
-  const components: { [key: string]: any } = {
-    button: CardButton,
-    switch: CardSwitch,
-    dimmer: CardDimmer,
-    info: CardInfo,
-    date: CardDate,
-    input: CardInput,
-  };
-  return components?.[type] || CardInfo;
-};
+const getComponent = ({ type = 'info' }) => `card-${type}`;
 
 const setStateValue = ({ id, value }: TypeProperty) => {
   setState(id, value);
