@@ -9,7 +9,7 @@
     <template v-if="show">
       <ServiceSettings v-if="isPage('settings')" v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" @reboot="onSureReboot" @reset="onSureReset" />
 
-      <ServiceStorage v-if="isPage('storage')" v-model="path" :files="fileList" :info="info" @send="onSend" />
+      <ServiceStorage v-if="isPage('storage')" v-model="path" :files="fileList" :info="main.info" @send="onSend" />
 
       <ServiceGPIO v-if="isPage('gpio')" :gpio="gpio" @reboot="onSureReboot" @send="onSend" />
     </template>
@@ -43,7 +43,7 @@ const { menu } = storeToRefs(appStore);
 const title = computed(() => getPageTitle(menu.value, route.fullPath).name);
 
 const webSocketStore = useWebSocketStore();
-const { fileList, info, path, settings, scanList, gpio } = storeToRefs(webSocketStore);
+const { fileList, main, path, settings, scanList, gpio } = storeToRefs(webSocketStore);
 
 const route = useRoute();
 

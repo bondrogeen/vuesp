@@ -189,15 +189,13 @@
 
 <script setup lang="ts">
 import { computed, ref, defineProps, defineEmits, inject, onMounted, nextTick } from 'vue';
-import { rules } from '@/utils/validate/index.js';
+import { required, max, min, sameAs, ip } from '@/utils/validate.js';
 
 import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/simbol/index.ts';
 
 import type { TypeStateScan, TypeStateSettings, TypelistWiFi, TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
-
-import AppDialog from '@/components/app/AppDialog.vue';
 
 interface Props {
   modelValue?: TypeStateSettings;
@@ -263,8 +261,6 @@ const authPass = computed({
 const rePassword = ref(settings.value.wifiPass);
 const reAuthPassword = ref(settings.value.authPass);
 
-const { required, max, min, sameAs, ip, max12 } = rules;
-
 const form = {
   wifiSsid,
   wifiPass,
@@ -281,7 +277,7 @@ const form = {
 };
 
 const validators = {
-  wifiSsid: { required, max },
+  wifiSsid: { required, max: max(32) },
   wifiPass: {
     required,
     max,
@@ -300,9 +296,9 @@ const validators = {
   wifiGateway: { ip },
   wifiDns: { ip },
 
-  authLogin: { required, max12 },
-  authPass: { required, max12, sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
-  reAuthPassword: { required, max12, sameAs: (value: string) => sameAs(value, authPass.value || '') },
+  authLogin: { required, max: max(12) },
+  authPass: { required, max: max(12), sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
+  reAuthPassword: { required, max: max(12), sameAs: (value: string) => sameAs(value, authPass.value || '') },
 };
 
 const { v, invalid, getError } = useForm(validators, form);

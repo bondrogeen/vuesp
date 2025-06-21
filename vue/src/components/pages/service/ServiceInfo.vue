@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, computed, defineProps, onMounted } from 'vue';
-import { toByte, secToTime } from '@/utils/func/index.ts';
+import { toByte, secToTime } from '@/utils/helpers.ts';
 
 import type { TypeStateInfo } from '@/types/types.ts';
 

@@ -10,9 +10,9 @@
 
     <template v-else>
       <div class="flex h-screen overflow-hidden">
-        <AppAside v-if="!isIframe" :info="info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
+        <AppAside v-if="!isIframe" :info="main.info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
-        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
           <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
 
           <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
@@ -42,10 +42,6 @@ import type { TypeNotificationItem } from '@/types/types.ts';
 import { useRoute, useRouter } from 'vue-router';
 
 import AppAside from '@/components/app/AppAside.vue';
-import AppDialog from '@/components/app/AppDialog.vue';
-import AppHeader from '@/components/app/AppHeader.vue';
-import AppOverlay from '@/components/app/AppOverlay.vue';
-import AppNotification from '@/components/app/AppNotification.vue';
 
 import { DialogKey, NotificationKey } from '@/simbol/index.ts';
 
@@ -54,7 +50,7 @@ const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
 const { menu, dialog, notifications } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
-const { info } = storeToRefs(webSocketStore);
+const { main } = storeToRefs(webSocketStore);
 
 const drawer = ref(false);
 const isIframe = ref(false);

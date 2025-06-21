@@ -5,7 +5,6 @@ import { useAppStore } from '@/stores/AppStore.js';
 import type { TypeStateWebSocket, TypeStateInfo, TypeStateFile, TypeStateSettings, TypeStateScan, TypeGpio } from '@/types/types.ts';
 
 const state: TypeStateWebSocket = {
-  info: {},
   progress: {},
   scanList: [],
   fileList: [],
@@ -13,15 +12,20 @@ const state: TypeStateWebSocket = {
   settings: {},
   gpio: {},
   unknown: {},
-  device: {},
-  dallas: {},
+  main: {
+    info: {},
+    device: {},
+    dallas: {},
+  },
+  modbus: {},
 };
 
 export const useWebSocketStore = defineStore('websocketstore', {
   state: () => state,
   actions: {
     SET_INFO(info: TypeStateInfo) {
-      this.info = info;
+      this.main.info = info;
+      this.main = { ...this.main };
     },
     SET_SCAN(data: TypeStateScan) {
       this.scanList = [...this.scanList, data];
@@ -41,11 +45,16 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.gpio[value.gpio] = value;
     },
     SET_DEVICE(value: any) {
-      this.device = value;
+      this.main.device = value;
+      this.main = { ...this.main };
     },
     SET_DALLAS(data: { address: number[] }) {
-      const name = (data.address || []).map(i => (i < 15 ? `0${i.toString(16)}` : i.toString(16))).join('');
-      this.dallas[name] = data;
+      const name = (data.address || []).map((i) => (i < 15 ? `0${i.toString(16)}` : i.toString(16))).join('');
+      this.main.dallas[name] = data;
+      this.main = { ...this.main };
+    },
+    SET_MODBUS(value: any) {
+      this.modbus = value;
     },
     SET_UNKNOWN({ object, key }: any) {
       this.unknown[key] = object;
