@@ -35,6 +35,10 @@ void setupFirst() {
 
 void setupDelay() {
   infoFS.id = id;
+  char nameDevice[20];
+  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
+  strcpy(infoFS.name, nameDevice);
+
   getInfo(&infoFS);
   loadConfig(settings, id);
   initWiFi();

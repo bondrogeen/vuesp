@@ -20,7 +20,7 @@ void loadConfig(Settings& settings, uint32_t id) {
   if (version == settings.version) {
     EEPROM.get(CONFIG_START, settings);
   } else {
-    char nameDevice[13];
+    char nameDevice[20];
     sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
     strcpy(settings.wifiSsid, nameDevice);
     saveSettings(settings);

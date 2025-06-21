@@ -101,7 +101,7 @@ void getGPIO() {
 }
 
 void setupFirstDevice() {
-  getDef();
+  getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
 }
 
 void setupDevice() {

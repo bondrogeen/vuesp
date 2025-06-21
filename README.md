@@ -72,6 +72,10 @@ http://localhost:3000/
 npm run build
 ```
 
+### 3.0.0 (2025-04-03)
+
+- (bondrogeen) Migrate from vue cli to vite
+
 ### 2.0.0 (2023-06-05)
 
 - (bondrogeen) Add tailwind

@@ -2,74 +2,79 @@
   <div class="h-[100dvh] min-h-full flex flex-col">
     <AppOverlay v-if="!isConnect" @click="onClose">
       <div class="mb-4">Disconnected</div>
-      
+
       <div class="flex justify-center">
-        <VLoader class="text-primary"></VLoader>
+        <v-loader class="text-primary"></v-loader>
       </div>
     </AppOverlay>
 
-    <AppDialog v-bind="dialog" @close="dialog = {}" />
+    <template v-else>
+      <div class="flex h-screen overflow-hidden">
+        <AppAside v-if="!isIframe" :info="main.info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
-    <AppDrawer :value="drawer" :change-theme="appStore.changeTheme" @close="drawer = false">
-      <component :is="DrawerMain" :state="isConnect" :info="info" @close="drawer = false" />
-    </AppDrawer>
+        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
+          <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
 
-    <AppHeader :state="isConnect" :change-theme="appStore.changeTheme" @drawer="drawer = !drawer" />
+          <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
 
-    <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
+          <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
+            <div :class="isIframe ? '' : 'container mx-auto'">
+              <router-view />
+            </div>
+          </main>
+        </div>
+      </div>
+    </template>
 
-    <main class="pt-20 px-4 py-6 sm:px-6 lg:px-8 flex-auto">
-      <router-view />
-    </main>
-
-    <AppNavigation class="md:hidden" v-bind="info" />
-
-    <AppFooter v-bind="info" class="pb-20 md:pb-4" />
+    <AppDialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, provide } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useAppStore } from '@/stores/AppStore';
-import { useWebSocket } from '@/stores/WebSocket';
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { useAppStore } from '@/stores/AppStore.js';
+import { useWebSocket } from '@/stores/WebSocket.js';
+import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import DrawerMain from '@/components/app/drawers/DrawerMain';
+import type { TypeNotificationItem } from '@/types/types.ts';
 
-import VLoader from '@/components/general/VLoader';
+import { useRoute, useRouter } from 'vue-router';
 
-import AppDialog from '@/components/app/AppDialog';
-import AppHeader from '@/components/app/AppHeader';
-import AppFooter from '@/components/app/AppFooter';
-import AppDrawer from '@/components/app/AppDrawer';
-import AppOverlay from '@/components/app/AppOverlay';
-import AppNavigation from '@/components/app/AppNavigation';
-import AppNotification from '@/components/app/AppNotification';
+import AppAside from '@/components/app/AppAside.vue';
+
+import { DialogKey, NotificationKey } from '@/simbol/index.ts';
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
-const { dialog, theme, notifications } = storeToRefs(appStore);
+const { menu, dialog, notifications } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
-const { info } = storeToRefs(webSocketStore);
+const { main } = storeToRefs(webSocketStore);
 
 const drawer = ref(false);
+const isIframe = ref(false);
+const sidebarToggle = ref(false);
 
-let ping = null;
+let ping: ReturnType<typeof setTimeout> | null = null;
 
-provide('theme', theme);
-provide('dialog', appStore.setDialog);
-provide('notification', appStore.setNotification);
+const route = useRoute();
+const router = useRouter();
 
-const host = process.env.NODE_ENV === 'production' ? window.location.host : process.env.PROXY;
+provide(DialogKey, appStore.setDialog);
+provide(NotificationKey, appStore.setNotification);
+
+const mode = import.meta.env.MODE;
+const proxy = import.meta.env.VITE_PROXY;
+
+const host = mode === 'production' ? window.location.host : proxy;
 
 const connect = () => {
-  const instance = new WebSocket(`ws://${host}/esp`);
+  const instance: any = new WebSocket(`ws://${host}/esp`);
   instance.binaryType = 'arraybuffer';
   instance.onopen = webSocket.onopen;
   instance.onmessage = webSocket.onmessage;
-  instance.onclose = e => {
+  instance.onclose = (e: any) => {
     webSocket.onclose(e);
     if (e.code !== 1000) connect();
   };
@@ -82,24 +87,37 @@ const onClose = () => {
   dialog.value = {};
 };
 
-const onNotifications = item => {
-  console.log(item);
-
-  notifications.value = notifications.value.filter(i => i.id !== item.id);
+const onNotifications = (item: TypeNotificationItem) => {
+  notifications.value = notifications.value.filter((i) => i.id !== item.id);
 };
 
 onMounted(() => {
   ping = setInterval(webSocket.onPing, 1000);
   setTimeout(connect, 100);
-  appStore.init();
+  appStore.init(route.query);
+
+  if (window.self !== window.top) {
+    isIframe.value = true;
+    const html = document.querySelector('html');
+    if (html) {
+      html.classList.add('no-scrollbar');
+    }
+
+    window.addEventListener('message', (event) => {
+      console.log('Данные:', event);
+      if (event?.data?.type === 'theme') {
+        appStore.changeTheme(event.data.value);
+      }
+      if (event?.data?.type === 'route') {
+        const data = event.data.data;
+        router.push(data);
+      }
+    });
+  }
 });
 
 onUnmounted(() => {
-  clearInterval(ping);
+  if (ping) clearInterval(ping);
   socket.value.close(1000);
 });
 </script>
-
-<style lang="scss">
-@import '@/assets/scss/index.scss';
-</style>
