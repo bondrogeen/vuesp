@@ -39,7 +39,7 @@ export const functionToString = ({ set, get, modifyValue, ...arg }: TypeProperty
   const obj: TypePropertyString = { ...arg };
   if (set) obj.set = set.toString();
   if (get) obj.get = get.toString();
-  if (modifyValue) obj.get = modifyValue.toString();
+  if (modifyValue) obj.modifyValue = modifyValue.toString();
   return obj;
 };
 

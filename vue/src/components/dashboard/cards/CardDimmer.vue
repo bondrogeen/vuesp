@@ -12,7 +12,7 @@
               stroke="currentColor"
               stroke-width="8"
               stroke-linecap="butt"
-              :stroke-dashoffset="getRangePercent(value, max)"
+              :stroke-dashoffset="getRangePercent(value, max || 0)"
               fill="transparent"
               stroke-dasharray="187"
             ></circle>
@@ -21,8 +21,8 @@
       </div>
     </template>
 
-    <template #dialog="{ min, max, value }">
-      <div class="flex justify-center relative mx-2">
+    <template #dialog="{ min = 0, max = 255, value }">
+      <div class="flex justify-center relative mx-2 my-6">
         <div class="absolute h-10 w-full top-0 left-0 bg-gray-400 dark:bg-gray-800 z-0 rounded-md"></div>
 
         <div class="absolute h-10 top-0 left-0 bg-blue-600 dark:bg-blue-400 z-0 rounded-md" :style="`width: ${getPercent(value, max)}%`"></div>
@@ -53,7 +53,7 @@ const getRangePercent = (value: number, max: number) => Math.round(187 - (value 
 const onClick = (event: Event) => emit('click', event);
 
 const onChange = (e: any) => {
-  const value = e?.target?.value || 0;
+  const value = +e?.target?.value || 0;
   emit('setState', { ...props, value });
 };
 </script>

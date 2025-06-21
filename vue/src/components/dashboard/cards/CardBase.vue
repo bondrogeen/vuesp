@@ -4,7 +4,7 @@
     @click="onClick"
   >
     <div class="flex-auto flex justify-between">
-      <div :class="!value ? 'text-amber-500' : 'text-gray-400'">
+      <div :class="getColorValue">
         <component :is="getIcon" class="size-8" />
       </div>
       <slot name="header" v-bind="bind"></slot>
@@ -50,9 +50,13 @@ const emit = defineEmits<{
   (e: 'edit', event: Event): void;
 }>();
 
-const { name, value, icon, minMax, modifyValue } = defineProps<TypeProperty>();
+const { name, value, icon, min, type, max, modifyValue } = defineProps<TypeProperty>();
 
 const getIcon = computed(() => (icon ? `icon-${icon}` : 'icon-therm'));
+const getColorValue = computed(() => {
+  if (['button', 'switch'].includes(type || '')) return !value ? 'text-amber-500' : 'text-gray-400';
+  return 'text-gray-400';
+});
 
 const onEdit = (e: Event) => emit('edit', e);
 
@@ -60,10 +64,9 @@ const onClick = () => (dialog.value = true);
 
 const getModifyValue = (value: any) => modifyValue?.(value) || value;
 
-const [min, max] = minMax || [];
-
 const bind = computed(() => ({
   value: value,
+  name,
   min,
   max,
   modify: getModifyValue(value),

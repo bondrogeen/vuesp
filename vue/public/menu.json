@@ -4,6 +4,10 @@
     "path": "/"
   },
   {
+    "name": "ModBus",
+    "path": "/modbus/"
+  },
+  {
     "name": "Settings",
     "icon": "IconSetting",
     "path": "/device/settings/"

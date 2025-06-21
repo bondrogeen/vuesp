@@ -19,8 +19,6 @@ export const useModule = () => {
   const getList = computed(() => data.value?.getList?.());
 
   const setState = (id: string, value: any, options?: any) => {
-    console.log(id, value, options);
-
     data.value?.set(id, value);
     const { device } = data.value?.getData();
     onSend('DEVICE', { ...device, ...options });

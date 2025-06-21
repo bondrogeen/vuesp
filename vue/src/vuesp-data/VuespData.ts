@@ -5,21 +5,23 @@ import { stringToFunction, saveObjectWithFunctions, createObjectFromPaths } from
 class Property implements TypeProperty {
   id: string;
   name: string;
-  key: string;
+  keyValue: string;
   type?: string;
   icon?: string;
-  minMax?: number[];
+  min?: number;
+  max?: number;
   set?: (obj: any, value: any) => any;
   get?: (obj: any) => any;
   modifyValue?: (obj: any) => any;
 
-  constructor({ id, name, key, type, icon, minMax, get, set, modifyValue }: TypeProperty) {
+  constructor({ id, name, keyValue, type, icon, min, max, get, set, modifyValue }: TypeProperty) {
     this.id = id;
     this.name = name;
-    this.key = key;
+    this.keyValue = keyValue;
     this.type = type;
     this.icon = icon;
-    this.minMax = minMax;
+    this.min = min;
+    this.max = max;
     this.set = set;
     this.get = get;
     this.modifyValue = modifyValue;
@@ -27,39 +29,45 @@ class Property implements TypeProperty {
 
   getItem(value: any) {
     if (this.get) {
-      return this.get(value);
+      try {
+        return this.get(value);
+      } catch (error) {
+        return null;
+      }
     }
     return null;
   }
 
   setItem(data: any, value: any) {
     if (this.set) {
-      return this.set(data, value);
+      try {
+        return this.set(data, value);
+      } catch (error) {
+        return null;
+      }
     }
     return null;
   }
 }
 
 export class VuespData implements TypeVuespData {
-  listDef: TypeProperty[];
   items: Map<string, TypeProperty>;
   data: any;
 
   constructor(list: TypeProperty[]) {
-    this.listDef = list;
     this.items = new Map();
-    this.init();
+    this.init(list);
   }
 
-  init() {
-    for (let i = 0; i < this.listDef.length; i++) {
-      const item: TypeProperty = this.listDef[i];
+  init(list: TypeProperty[]) {
+    for (let i = 0; i < list.length; i++) {
+      const item: TypeProperty = list[i];
       this.items.set(item.id, new Property(item));
     }
   }
 
-  setDataValue({ key }: TypeProperty, value: any) {
-    const keys = key.split('.');
+  setDataValue({ keyValue }: TypeProperty, value: any) {
+    const keys = keyValue.split('.');
     let current = this.data;
     for (let i = 0; i < keys.length - 1; i++) {
       current = current[keys[i]];
@@ -67,8 +75,8 @@ export class VuespData implements TypeVuespData {
     current[keys[keys.length - 1]] = value;
   }
 
-  getDataValue({ key }: TypeProperty) {
-    const keys = key.split('.');
+  getDataValue({ keyValue }: TypeProperty) {
+    const keys = keyValue.split('.');
 
     let current: any = this.data;
     for (const key of keys) {
@@ -128,27 +136,5 @@ export class VuespData implements TypeVuespData {
   getObjectList() {
     const paths = Array.from(this.items, ([_, item]) => item.id);
     return createObjectFromPaths(paths);
-  }
-
-  getPaths() {
-    const result: string[] = [];
-
-    const traverse = (currentObj: any, currentPath: string) => {
-      for (const key in currentObj) {
-        if (Object.hasOwnProperty.call(currentObj, key)) {
-          const value = currentObj[key];
-          const newPath = currentPath ? `${currentPath}.${key}` : key;
-
-          if (typeof value === 'object' && value !== null) {
-            traverse(value, newPath);
-          } else {
-            result.push(newPath);
-          }
-        }
-      }
-    };
-
-    traverse(this.data, '');
-    return result;
   }
 }
