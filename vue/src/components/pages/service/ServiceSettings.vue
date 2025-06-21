@@ -197,8 +197,6 @@ import { DialogKey } from '@/simbol/index.ts';
 
 import type { TypeStateScan, TypeStateSettings, TypelistWiFi, TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
 
-import AppDialog from '@/components/app/AppDialog.vue';
-
 interface Props {
   modelValue?: TypeStateSettings;
   scanList: TypeStateScan[];
