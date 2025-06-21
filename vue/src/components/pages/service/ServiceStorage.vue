@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
-import { toByte, debounce } from '@/utils/func/index.ts';
+import { toByte, debounce } from '@/utils/helpers.ts';
 
 import { DialogKey } from '@/simbol/index.ts';
 

@@ -1,9 +1,7 @@
 <template>
-  <div>
+  <div class="container mx-auto">
     <div class="mb-6 flex items-center justify-between">
-      <h1>Main</h1>
-
-      <div class="v-spacer"></div>
+      <h1>Home</h1>
 
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
@@ -12,85 +10,100 @@
           </v-button>
         </template>
 
-        <v-list :list="listPage" @click="onPage"></v-list>
+        <v-list :list="listMenu" @click="onMenuEvent"></v-list>
       </v-dropdown>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      <div class="col-span-full">
-        <VCardGray title="Date">
-          <div class="flex items-center">
-            <input :value="datetime" type="datetime-local" @change="onDate" />
-          </div>
-        </VCardGray>
+    <div class="grid grid-cols-[repeat(auto-fit,_minmax(120px,_1fr))] gap-4">
+      <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
+        <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
       </div>
-
-      <VCardGray class="col-span-full" title="GPIO">
-        <div class="flex flex-col gap-2">
-          <div v-for="pin in ports" :key="pin.gpio">
-            <div v-if="pin" class="flex justify-between">
-              <div>
-                PIN: {{ pin.gpio }}
-                <span class="text-gray-500 text-sm">( {{ getModeName(pin) }} )</span>
-              </div>
-
-              <v-button color="blue" class="min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</v-button>
-            </div>
-          </div>
-        </div>
-      </VCardGray>
     </div>
+
+    <AppDialog v-if="dialogItem" size="md" :title="isNew ? 'Add item' : 'Edit item'" @close="dialogItem = false">
+      <BlockItemEdit :item="item" :isNew="isNew" @save="onSave" @remove="onRemove"></BlockItemEdit>
+    </AppDialog>
+
+    <AppDialog v-if="dialogObject" size="md" title="Edit item" @close="dialogObject = false">
+      <div class="relative min-h-[200px] max-h-[400px] overflow-auto scrollbar">
+        <VListObject :items="main" @click="onSelectId"></VListObject>
+      </div>
+    </AppDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
+import type { TypeProperty, TypePropertyString } from '@/vuesp-data/types.ts';
+import type { Ref } from 'vue';
 
-import { usePorts } from '@/composables/usePorts.ts';
+import { ref } from 'vue';
 
-const webSocketStore = useWebSocketStore();
-const { device, gpio } = storeToRefs(webSocketStore);
+import { useModule } from '@/composables/useModule.ts';
 
-const router = useRouter();
+import { functionToString } from '@/vuesp-data/utils.ts';
 
-const listPage = [
-  { id: 1, name: 'Config' },
-  { id: 2, name: 'Save default' },
+import VListObject from '@/components/general/VListObject.vue';
+
+const dialogItem = ref(false);
+const dialogObject = ref(false);
+const isNew = ref(false);
+
+const item: Ref<TypePropertyString> = ref({ id: '', name: '', keyValue: '' });
+
+interface TypeList {
+  id: number;
+  name: string;
+}
+
+const listMenu: TypeList[] = [
+  { id: 1, name: 'Add item' },
+  { id: 2, name: 'Restore items' },
+  { id: 3, name: 'Save items' },
+  { id: 2, name: 'Default state' },
 ];
 
-const datetime = computed(() => new Date((device.value.now || 0) * 1000).toISOString().slice(0, 16));
+const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
 
-const now = ref(0);
-
-const onSend = ({ comm, data }: any) => {
-  webSocketStore.onSend(comm, data);
-};
-
-const { ports, init, isDisabled, getModeName, getStateValue, onSetPort } = usePorts(onSend);
-
-const onPage = ({ id }: any) => {
+const onMenuEvent = async ({ id }: TypeList) => {
   if (id === 1) {
-    router.push('/config');
+    dialogObject.value = true;
+    isNew.value = true;
+    item.value = { id: 'device.test.1', name: 'device.test', keyValue: 'device.test', type: 'info', icon: 'light' };
   }
-  if (id === 2) {
-    onSaveDef();
-  }
+  if (id === 2) onRestore();
+  if (id === 3) onSaveModule();
+  if (id === 4) onSaveDef();
 };
 
-const onSaveDef = () => {
-  webSocketStore.onSend('DEVICE', { ...device.value, command: 4 });
+const getComponent = ({ type = 'info' }) => `card-${type}`;
+
+const setStateValue = ({ id, value }: TypeProperty) => {
+  setState(id, value);
 };
 
-const onDate = (e: any) => {
-  const _now: number = e?.target?.valueAsNumber;
-  if (_now) now.value = _now / 1000;
-  webSocketStore.onSend('DEVICE', { now: now.value, command: 1 });
+const onDialog = (data: TypeProperty) => {
+  item.value = functionToString({ ...data });
+  dialogItem.value = true;
+  isNew.value = false;
 };
 
-onMounted(async () => {
-  await init();
-});
+const onSave = (item: TypePropertyString) => {
+  onEditItem(item);
+  dialogItem.value = false;
+};
+
+const onRemove = (item: TypePropertyString) => {
+  onRemoveItem(item);
+  dialogItem.value = false;
+};
+
+const onSelectId = (id: string) => {
+  item.value.id = id;
+  item.value.keyValue = id;
+  item.value.name = id;
+  item.value.get = '(value) => value';
+
+  dialogObject.value = false;
+  dialogItem.value = true;
+};
 </script>

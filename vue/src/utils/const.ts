@@ -1,5 +1,5 @@
-export const pathConfigDef = '/config.json';
+export const pathListDef = '/list.js';
 
 export const pathTmp = '/tmp';
-export const pathConfig = `${pathTmp}/config.json`;
+export const pathList = `${pathTmp}/list.js`;
 export const pathGPIO = `${pathTmp}/gpio.io`;

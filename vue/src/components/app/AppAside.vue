@@ -25,11 +25,11 @@
               <component
                 :is="!children ? 'router-link' : 'span'"
                 :to="path"
-                class="flex gap-2 items-center px-3 py-2 rounded-lg"
+                class="flex gap-2 items-center px-3 py-2 rounded-sm"
                 :class="isActive(path) ? 'bg-blue-500/10' : 'hover:bg-gray-500/10'"
                 @click.prevent="onSelect(name)"
               >
-                <component :is="getComponent(icon)" class="h-5 w-5 flex-[0_0_24px]" />
+                <component :is="icon" class="h-5 w-5 flex-[0_0_24px]" />
 
                 <span class="flex-1 first-letter:uppercase" :class="sidebarToggle ? 'lg:hidden' : ''">{{ name }}</span>
 
@@ -39,7 +39,7 @@
               <div v-if="children" class="translate transform overflow-hidden" :class="selected === name ? 'block' : 'hidden'">
                 <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="mt-2 flex flex-col gap-1 pl-9">
                   <li v-for="item of children" :key="item.name">
-                    <router-link :to="item?.path || ''" class="block px-2 py-2 rounded-lg first-letter:uppercase" :class="isActive(item.path) ? 'bg-blue-500/10' : 'hover:bg-gray-500/10'">
+                    <router-link :to="item?.path || ''" class="block px-2 py-2 rounded-sm first-letter:uppercase" :class="isActive(item.path) ? 'bg-blue-500/10' : 'hover:bg-gray-500/10'">
                       {{ item.name }}
                     </router-link>
                   </li>
@@ -79,16 +79,7 @@ const { info = {}, sidebarToggle = false, menu = [] } = defineProps<Props>();
 //   (e: 'sidebar', value: boolean): void;
 // }>();
 
-const components: any = {
-  IconDashboard: 'IconDashboard',
-  IconStore: 'IconStore',
-  IconGpio: 'IconGpio',
-  IconSetting: 'IconSetting',
-};
-
 const route = useRoute();
-
-const getComponent = (name: string = 'IconDashboard') => components[name];
 
 const onSelect = (name: string = '') => (selected.value = selected.value === name ? '' : name);
 
