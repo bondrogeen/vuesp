@@ -1,9 +1,12 @@
 <template>
   <div class="grid gap-4">
-    <div class="grid md:grid-cols-2 lg:grid-cols-[100px_300px_100px_100px] gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[100px_300px_100px_100px] gap-4">
       <VTextField v-model="v.slaveID.value" label="Slave ID" :message="getError('slaveID')" @blur="v.slaveID.blur" />
+
       <VSelect :value="code.name" class="" label="Function Code" :list="functionList" @change="onFunction"></VSelect>
+
       <VTextField v-model="v.address.value" label="Address" :message="getError('address')" @blur="v.address.blur" />
+
       <VTextField v-model="v.length.value" label="Length" :message="getError('length')" />
     </div>
 
@@ -11,7 +14,7 @@
       <h5 class="mb-2">Request</h5>
 
       <div class="flex gap-4 items-center">
-        <div class="flex">
+        <div class="flex flex-wrap">
           <div
             v-for="(item, i) of dataPack"
             :key="i"
@@ -22,12 +25,12 @@
           </div>
         </div>
 
-        <div>
+        <div class=" self-start">
           <v-button class="w-[100px]" block :disabled="invalid" @click="onSend">Send</v-button>
         </div>
       </div>
     </div>
-    {{ v }}
+
     <div class="grid grid-cols-1">
       <h5 class="mb-2">Response</h5>
 

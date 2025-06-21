@@ -1,10 +1,11 @@
 export interface TypePropertyString {
   id: string;
   name: string;
-  key: string;
+  keyValue: string;
   icon?: string;
   type?: string;
-  minMax?: number[];
+  min?: number;
+  max?: number;
   get?: string;
   set?: string;
   modifyValue?: string;
@@ -13,11 +14,12 @@ export interface TypePropertyString {
 export interface TypeProperty {
   id: string;
   name: string;
-  key: string;
+  keyValue: string;
   type?: string;
   icon?: string;
   value?: any;
-  minMax?: number[];
+  min?: number;
+  max?: number;
   get?: (output: any) => any;
   set?: (output: any, value: any) => any;
   modifyValue?: (value: any) => any;
@@ -26,7 +28,6 @@ export interface TypeProperty {
 }
 
 export interface TypeVuespData {
-  listDef: TypeProperty[];
   items: Map<string, TypeProperty>;
   data: any;
   removeItem: (id: string) => void;
