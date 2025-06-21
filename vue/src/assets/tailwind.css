@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source inline("dark:{flex,hidden} dark:border-gray-700/50");
+@source inline("dark:{flex,hidden} dark:border-gray-700/50 dark:border-gray-700");
 
 @theme {
   --color-primary: #24c0eb;
