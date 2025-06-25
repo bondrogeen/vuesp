@@ -14,7 +14,7 @@
       </v-dropdown>
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fit,_minmax(120px,_1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fill,_minmax(120px,_1fr))] gap-4">
       <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
         <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
       </div>
