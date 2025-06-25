@@ -59,12 +59,12 @@ void initGpio() {
 }
 
 void setupFirstGPIO() {
-  // uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-  // if (!isOk) {
-  //   defPorts();
-  //   writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-  // }
-  // initGpio();
+  uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
+  if (!isOk) {
+    defPorts();
+    writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
+  }
+  initGpio();
 }
 
 uint8_t readPort(uint8_t port) {
@@ -91,24 +91,24 @@ void getAll(uint8_t readAll) {
 }
 
 void loopGPIO(uint32_t now) {
-  // if (btnStatus == 1) {
-  //   btnStatus = 2;
-  //   debounce = now;
-  // }
-  // if (btnStatus == 2 && now - debounce > 50) {
-  //   btnStatus = 0;
-  //   getAll(false);
-  //   deviceGPIO();
-  // }
+  if (btnStatus == 1) {
+    btnStatus = 2;
+    debounce = now;
+  }
+  if (btnStatus == 2 && now - debounce > 50) {
+    btnStatus = 0;
+    getAll(false);
+    deviceGPIO();
+  }
 
-  // if (tasks[KEY_PORT]) {
-  //   if (port.command == GPIO_COMMAND_GET_ALL) {
-  //     getAll(true);
-  //   }
-  //   if (port.command == GPIO_COMMAND_SET) {
-  //     digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
-  //     getAll(true);
-  //   }
-  //   tasks[KEY_PORT] = 0;
-  // };
+  if (tasks[KEY_PORT]) {
+    if (port.command == GPIO_COMMAND_GET_ALL) {
+      getAll(true);
+    }
+    if (port.command == GPIO_COMMAND_SET) {
+      digitalWrite(port.gpio, readBit(port.data, GPIO_VALUE));
+      getAll(true);
+    }
+    tasks[KEY_PORT] = 0;
+  };
 }
