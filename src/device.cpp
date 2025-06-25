@@ -12,6 +12,8 @@ Device device = {
     0,
     255,
     0,
+    0,
+    0,
     "test"};
 
 uint8_t task;
@@ -53,22 +55,50 @@ void setupFirstDevice() {
   getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
 }
 
+void getADC() {
+  device.analog = analogRead(A0);
+}
+
+void setPWM() {
+  analogWrite(13, device.pwm);
+}
+void getInput() {
+  device.gpio12 = digitalRead(12);
+  device.gpio14 = digitalRead(D5);
+}
+void setOutput() {
+  Serial.println(device.gpio14);
+  digitalWrite(D5, device.gpio14);
+  Serial.println(device.gpio14);
+}
+
+void getData() {
+  getADC();
+}
+
 void setupDevice() {
+  pinMode(D5, OUTPUT);
+  digitalWrite(D5, LOW);
 }
 
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-    // onSend();
+    getData();
+    onSend();
   }
 
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
-    Serial.println(device.now);
     if (device.command == 1) {
-      Serial.println("device");
-      Serial.println(device.now);
-      // writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+    }
+    if (device.command == 2) {
+      setOutput();
+    }
+    if (device.command == 3) {
+      Serial.println(device.pwm);
+      setPWM();
     }
 
     device.command = 0;
