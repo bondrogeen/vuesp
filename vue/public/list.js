@@ -6,7 +6,7 @@ export default [
     type: 'switch',
     icon: 'light',
     get: (v) => v ? 1 : 0,
-    modifyValue: (v) => v ? 'OFF' : 'ON',
+    modifyValue: (v) => v ? 'ON' : 'OFF',
   },
   {
     id: 'device.gpio14',
@@ -16,7 +16,7 @@ export default [
     icon: 'bulb',
     get: ({ gpio14 }) => gpio14,
     set: (device, v) => ({ ...device, gpio14: v, command: 2 }),
-    modifyValue: (v) => v ? 'OFF' : 'ON',
+    modifyValue: (v) => v ? 'ON' : 'OFF',
   },
   {
     id: 'device.analog',
