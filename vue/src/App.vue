@@ -7,8 +7,8 @@
         <v-loader class="text-primary"></v-loader>
       </div>
     </AppOverlay>
-
     <template v-else>
+      {{ main }}
       <div class="flex h-screen overflow-hidden">
         <AppAside v-if="!isIframe" :info="main.info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
 
