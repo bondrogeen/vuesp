@@ -2,7 +2,7 @@
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
     <VCardGray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <VSelect :value="getMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
+        <VSelect :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
 
         <VTextField v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
           <template #icon>
@@ -310,7 +310,6 @@ const listWiFi: TypelistWiFi[] = [
   // { name: 'STA + AP', value: 3 },
 ];
 
-const getMode = computed(() => listWiFi.find((i) => i.value === settings.value.wifiMode)?.name || '');
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
