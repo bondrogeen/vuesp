@@ -87,6 +87,7 @@ export const useModule = () => {
     }
     data.value = new VuespData(module?.default);
     webSocketStore.onSend('DEVICE');
+    webSocketStore.onSend('INFO');
   });
 
   return { main, data, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef, onSend };

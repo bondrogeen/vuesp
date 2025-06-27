@@ -14,28 +14,6 @@
       </v-dropdown>
     </div>
 
-    <!-- <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      <VCard class="flex col-span-full gap-4">
-        <h5>Temperature:</h5>
-
-        <div class="flex items-center">{{ device.temp }} °C</div>
-      </VCard>
-
-      <VCard class="col-span-full">
-        <h5 class="mb-4">Brightness</h5>
-        <div class="flex flex-col md:flex-row gap-4 md:items-center">
-          <VRange class="md:w-1/2" :modelValue="device.light" min="0" max="254" @change="onLight" />
-          <v-button @click="onChangeState">{{ device.state ? 'ON' : 'OFF' }}</v-button>
-        </div>
-
-        <h5 class="mt-6">Sensors</h5>
-        <div class="flex gap-4">
-          <v-button class="mt-6" disabled @click="onScan(true)">{{ device.sensor1 ? 'ON' : 'OFF' }}</v-button>
-          <v-button class="mt-6" disabled @click="onScan(true)">{{ device.sensor2 ? 'ON' : 'OFF' }}</v-button>
-        </div>
-      </VCard>
-    </div> -->
-
     <div class="grid grid-cols-[repeat(auto-fit,_minmax(120px,_1fr))] gap-4">
       <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
         <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
@@ -57,13 +35,6 @@
 <script setup lang="ts">
 import type { TypeProperty, TypePropertyString } from '@/vuesp-data/types.ts';
 import type { Ref } from 'vue';
-
-import { getBinary } from '@/utils/fs/';
-import { getKey, parseDateGPIO } from '@/utils/gpio.ts';
-import { pathGPIO } from '@/utils/const';
-
-import VSelect from '@/components/general/VSelect';
-import VRange from '@/components/general/VRange';
 
 import { ref } from 'vue';
 
@@ -102,16 +73,6 @@ const onMenuEvent = async ({ id }: TypeList) => {
   if (id === 2) onRestore();
   if (id === 3) onSaveModule();
   if (id === 4) onSaveDef();
-};
-
-const onLight = (e) => {
-  const value = e?.target?.valueAsNumber;
-  webSocketStore.onSend('DEVICE', { light: value, command: 2 });
-};
-
-const onChangeState = (e) => {
-  device.value.state = device.value.state ? 0 : 1;
-  webSocketStore.onSend('DEVICE', { state: device.value.state, command: 2 });
 };
 
 const getComponent = ({ type = 'info' }) => `card-${type}`;
