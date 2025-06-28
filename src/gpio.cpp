@@ -1,6 +1,7 @@
 #include "./include/gpio.h"
 
 #include "./include/device.h"
+#include "./include/files.h"
 #include "./include/init.h"
 #include "./include/tasks.h"
 
@@ -57,12 +58,11 @@ void initGpio() {
   }
 }
 
-void setupGPIO() {
-  uint8_t isOk = readFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
-  Serial.println(isOk);
+void setupFirstGPIO() {
+  uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
   if (!isOk) {
     defPorts();
-    writeFile(DEF_PAHT_GPIO, (uint8_t *)ports, sizeof(ports));
+    writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
   }
   initGpio();
 }
@@ -76,17 +76,15 @@ void getAll(uint8_t readAll) {
   for (int i = 0; gpio[i]; i++) {
     port.gpio = gpio[i];
     uint8_t value = digitalRead(gpio[i]);
-    uint8_t *adress = &ports[i][1];
-    changeBit(adress, value, GPIO_VALUE);
+    uint8_t *address = &ports[i][1];
+    changeBit(address, value, GPIO_VALUE);
     port.data = ports[i][1];
     if (readAll) {
       send((uint8_t *)&port, sizeof(port), KEY_PORT);
     } else {
       if (readBit(port.data, GPIO_VALUE_OLD) != value) {
-        changeBit(adress, value, GPIO_VALUE_OLD);
-        port.data = ports[i][1];
+        changeBit(address, value, GPIO_VALUE_OLD);
         send((uint8_t *)&port, sizeof(port), KEY_PORT);
-        eventGPIO(gpio[i], value);
       }
     }
   }
@@ -98,9 +96,9 @@ void loopGPIO(uint32_t now) {
     debounce = now;
   }
   if (btnStatus == 2 && now - debounce > 50) {
-    Serial.println(debounce);
     btnStatus = 0;
     getAll(false);
+    deviceGPIO();
   }
 
   if (tasks[KEY_PORT]) {

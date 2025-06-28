@@ -1,6 +1,7 @@
 #include "./include/webserver.h"
 
 #include "./include/device.h"
+#include "./include/files.h"
 #include "./include/tasks.h"
 
 AsyncWebServer server(80);
@@ -47,7 +48,7 @@ void onReqUpload(AsyncWebServerRequest *request) {
   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
   uint8_t method = request->method();
   if (request->hasParam("file")) {
-    AsyncWebParameter *p = request->getParam("file");
+    const  AsyncWebParameter *p = request->getParam("file");
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
@@ -68,8 +69,10 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
+    progress.size = 0;
     progress.length = request->contentLength();
     request->_tempFile = LittleFS.open(filename, "w");
+    // Serial.println(filename);
   }
   if (len) request->_tempFile.write(data, len);
   if (final) request->_tempFile.close();
@@ -88,6 +91,7 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
+    progress.size = 0;
     progress.length = request->contentLength();
 #if defined(ESP8266)
     Update.runAsync(true);
@@ -111,6 +115,12 @@ void onRecovery(AsyncWebServerRequest *request) {
   request->send(response);
 }
 
+// void onGetData(AsyncWebServerRequest *request) {
+//   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+//   AsyncResponseStream *response = request->beginResponseStream("application/x-binary", sizeof(infoFS));
+//   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
+//   request->send(response);
+// }
 void onRedirectRecovery(AsyncWebServerRequest *request) {
   request->redirect("/recovery");
 }
@@ -129,6 +139,7 @@ void setupServer() {
   }
 
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
+  // server.on("/get", HTTP_GET, onGetData);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
   server.on("/", HTTP_GET, onRedirectRecovery);
