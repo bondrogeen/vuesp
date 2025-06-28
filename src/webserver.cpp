@@ -52,7 +52,7 @@ void onReqUpload(AsyncWebServerRequest *request) {
   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
   uint8_t method = request->method();
   if (request->hasParam("file")) {
-    AsyncWebParameter *p = request->getParam("file");
+    const AsyncWebParameter *p = request->getParam("file");
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
@@ -87,7 +87,7 @@ void onReqModbus(AsyncWebServerRequest *request) {
   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
   uint8_t len = 0;
   if (request->hasParam("data")) {
-    AsyncWebParameter *p = request->getParam("data");
+    const AsyncWebParameter *p = request->getParam("data");
 
     const char *hexStr = p->value().c_str();
     uint8_t length = strlen(hexStr) / 2;
