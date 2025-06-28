@@ -1,111 +1,79 @@
 <template>
-  <div class="service-gpio">
-    <div v-for="pin in ports" :key="pin.gpio">
-      <div v-if="pin" class="d-flex j-between">
-        <v-select class="service-gpio__select" :value="getMode(pin).name" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)"></v-select>
-        <v-button class="ml-2" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(pin))">{{ getStateValue(pin) ? 'ON' : 'OFF' }}</v-button>
+  <div>
+    <VCardGray title="Ports">
+      <div class="relative flex flex-col">
+        <div v-for="pin in ports" :key="pin.gpio">
+          <div v-if="pin" class="flex justify-between">
+            <VSelect class="max-w-[250px]" :value="getModeName(pin)" :label="`GPIO: ${pin.gpio}`" :list="listMode" @change="onMode(pin, $event)" />
+
+            <v-button color="blue" class="ml-2 min-w-20" :disabled="isDisabled(pin)" @click="onSetPort(pin, !getStateValue(gpio, pin))">{{ getStateValue(gpio, pin) ? 'ON' : 'OFF' }}</v-button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="row mt-6">
-      <div class="col sm12 d-flex j-end">
-        <v-button class="mr-4" @click="onGetPort">Update</v-button>
-        <v-button :disabled="!isDifferent" @click="onSave">Save</v-button>
-      </div>
-    </div>
+    </VCardGray>
+
+    <Teleport to="[data-slot='device']">
+      <v-dropdown right="0" left="unset" top="0">
+        <template #activator="{ on }">
+          <v-button color="" type="icon" @click="on.click">
+            <icon-dots class="rotate-90"></icon-dots>
+          </v-button>
+        </template>
+
+        <v-list v-slot="{ item }" :list="listMenu" @click="onMenu">
+          <component :is="item.icon"></component>
+          <span class="ms-2">{{ item.name }}</span>
+        </v-list>
+      </v-dropdown>
+    </Teleport>
   </div>
 </template>
 
-<script setup>
-import { defineProps, defineEmits, onMounted, ref, computed } from 'vue';
-import { getBinary, onUploadBinary } from '@/utils/fs/';
-import { command, getKey, getData, setData, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio/';
+<script setup lang="ts">
+import { defineProps, defineEmits, onMounted } from 'vue';
 
-const props = defineProps({
-  gpios: { type: Object, default: () => ({}) },
-  path: { type: String, default: '/service/gpio.io' },
-});
+import { pathGPIO } from '@/utils/const.ts';
 
-const emit = defineEmits(['click', 'send', 'reboot']);
+import type { TypeWSSend } from '@/types/types.ts';
 
-const ports = ref([]);
-const portsDef = ref([]);
+import { usePorts } from '@/composables/usePorts.ts';
 
-const isDifferent = computed(() => {
-  for (let i = 0; i < ports.value.length; i++) {
-    if (getMode(ports.value[i])?.value !== getMode(portsDef.value[i])?.value) return 1;
-  }
-  return 0;
-});
+interface Props {
+  gpio?: any;
+}
 
-const listMode = [
-  { name: 'OFF', value: 0 },
-  { name: 'INPUT', value: 8 }, // 0x00
-  { name: 'OUTPUT', value: 9 }, // 0x01
-  { name: 'INPUT_PULLUP', value: 10 }, // 0x02
-  { name: 'OUTPUT_OPEN_DRAIN', value: 11 }, // 0x03
-  // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
-  // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
-  // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07
+const { gpio = {} } = defineProps<Props>();
+
+const emit = defineEmits<{
+  (e: 'click', value: boolean): void;
+  (e: 'send', value: TypeWSSend): void;
+  (e: 'reboot', value: Event): void;
+}>();
+
+const listMenu = [
+  { name: 'Update', icon: 'IconUpdate' },
+  { name: 'Save', icon: 'IconSave' },
 ];
 
-const onMode = (port, item) => {
-  const obj = getData(port.data);
-  const value = item.value;
-  obj.init = value & 0b00001111 ? 1 : 0;
-  obj.mode = value & 0b00000111;
-  port.data = setData(obj);
+const onSend = (data: any) => {
+  emit('send', data);
 };
 
-const getMode = ({ data }) => {
-  const mode = getKey(data, 'mode');
-  const init = getKey(data, 'init');
-  const value = init * 8 + mode;
-  return listMode.find(i => i.value === value) || {};
+const { ports, portsDef, listMode, init, isDisabled, getModeName, getStateValue, onSetPort, onMode, onUploadBinary, stringifyDateGPIO } = usePorts(onSend);
+
+const onMenu = (e: Event) => {
+  onSave(e);
 };
 
-const getValue = ({ data }) => Boolean(getKey(data, 'value'));
-
-const getStateValue = ({ gpio }) => getValue(props?.gpios?.[gpio] || {});
-
-const isDisabled = pin => Boolean(![9, 11].includes(getMode(pin).value));
-
-const onSetPort = (port, value) => {
-  const obj = getData(port.data);
-  obj.value = value;
-  port.data = setData(obj);
-
-  emit('send', { comm: 'PORT', data: { gpio: port.gpio, command: command.GPIO_COMMAND_SET, data: port.data } });
-};
-
-const onGetPort = () => {
-  emit('send', { comm: 'PORT', data: { command: command.GPIO_COMMAND_GET_ALL } });
-};
-
-const onLoadDataGpio = async () => {
-  const array = await getBinary(props.path);
-  return parseDateGPIO(array);
-};
-
-const onSave = async () => {
+const onSave = async (e: Event) => {
   const data = stringifyDateGPIO(ports.value);
   const buffer = new Uint8Array(data).buffer;
-  await onUploadBinary(props.path, buffer);
+  await onUploadBinary(pathGPIO, buffer);
   portsDef.value = JSON.parse(JSON.stringify(ports.value));
-  emit('reboot');
+  emit('reboot', e);
 };
 
 onMounted(async () => {
-  ports.value = await onLoadDataGpio();
-  portsDef.value = JSON.parse(JSON.stringify(ports.value));
-  onGetPort();
+  init();
 });
 </script>
-
-<style lang="scss">
-.service-gpio {
-  position: relative;
-  &__select {
-    max-width: 250px;
-  }
-}
-</style>

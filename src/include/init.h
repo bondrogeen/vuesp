@@ -1,8 +1,10 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include <EEPROM.h>
-#include <LittleFS.h>
+#define UDP_PORT 12345
+#define UDP_IP {255, 255, 255, 255}
+
+#include <WiFiUdp.h>
 
 #ifdef ESP32
 // #include <AsyncTCP.h>
@@ -15,8 +17,8 @@
 
 #include "../const/index.h"
 
-void setupInit();
-void saveSettings(Settings& settings);
+void initWiFi();
+void loopWiFi(uint32_t now);
 void reboot();
 uint8_t readFile(const char* path, uint8_t* buf, size_t size);
 void writeFile(const char* path, const uint8_t* buf, size_t size);

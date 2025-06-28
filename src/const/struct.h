@@ -27,7 +27,7 @@ struct Settings {
 
   uint8_t wifiIp[4];
   uint8_t wifiSubnet[4];
-  uint8_t wifiGeteway[4];
+  uint8_t wifiGateway[4];
   uint8_t wifiDns[4];
 
   char wifiSsid[32];
@@ -42,6 +42,8 @@ struct Info {
   uint32_t totalBytes;
   uint32_t usedBytes;
   uint32_t id;
+  uint32_t uptime;
+  char name[20];
 };
 
 struct Ping {

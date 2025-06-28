@@ -1,6 +1,9 @@
 #include "./include/tasks.h"
+
+#include "./include/eeprom.h"
+#include "./include/files.h"
+
 uint8_t tasks[KEY_END];
-// uint32_t lastTime = 0;
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
@@ -87,7 +90,10 @@ void send(uint8_t *message, size_t len, uint8_t task) {
 
 void loopTask(uint32_t now) {
   if (tasks[KEY_SETTINGS]) send((uint8_t *)&settings, sizeof(settings), KEY_SETTINGS);
-  if (tasks[KEY_INFO]) send((uint8_t *)&infoFS, sizeof(infoFS), KEY_INFO);
+  if (tasks[KEY_INFO]) {
+    getInfo(&infoFS);
+    send((uint8_t *)&infoFS, sizeof(infoFS), KEY_INFO);
+  }
   if (tasks[KEY_FILES]) getFile(files.name);
   if (tasks[KEY_REBOOT]) reboot();
   if (tasks[KEY_SCAN]) scanWiFi();

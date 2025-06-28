@@ -1,39 +1,67 @@
 <template>
-  <div class="file-info">
-    <div class="file-info__body my-6 mb-10">
-      <v-progressbar :value="procent"></v-progressbar>
-    </div>
-    <div class="file-info__footer d-flex j-between">
-      <div v-for="(item, key) in date" :key="key" class="center">
-        <div class="text-title-1 grey-base">{{ key }}</div>
-        <div class="text-h6">{{ toByte(item) }}</div>
+  <div class="grid grid-cols-1 gap-4 lg:max-w-[360px]">
+    <div class="flex flex-col w-full items-center gap-2">
+      <div class="relative block h-4 w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
+        <div class="absolute left-0 top-0 flex h-full items-center justify-center bg-blue-600 hover:bg-blue-500" :style="`width: ${percent}%;`" :title="`${percent}%`"></div>
+
+        <span class="absolute left-1/2 -translate-x-1/2 top-0 text-xs font-medium text-gray-700 dark:text-gray-400">{{ percent }}%</span>
       </div>
+
+      <div class="flex justify-center gap-4 w-full text-xs">
+        <div v-for="(item, key) in store" :key="key" class="">
+          <div class="text-gray-400">{{ key }}:</div>
+
+          <div>{{ item }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-sm">
+      <div v-for="(item, key) in date" :key="key" class="grid grid-cols-2">
+        <div class="text-gray-400 text-left">{{ key }}:</div>
+
+        <div class="text-right">{{ item }}</div>
+      </div>
+    </div>
+
+    <div>
+      <slot></slot>
     </div>
   </div>
 </template>
 
-<script setup>
-import { computed, defineProps } from 'vue';
-import { toByte } from '@/utils/func/';
-const props = defineProps({
-  totalBytes: { type: Number, default: 0 },
-  usedBytes: { type: Number, default: 0 },
+<script setup lang="ts">
+import { ref, computed, defineProps, onMounted } from 'vue';
+import { toByte, secToTime } from '@/utils/helpers.ts';
+
+import type { TypeStateInfo } from '@/types/types.ts';
+
+const { id = 0, firmware = [], totalBytes = 0, usedBytes = 0, uptime = 0 } = defineProps<TypeStateInfo>();
+
+const time = ref(uptime);
+
+const getFirmware = computed(() => firmware.join('.'));
+
+const store = computed(() => ({
+  Used: toByte(usedBytes),
+  Available: toByte(totalBytes - usedBytes),
+  Total: toByte(totalBytes),
+}));
+
+const date = computed(() => ({
+  Uptime: secToTime(time.value),
+  ID: id.toString(16),
+  Firmware: getFirmware.value,
+}));
+
+const percent = computed(() => Math.round((usedBytes * 100) / totalBytes));
+
+const timeUp = () => {
+  time.value++;
+  setTimeout(timeUp, 1000);
+};
+
+onMounted(() => {
+  timeUp();
 });
-
-const date = computed(() => ({ Used: props.usedBytes, Available: props.totalBytes - props.usedBytes, Total: props.totalBytes }));
-const procent = computed(() => (props.usedBytes * 100) / props.totalBytes);
 </script>
-
-<style lang="scss">
-.file-info {
-  max-width: 100%;
-  position: relative;
-  background: var(--bg-2);
-  border-radius: 10px;
-  padding: 20px;
-
-  @include above($sm) {
-    max-width: 320px;
-  }
-}
-</style>

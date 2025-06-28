@@ -1,4 +1,8 @@
 
+#include "./include/device.h"
+
+#include "./include/UnixTime.h"
+#include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
 #include "./include/led.h"
@@ -71,21 +75,6 @@ void effectsTick(uint32_t now) {
   }
 }
 
-void setupDevice() {
-  uint8_t isOk = readFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
-  Serial.println(isOk);
-  if (!isOk) {
-    writeFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
-  }
-
-  setupLed();
-  ledBrightness(device.brightness);
-  Wire.begin(GPIO_SDA, GPIO_SCL);
-  bmp.begin();
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL, Adafruit_BMP280::SAMPLING_X2, Adafruit_BMP280::SAMPLING_X16, Adafruit_BMP280::FILTER_X16, Adafruit_BMP280::STANDBY_MS_500);
-  aht.begin();
-}
-
 void loopDevice(uint32_t now) {
   if (device.effect) effectsTick(now);
 
@@ -103,7 +92,7 @@ void loopDevice(uint32_t now) {
     Serial.println("KEY_DEVICE");
     Serial.println(tasks[KEY_DEVICE]);
     if (device.command == COMMAND_GET_ALL) {
-      readFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
+      readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
       onSend();
       Serial.println("all");
     }
@@ -119,9 +108,27 @@ void loopDevice(uint32_t now) {
     if (device.command == COMMAND_SAVE) {
       device.command = COMMAND_GET_ALL;
       Serial.println("save");
-      writeFile(DEF_PAHT_DEVICE, (uint8_t *)&device, sizeof(device));
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
     }
 
     tasks[KEY_DEVICE] = 0;
-  };
+  }
+}
+
+void deviceGPIO() {
+  uint8_t value = digitalRead(13);
+  Serial.println(value);
+}
+
+void setupDevice() {
+  setupLed();
+  ledBrightness(device.brightness);
+  Wire.begin(GPIO_SDA, GPIO_SCL);
+  bmp.begin();
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL, Adafruit_BMP280::SAMPLING_X2, Adafruit_BMP280::SAMPLING_X16, Adafruit_BMP280::FILTER_X16, Adafruit_BMP280::STANDBY_MS_500);
+  aht.begin();
+}
+
+void setupFirstDevice() {
+  getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
 }

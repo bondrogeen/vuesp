@@ -1,5 +1,5 @@
-const fs = require('fs').promises;
-var path = require('path');
+import { promises as fs } from 'fs';
+import path from 'path'
 
 const args = process.argv;
 const inputFile = args[2];
