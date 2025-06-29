@@ -68,3 +68,15 @@ export const debounce = (fn: Function, ms = 300) => {
     timeoutId = setTimeout(() => fn.apply(this, args), ms);
   };
 };
+
+export const hexToRGBA = (hex: string, a = 1) => (hex ? [...hex.match(/\w\w/g).map((x) => parseInt(x, 16)), a] : []);
+
+export const int32ToBytes = (int: number) => [(int >> 24) & 0xff, (int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff];
+
+export const objCopy = (obj: any) => {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (error) {
+    return null;
+  }
+};

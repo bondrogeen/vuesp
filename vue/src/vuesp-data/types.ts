@@ -1,3 +1,8 @@
+export interface TypeSelectList {
+  name: string;
+  value: string | number;
+}
+
 export interface TypePropertyString {
   id: string;
   name: string;
@@ -6,6 +11,7 @@ export interface TypePropertyString {
   type?: string;
   min?: number;
   max?: number;
+  list?: TypeSelectList[];
   get?: string;
   set?: string;
   modifyValue?: string;
@@ -20,6 +26,7 @@ export interface TypeProperty {
   value?: any;
   min?: number;
   max?: number;
+  list?: TypeSelectList[];
   get?: (output: any) => any;
   set?: (output: any, value: any) => any;
   modifyValue?: (value: any) => any;

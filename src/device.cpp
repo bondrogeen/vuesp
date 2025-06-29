@@ -33,6 +33,12 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
         *(address + i + info->index) = *(data + i);
       }
     }
+    if (info->len == sizeof(sensors)) {
+      uint8_t *address = (uint8_t *)&sensors;
+      for (size_t i = 0; i < len; i++) {
+        *(address + i + info->index) = *(data + i);
+      }
+    }
     if ((info->index + len) == info->len) {
       tasks[task] = true;
     }
@@ -43,11 +49,9 @@ void onSend() {
   send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
 }
 
-void eventGPIO(uint8_t port, uint8_t value) {
-  Serial.print(port);
-  Serial.print(device.effect);
-  Serial.println(value);
-  if (port == GPIO_BTN && value) {
+void deviceGPIO() {
+  uint8_t value = digitalRead(GPIO_BTN);
+  if (value) {
     device.effect++;
   }
 }
@@ -57,11 +61,11 @@ void effectsTick(uint32_t now) {
     effTimer = now;
 
     switch (device.effect) {
-      case EFFECT_FIRE:
-        ledEffectFire();
-        break;
       case EFFECT_LIGHTERS:
         ledEffectLighters();
+        break;
+      case EFFECT_FIRE:
+        ledEffectFire();
         break;
       case EFFECT_TWINKLEUP:
         rainbow_fade();
@@ -75,18 +79,23 @@ void effectsTick(uint32_t now) {
   }
 }
 
+void getSensors() {
+  aht.getEvent(&humidity, &temp);
+  sensors.ahtTemperature = temp.temperature;
+  sensors.ahtHumidity = humidity.relative_humidity;
+  sensors.bmpTemperature = bmp.readTemperature();
+  sensors.bmpPressure = bmp.readPressure();
+  sensors.bmpAltitude = bmp.readAltitude(1013.25);
+  send((uint8_t *)&sensors, sizeof(sensors), KEY_SENSORS);
+}
+
 void loopDevice(uint32_t now) {
   if (device.effect) effectsTick(now);
 
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-    aht.getEvent(&humidity, &temp);
-    sensors.ahtTemperature = temp.temperature;
-    sensors.ahtHumidity = humidity.relative_humidity;
-    sensors.bmpTemperature = bmp.readTemperature();
-    sensors.bmpPressure = bmp.readPressure();
-    sensors.bmpAltitude = bmp.readAltitude(1013.25);
-    send((uint8_t *)&sensors, sizeof(sensors), KEY_SENSORS);
+    getSensors();
+    onSend();
   }
   if (tasks[KEY_DEVICE]) {
     Serial.println("KEY_DEVICE");
@@ -113,11 +122,6 @@ void loopDevice(uint32_t now) {
 
     tasks[KEY_DEVICE] = 0;
   }
-}
-
-void deviceGPIO() {
-  uint8_t value = digitalRead(13);
-  Serial.println(value);
 }
 
 void setupDevice() {

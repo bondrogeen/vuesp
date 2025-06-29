@@ -16,7 +16,7 @@
 <script setup>
 import { defineProps, defineEmits, ref } from 'vue';
 
-import { hexToRGBA } from '@/utils/helpers';
+import { hexToRGBA } from '@/utils/helpers.ts';
 
 const props = defineProps({
   color: { type: String, default: '#ffffff' },

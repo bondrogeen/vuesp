@@ -85,6 +85,8 @@ export const useModule = () => {
     if (!module) {
       module = await initModule(pathListDef);
     }
+    console.log(module?.default);
+    
     data.value = new VuespData(module?.default);
     webSocketStore.onSend('DEVICE');
   });

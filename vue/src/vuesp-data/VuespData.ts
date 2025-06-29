@@ -1,4 +1,4 @@
-import type { TypeProperty, TypePropertyString, TypeVuespData } from './types.ts';
+import type { TypeProperty, TypePropertyString, TypeVuespData, TypeSelectList } from './types.ts';
 
 import { stringToFunction, saveObjectWithFunctions, createObjectFromPaths } from './utils.ts';
 
@@ -10,11 +10,12 @@ class Property implements TypeProperty {
   icon?: string;
   min?: number;
   max?: number;
+  list?: TypeSelectList[];
   set?: (obj: any, value: any) => any;
   get?: (obj: any) => any;
-  modifyValue?: (obj: any) => any;
+  modifyValue?: (value: any) => any;
 
-  constructor({ id, name, keyValue, type, icon, min, max, get, set, modifyValue }: TypeProperty) {
+  constructor({ id, name, keyValue, type, icon, min, max, list, get, set, modifyValue }: TypeProperty) {
     this.id = id;
     this.name = name;
     this.keyValue = keyValue;
@@ -22,6 +23,7 @@ class Property implements TypeProperty {
     this.icon = icon;
     this.min = min;
     this.max = max;
+    this.list = list;
     this.set = set;
     this.get = get;
     this.modifyValue = modifyValue;
