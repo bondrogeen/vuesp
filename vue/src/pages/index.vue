@@ -33,14 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty, TypePropertyString } from '@/legacy-data/types.ts';
+import type { TypeProperty, TypePropertyString } from 'legacy-data';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 
 import { useModule } from '@/composables/useModule.ts';
 
-import { functionToString } from '@/legacy-data/utils.ts';
+import { functionToString } from 'legacy-data';
 
 import VListObject from '@/components/general/VListObject.vue';
 
