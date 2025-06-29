@@ -18,9 +18,6 @@
       <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
         <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
       </div>
-      <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
-        <CardList v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></CardList>
-      </div>
     </div>
 
     <AppDialog v-if="dialogItem" size="md" :title="isNew ? 'Add item' : 'Edit item'" @close="dialogItem = false">
@@ -36,17 +33,16 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty, TypePropertyString } from '@/vuesp-data/types.ts';
+import type { TypeProperty, TypePropertyString } from 'vuesp-data';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 
 import { useModule } from '@/composables/useModule.ts';
 
-import { functionToString } from '@/vuesp-data/utils.ts';
+import { functionToString } from 'vuesp-data';
 
 import VListObject from '@/components/general/VListObject.vue';
-import CardList from '@/components/general/CardList.vue';
 
 const dialogItem = ref(false);
 const dialogObject = ref(false);

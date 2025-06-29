@@ -117,14 +117,7 @@ export interface TypeStateWebSocket {
   path: string[];
   settings: TypeStateSettings;
   progress: any;
-  unknown: any;
-  modbus?: any;
-  main: {
-    info?: TypeStateInfo;
-    device: any;
-    dallas: any;
-    sensors: any;
-  };
+  main: any;
 }
 
 export interface TypeNotificationItem {
