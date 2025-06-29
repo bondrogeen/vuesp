@@ -16,8 +16,8 @@ const state: TypeStateWebSocket = {
     info: {},
     device: {},
     dallas: {},
+    sensors: {},
   },
-  modbus: {},
 };
 
 export const useWebSocketStore = defineStore('websocketstore', {
@@ -48,13 +48,14 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.main.device = value;
       this.main = { ...this.main };
     },
+    SET_SENSORS(value: any) {
+      this.main.sensors = value;
+      this.main = { ...this.main };
+    },
     SET_DALLAS(data: { address: number[] }) {
       const name = (data.address || []).map((i) => (i < 15 ? `0${i.toString(16)}` : i.toString(16))).join('');
       this.main.dallas[name] = data;
       this.main = { ...this.main };
-    },
-    SET_MODBUS(value: any) {
-      this.modbus = value;
     },
     SET_UNKNOWN({ object, key }: any) {
       this.unknown[key] = object;

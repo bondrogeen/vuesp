@@ -32,6 +32,7 @@ export const useWebSocket = defineStore('websocket', {
       this.onSend('INFO');
       this.onSend('DEVICE');
       this.onSend('PORT');
+      this.onSend('SENSORS');
     },
     async onStruct() {
       const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
@@ -42,8 +43,8 @@ export const useWebSocket = defineStore('websocket', {
     onopen() {
       this.pingDevice = Date.now();
       this.pingClient = Date.now();
-      this.init();
       event.emit('connected', true);
+      this.init();
     },
     onmessage(message: any) {
       this.pingDevice = Date.now();

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { changeTheme, localGet } from '@/utils/helpers';
+import { changeTheme, localGet } from '@/utils/helpers.ts';
 
 import type { TypeNotificationItem, TypeStateApp, TypeDialog } from '@/types/types.ts';
 

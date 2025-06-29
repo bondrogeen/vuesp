@@ -118,11 +118,12 @@ export interface TypeStateWebSocket {
   settings: TypeStateSettings;
   progress: any;
   unknown: any;
-  modbus: any;
+  modbus?: any;
   main: {
     info?: TypeStateInfo;
     device: any;
     dallas: any;
+    sensors: any;
   };
 }
 

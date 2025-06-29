@@ -28,20 +28,6 @@
 #define EFFECT_FIRE 2
 #define EFFECT_TWINKLEUP 3
 
-#define GPIO_SDA 4
-#define GPIO_SCL 15
-
-#define GPIO_ADC1 36
-#define GPIO_ADC2 39
-#define GPIO_ADC3 34
-#define GPIO_ADC4 35
-
-#define GPIO_HT1 32
-
-#define ADDRESS_RTC 0x68
-#define ADDRESS_OUTPUT 0x24
-#define ADDRESS_INPUT 0x22
-
 void setupDevice();
 void setupFirstDevice();
 void getGPIO();
