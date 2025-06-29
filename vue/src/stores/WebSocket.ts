@@ -57,7 +57,7 @@ export const useWebSocket = defineStore('websocket', {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           if (store?.[`SET_${key}`]) store?.[`SET_${key}`](object);
-          else store.SET_UNKNOWN(data);
+          else store.SET_MAIN(data);
         }
       }
     },

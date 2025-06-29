@@ -64,11 +64,11 @@ void setPWM() {
 }
 void getInput() {
   device.gpio12 = digitalRead(12);
-  device.gpio14 = digitalRead(D5);
+  device.gpio14 = digitalRead(14);
 }
 void setOutput() {
   Serial.println(device.gpio14);
-  digitalWrite(D5, device.gpio14);
+  digitalWrite(14, device.gpio14);
   Serial.println(device.gpio14);
 }
 
@@ -77,8 +77,8 @@ void getData() {
 }
 
 void setupDevice() {
-  pinMode(D5, OUTPUT);
-  digitalWrite(D5, LOW);
+  pinMode(14, OUTPUT);
+  digitalWrite(14, LOW);
 }
 
 void loopDevice(uint32_t now) {
