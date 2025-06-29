@@ -69,7 +69,7 @@ export const debounce = (fn: Function, ms = 300) => {
   };
 };
 
-export const hexToRGBA = (hex: string, a = 1) => (hex ? [...hex.match(/\w\w/g).map((x) => parseInt(x, 16)), a] : []);
+export const hexToRGBA = (hex: any, a = 1) => [...hex.match(/\w\w/g).map((x: string) => parseInt(x, 16)), a];
 
 export const int32ToBytes = (int: number) => [(int >> 24) & 0xff, (int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff];
 
