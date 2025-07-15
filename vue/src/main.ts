@@ -1,11 +1,8 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+
 import { useWebSocket } from '@/stores/WebSocket';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import App from '@/App.vue';
 import router from '@/router/index.ts';
 
