@@ -21,7 +21,7 @@
           </v-tab>
           <v-tab label="Paint" icon="onher">
             <div class="row">
-              <MainPaint class="col sm12" />
+              <!-- <MainPaint class="col sm12" /> -->
             </div>
           </v-tab>
         </v-tabs>
@@ -35,7 +35,7 @@ import { computed, defineProps } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-import MainPaint from '@/components/pages/main/MainPaint';
+// import MainPaint from '@/components/pages/main/MainPaint';
 
 // import event from '@/assets/js/event';
 
@@ -60,7 +60,5 @@ const getSensors = computed(() => ({
   },
 }));
 
-const getValue = value => (value ? value.toFixed(2) : '--');
+const getValue = (value) => (value ? value.toFixed(2) : '--');
 </script>
-
-<style lang="scss"></style>

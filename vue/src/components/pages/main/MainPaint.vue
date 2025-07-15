@@ -135,7 +135,7 @@ onMounted(() => {
   }, 1000);
 });
 </script>
-
+<!-- 
 <style lang="scss">
 .main-paint {
   position: relative;
@@ -185,4 +185,4 @@ onMounted(() => {
     }
   }
 }
-</style>
+</style> -->

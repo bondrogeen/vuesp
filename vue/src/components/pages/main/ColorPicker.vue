@@ -51,7 +51,7 @@ const onReverse = e => {
   emit('fill', hexToRGBA(valueFill.value));
 };
 </script>
-
+<!-- 
 <style lang="scss">
 .color-picker {
   display: flex;
@@ -106,4 +106,4 @@ const onReverse = e => {
     }
   }
 }
-</style>
+</style> -->

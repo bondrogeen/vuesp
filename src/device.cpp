@@ -51,9 +51,11 @@ void onSend() {
 
 void deviceGPIO() {
   uint8_t value = digitalRead(GPIO_BTN);
+  device.button = value;
   if (value) {
     device.effect++;
   }
+  onSend();
 }
 
 void effectsTick(uint32_t now) {
@@ -109,6 +111,7 @@ void loopDevice(uint32_t now) {
       Serial.println("set");
       // led(device);
       ledBrightness(device.brightness);
+      onSend();
     }
     if (device.command == COMMAND_DRAW) {
       Serial.println("draW");
