@@ -44,6 +44,7 @@ void setupDelay() {
   initWiFi();
   setupDevice();
   setupServer();
+  setupGPIO();
 
   // String script = String("local x = 10 local y = 25 local z = x + y print('Sum of x+y =',z)");
   // Serial.println(lua.Lua_dostring(&script));
