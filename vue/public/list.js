@@ -1,8 +1,8 @@
 export default [
   {
-    id: 'device.gpio12',
-    name: 'gpio.12',
-    keyValue: 'device.gpio12',
+    id: 'device.button',
+    name: 'button',
+    keyValue: 'device.button',
     type: 'switch',
     icon: 'light',
     get: (v) => v ? 1 : 0,
@@ -16,7 +16,7 @@ export default [
     icon: 'bulb',
     list: [{ name: 'Off', value: 0 }, { name: 'Lighters', value: 1 }, { name: 'Fire', value: 2 }, { name: 'Rainbow', value: 3 }],
     get: ({ effect }) => effect,
-    set: (device, v) => ({ ...device, effect: v, command: 2 }),
+    set: (device, v) => ({ ...device, effect: v, command: 1 }),
     modifyValue: (v) => v ? 'ON' : 'OFF',
   },
   {

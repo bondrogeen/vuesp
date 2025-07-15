@@ -18,7 +18,7 @@ onMounted(() => {
   canvas.setBuffer(props.buffer);
 });
 </script>
-
+<!-- 
 <style lang="scss">
 .card-frame {
   position: relative;
@@ -28,4 +28,4 @@ onMounted(() => {
     width: 40px;
   }
 }
-</style>
+</style> -->

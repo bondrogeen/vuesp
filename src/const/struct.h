@@ -90,7 +90,7 @@ struct Device {
   uint8_t speed;
   uint8_t effect;
   uint8_t brightness;
-  uint8_t empty1;
+  uint8_t button;
   uint8_t empty2;
   uint8_t empty3;
   uint32_t buffer[256];
