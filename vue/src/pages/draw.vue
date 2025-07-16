@@ -1,0 +1,28 @@
+<template>
+  <div class="container">
+    <div class="row">
+      <h1 class="col sm12 text-h2 mb-6">Main</h1>
+      <div class="col sm12 lg8 xl7">
+        <!-- <MainPaint class="col sm12" /> -->
+        {{ main }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
+
+// import MainPaint from '@/components/pages/main/MainPaint';
+
+// import event from '@/assets/js/event';
+
+const webSocketStore = useWebSocketStore();
+const { main } = storeToRefs(webSocketStore);
+
+onMounted(() => {
+  webSocketStore.onSend('DRAW');
+});
+</script>

@@ -13,7 +13,8 @@ Adafruit_BMP280 bmp;
 
 sensors_event_t humidity, temp;
 
-Device device = {KEY_DEVICE, COMMAND_GET_ALL, SPEED, EFFECT_DRAW, BRIGHTNESS, 0, 0, 0, {}};
+Device device = {KEY_DEVICE, COMMAND_GET_ALL, SPEED, EFFECT_DRAW, BRIGHTNESS, 0, 0};
+Draw draw = {KEY_DRAW, COMMAND_GET_ALL, SPEED, EFFECT_DRAW, {}};
 Sensors sensors = {KEY_SENSORS};
 
 uint8_t task;
@@ -33,6 +34,12 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
         *(address + i + info->index) = *(data + i);
       }
     }
+    if (info->len == sizeof(draw)) {
+      uint8_t *address = (uint8_t *)&draw;
+      for (size_t i = 0; i < len; i++) {
+        *(address + i + info->index) = *(data + i);
+      }
+    }
     if (info->len == sizeof(sensors)) {
       uint8_t *address = (uint8_t *)&sensors;
       for (size_t i = 0; i < len; i++) {
@@ -41,6 +48,8 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
     }
     if ((info->index + len) == info->len) {
       tasks[task] = true;
+      Serial.println("task");
+      Serial.println(task);
     }
   }
 }
@@ -99,31 +108,29 @@ void loopDevice(uint32_t now) {
     getSensors();
     onSend();
   }
+
   if (tasks[KEY_DEVICE]) {
-    Serial.println("KEY_DEVICE");
-    Serial.println(tasks[KEY_DEVICE]);
     if (device.command == COMMAND_GET_ALL) {
       readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
       onSend();
-      Serial.println("all");
     }
     if (device.command == COMMAND_SET) {
-      Serial.println("set");
-      // led(device);
       ledBrightness(device.brightness);
       onSend();
     }
-    if (device.command == COMMAND_DRAW) {
-      Serial.println("draW");
-      led(device);
-    }
     if (device.command == COMMAND_SAVE) {
       device.command = COMMAND_GET_ALL;
-      Serial.println("save");
       writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
     }
-
     tasks[KEY_DEVICE] = 0;
+  }
+
+  if (tasks[KEY_DRAW]) {
+    if (draw.command == COMMAND_DRAW) {
+      led(draw);
+    }
+    send((uint8_t *)&draw, sizeof(draw), KEY_DRAW);
+    tasks[KEY_DRAW] = 0;
   }
 }
 

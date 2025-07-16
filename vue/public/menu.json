@@ -5,6 +5,11 @@
     "path": "/"
   },
   {
+    "name": "Draw",
+    "icon": "IconDashboard",
+    "path": "/draw/"
+  },
+  {
     "name": "Settings",
     "icon": "IconSetting",
     "path": "/device/settings/"
