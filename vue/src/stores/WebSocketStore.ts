@@ -14,7 +14,6 @@ const state: TypeStateWebSocket = {
   main: {
     info: {},
     device: {},
-    dallas: {},
     sensors: {},
   },
 };
@@ -38,11 +37,6 @@ export const useWebSocketStore = defineStore('websocketstore', {
     },
     SET_PORT(value: TypeGpio) {
       this.gpio[value.gpio] = value;
-    },
-    SET_DALLAS(data: { address: number[] }) {
-      const name = (data.address || []).map((i) => (i < 15 ? `0${i.toString(16)}` : i.toString(16))).join('');
-      this.main.dallas[name] = data;
-      this.main = { ...this.main };
     },
     SET_MAIN({ object, key }: any) {
       this.main[key.toLowerCase()] = object;

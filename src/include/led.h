@@ -18,7 +18,7 @@
 #define SPARKLES (1U)
 
 void setupLed();
-void led(Device device);
+void led(Draw draw);
 void ledShow();
 void ledClear();
 void ledBrightness(uint8_t brightness);

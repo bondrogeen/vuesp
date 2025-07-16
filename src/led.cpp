@@ -185,13 +185,13 @@ void rainbow_fade() {  //-m2-FADE ALL LEDS THROUGH HSV RAINBOW
   }
 }
 
-void led(Device device) {
+void led(Draw draw) {
   pixels.clear();
 
   for (int i = 0; i < NUMPIXELS; i++) {
-    uint8_t r = (uint8_t)(device.buffer[i] >> 24);
-    uint8_t g = (uint8_t)(device.buffer[i] >> 16);
-    uint8_t b = (uint8_t)(device.buffer[i] >> 8);
+    uint8_t r = (uint8_t)(draw.buffer[i] >> 24);
+    uint8_t g = (uint8_t)(draw.buffer[i] >> 16);
+    uint8_t b = (uint8_t)(draw.buffer[i] >> 8);
     pixels.setPixelColor(i, r, g, b);
     // Serial.println(device.buffer[i]);
   }
