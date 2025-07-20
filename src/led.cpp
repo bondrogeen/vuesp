@@ -173,15 +173,40 @@ void ledEffectLighters() {
   }
 }
 
-uint8_t ihue = 0;
-void rainbow_fade() {  //-m2-FADE ALL LEDS THROUGH HSV RAINBOW
-  ihue++;
-  if (ihue > 255) {
-    ihue = 0;
+u_int8_t a = 0;
+int firstPixelHue = 0;
+
+void theaterChase() {
+  a++;
+  for (int b = 0; b < 3; b++) {
+    pixels.clear();
+    for (int c = b; c < pixels.numPixels(); c += 3) {
+      int hue = firstPixelHue + c * 65536L / pixels.numPixels();
+      uint32_t color = pixels.gamma32(pixels.ColorHSV(hue));
+      pixels.setPixelColor(c, color);
+    }
+    firstPixelHue += 65536 / 90;
   }
+}
+
+void rainbow_fade() {
+  firstPixelHue += 256;
+  for (int i = 0; i < pixels.numPixels(); i++) {
+    int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
+    pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue)));
+  }
+}
+
+void twinklingStars() {
+  pixels.clear();
   for (int i = 0; i < NUMPIXELS; i++) {
-    // leds[idex] = CHSV(ihue, thissat, 255);
-    pixels.setPixelColor(i, ihue, ihue, ihue);
+    int randomBrightness = random(0, 50);
+    if (random(0, 10) > 3) {
+      pixels.setPixelColor(i, pixels.Color(75, 0, 130));
+      pixels.setBrightness(randomBrightness);
+    } else {
+      pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+    }
   }
 }
 

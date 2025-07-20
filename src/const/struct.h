@@ -92,7 +92,8 @@ struct Device {
   uint8_t effect;
   uint8_t brightness;
   uint8_t button;
-  uint16_t empty;
+  uint16_t sensor;
+  uint32_t color;
 };
 
 struct Draw {

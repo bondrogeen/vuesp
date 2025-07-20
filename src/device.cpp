@@ -17,6 +17,7 @@ Device device = {KEY_DEVICE, COMMAND_GET_ALL, SPEED, EFFECT_DRAW, BRIGHTNESS, 0,
 Draw draw = {KEY_DRAW, COMMAND_GET_ALL, SPEED, EFFECT_DRAW, {}};
 Sensors sensors = {KEY_SENSORS};
 
+uint8_t state;
 uint8_t task;
 uint32_t effTimer;
 uint32_t lastTimeDevice = 0;
@@ -59,9 +60,11 @@ void onSend() {
 }
 
 void deviceGPIO() {
-  uint8_t value = digitalRead(GPIO_BTN);
-  device.button = value;
-  if (value) {
+  uint8_t button = digitalRead(GPIO_BTN);
+  uint8_t sensor = digitalRead(GPIO_HLK_LD101);
+  device.sensor = sensor;
+  device.button = button;
+  if (button) {
     device.effect++;
   }
   onSend();
@@ -70,6 +73,7 @@ void deviceGPIO() {
 void effectsTick(uint32_t now) {
   if (now - effTimer >= device.speed) {
     effTimer = now;
+    state = 1;
 
     switch (device.effect) {
       case EFFECT_LIGHTERS:
@@ -78,8 +82,14 @@ void effectsTick(uint32_t now) {
       case EFFECT_FIRE:
         ledEffectFire();
         break;
-      case EFFECT_TWINKLEUP:
+      case EFFECT_RAINBOW:
         rainbow_fade();
+        break;
+      case EFFECT_TWINKLING_STARS:
+        twinklingStars();
+        break;
+      case EFFECT_CHASE:
+        theaterChase();
         break;
       default:
         device.effect = 0;
@@ -92,6 +102,10 @@ void effectsTick(uint32_t now) {
 
 void getSensors() {
   aht.getEvent(&humidity, &temp);
+
+  Serial.println(temp.temperature);
+  Serial.println(humidity.relative_humidity);
+
   sensors.ahtTemperature = temp.temperature;
   sensors.ahtHumidity = humidity.relative_humidity;
   sensors.bmpTemperature = bmp.readTemperature();
@@ -101,7 +115,15 @@ void getSensors() {
 }
 
 void loopDevice(uint32_t now) {
-  if (device.effect) effectsTick(now);
+  if (device.effect) {
+    effectsTick(now);
+  } else {
+    if (state) {
+      state = 0;
+      ledClear();
+      ledShow();
+    }
+  }
 
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
@@ -112,16 +134,15 @@ void loopDevice(uint32_t now) {
   if (tasks[KEY_DEVICE]) {
     if (device.command == COMMAND_GET_ALL) {
       readFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-      onSend();
     }
     if (device.command == COMMAND_SET) {
       ledBrightness(device.brightness);
-      onSend();
     }
     if (device.command == COMMAND_SAVE) {
       device.command = COMMAND_GET_ALL;
       writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
     }
+    onSend();
     tasks[KEY_DEVICE] = 0;
   }
 
