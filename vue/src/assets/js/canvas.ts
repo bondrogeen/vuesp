@@ -13,9 +13,9 @@ const defColors = [
   [255, 255, 255, 255],
 ];
 
-import { int32ToBytes, objCopy } from '@/utils/helpers'
+import { int32ToBytes, objCopy } from '@/utils/helpers';
 
-const rotateRight90 = (matrix) => {
+const rotateRight90 = (matrix: any) => {
   let result = [];
   for (let i = matrix.length - 1; i >= 0; i--) {
     for (let j = 0; j < matrix[i].length; j++) {
@@ -24,21 +24,52 @@ const rotateRight90 = (matrix) => {
     }
   }
   return result;
-}
+};
 
-const rotateRight180 = (matrix) => rotateRight90(rotateRight90(matrix))
-const rotateRight270 = (matrix) => rotateRight90(rotateRight90(rotateRight90(matrix)))
+const rotateRight180 = (matrix: number[][]) => rotateRight90(rotateRight90(matrix));
+const rotateRight270 = (matrix: number[][]) => rotateRight90(rotateRight90(rotateRight90(matrix)));
+
 export default class Canvas {
-  constructor({ width, height, colors, event, view = false, selector = 'canvas', color = [255, 255, 255, 255], fill = [0, 0, 0, 255], rotate = '180', direction = 'serpentine' }) {
+  canvas: any;
+  width: any;
+  height: any;
+  tool: any;
+  rotate: any;
+  direction: any;
+  fill: any;
+  event: any;
+  colors: any;
+  w: any;
+  h: any;
+  ctx: any;
+  data: any;
+  steps: any;
+  redo_arr: any;
+  frames: any;
+  color: any;
+  active: any;
+
+  constructor({
+    width = 16,
+    height = 16,
+    colors = defColors,
+    event = 16,
+    view = false,
+    selector = 'canvas',
+    color = [255, 255, 255, 255],
+    fill = [0, 0, 0, 255],
+    rotate = '180',
+    direction = 'serpentine',
+  }) {
     this.canvas = document.querySelector(selector);
-    this.width = +width;
-    this.height = +height;
+    this.width = width;
+    this.height = height;
     this.tool = 'pen';
     this.rotate = rotate;
     this.direction = direction;
     this.fill = fill;
     this.event = event;
-    this.colors = colors || defColors;
+    this.colors = colors;
     this.canvas.width = 10 * this.width;
     this.canvas.height = 10 * this.height;
     this.canvas.style.display = 'block';
@@ -53,33 +84,34 @@ export default class Canvas {
     this.redo_arr = [];
     this.frames = [];
     this.color = color;
+    this.active = false;
 
     if (view) return;
-    console.log('sdsd');
-    this.canvas.addEventListener('click', e => {
-      const { x, y } = this.getPosition(e)
+
+    this.canvas.addEventListener('click', (e: Event) => {
+      const { x, y } = this.getPosition(e);
       if (this.tool === 'pen') this.draw(x, y);
       if (this.tool === 'eraser') this.erase(x, y);
     });
 
-    this.canvas.addEventListener('contextmenu', e => {
+    this.canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      const { x, y } = this.getPosition(e)
+      const { x, y } = this.getPosition(e);
       if (this.tool === 'eraser') {
         this.erase(x, y);
       }
-    })
+    });
 
-    this.canvas.addEventListener('mousemove', e => {
+    this.canvas.addEventListener('mousemove', (e) => {
       if (this.active) {
-        const { x, y } = this.getPosition(e)
+        const { x, y } = this.getPosition(e);
         if (this.tool === 'pen') this.draw(x, y);
         if (this.tool === 'eraser') this.erase(x, y);
       }
     });
 
-    this.canvas.addEventListener('touchmove', e => {
-      const { x, y } = this.getPosition(e)
+    this.canvas.addEventListener('touchmove', (e) => {
+      const { x, y } = this.getPosition(e);
       if (this.tool === 'pen') this.draw(x, y);
       if (this.tool === 'eraser') this.erase(x, y);
     });
@@ -90,14 +122,14 @@ export default class Canvas {
 
     this.canvas.addEventListener('mousedown', (e) => {
       this.active = true;
-      this.setTool(e.button ? 'eraser' : 'pen')
+      this.setTool(e.button ? 'eraser' : 'pen');
     });
 
     this.canvas.addEventListener('mouseup', () => {
       this.active = false;
       setTimeout(() => {
         if (this?.event?.click) this.event.click();
-      }, 100)
+      }, 100);
     });
   }
 
@@ -107,10 +139,10 @@ export default class Canvas {
     let y = e.clientY - rect.top;
     x = Math.floor((this.width * x) / this.canvas.clientWidth);
     y = Math.floor((this.height * y) / this.canvas.clientHeight);
-    return { x, y }
+    return { x, y };
   }
 
-  draw(x, y, count) {
+  draw(x: number, y: number, count?: boolean) {
     // console.log(x, y);
     if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
       this.data[x][y] = this.color;
@@ -119,21 +151,21 @@ export default class Canvas {
     }
   }
 
-  setTool(tool) {
+  setTool(tool: string) {
     this.tool = tool;
   }
 
   getRotate() {
-    let data = objCopy(this.data)
+    let data = objCopy(this.data);
     if (this.rotate === '90') data = rotateRight90(data);
     if (this.rotate === '180') data = rotateRight180(data);
     if (this.rotate === '270') data = rotateRight270(data);
-    return data
+    return data;
   }
 
   getBuffer() {
-    let data = this.getRotate()
-    let arr = [];
+    let data = this.getRotate();
+    let arr: any = [];
 
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
@@ -153,7 +185,7 @@ export default class Canvas {
   }
 
   update() {
-    const colorTemp = this.color
+    const colorTemp = this.color;
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         this.setColor(this.data[x][y]);
@@ -163,22 +195,22 @@ export default class Canvas {
     this.setColor(colorTemp);
   }
 
-  setBuffer(buffer) {
+  setBuffer(buffer: any) {
     if (!buffer) return;
 
     for (let i = 0; i < buffer.length; i++) {
-      const x = i % 16
-      const y = (i / 16) | 0
-      const value = int32ToBytes(buffer[i])
+      const x = i % 16;
+      const y = (i / 16) | 0;
+      const value = int32ToBytes(buffer[i]);
       if (this.direction === 'serpentine' && y % 2) {
-        this.data[x][y] = value
+        this.data[x][y] = value;
       } else {
-        this.data[this.width - 1 - x][y] = value
+        this.data[this.width - 1 - x][y] = value;
       }
     }
 
-    this.data = this.getRotate()
-    this.update()
+    this.data = this.getRotate();
+    this.update();
   }
 
   erase(x, y) {
@@ -190,18 +222,18 @@ export default class Canvas {
     this.ctx.globalAlpha = tga;
   }
 
-  setColor(color) {
+  setColor(color: number[]) {
     this.ctx.globalAlpha = 1;
     this.color = color;
     this.ctx.fillStyle = `rgba(${this.color.join(',')})`;
   }
 
-  setFill(color) {
+  setFill(color: number[]) {
     this.fill = color;
   }
 
   saveImage() {
-    this.canvas.toBlob(function (blob) {
+    this.canvas.toBlob(function (blob: any) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = 'canvas.png';
@@ -211,7 +243,7 @@ export default class Canvas {
   }
 
   save() {
-    this.saveInLocal()
+    this.saveInLocal();
     if (this?.event?.save) this.event.save();
   }
 
@@ -225,14 +257,14 @@ export default class Canvas {
   addFrame(data = null) {
     var img = new Image();
     img.src = data || this.canvas.toDataURL();
-    this.frames.push([img, this.data.map(inner => inner.slice())]);
+    this.frames.push([img, this.data.map((inner: any) => inner.slice())]);
   }
 
-  deleteFrame(f) {
+  deleteFrame(f: any) {
     this.frames.splice(f, 1);
   }
 
-  loadFrame(f) {
+  loadFrame(f: any) {
     this.clear();
     var img = this.frames[f][1];
     var tmp_color = this.color;
@@ -252,7 +284,7 @@ export default class Canvas {
   undo() {
     this.clear();
     this.redo_arr.push(this.steps.pop());
-    this.steps.forEach(step => {
+    this.steps.forEach((step: any) => {
       this.setColor(step[2]);
       this.ctx.globalAlpha = step[3];
       this.draw(step[0], step[1], true);
@@ -261,7 +293,7 @@ export default class Canvas {
 
   redo() {
     this.steps.push(this.redo_arr.pop());
-    this.steps.forEach(step => {
+    this.steps.forEach((step: any) => {
       this.setColor(step[2]);
       this.ctx.globalAlpha = step[3];
       this.draw(step[0], step[1], true);
@@ -283,14 +315,12 @@ export default class Canvas {
   loadInLocal() {
     const load = localStorage.getItem('canvas-data');
     if (load) {
-      const data = JSON.parse(load)
+      const data = JSON.parse(load);
       console.log(data);
     }
-
   }
 
   text() {
-
     let x = 0;
 
     x += 0.01;
@@ -306,38 +336,38 @@ export default class Canvas {
     this.ctx.fillText('Hello World', 0, 30);
     this.ctx.restore();
 
-
     this.ctx.save();
     this.ctx.scale(t, t);
     this.ctx.rotate(Math.PI / 180);
     this.ctx.fillText('Hello World', 0, 60);
     this.ctx.restore();
 
-
-
     // render();
   }
 
   addImage() {
-    this.clear()
+    this.clear();
     var _this = this;
     var fp = document.createElement('input');
     fp.type = 'file';
     fp.click();
-    fp.onchange = function (e) {
+    fp.onchange = function (e: any) {
       var reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
+      const file = e.target?.files?.[0];
+      reader.readAsDataURL(file);
       reader.onload = function () {
-        var uimg = new Image();
-        uimg.src = reader.result;
-        uimg.width = _this.w;
-        uimg.height = _this.h;
-        uimg.onload = function () {
+        var img = new Image();
+        if (!img) return;
+        img.src = reader.result;
+        img.width = _this.w;
+        img.height = _this.h;
+        img.onload = function () {
           var pxc = document.createElement('canvas');
           pxc.width = _this.w;
           pxc.height = _this.h;
-          var pxctx = pxc.getContext('2d');
-          pxctx.drawImage(uimg, 0, 0, _this.w, _this.h);
+          const pxctx = pxc.getContext('2d');
+          if (!pxctx) return;
+          pxctx.drawImage(img, 0, 0, _this.w, _this.h);
           var i, j;
           for (i = 0; i < _this.width; i++) {
             for (j = 0; j < _this.height; j++) {
@@ -348,7 +378,7 @@ export default class Canvas {
                 avg[k % 4] += x;
                 if (k % 4 == 0) ctr++;
               });
-              avg = avg.map(x => ~~(x / ctr));
+              avg = avg.map((x) => ~~(x / ctr));
               _this.setColor(avg);
               _this.draw(i, j);
             }

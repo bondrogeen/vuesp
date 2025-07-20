@@ -6,7 +6,7 @@
 
 <script setup>
 import { defineProps, onMounted } from 'vue';
-import Canvas from '@/assets/js/canvas';
+import Canvas from '@/assets/js/canvas.ts';
 
 const props = defineProps({
   id: { type: Number, default: 0 },

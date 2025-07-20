@@ -26,7 +26,9 @@
 #define EFFECT_DRAW 0
 #define EFFECT_LIGHTERS 1
 #define EFFECT_FIRE 2
-#define EFFECT_TWINKLEUP 3
+#define EFFECT_RAINBOW 3
+#define EFFECT_TWINKLING_STARS 4
+#define EFFECT_CHASE 5
 
 void setupDevice();
 void setupFirstDevice();
