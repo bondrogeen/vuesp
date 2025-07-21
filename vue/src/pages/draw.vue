@@ -14,7 +14,7 @@ import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-import MainPaint from '@/components/pages/main/MainPaint';
+import MainPaint from '@/components/pages/main/MainPaint.vue';
 
 // import event from '@/assets/js/event';
 

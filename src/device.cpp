@@ -101,13 +101,16 @@ void effectsTick(uint32_t now) {
 }
 
 void getSensors() {
-  aht.getEvent(&humidity, &temp);
 
-  Serial.println(temp.temperature);
-  Serial.println(humidity.relative_humidity);
+  // aht.getEvent(&humidity, &temp);
+
+  sensors.status = aht.getEvent(&humidity, &temp);
 
   sensors.ahtTemperature = temp.temperature;
   sensors.ahtHumidity = humidity.relative_humidity;
+  Serial.println(sensors.ahtTemperature);
+  Serial.println(sensors.ahtHumidity);
+
   sensors.bmpTemperature = bmp.readTemperature();
   sensors.bmpPressure = bmp.readPressure();
   sensors.bmpAltitude = bmp.readAltitude(1013.25);
@@ -146,6 +149,10 @@ void loopDevice(uint32_t now) {
     tasks[KEY_DEVICE] = 0;
   }
 
+  if (tasks[KEY_SENSORS]) {
+    getSensors();
+    tasks[KEY_SENSORS] = 0;
+  }
   if (tasks[KEY_DRAW]) {
     if (draw.command == COMMAND_DRAW) {
       led(draw);
