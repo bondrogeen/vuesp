@@ -67,9 +67,7 @@ void getInput() {
   device.gpio14 = digitalRead(14);
 }
 void setOutput() {
-  Serial.println(device.gpio14);
   digitalWrite(14, device.gpio14);
-  Serial.println(device.gpio14);
 }
 
 void getData() {
@@ -79,6 +77,7 @@ void getData() {
 void setupDevice() {
   pinMode(14, OUTPUT);
   digitalWrite(14, LOW);
+  setOutput();
 }
 
 void loopDevice(uint32_t now) {
@@ -90,15 +89,14 @@ void loopDevice(uint32_t now) {
 
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
-    if (device.command == 1) {
-      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
-    }
     if (device.command == 2) {
       setOutput();
     }
     if (device.command == 3) {
-      Serial.println(device.pwm);
       setPWM();
+    }
+    if (device.command == 4) {
+      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
     }
 
     device.command = 0;

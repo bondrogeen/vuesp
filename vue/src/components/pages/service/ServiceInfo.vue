@@ -7,20 +7,20 @@
         <span class="absolute left-1/2 -translate-x-1/2 top-0 text-xs font-medium text-gray-700 dark:text-gray-400">{{ percent }}%</span>
       </div>
 
-      <div class="flex justify-center gap-4 w-full text-xs">
-        <div v-for="(item, key) in store" :key="key" class="">
+      <div class="flex justify-between  w-full text-xs">
+        <div v-for="(item, key) in store" :key="key" class=" flex-auto">
           <div class="text-gray-400">{{ key }}:</div>
 
           <div>{{ item }}</div>
         </div>
       </div>
     </div>
-
+ 
     <div class="text-sm">
-      <div v-for="(item, key) in date" :key="key" class="grid grid-cols-2">
+      <div v-for="(item, key) in date" :key="key" class="flex justify-between items-center">
         <div class="text-gray-400 text-left">{{ key }}:</div>
 
-        <div class="text-right">{{ item }}</div>
+        <div class="text-right text-xs">{{ item }}</div>
       </div>
     </div>
 

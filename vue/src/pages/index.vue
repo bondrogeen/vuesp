@@ -59,7 +59,7 @@ const listMenu: TypeList[] = [
   { id: 1, name: 'Add item' },
   { id: 2, name: 'Restore items' },
   { id: 3, name: 'Save items' },
-  { id: 2, name: 'Default state' },
+  { id: 4, name: 'Save default state' },
 ];
 
 const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
