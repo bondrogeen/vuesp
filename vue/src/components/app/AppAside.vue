@@ -14,7 +14,7 @@
     <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear h-full">
       <nav>
         <div>
-          <h3 class="mb-4 text-xs leading-[20px] text-gray-400 uppercase">
+          <h3 class="mb-4 text-xs h-5 text-gray-400 uppercase">
             <span class="menu-group-title" :class="sidebarToggle ? 'lg:hidden' : ''">{{ info.name }}</span>
 
             <icon-dots :class="sidebarToggle ? 'lg:block hidden' : 'hidden'" class="menu-group-icon mx-auto fill-current hidden" />

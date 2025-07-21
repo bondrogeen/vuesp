@@ -16,7 +16,7 @@
   },
   {
     "name": "GPIO",
-    "icon": "IconStore",
+    "icon": "IconGpio",
     "path": "/device/gpio/"
   }
 ]
