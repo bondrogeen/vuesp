@@ -13,18 +13,18 @@
                 <template #activator="{ on }">
                   <v-icons icon="addFrame" @click="on.click"></v-icons>
                 </template>
-                <v-list :list="listFrame" @click="onFrame"></v-list>
+                <!-- <v-list :list="listFrame" @click="onFrame"></v-list> -->
               </v-dropdown>
             </div>
-            <ColorPicker v-if="colorPicker" class="mr-2" @color="onSetColor" @fill="onSetFill" />
+            <!-- <ColorPicker v-if="colorPicker" class="mr-2" @color="onSetColor" @fill="onSetFill" /> -->
           </div>
           <canvas class="main-paint__canvas"></canvas>
         </div>
       </div>
 
-      <div class="main-paint__frames col sm12 lg2 xl4">
+      <!-- <div class="main-paint__frames col sm12 lg2 xl4">
         <CardFrame v-for="frame of frames" :key="frame.id" v-bind="frame" @click="onCardFrame(frame)" />
-      </div>
+      </div> -->
 
       <AppDialog v-if="showDialog" class="main-paint__dialog" title="Create new" :value="showDialog" @close="onClose">
         <template #footer>
@@ -36,8 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import ColorPicker from '@/components/pages/main/ColorPicker';
-import CardFrame from '@/components/pages/main/CardFrame';
+// import ColorPicker from '@/components/pages/main/ColorPicker.vue';
+// import CardFrame from '@/components/pages/main/CardFrame';
 
 import { defineProps, onMounted, ref } from 'vue';
 import Canvas from '@/assets/js/canvas.ts';
@@ -52,10 +52,10 @@ const emit = defineEmits<{
   (e: 'send', value: any): void;
 }>();
 
-const colorPicker = ref(true);
-const frames = ref([]);
+// const colorPicker = ref(true);
+// const frames = ref([]);
 
-let canvas = {};
+let canvas: any = {};
 const showDialog = ref(true);
 
 const onClick = () => {
@@ -68,25 +68,25 @@ const onSave = () => {
   emit('send', { buffer, effect: 0, command: 4 });
 };
 
-const onFrame = ({ id }) => {
-  if (id === 1) {
-    const buffer = canvas.getBuffer();
-    frames.value.push({ id: frames.value.length + 1, buffer });
-  }
-};
+// const onFrame = ({ id }: any) => {
+//   if (id === 1) {
+//     const buffer = canvas.getBuffer();
+//     frames.value.push({ id: frames.value.length + 1, buffer });
+//   }
+// };
 
-const onCardFrame = ({ buffer }) => {
-  canvas.clear();
-  canvas.setBuffer(buffer);
-  emit('send', { buffer, effect: 0, command: 3 });
-};
+// const onCardFrame = ({ buffer }: any) => {
+//   canvas.clear();
+//   canvas.setBuffer(buffer);
+//   emit('send', { buffer, effect: 0, command: 3 });
+// };
 
-const listFrame = [
-  { id: 1, name: 'New' },
-  { id: 2, name: 'Remove' },
-];
+// const listFrame = [
+//   { id: 1, name: 'New' },
+//   { id: 2, name: 'Remove' },
+// ];
 
-const onTools = (tool) => {
+const onTools = (tool: any) => {
   if (tool.event) {
     if (typeof tool.event === 'function') tool.event();
     if (canvas[tool.event]) canvas[tool.event]();
@@ -115,12 +115,12 @@ const tools = ref([
   // { active: false, name: 'open', event: 'open' },
 ]);
 
-const onSetColor = (color) => {
-  if (canvas?.setColor) canvas.setColor(color);
-};
-const onSetFill = (color) => {
-  if (canvas?.setFill) canvas.setFill(color);
-};
+// const onSetColor = (color: any) => {
+//   if (canvas?.setColor) canvas.setColor(color);
+// };
+// const onSetFill = (color: any) => {
+//   if (canvas?.setFill) canvas.setFill(color);
+// };
 
 const onClose = () => (showDialog.value = false);
 

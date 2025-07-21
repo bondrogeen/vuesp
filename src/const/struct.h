@@ -107,7 +107,7 @@ struct Draw {
 struct Sensors {
   uint8_t key;
   uint8_t command;
-  uint16_t example1;
+  uint16_t status;
   float bmpTemperature;
   float bmpPressure;
   float bmpAltitude;

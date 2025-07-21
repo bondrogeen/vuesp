@@ -78,7 +78,7 @@ export default [
   },
   {
     id: 'sensors.aht.humidity',
-    name: 'Altitude',
+    name: 'Humidity',
     keyValue: 'sensors.ahtHumidity',
     type: 'info',
     get: (v) => v,
@@ -86,7 +86,7 @@ export default [
   },
   {
     id: 'sensors.aht.temperature',
-    name: 'Altitude',
+    name: 'Temperature',
     keyValue: 'sensors.ahtTemperature',
     type: 'info',
     get: (v) => v,

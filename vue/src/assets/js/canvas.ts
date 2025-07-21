@@ -20,6 +20,8 @@ const rotateRight90 = (matrix: any) => {
   for (let i = matrix.length - 1; i >= 0; i--) {
     for (let j = 0; j < matrix[i].length; j++) {
       if (!result[j]) result[j] = [];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       result[j].push(matrix[i][j]);
     }
   }
@@ -53,7 +55,7 @@ export default class Canvas {
     width = 16,
     height = 16,
     colors = defColors,
-    event = 16,
+    event = {},
     view = false,
     selector = 'canvas',
     color = [255, 255, 255, 255],
@@ -94,7 +96,7 @@ export default class Canvas {
       if (this.tool === 'eraser') this.erase(x, y);
     });
 
-    this.canvas.addEventListener('contextmenu', (e) => {
+    this.canvas.addEventListener('contextmenu', (e: Event) => {
       e.preventDefault();
       const { x, y } = this.getPosition(e);
       if (this.tool === 'eraser') {
@@ -102,7 +104,7 @@ export default class Canvas {
       }
     });
 
-    this.canvas.addEventListener('mousemove', (e) => {
+    this.canvas.addEventListener('mousemove', (e: Event) => {
       if (this.active) {
         const { x, y } = this.getPosition(e);
         if (this.tool === 'pen') this.draw(x, y);
@@ -110,7 +112,7 @@ export default class Canvas {
       }
     });
 
-    this.canvas.addEventListener('touchmove', (e) => {
+    this.canvas.addEventListener('touchmove', (e: Event) => {
       const { x, y } = this.getPosition(e);
       if (this.tool === 'pen') this.draw(x, y);
       if (this.tool === 'eraser') this.erase(x, y);
@@ -120,7 +122,7 @@ export default class Canvas {
       this.active = false;
     });
 
-    this.canvas.addEventListener('mousedown', (e) => {
+    this.canvas.addEventListener('mousedown', (e: any) => {
       this.active = true;
       this.setTool(e.button ? 'eraser' : 'pen');
     });
@@ -133,7 +135,7 @@ export default class Canvas {
     });
   }
 
-  getPosition(e) {
+  getPosition(e: any) {
     const rect = this.canvas.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
@@ -213,7 +215,7 @@ export default class Canvas {
     this.update();
   }
 
-  erase(x, y) {
+  erase(x: number, y: number) {
     const temp = this.color;
     const tga = this.ctx.globalAlpha;
     this.setColor(this.fill);
@@ -347,44 +349,44 @@ export default class Canvas {
 
   addImage() {
     this.clear();
-    var _this = this;
+    // var _this = this;
     var fp = document.createElement('input');
     fp.type = 'file';
     fp.click();
-    fp.onchange = function (e: any) {
-      var reader = new FileReader();
-      const file = e.target?.files?.[0];
-      reader.readAsDataURL(file);
-      reader.onload = function () {
-        var img = new Image();
-        if (!img) return;
-        img.src = reader.result;
-        img.width = _this.w;
-        img.height = _this.h;
-        img.onload = function () {
-          var pxc = document.createElement('canvas');
-          pxc.width = _this.w;
-          pxc.height = _this.h;
-          const pxctx = pxc.getContext('2d');
-          if (!pxctx) return;
-          pxctx.drawImage(img, 0, 0, _this.w, _this.h);
-          var i, j;
-          for (i = 0; i < _this.width; i++) {
-            for (j = 0; j < _this.height; j++) {
-              var ctr = 0;
-              var avg = [0, 0, 0, 0];
-              var pix = pxctx.getImageData(10 * i, 10 * j, 10, 10).data;
-              pix.forEach((x, k) => {
-                avg[k % 4] += x;
-                if (k % 4 == 0) ctr++;
-              });
-              avg = avg.map((x) => ~~(x / ctr));
-              _this.setColor(avg);
-              _this.draw(i, j);
-            }
-          }
-        };
-      };
-    };
+    // fp.onchange = function (e: any) {
+    //   var reader = new FileReader();
+    //   const file = e.target?.files?.[0];
+    //   reader.readAsDataURL(file);
+    //   reader.onload = function () {
+    //     var img = new Image();
+    //     if (!img) return;
+    //     img.src = reader.result;
+    //     img.width = _this.w;
+    //     img.height = _this.h;
+    //     img.onload = function () {
+    //       var pxc = document.createElement('canvas');
+    //       pxc.width = _this.w;
+    //       pxc.height = _this.h;
+    //       const pxctx = pxc.getContext('2d');
+    //       if (!pxctx) return;
+    //       pxctx.drawImage(img, 0, 0, _this.w, _this.h);
+    //       var i, j;
+    //       for (i = 0; i < _this.width; i++) {
+    //         for (j = 0; j < _this.height; j++) {
+    //           var ctr = 0;
+    //           var avg = [0, 0, 0, 0];
+    //           var pix = pxctx.getImageData(10 * i, 10 * j, 10, 10).data;
+    //           pix.forEach((x, k) => {
+    //             avg[k % 4] += x;
+    //             if (k % 4 == 0) ctr++;
+    //           });
+    //           avg = avg.map((x) => ~~(x / ctr));
+    //           _this.setColor(avg);
+    //           _this.draw(i, j);
+    //         }
+    //       }
+    //     };
+    //   };
+    // };
   }
 }
