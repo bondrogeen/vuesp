@@ -43,8 +43,15 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   else if (type == WS_EVT_DISCONNECT)
     countClient -= clientID;
   else if (type == WS_EVT_DATA) {
-    onWsEventTasks(arg, data, len, clientID);
-    onWsEventDevice(arg, data, len, clientID);
+    AwsFrameInfo *info = (AwsFrameInfo *)arg;
+    if (info->opcode == WS_BINARY) {
+      if (info->final && info->index == 0 && info->len == len) {
+        uint8_t task = data[0];
+        if (task > KEY_END) return;
+        onWsEventTasks(arg, data, len, clientID, task);
+        onWsEventDevice(arg, data, len, clientID, task);
+      }
+    }
   }
 }
 
@@ -110,7 +117,7 @@ void onReqModbus(AsyncWebServerRequest *request) {
       modbus.data[length + 1] = bytes[1];
       length += 2;
     }
-    
+
     len = transmitData(modbus.data, length, isCheck);
     if (!len) return request->send(422, RES_TYPE_JSON, status(0));
 

@@ -32,31 +32,15 @@ Device device = {
     0,
 };
 
-uint8_t task;
 uint32_t lastTimeDevice = 0;
 
-void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
+void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
-
-  if (info->opcode == WS_BINARY) {
-    if (info->index == 0) {
-      task = data[0];
-    }
-    if (info->len == sizeof(device)) {
-      uint8_t *address = (uint8_t *)&device;
-      for (size_t i = 0; i < len; i++) {
-        *(address + i + info->index) = *(data + i);
-      }
-    }
-    if (info->len == sizeof(modbus)) {
-      uint8_t *address = (uint8_t *)&modbus;
-      for (size_t i = 0; i < len; i++) {
-        *(address + i + info->index) = *(data + i);
-      }
-    }
-    if ((info->index + len) == info->len) {
-      tasks[task] = true;
-    }
+  if (task == KEY_DEVICE && info->len == sizeof(device)) {
+    memcpy(&device, data, sizeof(device));
+  }
+  if (task == KEY_MODBUS && info->len == sizeof(modbus)) {
+    memcpy(&modbus, data, sizeof(modbus));
   }
 }
 
