@@ -9,29 +9,18 @@ Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
 
-void onWsEventTasks(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
+void onWsEventTasks(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
-  if (info->final && info->index == 0 && info->len == len) {
-    if (info->opcode == WS_BINARY) {
-      uint8_t task = data[0];
-      if (task > sizeof(tasks)) return;
-      if (info->len == 1) {
-        tasks[task] = true;
-      } else {
-        if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
-          memcpy(&settings, data, sizeof(settings));
-          saveSettings(settings);
-        }
-        if (task == KEY_FILES && info->len == sizeof(files)) {
-          memcpy(&files, data, sizeof(files));
-          tasks[task] = true;
-        }
-        if (task == KEY_PORT && info->len == sizeof(port)) {
-          memcpy(&port, data, sizeof(port));
-          tasks[task] = true;
-        }
-      }
-    }
+  tasks[task] = true;
+  if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
+    memcpy(&settings, data, sizeof(settings));
+    saveSettings(settings);
+  }
+  if (task == KEY_FILES && info->len == sizeof(files)) {
+    memcpy(&files, data, sizeof(files));
+  }
+  if (task == KEY_PORT && info->len == sizeof(port)) {
+    memcpy(&port, data, sizeof(port));
   }
 }
 
