@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { changeTheme, localGet } from '@/utils/helpers';
 
-import type { TypeNotificationItem, TypeStateApp, TypeDialog } from '@/types/types.ts';
+import type { INotificationItem, IStateApp, IDialog } from '@/types/types.ts';
 
-const state: TypeStateApp = {
+const state: IStateApp = {
   menu: [],
   isLoading: false,
   theme: 'dark',
@@ -29,10 +29,10 @@ export const useAppStore = defineStore('app', {
       this.theme = this.theme === 'light' ? 'dark' : 'light';
       changeTheme(value || this.theme);
     },
-    setDialog(data: TypeDialog) {
+    setDialog(data: IDialog) {
       this.dialog = data;
     },
-    setNotification(notification: TypeNotificationItem) {
+    setNotification(notification: INotificationItem) {
       const id = notification?.id || Date.now();
       const timeout = notification?.timeout || 10;
       const item = this.notifications.find((i) => i.id === id);

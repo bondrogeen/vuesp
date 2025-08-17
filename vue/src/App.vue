@@ -37,7 +37,7 @@ import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocket } from '@/stores/WebSocket.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import type { TypeNotificationItem } from '@/types/types.ts';
+import type { INotificationItem } from '@/types/types.ts';
 
 import { useRoute, useRouter } from 'vue-router';
 
@@ -87,7 +87,7 @@ const onClose = () => {
   dialog.value = {};
 };
 
-const onNotifications = (item: TypeNotificationItem) => {
+const onNotifications = (item: INotificationItem) => {
   notifications.value = notifications.value.filter((i) => i.id !== item.id);
 };
 

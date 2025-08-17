@@ -63,14 +63,14 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import type { TypeMenuItem, TypeMenuChild, TypeStateInfo } from '@/types/types.ts';
+import type { IMenuItem, IMenuChild, IStateInfo } from '@/types/types.ts';
 
 import ServiceInfo from '@/components/pages/service/ServiceInfo.vue';
 
 interface Props {
   sidebarToggle?: boolean;
-  menu?: TypeMenuItem[];
-  info?: TypeStateInfo;
+  menu?: IMenuItem[];
+  info?: IStateInfo;
 }
 
 const { info = {}, sidebarToggle = false, menu = [] } = defineProps<Props>();
@@ -95,8 +95,8 @@ const selected = ref('');
 
 onMounted(() => {
   setTimeout(() => {
-    menu.forEach((item: TypeMenuItem) => {
-      const el = (item?.children || []).find((i: TypeMenuChild) => isActive(i?.path));
+    menu.forEach((item: IMenuItem) => {
+      const el = (item?.children || []).find((i: IMenuChild) => isActive(i?.path));
       if (el) selected.value = item.name;
     });
   }, 300);

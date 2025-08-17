@@ -70,12 +70,12 @@ import { toByte, debounce } from '@/utils/helpers.ts';
 
 import { DialogKey } from '@/simbol/index.ts';
 
-import type { TypeListMenu, TypeTextFieldEvent, TypeStateInfo, TypeStateFile } from '@/types/types.ts';
+import type { IListMenu, ITextFieldEvent, IStateInfo, IStateFile } from '@/types/types.ts';
 
 interface Props {
-  files: TypeStateFile[];
+  files: IStateFile[];
   modelValue?: string[];
-  info?: TypeStateInfo;
+  info?: IStateInfo;
   url?: string;
 }
 
@@ -88,12 +88,12 @@ const emit = defineEmits<{
 
 const dialog = inject(DialogKey, ({}) => {});
 
-const mainMenu: TypeListMenu[] = [
+const mainMenu: IListMenu[] = [
   { id: 2, name: 'Upload' },
   { id: 3, name: 'Reload' },
   { id: 4, name: 'Format' },
 ];
-const listMenu: TypeListMenu[] = [
+const listMenu: IListMenu[] = [
   { id: 1, name: 'Download' },
   { id: 2, name: 'Remove' },
 ];
@@ -106,7 +106,7 @@ const path = computed({
 });
 
 const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.id !== 1 : true));
-const sortFiles = computed(() => JSON.parse(JSON.stringify(files)).sort((a: TypeStateFile, b: TypeStateFile) => (a.isFile > b.isFile ? 1 : -1)));
+const sortFiles = computed(() => JSON.parse(JSON.stringify(files)).sort((a: IStateFile, b: IStateFile) => (a.isFile > b.isFile ? 1 : -1)));
 const getFullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const fileName = (name: string) => `${getFullPath.value}${name}`;
 
@@ -130,7 +130,7 @@ const onNext = (isDir: boolean, value: string) => {
   }
 };
 
-const onEventService = ({ id }: TypeListMenu) => {
+const onEventService = ({ id }: IListMenu) => {
   if (id === 2) {
     const input: HTMLInputElement | null = document.querySelector('input[type="file"]');
     if (input) {
@@ -141,7 +141,7 @@ const onEventService = ({ id }: TypeListMenu) => {
   if (id === 4) onSureFormat();
 };
 
-const onEventList = (name: string, { id }: TypeListMenu) => {
+const onEventList = (name: string, { id }: IListMenu) => {
   if (id === 1) onDownload(name);
   if (id === 2) onSureDelete(name);
 };
@@ -153,7 +153,7 @@ const onFormat = async () => {
 
 const onSureFormat = () => dialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
 
-const onUpload = async (data: TypeTextFieldEvent) => {
+const onUpload = async (data: ITextFieldEvent) => {
   const totalSize = data?.info?.totalSize || 0;
   const files = data?.files || [];
 
@@ -165,7 +165,7 @@ const onUpload = async (data: TypeTextFieldEvent) => {
       date.append(`file[${i}]`, file, fileName);
     }
   }
-  const { totalBytes = 0, usedBytes = 0 }: TypeStateInfo = info;
+  const { totalBytes = 0, usedBytes = 0 }: IStateInfo = info;
   if (totalSize < totalBytes - usedBytes) {
     const res = await (await fetch(url, { method: 'POST', body: date })).json();
     if (res?.state) onUpdate();

@@ -20,7 +20,7 @@
 import { ref, computed, onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import type { TypeStateSettings } from '@/types/types.ts';
+import type { IStateSettings } from '@/types/types.ts';
 
 import { getPageTitle } from '@/utils/helpers';
 
@@ -77,7 +77,7 @@ const onSend = ({ comm, data }: any) => {
   webSocketStore.onSend(comm, data);
 };
 
-const onSave = (settings: TypeStateSettings) => {
+const onSave = (settings: IStateSettings) => {
   webSocketStore.onSend('SETTINGS', settings);
   dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };

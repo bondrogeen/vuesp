@@ -1,57 +1,46 @@
-export interface TypeWSSend {
+export interface IWSSend {
   comm: string;
   data?: any;
 }
 
-export interface TypeMenuChild {
+export interface IMenuChild {
   name: string;
   path?: string;
 }
 
-export interface TypeMenuItem {
+export interface IMenuItem {
   name: string;
   icon: string;
   path: string;
-  children?: TypeMenuChild[];
+  children?: IMenuChild[];
 }
 
-export interface TypeMenu {
-  title: string;
-  path: string;
-  items: TypeMenuItem[];
-}
-
-export interface TypeBreadcrumb {
-  name: string;
-  path?: string;
-}
-
-export interface TypeDialog {
+export interface IDialog {
   message?: string;
   title?: string;
   value?: boolean;
   callback?: () => void;
 }
 
-export interface TypeListMenu {
+export interface IListMenu {
   id: number;
   name: string;
 }
 
-export interface TypeTextFieldFile {
+export interface ITextFieldFile {
   name: string;
   size: number;
 }
-export interface TypeTextFieldInfo {
-  files: TypeTextFieldFile[];
+export interface ITextFieldInfo {
+  files: ITextFieldFile[];
   totalSize: number;
 }
-export interface TypeTextFieldEvent {
+export interface ITextFieldEvent {
   files: FileList;
-  info?: TypeTextFieldInfo;
+  info?: ITextFieldInfo;
 }
 
-export interface TypeStateInfo {
+export interface IStateInfo {
   id?: number;
   firmware?: number[];
   totalBytes?: number;
@@ -59,7 +48,7 @@ export interface TypeStateInfo {
   uptime?: number;
   name?: string;
 }
-export interface TypeStateFile {
+export interface IStateFile {
   key: number;
   isDir: number;
   isFile: number;
@@ -68,23 +57,23 @@ export interface TypeStateFile {
   name?: string;
 }
 
-export interface TypeGpio {
+export interface IGpio {
   key: number;
   command: number;
   gpio: number;
   data: number;
 }
 
-export interface TypeStateGpio {
-  [key: string]: TypeGpio;
+export interface IStateGpio {
+  [key: string]: IGpio;
 }
 
-export interface TypelistWiFi {
+export interface IListWiFi {
   name: string;
   value: number;
 }
 
-export interface TypeStateScan {
+export interface IStateScan {
   key: number;
   id: number;
   isHidden: number;
@@ -93,7 +82,7 @@ export interface TypeStateScan {
   rssi: number;
   ssid: string;
 }
-export interface TypeStateSettings {
+export interface IStateSettings {
   key?: number;
   wifiDhcp?: number;
   wifiMode?: number;
@@ -110,26 +99,33 @@ export interface TypeStateSettings {
   authPass?: string;
 }
 
-export interface TypeStateWebSocket {
-  fileList: TypeStateFile[];
-  gpio: TypeStateGpio;
-  scanList: TypeStateScan[];
-  path: string[];
-  settings: TypeStateSettings;
-  progress: any;
-  main: any;
+export interface IStateMain {
+  info?: IStateInfo;
+  device: any;
+  dallas: any;
 }
 
-export interface TypeNotificationItem {
+export interface IStateWebSocket {
+  fileList: IStateFile[];
+  gpio: IStateGpio;
+  scanList: IStateScan[];
+  path: string[];
+  settings: IStateSettings;
+  main: IStateMain;
+  progress: any;
+  unknown: any;
+}
+
+export interface INotificationItem {
   id?: number;
   text?: string;
   timeout?: number;
 }
-export interface TypeStateApp {
-  menu: TypeMenuItem[];
+export interface IStateApp {
+  menu: IMenuItem[];
   isLoading: boolean;
   theme: string;
-  dialog: TypeDialog;
-  notifications: TypeNotificationItem[];
+  dialog: IDialog;
+  notifications: INotificationItem[];
   struct: {};
 }
