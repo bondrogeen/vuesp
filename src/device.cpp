@@ -16,30 +16,17 @@ Device device = {
     0,
     "test"};
 
-uint8_t task;
 uint32_t lastTimeDevice = 0;
 
-void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId) {
+void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
-
-  if (info->opcode == WS_BINARY) {
-    if (info->index == 0) {
-      task = data[0];
-    }
-    if (info->len == sizeof(device)) {
-      uint8_t *address = (uint8_t *)&device;
-      for (size_t i = 0; i < len; i++) {
-        *(address + i + info->index) = *(data + i);
-      }
-    }
-    if ((info->index + len) == info->len) {
-      tasks[task] = true;
-    }
+  if (task == KEY_DEVICE && info->len == sizeof(device)) {
+    memcpy(&device, data, sizeof(device));
   }
 }
 
 void onSend() {
-  send((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+  sendAll((uint8_t *)&device, sizeof(device), KEY_DEVICE);
 }
 
 void deviceGPIO() {
@@ -53,6 +40,7 @@ void getGPIO() {
 
 void setupFirstDevice() {
   getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+  // getLoadDef(DEF_PATH_MODBUS, (uint8_t *)&modbusSetting, sizeof(modbusSetting));
 }
 
 void getADC() {
