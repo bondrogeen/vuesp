@@ -195,19 +195,19 @@ import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/simbol/index.ts';
 
-import type { TypeStateScan, TypeStateSettings, TypelistWiFi, TypeTextFieldFile, TypeTextFieldEvent } from '@/types/types.ts';
+import type { IStateScan, IStateSettings, IListWiFi, ITextFieldFile, ITextFieldEvent } from '@/types/types.ts';
 
 interface Props {
-  modelValue?: TypeStateSettings;
-  scanList: TypeStateScan[];
+  modelValue?: IStateSettings;
+  scanList: IStateScan[];
 }
 
 const { modelValue = {}, scanList = [] } = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: TypeStateSettings): void;
+  (e: 'update:modelValue', value: IStateSettings): void;
   (e: 'scan', value: boolean): void;
-  (e: 'save', value: TypeStateSettings): void;
+  (e: 'save', value: IStateSettings): void;
   (e: 'reset', value: Event): void;
   (e: 'reboot', value: Event): void;
 }>();
@@ -303,7 +303,7 @@ const validators = {
 
 const { v, invalid, getError } = useForm(validators, form);
 
-const listWiFi: TypelistWiFi[] = [
+const listWiFi: IListWiFi[] = [
   { name: 'OFF', value: 0 },
   { name: 'STA', value: 1 },
   { name: 'AP', value: 2 },
@@ -323,7 +323,7 @@ const onMenu = () => {
 
 const listEncryption: string[] = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
-const onSelectSsid = ({ ssid }: TypeStateScan) => {
+const onSelectSsid = ({ ssid }: IStateScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
   const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
@@ -344,7 +344,7 @@ const onScan = (value: boolean) => {
 };
 
 const onChange = (value: number) => (settings.value.wifiMode = value);
-const onSureOffWifi = ({ value }: TypelistWiFi) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
+const onSureOffWifi = ({ value }: IListWiFi) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
 
 onMounted(() => {
   rePassword.value = settings.value.wifiPass;
@@ -354,13 +354,13 @@ const data = { LittleFS: null, firmware: null };
 
 const selectFile = ref<any>(data);
 
-const onUpdateFirmware = (e: TypeTextFieldEvent) => (selectFile.value.firmware = e);
-const onUpdateLittleFS = (e: TypeTextFieldEvent) => (selectFile.value.LittleFS = e);
+const onUpdateFirmware = (e: ITextFieldEvent) => (selectFile.value.firmware = e);
+const onUpdateLittleFS = (e: ITextFieldEvent) => (selectFile.value.LittleFS = e);
 const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
 const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
 
-const getFileNames = (files: TypeTextFieldFile[]) => (files.length ? files.map((i) => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
-const getName = (name: string) => (selectFile.value?.[name]?.info?.files || []).map((i: TypeTextFieldFile) => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
+const getFileNames = (files: ITextFieldFile[]) => (files.length ? files.map((i) => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
+const getName = (name: string) => (selectFile.value?.[name]?.info?.files || []).map((i: ITextFieldFile) => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
 
 const onFlash = async (name: string) => {
   if (!selectFile.value?.[name]) return;
