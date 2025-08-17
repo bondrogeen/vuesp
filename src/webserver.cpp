@@ -23,6 +23,9 @@ String status(uint8_t state) {
 void wsSend(uint8_t *message, size_t len) {
   ws.binary(clientID, message, len);
 }
+void wsSendAll(uint8_t *message, size_t len) {
+  ws.binaryAll(message, len);
+}
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
@@ -39,8 +42,15 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   else if (type == WS_EVT_DISCONNECT)
     countClient -= clientID;
   else if (type == WS_EVT_DATA) {
-    onWsEventTasks(arg, data, len, clientID);
-    onWsEventDevice(arg, data, len, clientID);
+    AwsFrameInfo *info = (AwsFrameInfo *)arg;
+    if (info->opcode == WS_BINARY) {
+      if (info->final && info->index == 0 && info->len == len) {
+        uint8_t task = data[0];
+        if (task > KEY_END) return;
+        onWsEventTasks(arg, data, len, clientID, task);
+        onWsEventDevice(arg, data, len, clientID, task);
+      }
+    }
   }
 }
 
@@ -48,7 +58,7 @@ void onReqUpload(AsyncWebServerRequest *request) {
   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
   uint8_t method = request->method();
   if (request->hasParam("file")) {
-    const  AsyncWebParameter *p = request->getParam("file");
+    const AsyncWebParameter *p = request->getParam("file");
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
