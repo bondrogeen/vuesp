@@ -10,7 +10,7 @@ const path = fileURLToPath(new URL('./src', import.meta.url));
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  console.log(env);
+
   return {
     build: {
       outDir: env.VITE_OUTPUT_DIR,

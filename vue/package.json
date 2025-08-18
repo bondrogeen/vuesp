@@ -1,7 +1,7 @@
 {
   "name": "vuesp",
   "private": true,
-  "version": "0.0.1",
+  "version": "3.0.1",
   "type": "module",
   "scripts": {
     "preview": "vite preview",
@@ -20,7 +20,7 @@
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",
     "vuesp-components": "^0.3.0",
-    "vuesp-struct": "^1.0.0",
+    "vuesp-struct": "^1.1.2",
     "vuesp-data": "^1.0.0"
   },
   "devDependencies": {
