@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+
 import VuespStruct from 'vuesp-struct';
 
 import { useWebSocketStore } from './WebSocketStore.ts';
