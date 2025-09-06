@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { changeTheme, localGet } from '@/utils/helpers';
 
-import type { TypeNotificationItem, TypeStateApp, TypeDialog } from '@/types/types.ts';
+import type { INotificationItem, IStateApp, IDialog } from '@/utils/types/types.ts';
 
-const state: TypeStateApp = {
+const initialState = (): IStateApp => ({
   menu: [],
   isLoading: false,
   theme: 'dark',
@@ -12,33 +12,33 @@ const state: TypeStateApp = {
   },
   notifications: [],
   struct: {},
-};
+});
 
 export const useAppStore = defineStore('app', {
-  state: () => state,
+  state: initialState,
   actions: {
-    async init({ theme }: any) {
+    async init({ theme }: { theme?: string }) {
       this.theme = localGet('theme') || 'dark';
-      if (['light', 'dark'].includes(theme)) {
+      if (theme && ['light', 'dark'].includes(theme)) {
         this.theme = theme;
       }
       changeTheme(this.theme);
       this.menu = await (await fetch(`/menu.json`, { method: 'GET' })).json();
     },
     changeTheme(value?: string) {
-      this.theme = this.theme === 'light' ? 'dark' : 'light';
-      changeTheme(value || this.theme);
+      this.theme = value || (this.theme === 'light' ? 'dark' : 'light');
+      changeTheme(this.theme);
     },
-    setDialog(data: TypeDialog) {
+    setDialog(data: IDialog) {
       this.dialog = data;
     },
-    setNotification(notification: TypeNotificationItem) {
+    setNotification(notification: INotificationItem) {
       const id = notification?.id || Date.now();
       const timeout = notification?.timeout || 10;
-      const item = this.notifications.find((i) => i.id === id);
+      const idx = this.notifications.findIndex((i) => i.id === id);
 
-      if (item) {
-        this.notifications = this.notifications.map((i) => (i.id === item.id ? notification : i));
+      if (idx !== -1) {
+        this.notifications[idx] = { ...this.notifications[idx], ...notification, id, timeout };
       } else {
         this.notifications = [...this.notifications, { ...notification, id, timeout }];
       }

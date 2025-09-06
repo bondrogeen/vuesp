@@ -16,7 +16,6 @@
 #include "./webserver.h"
 
 void setupFirstGPIO();
-void setupGPIO();
 void loopGPIO(uint32_t now);
 
 #endif

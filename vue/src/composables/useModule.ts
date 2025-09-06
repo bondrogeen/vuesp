@@ -1,11 +1,11 @@
-import type { TypeVuespData, TypePropertyString } from '@/legacy-data/types.ts';
+import type { TypeVuespData, TypePropertyString } from 'legacy-data';
 import type { Ref } from 'vue';
 
 import { onMounted, ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
+import { VuespData } from 'legacy-data';
 import { loadModule, saveModule } from '@/utils/fs.ts';
-import { VuespData } from '@/legacy-data/VuespData';
 import { pathListDef, pathList } from '@/utils/const.ts';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';

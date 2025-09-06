@@ -34,7 +34,7 @@ import { defineProps, defineEmits, onMounted } from 'vue';
 
 import { pathGPIO } from '@/utils/const.ts';
 
-import type { TypeWSSend } from '@/types/types.ts';
+import type { IWSSend } from '@/utils/types/types.ts';
 
 import { usePorts } from '@/composables/usePorts.ts';
 
@@ -46,7 +46,7 @@ const { gpio = {} } = defineProps<Props>();
 
 const emit = defineEmits<{
   (e: 'click', value: boolean): void;
-  (e: 'send', value: TypeWSSend): void;
+  (e: 'send', value: IWSSend): void;
   (e: 'reboot', value: Event): void;
 }>();
 
