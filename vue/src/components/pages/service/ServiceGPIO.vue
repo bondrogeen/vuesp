@@ -34,7 +34,7 @@ import { defineProps, defineEmits, onMounted } from 'vue';
 
 import { pathGPIO } from '@/utils/const.ts';
 
-import type { IWSSend } from '@/types/types.ts';
+import type { IWSSend } from '@/utils/types/types.ts';
 
 import { usePorts } from '@/composables/usePorts.ts';
 

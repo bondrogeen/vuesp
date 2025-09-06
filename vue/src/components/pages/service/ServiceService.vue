@@ -44,9 +44,9 @@
 <script setup lang="ts">
 import { computed, ref, defineEmits, inject, nextTick } from 'vue';
 
-import type { ITextFieldFile, ITextFieldEvent } from '@/types/types.ts';
+import type { ITextFieldFile, ITextFieldEvent } from '@/utils/types/types.ts';
 
-import { DialogKey } from '@/simbol/index.ts';
+import { DialogKey } from '@/utils/types/simbol';
 
 const emit = defineEmits<{
   (e: 'reset', value: Event): void;

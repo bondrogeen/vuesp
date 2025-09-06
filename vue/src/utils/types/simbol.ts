@@ -1,6 +1,6 @@
 import type { InjectionKey, Ref } from 'vue';
 
-import type { IDialog, INotificationItem } from '@/types/types.ts';
+import type { IDialog, INotificationItem } from '@/utils/types/types.ts';
 
 export const ThemeKey: InjectionKey<Ref<string>> = Symbol('theme');
 export const DialogKey: InjectionKey<(data: IDialog) => void> = Symbol('dialog');

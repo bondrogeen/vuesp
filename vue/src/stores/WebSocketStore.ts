@@ -2,25 +2,24 @@ import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket.js';
 import { useAppStore } from '@/stores/AppStore.js';
 
-import type { IStateWebSocket, IStateMain, IStateInfo, IStateFile, IStateSettings, IStateScan, IGpio } from '@/types/types.ts';
+import type { IStateWebSocket, IStateMain, IStateInfo, IStateFile, IStateSettings, IStateScan, IGpio } from '@/utils/types/types.ts';
 
-const state: IStateWebSocket = {
+const initialState = (): IStateWebSocket => ({
   progress: {},
   scanList: [],
   fileList: [],
   path: ['root'],
   settings: {},
   gpio: {},
-  unknown: undefined,
   main: {
     info: {},
     device: {},
     dallas: {},
   },
-};
+});
 
 export const useWebSocketStore = defineStore('websocketstore', {
-  state: () => state,
+  state: initialState,
   actions: {
     SET_INFO(info: IStateInfo) {
       this.main.info = info;
@@ -44,12 +43,12 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.gpio[value.gpio] = value;
     },
     SET_DALLAS(data: { address: number[] }) {
-      const name = (data.address || []).map((i) => (i < 15 ? `0${i.toString(16)}` : i.toString(16))).join('');
+      const name = (data.address || []).map((i) => (i < 16 ? `0${i.toString(16)}` : i.toString(16))).join('');
       this.main.dallas[name] = data;
       this.main = { ...this.main };
     },
-    SET_MAIN({ object, key }: any) {
-      const name: keyof IStateMain = key.toLowerCase();
+    SET_MAIN({ object, key }: { object: any; key: string }) {
+      const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
       this.main[name] = object;
       this.main = { ...this.main };
     },

@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 gap-4 lg:max-w-[360px]">
+  <div class="grid grid-cols-1 gap-4 lg:max-w-[360px] min-w-[250px]">
     <div class="flex flex-col w-full items-center gap-2">
       <div class="relative block h-4 w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800">
         <div class="absolute left-0 top-0 flex h-full items-center justify-center bg-blue-600 hover:bg-blue-500" :style="`width: ${percent}%;`" :title="`${percent}%`"></div>
@@ -34,7 +34,7 @@
 import { ref, computed, defineProps, onMounted } from 'vue';
 import { toByte, secToTime } from '@/utils/helpers.ts';
 
-import type { IStateInfo } from '@/types/types.ts';
+import type { IStateInfo } from '@/utils/types/types.ts';
 
 const { id = 0, firmware = [], totalBytes = 0, usedBytes = 0, uptime = 0 } = defineProps<IStateInfo>();
 

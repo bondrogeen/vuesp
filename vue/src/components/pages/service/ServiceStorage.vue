@@ -68,9 +68,9 @@
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
 import { toByte, debounce } from '@/utils/helpers.ts';
 
-import { DialogKey } from '@/simbol/index.ts';
+import { DialogKey } from '@/utils/types/simbol';
 
-import type { IListMenu, ITextFieldEvent, IStateInfo, IStateFile } from '@/types/types.ts';
+import type { IListMenu, ITextFieldEvent, IStateInfo, IStateFile } from '@/utils/types/types.ts';
 
 interface Props {
   files: IStateFile[];
