@@ -3,6 +3,13 @@ export interface IWSSend {
   data?: any;
 }
 
+export interface IWebSocket {
+  socket: WebSocket | null;
+  pingClient: number;
+  pingDevice: number;
+  struct: any;
+}
+
 export interface IMenuChild {
   name: string;
   path?: string;
@@ -113,7 +120,6 @@ export interface IStateWebSocket {
   settings: IStateSettings;
   main: IStateMain;
   progress: any;
-  unknown: any;
 }
 
 export interface INotificationItem {

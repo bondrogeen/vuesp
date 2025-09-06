@@ -50,12 +50,12 @@ const isNew = ref(false);
 
 const item: Ref<TypePropertyString> = ref({ id: '', name: '', keyValue: '' });
 
-interface TypeList {
+interface IListMenu {
   id: number;
   name: string;
 }
 
-const listMenu: TypeList[] = [
+const listMenu: IListMenu[] = [
   { id: 1, name: 'Add item' },
   { id: 2, name: 'Restore items' },
   { id: 3, name: 'Save items' },
@@ -64,7 +64,7 @@ const listMenu: TypeList[] = [
 
 const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
 
-const onMenuEvent = async ({ id }: TypeList) => {
+const onMenuEvent = ({ id }: IListMenu) => {
   if (id === 1) {
     dialogObject.value = true;
     isNew.value = true;

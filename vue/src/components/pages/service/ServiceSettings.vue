@@ -193,9 +193,9 @@ import { required, max, min, sameAs, ip } from '@/utils/validate.js';
 
 import { useForm } from '@/composables/useForm.js';
 
-import { DialogKey } from '@/simbol/index.ts';
+import { DialogKey } from '@/utils/types/simbol';
 
-import type { IStateScan, IStateSettings, IListWiFi, ITextFieldFile, ITextFieldEvent } from '@/types/types.ts';
+import type { IStateScan, IStateSettings, IListWiFi, ITextFieldFile, ITextFieldEvent } from '@/utils/types/types.ts';
 
 interface Props {
   modelValue?: IStateSettings;

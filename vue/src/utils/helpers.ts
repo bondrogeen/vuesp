@@ -1,4 +1,4 @@
-import type { IMenuItem } from '@/types/types.ts';
+import type { IMenuItem } from '@/utils/types/types.ts';
 
 export const jsonParse = (data: string | null) => {
   try {
@@ -11,11 +11,13 @@ export const jsonParse = (data: string | null) => {
 const jsonString = (data: object) => (typeof data === 'object' ? JSON.stringify(data) : data);
 
 export const localGet = (name: string) => jsonParse(localStorage.getItem(name));
+
 export const localSet = (name: string, data: any) => {
   if (localStorage) localStorage.setItem(name, jsonString(data));
 };
 
 export const sessionGet = (name: string) => jsonParse(sessionStorage.getItem(name));
+
 export const sessionSet = (name: string, data: any) => {
   if (sessionStorage) sessionStorage.setItem(name, jsonString(data));
 };
