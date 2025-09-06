@@ -1,6 +1,5 @@
 {
   "name": "vuesp",
-  "private": true,
   "version": "3.0.1",
   "type": "module",
   "scripts": {
@@ -13,6 +12,7 @@
     "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
     "recovery": "node ./utils/script.js /recovery/ ../src/pages"
   },
+  "author": "bondrogeen",
   "dependencies": {
     "@types/websocket": "^1.0.10",
     "pinia": "^3.0.2",
