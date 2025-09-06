@@ -37,13 +37,13 @@ import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocket } from '@/stores/WebSocket.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import type { TypeNotificationItem } from '@/types/types.ts';
+import type { INotificationItem } from '@/utils/types/types.ts';
 
 import { useRoute, useRouter } from 'vue-router';
 
 import AppAside from '@/components/app/AppAside.vue';
 
-import { DialogKey, NotificationKey } from '@/simbol/index.ts';
+import { DialogKey, NotificationKey } from '@/utils/types/simbol';
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
@@ -56,7 +56,8 @@ const drawer = ref(false);
 const isIframe = ref(false);
 const sidebarToggle = ref(false);
 
-let ping: ReturnType<typeof setTimeout> | null = null;
+let ping: ReturnType<typeof setInterval> | null = null;
+let messageListener: ((event: MessageEvent) => void) | null = null; // Для очистки слушателя
 
 const route = useRoute();
 const router = useRouter();
@@ -70,13 +71,15 @@ const proxy = import.meta.env.VITE_PROXY;
 const host = mode === 'production' ? window.location.host : proxy;
 
 const connect = () => {
-  const instance: any = new WebSocket(`ws://${host}/esp`);
+  const instance: WebSocket = new WebSocket(`ws://${host}/esp`);
   instance.binaryType = 'arraybuffer';
   instance.onopen = webSocket.onopen;
   instance.onmessage = webSocket.onmessage;
-  instance.onclose = (e: any) => {
+  instance.onclose = (e: CloseEvent) => {
     webSocket.onclose(e);
-    if (e.code !== 1000) connect();
+    if (e.code !== 1000) {
+      setTimeout(connect, 2000);
+    }
   };
   instance.onerror = webSocket.onerror;
   socket.value = instance;
@@ -87,7 +90,7 @@ const onClose = () => {
   dialog.value = {};
 };
 
-const onNotifications = (item: TypeNotificationItem) => {
+const onNotifications = (item: INotificationItem) => {
   notifications.value = notifications.value.filter((i) => i.id !== item.id);
 };
 
@@ -103,8 +106,8 @@ onMounted(() => {
       html.classList.add('no-scrollbar');
     }
 
-    window.addEventListener('message', (event) => {
-      console.log('Данные:', event);
+    messageListener = (event: MessageEvent) => {
+      console.log('Data:', event);
       if (event?.data?.type === 'theme') {
         appStore.changeTheme(event.data.value);
       }
@@ -112,12 +115,14 @@ onMounted(() => {
         const data = event.data.data;
         router.push(data);
       }
-    });
+    };
+    window.addEventListener('message', messageListener);
   }
 });
 
 onUnmounted(() => {
   if (ping) clearInterval(ping);
-  socket.value.close(1000);
+  if (socket.value) socket.value.close(1000);
+  if (messageListener) window.removeEventListener('message', messageListener);
 });
 </script>

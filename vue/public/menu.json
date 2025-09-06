@@ -5,11 +5,6 @@
     "path": "/"
   },
   {
-    "name": "ModBus",
-    "icon": "IconDevice",
-    "path": "/modbus/"
-  },
-  {
     "name": "Settings",
     "icon": "IconSetting",
     "path": "/device/settings/"
@@ -18,5 +13,10 @@
     "name": "Storage",
     "icon": "IconStore",
     "path": "/device/storage/"
+  },
+  {
+    "name": "GPIO",
+    "icon": "IconGpio",
+    "path": "/device/gpio/"
   }
 ]

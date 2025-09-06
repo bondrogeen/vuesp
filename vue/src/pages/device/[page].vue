@@ -20,11 +20,11 @@
 import { ref, computed, onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import type { TypeStateSettings } from '@/types/types.ts';
+import type { IStateSettings } from '@/utils/types/types.ts';
 
 import { getPageTitle } from '@/utils/helpers';
 
-import event from '@/assets/js/event';
+import { useConnection } from '@/composables/useConnection.js';
 
 import ServiceGPIO from '@/components/pages/service/ServiceGPIO.vue';
 import ServiceStorage from '@/components/pages/service/ServiceStorage.vue';
@@ -35,7 +35,12 @@ import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
 import { useRoute } from 'vue-router';
 
-import { DialogKey, NotificationKey } from '@/simbol/index.ts';
+import { DialogKey, NotificationKey } from '@/utils/types/simbol';
+
+useConnection(() => {
+  webSocketStore.onSend('SETTINGS');
+  webSocketStore.onSend('INFO');
+});
 
 const appStore = useAppStore();
 const { menu } = storeToRefs(appStore);
@@ -77,7 +82,7 @@ const onSend = ({ comm, data }: any) => {
   webSocketStore.onSend(comm, data);
 };
 
-const onSave = (settings: TypeStateSettings) => {
+const onSave = (settings: IStateSettings) => {
   webSocketStore.onSend('SETTINGS', settings);
   dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };
@@ -87,14 +92,7 @@ const onScan = (value: boolean) => {
   if (!scanList.value.length) webSocketStore.onSend('SCAN');
 };
 
-event.on('init', () => {
-  if (!settings?.value?.key) webSocketStore.onSend('SETTINGS');
-});
-
 onMounted(() => {
-  webSocketStore.onSend('SETTINGS');
-  webSocketStore.onSend('INFO');
-
   setTimeout(() => {
     show.value = true;
   }, 100);

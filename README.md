@@ -2,12 +2,17 @@
 
 Vue + ESP = Vuesp
 
-Template for your projects with a web interface.
-
-![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen.gif)
+Template for your arduino projects with a web interface.
 
 [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino  
 [Vue3](https://vuejs.org/) - The Progressive JavaScript Framework
+
+Screenshot
+
+![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen/home.webp)
+![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen/settings.webp)
+![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen/storage.webp)
+![image](https://raw.githubusercontent.com/bondrogeen/vuesp/master/github/images/screen/action.webp)
 
 ## Project structure
 
@@ -57,7 +62,8 @@ npm i
 Next in [.env](./vue/.env) file change proxy to your ip device
 
 ```
-PROXY=192.168.1.10 // Change to your ip esp device
+VITE_PROXY=192.168.1.10 // Change to your ip esp device
+VITE_OUTPUT_DIR=../data/www/
 ```
 
 ```
@@ -71,6 +77,10 @@ http://localhost:3000/
 ```
 npm run build
 ```
+
+## 3.1.0 (2025-07-03)
+
+- (bondrogeen) Minor changes
 
 ### 3.0.0 (2025-04-03)
 
@@ -125,7 +135,7 @@ npm run build
 
 The MIT License (MIT)
 
-Copyright (c) 2021-2022, bondrogeen <bondrogeen@gmail.com>
+Copyright (c) 2021-2025, bondrogeen <bondrogeen@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

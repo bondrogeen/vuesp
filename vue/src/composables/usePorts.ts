@@ -46,7 +46,7 @@ export const usePorts = (onSend: (data: any) => void) => {
     return listMode.find((i) => i.value === value);
   };
 
-  const getModeName = (pin: TypePort) => getMode(pin)?.name || '';
+  const getModeName = (pin: TypePort) => getMode(pin)?.value || 0;
 
   const getValue = ({ data }: TypePort) => Boolean(getKey(data, 'value'));
 

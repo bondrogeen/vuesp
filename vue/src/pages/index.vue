@@ -14,7 +14,7 @@
       </v-dropdown>
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fill,_minmax(120px,_1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fill,_minmax(130px,_1fr))] gap-4">
       <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
         <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
       </div>
@@ -33,14 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty, TypePropertyString } from '@/vuesp-data/types.ts';
+import type { TypeProperty, TypePropertyString } from 'vuesp-data';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 
 import { useModule } from '@/composables/useModule.ts';
 
-import { functionToString } from '@/vuesp-data/utils.ts';
+import { functionToString } from 'vuesp-data';
 
 import VListObject from '@/components/general/VListObject.vue';
 
@@ -50,21 +50,21 @@ const isNew = ref(false);
 
 const item: Ref<TypePropertyString> = ref({ id: '', name: '', keyValue: '' });
 
-interface TypeList {
+interface IListMenu {
   id: number;
   name: string;
 }
 
-const listMenu: TypeList[] = [
+const listMenu: IListMenu[] = [
   { id: 1, name: 'Add item' },
   { id: 2, name: 'Restore items' },
   { id: 3, name: 'Save items' },
-  { id: 2, name: 'Default state' },
+  { id: 4, name: 'Save default state' },
 ];
 
 const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
 
-const onMenuEvent = async ({ id }: TypeList) => {
+const onMenuEvent = ({ id }: IListMenu) => {
   if (id === 1) {
     dialogObject.value = true;
     isNew.value = true;

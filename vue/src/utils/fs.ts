@@ -4,6 +4,7 @@ export const fetchJson = async (path: string, init?: RequestInit) => {
   const res = await fetch(path, init);
   return await res.json();
 };
+
 export const fetchText = async (path: string, init?: RequestInit) => {
   const res = await fetch(path, init);
   return await res.text();

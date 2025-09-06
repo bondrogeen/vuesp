@@ -5,7 +5,7 @@
 #include "./include/init.h"
 #include "./include/tasks.h"
 
-uint8_t gpio[0] = {};
+uint8_t gpio[5] = {4, 5, 12, 13, 14};
 uint8_t ports[sizeof(gpio)][2] = {};
 
 uint8_t btnStatus = 0;
@@ -41,18 +41,29 @@ uint8_t getPort(uint8_t gpio) {
 }
 
 void initGpio() {
-  pinMode(13, INPUT);
-  digitalWrite(13, LOW);
+  for (uint8_t i = 0; i < sizeof(gpio); i++) {
+    uint8_t data = ports[i][1];
 
-  attachInterrupt(13, btnIsr, FALLING);
+    uint8_t init = (data & GPIO_INIT) >> 7;
+    uint8_t mode = (data & GPIO_MODE) >> 4;
+    uint8_t value = (data & GPIO_VALUE) >> 0;
+
+    if (init) {
+      pinMode(gpio[i], mode);
+      digitalWrite(gpio[i], value);
+    }
+    if (mode == INPUT_PULLUP) {
+      attachInterrupt(gpio[i], btnIsr, CHANGE);
+    }
+  }
 }
 
 void setupFirstGPIO() {
-  getLoadDef(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
-}
-
-void setupGPIO() {
-  defPorts();
+  uint8_t isOk = readFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
+  if (!isOk) {
+    defPorts();
+    writeFile(DEF_PATH_GPIO, (uint8_t *)ports, sizeof(ports));
+  }
   initGpio();
 }
 
@@ -85,10 +96,9 @@ void loopGPIO(uint32_t now) {
     debounce = now;
   }
   if (btnStatus == 2 && now - debounce > 50) {
-    Serial.println(debounce);
     btnStatus = 0;
-    // getAll(false);
-    getGPIO();
+    getAll(false);
+    deviceGPIO();
   }
 
   if (tasks[KEY_PORT]) {
