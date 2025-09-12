@@ -1,13 +1,12 @@
 import { defineStore } from 'pinia';
-import VuespStruct from 'vuesp-struct';
+
+import { struct } from '@/utils/struct.ts';
 
 import { useWebSocketStore } from './WebSocketStore.ts';
 import event from '@/assets/js/event.ts';
 import { log } from '@/utils/debug.ts';
 
 import type { IWebSocket } from '@/utils/types/types.ts';
-
-const struct = new VuespStruct();
 
 const initialState = (): IWebSocket => ({
   socket: null,
@@ -24,11 +23,6 @@ export const useWebSocket = defineStore('websocket', {
       this.onSend('DEVICE');
       this.onSend('PORT');
       event.emit('init');
-    },
-    async onStruct() {
-      const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
-      struct.init(res);
-      return res;
     },
     onopen() {
       this.pingDevice = Date.now();
