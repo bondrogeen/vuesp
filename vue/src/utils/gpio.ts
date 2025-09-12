@@ -1,9 +1,9 @@
 export const mask = {
   GPIO_VALUE: 0b00000001,
   GPIO_STATUS: 0b00000010,
-  GPIO_EMPTY: 0b00001100,
+  GPIO_INTERRUPT: 0b00001100,
   GPIO_MODE: 0b01110000,
-  GPIO_INIT: 0b10000000,
+  GPIO_DISABLED: 0b10000000,
 };
 
 export const command = {
@@ -12,10 +12,13 @@ export const command = {
   GPIO_COMMAND_GET_ALL: 2,
 };
 
-export const parseDateGPIO = (array: any): any => {
-  const arr = [];
-  for (let i = 0; i < array.length; i += 2) {
-    arr.push({ gpio: array[i], data: array[i + 1] });
+export const parseDateGPIO = (array: any): ArrayBuffer[] => {
+  const arr: ArrayBuffer[] = [];
+  const length = 8; // Port length
+  for (let i = 0; i < array.length; i += length) {
+    const data = array.slice(i, i + length);
+    const uint8View = new Uint8Array(data);
+    arr.push(uint8View.buffer);
   }
   return arr;
 };
@@ -40,9 +43,9 @@ export const toggleBit = (byte: number, mask: number) => (byte ^= mask);
 
 export const getData = (byte: number): any => {
   return {
-    init: (byte & mask.GPIO_INIT) >> 7,
+    disabled: (byte & mask.GPIO_DISABLED) >> 7,
     mode: (byte & mask.GPIO_MODE) >> 4,
-    empty: (byte & mask.GPIO_EMPTY) >> 2,
+    interrupt: (byte & mask.GPIO_INTERRUPT) >> 2,
     status: (byte & mask.GPIO_STATUS) >> 1,
     value: (byte & mask.GPIO_VALUE) >> 0,
   };
@@ -51,7 +54,7 @@ export const getData = (byte: number): any => {
 export const setData = (obj: any) => {
   let data = 0;
   data = obj.value ? setBit(data, mask.GPIO_VALUE) : clearBit(data, mask.GPIO_VALUE);
-  data = obj.init ? setBit(data, mask.GPIO_INIT) : clearBit(data, mask.GPIO_INIT);
+  data = obj.disabled ? setBit(data, mask.GPIO_DISABLED) : clearBit(data, mask.GPIO_DISABLED);
   data = obj.status ? setBit(data, mask.GPIO_STATUS) : clearBit(data, mask.GPIO_STATUS);
   data = clearBit(data, mask.GPIO_MODE);
   data |= (obj.mode & 0b111) << 4;
@@ -66,7 +69,7 @@ export const getKey = (byte: number, key: string) => {
 //   return {
 //     value: getBit(byte, mask.GPIO_VALUE),
 //     mode: getBit(byte, mask.GPIO_MODE),
-//     init: getBit(byte, mask.GPIO_INIT),
+//     disabled: getBit(byte, mask.GPIO_DISABLED),
 //     status: getBit(byte, mask.GPIO_STATUS),
 //   };
 // };

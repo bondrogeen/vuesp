@@ -68,7 +68,10 @@ export interface IGpio {
   key: number;
   command: number;
   gpio: number;
-  data: number;
+  mode: number;
+  value: number;
+  interrupt: number;
+  disabled: number;
 }
 
 export interface IStateGpio {
@@ -108,13 +111,14 @@ export interface IStateSettings {
 
 export interface IStateMain {
   info?: IStateInfo;
+  gpio: IStateGpio;
   device: any;
   dallas: any;
 }
 
 export interface IStateWebSocket {
   fileList: IStateFile[];
-  gpio: IStateGpio;
+
   scanList: IStateScan[];
   path: string[];
   settings: IStateSettings;

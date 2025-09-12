@@ -10,8 +10,8 @@ const initialState = (): IStateWebSocket => ({
   fileList: [],
   path: ['root'],
   settings: {},
-  gpio: {},
   main: {
+    gpio: {},
     info: {},
     device: {},
     dallas: {},
@@ -40,7 +40,10 @@ export const useWebSocketStore = defineStore('websocketstore', {
       this.progress = value;
     },
     SET_PORT(value: IGpio) {
-      this.gpio[value.gpio] = value;
+      console.log(value);
+      
+      this.main.gpio[value.gpio] = value;
+      this.main = { ...this.main };
     },
     SET_DALLAS(data: { address: number[] }) {
       const name = (data.address || []).map((i) => (i < 16 ? `0${i.toString(16)}` : i.toString(16))).join('');

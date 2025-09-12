@@ -81,7 +81,10 @@ struct Port {
   uint8_t key;
   uint8_t command;
   uint8_t gpio;
-  uint8_t data;
+  uint8_t mode;
+  uint16_t value;
+  uint8_t interrupt;
+  uint8_t disabled;
 };
 
 struct Device {

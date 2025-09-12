@@ -1,8 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 
-import { useWebSocket } from '@/stores/WebSocket';
-
 import App from '@/App.vue';
 import router from '@/router/index.ts';
 
@@ -25,8 +23,6 @@ directives.forEach(({ name, directive }) => app.directive(name, directive));
 (async () => {
   app.use(pinia);
   app.use(VuespComponents);
-  const store = useWebSocket();
-  await store.onStruct();
   app.use(router);
   app.mount('#appVuesp');
 })();

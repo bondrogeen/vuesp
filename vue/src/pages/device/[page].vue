@@ -11,7 +11,7 @@
 
       <ServiceStorage v-if="isPage('storage')" v-model="path" :files="fileList" :info="main.info" @send="onSend" />
 
-      <ServiceGPIO v-if="isPage('gpio')" :gpio="gpio" @reboot="onSureReboot" @send="onSend" />
+      <ServiceGPIO v-if="isPage('gpio')" :gpio="main.gpio" @reboot="onSureReboot" @send="onSend" />
     </template>
   </div>
 </template>
@@ -48,7 +48,7 @@ const { menu } = storeToRefs(appStore);
 const title = computed(() => getPageTitle(menu.value, route.fullPath).name);
 
 const webSocketStore = useWebSocketStore();
-const { fileList, main, path, settings, scanList, gpio } = storeToRefs(webSocketStore);
+const { fileList, main, path, settings, scanList } = storeToRefs(webSocketStore);
 
 const route = useRoute();
 
