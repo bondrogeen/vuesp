@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import type { IGpio, IStateGpio } from '@/utils/types/types.ts';
+import type { IGpio } from 'vuesp-components/types';
 
 import { ref } from 'vue';
 import { getBinary, onUploadBinary } from '@/utils/fs';
@@ -15,8 +15,14 @@ export const usePorts = (onSend: (data: any) => void) => {
     value: number;
   }
 
-  const ports: Ref<IGpio[]> = ref([]);
-  const portsDef = ref([]);
+  const ports: Ref<Record<string | number, IGpio>> = ref({});
+
+  const enum GPIOMode {
+    INPUT,
+    OUTPUT,
+    INPUT_PULLUP,
+    OUTPUT_OPEN_DRAIN,
+  }
 
   const listMode: TypeMode[] = [
     { name: 'INPUT', value: 0 }, // 0x00
@@ -35,33 +41,17 @@ export const usePorts = (onSend: (data: any) => void) => {
     { name: 'CHANGE', value: 3 }, // 0x03
   ];
 
-  const onMode = (port: IGpio, item: TypeMode) => {
-    console.log(port, item);
+  const isOutput = ({ mode }: IGpio) => [GPIOMode.OUTPUT, GPIOMode.OUTPUT_OPEN_DRAIN].includes(mode);
+  const isInput = ({ mode }: IGpio) => [GPIOMode.INPUT, GPIOMode.INPUT_PULLUP].includes(mode);
 
-    // const obj = getData(port.data) || {};
-    // const value = item?.value || 0;
-    // obj.init = value & 0b00001111 ? 1 : 0;
-    // obj.mode = value & 0b00000111;
-    // port.data = setData(obj);
+  const onMode = ({ gpio }: IGpio, { value }: TypeMode) => (ports.value[gpio].mode = value);
+  const onInputValue = ({ gpio }: IGpio, { value }: TypeMode) => (ports.value[gpio].mode = value);
+
+  const onInterrupt = ({ gpio }: IGpio, { value }: TypeMode) => {
+    ports.value[gpio].interrupt = value;
   };
 
-  const onInterrupt = (port: IGpio, item: TypeMode) => {
-    console.log(port, item);
-    // const obj = getData(port.data) || {};
-    // console.log(obj);
-    // const value = item?.value || 0;
-    // obj.interrupt = value & 0b00000111;
-    // port.data = setData(obj);
-  };
-
-  // const getMode = ({ mode }: IGpio): TypeMode | undefined => {
-  //   const mode = getKey(data, 'mode');
-  //   return listMode.find((i) => i.value === mode);
-  // };
-
-  const getStateValue = (gpio: IStateGpio, port: IGpio) => gpio?.[port.gpio]?.value;
-
-  // const isDisabled = (pin: IGpio) => Boolean(![9, 11].includes(getMode(pin)?.value || 0));
+  const getStateValue = (gpio: Record<string, IGpio>, port: IGpio) => gpio?.[port.gpio]?.value;
 
   const onSetPort = (port: IGpio, value: number) => {
     onSend({ comm: 'PORT', data: { ...port, command: command.GPIO_COMMAND_SET, value } });
@@ -71,20 +61,22 @@ export const usePorts = (onSend: (data: any) => void) => {
     onSend({ comm: 'PORT', data: { command: command.GPIO_COMMAND_GET_ALL } });
   };
 
-  const onLoadDataGpio = async (): Promise<IGpio[]> => {
+  const onLoadDataGpio = async (): Promise<Record<string, IGpio>> => {
     const array = await getBinary(pathGPIO);
     const data: ArrayBuffer[] = parseDateGPIO(array);
-    return data.map((i) => {
+
+    return data.reduce<Record<string, IGpio>>((acc, i) => {
       const { object } = (struct.get(i) || {}) as { object: IGpio };
-      return object;
-    });
+      const gpio = object.gpio;
+      acc[gpio] = object;
+      return acc;
+    }, {});
   };
 
   const init = async () => {
     ports.value = await onLoadDataGpio();
-    // portsDef.value = JSON.parse(JSON.stringify(ports.value));
     onGetPort();
   };
 
-  return { ports, portsDef, listMode, listInterrupt, init, getStateValue, onSetPort, onMode, onInterrupt, onUploadBinary, stringifyDateGPIO };
+  return { ports, listMode, listInterrupt, init, getStateValue, onSetPort, onMode, onInterrupt, onInputValue, onUploadBinary, isOutput, isInput, stringifyDateGPIO };
 };

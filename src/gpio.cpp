@@ -10,7 +10,7 @@ Port ports[5] = {
     {KEY_PORT, 0, 5, OUTPUT, 0, 0},
     {KEY_PORT, 0, 12, OUTPUT_OPEN_DRAIN, 1, 0},
     {KEY_PORT, 0, 13, OUTPUT, 0, 0},
-    {KEY_PORT, 0, 14, OUTPUT, 0, 0},
+    {KEY_PORT, 0, 14, OUTPUT, 1, 0},
 };
 
 int ports_len = sizeof(ports) / sizeof(ports[0]);
@@ -37,10 +37,13 @@ void initGpio() {
     uint8_t interrupt = ports[i].interrupt;
     uint8_t mode = ports[i].mode;
 
-    // if (mode) {
-    //   pinMode(pin, mode);
-    //   digitalWrite(pin, value);
-    // }
+    Serial.println("");
+    Serial.printf("pin: %d, value: %d, mode: %d \n", pin, value, mode);
+
+    if (mode) {
+      pinMode(pin, mode);
+      digitalWrite(pin, value);
+    }
     // if (interrupt) {
     //   attachInterrupt(pin, btnIsr, interrupt);
     // }

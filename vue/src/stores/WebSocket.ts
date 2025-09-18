@@ -6,7 +6,7 @@ import { useWebSocketStore } from './WebSocketStore.ts';
 import event from '@/assets/js/event.ts';
 import { log } from '@/utils/debug.ts';
 
-import type { IWebSocket } from '@/utils/types/types.ts';
+import type { IWebSocket } from 'vuesp-components/types';
 
 const initialState = (): IWebSocket => ({
   socket: null,

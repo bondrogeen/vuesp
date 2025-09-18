@@ -1,4 +1,4 @@
-import type { IMenuItem } from '@/utils/types/types.ts';
+import type { IMenuItem } from 'vuesp-components/types';
 
 export const jsonParse = (data: string | null) => {
   try {

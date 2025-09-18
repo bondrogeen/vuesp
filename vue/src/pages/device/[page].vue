@@ -20,15 +20,15 @@
 import { ref, computed, onMounted, inject, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import type { IStateSettings } from '@/utils/types/types.ts';
+import type { IStateSettings } from 'vuesp-components/types';
 
 import { getPageTitle } from '@/utils/helpers';
 
 import { useConnection } from '@/composables/useConnection.js';
 
-import ServiceGPIO from '@/components/pages/service/ServiceGPIO.vue';
-import ServiceStorage from '@/components/pages/service/ServiceStorage.vue';
-import ServiceSettings from '@/components/pages/service/ServiceSettings.vue';
+import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
+import ServiceStorage from '@/components/service/ServiceStorage.vue';
+import ServiceSettings from '@/components/service/ServiceSettings.vue';
 
 import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';

@@ -4,13 +4,16 @@
       <div class="mb-4">Disconnected</div>
 
       <div class="flex justify-center">
-        <v-loader class="text-primary"></v-loader>
+        <VLoader class="text-primary"></VLoader>
       </div>
     </AppOverlay>
-
     <template v-else>
       <div class="flex h-screen overflow-hidden">
-        <AppAside v-if="!isIframe" :info="main.info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
+        <AppAside v-if="!isIframe" :nameDevice="nameDevice" :fullPath="fullPath" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle">
+          <ServiceInfo v-bind="main.info" class="mb-4 w-full rounded-2xl bg-gray-50 px-4 py-4 text-center dark:bg-white/[0.03]" :class="sidebarToggle ? 'lg:hidden' : ''">
+            <v-button href="https://github.com/bondrogeen/vuesp" class="w-full" target="_blank" color="blue">Github</v-button>
+          </ServiceInfo>
+        </AppAside>
 
         <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
           <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
@@ -31,23 +34,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, provide } from 'vue';
+import { ref, onMounted, onUnmounted, provide, computed, inject } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useAppStore } from '@/stores/AppStore.js';
-import { useWebSocket } from '@/stores/WebSocket.js';
-import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
+import { useAppStore } from '@/stores/AppStore';
+import { useWebSocket } from '@/stores/WebSocket';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-import type { INotificationItem } from '@/utils/types/types.ts';
+import type { INotificationItem } from 'vuesp-components/types';
 
 import { useRoute, useRouter } from 'vue-router';
 
-import AppAside from '@/components/app/AppAside.vue';
+// import AppAside from '@/components/app/AppAside.vue';
 
-import { DialogKey, NotificationKey } from '@/utils/types/simbol';
+import { VuespKey, DialogKey, NotificationKey } from '@/utils/types/simbol';
+
+import ServiceInfo from '@/components/service/ServiceInfo.vue';
+
+const vuesp = inject(VuespKey);
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
+
 const { menu, dialog, notifications } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
 const { main } = storeToRefs(webSocketStore);
@@ -57,7 +65,7 @@ const isIframe = ref(false);
 const sidebarToggle = ref(false);
 
 let ping: ReturnType<typeof setInterval> | null = null;
-let messageListener: ((event: MessageEvent) => void) | null = null; // Для очистки слушателя
+let messageListener: ((event: MessageEvent) => void) | null = null;
 
 const route = useRoute();
 const router = useRouter();
@@ -69,6 +77,9 @@ const mode = import.meta.env.MODE;
 const proxy = import.meta.env.VITE_PROXY;
 
 const host = mode === 'production' ? window.location.host : proxy;
+
+const fullPath = computed(() => route.fullPath);
+const nameDevice = computed(() => main.value?.info?.name || 'Device');
 
 const connect = () => {
   const instance: WebSocket = new WebSocket(`ws://${host}/esp`);

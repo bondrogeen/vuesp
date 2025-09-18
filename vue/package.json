@@ -1,7 +1,31 @@
 {
   "name": "vuesp",
   "version": "3.0.1",
+  "author": "bondrogeen",
+  "description": "Template for your arduino projects with a web interface.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bondrogeen/vuesp"
+  },
+  "homepage": "https://vuesp.ru",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bondrogeen/vuesp/issues"
+  },
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "vue",
+    "vuesp",
+    "esp",
+    "esp32",
+    "esp8600",
+    "webinterface",
+    "arduino"
+  ],
   "scripts": {
     "preview": "vite preview",
     "build": "npm run increment && npm run recovery && npm run parser && vue-tsc -b && vite build && npm run firmware",
@@ -12,14 +36,13 @@
     "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
     "recovery": "node ./utils/script.js /recovery/ ../src/pages"
   },
-  "author": "bondrogeen",
   "dependencies": {
     "@types/websocket": "^1.0.10",
     "pinia": "^3.0.2",
     "tailwindcss": "^4.1.5",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",
-    "vuesp-components": "^0.3.0",
+    "vuesp-components": "^1.0.0",
     "vuesp-struct": "^1.1.2",
     "vuesp-data": "^1.0.0"
   },

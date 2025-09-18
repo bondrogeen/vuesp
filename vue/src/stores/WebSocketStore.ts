@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket.js';
 import { useAppStore } from '@/stores/AppStore.js';
 
-import type { IStateWebSocket, IStateMain, IStateInfo, IStateFile, IStateSettings, IStateScan, IGpio } from '@/utils/types/types.ts';
+import type { IStateWebSocket, IStateMain, IStateInfo, IStateFile, IStateSettings, IStateScan, IGpio } from 'vuesp-components/types';
 
 const initialState = (): IStateWebSocket => ({
   progress: {},

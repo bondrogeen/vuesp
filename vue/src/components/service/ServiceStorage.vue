@@ -11,12 +11,12 @@
           >
             <div>{{ value }}</div>
 
-            <icon-chevron v-if="isLast(path, i)" class="h-5 w-4 -rotate-90"></icon-chevron>
+            <v-icons name="IconChevron" v-if="isLast(path, i)" class="h-5 w-4 -rotate-90"></v-icons>
           </div>
         </div>
 
         <div>
-          <v-text-field-file @change="onUpload"></v-text-field-file>
+          <VTextFieldFile @change="onUpload"></VTextFieldFile>
         </div>
       </div>
 
@@ -26,8 +26,8 @@
         <v-list v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
-              <icon-folder v-if="isDir"></icon-folder>
-              <icon-file v-else></icon-file>
+              <v-icons name="IconFolder" v-if="isDir"></v-icons>
+              <v-icons name="IconFile" v-else></v-icons>
             </div>
 
             <div>
@@ -40,7 +40,7 @@
           <v-dropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <button @click="on.click">
-                <icon-dots class="rotate-90"></icon-dots>
+                <v-icons name="IconDots" class="rotate-90"></v-icons>
               </button>
             </template>
 
@@ -54,7 +54,7 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <icon-dots class="rotate-90"></icon-dots>
+            <v-icons name="IconDots" class="rotate-90"></v-icons>
           </v-button>
         </template>
 
@@ -70,7 +70,8 @@ import { toByte, debounce } from '@/utils/helpers.ts';
 
 import { DialogKey } from '@/utils/types/simbol';
 
-import type { IListMenu, ITextFieldEvent, IStateInfo, IStateFile } from '@/utils/types/types.ts';
+import type { IListItem, ITextFieldEvent, IStateInfo, IStateFile } from 'vuesp-components/types';
+import  { VTextFieldFile } from 'vuesp-components';
 
 interface Props {
   files: IStateFile[];
@@ -88,12 +89,12 @@ const emit = defineEmits<{
 
 const dialog = inject(DialogKey, ({}) => {});
 
-const mainMenu: IListMenu[] = [
+const mainMenu: IListItem[] = [
   { id: 2, name: 'Upload' },
   { id: 3, name: 'Reload' },
   { id: 4, name: 'Format' },
 ];
-const listMenu: IListMenu[] = [
+const listMenu: IListItem[] = [
   { id: 1, name: 'Download' },
   { id: 2, name: 'Remove' },
 ];
@@ -130,7 +131,7 @@ const onNext = (isDir: boolean, value: string) => {
   }
 };
 
-const onEventService = ({ id }: IListMenu) => {
+const onEventService = ({ id }: IListItem) => {
   if (id === 2) {
     const input: HTMLInputElement | null = document.querySelector('input[type="file"]');
     if (input) {
@@ -141,7 +142,7 @@ const onEventService = ({ id }: IListMenu) => {
   if (id === 4) onSureFormat();
 };
 
-const onEventList = (name: string, { id }: IListMenu) => {
+const onEventList = (name: string, { id }: IListItem) => {
   if (id === 1) onDownload(name);
   if (id === 2) onSureDelete(name);
 };

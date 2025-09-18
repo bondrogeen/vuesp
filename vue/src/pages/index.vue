@@ -5,9 +5,9 @@
 
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
-            <icon-dots class="rotate-90"></icon-dots>
-          </v-button>
+          <VButton color="" type="icon" @click="on.click">
+            <VIcons name="IconDots" class="rotate-90"></VIcons>
+          </VButton>
         </template>
 
         <v-list :list="listMenu" @click="onMenuEvent"></v-list>
@@ -42,7 +42,8 @@ import { useModule } from '@/composables/useModule.ts';
 
 import { functionToString } from 'vuesp-data';
 
-import VListObject from '@/components/general/VListObject.vue';
+import { VListObject } from 'vuesp-components';
+// import type { IListMenu } from 'vuesp-components';
 
 const dialogItem = ref(false);
 const dialogObject = ref(false);
