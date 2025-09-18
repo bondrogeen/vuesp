@@ -50,10 +50,6 @@ void getADC() {
 void setPWM() {
   analogWrite(13, device.pwm);
 }
-void getInput() {
-  device.gpio12 = digitalRead(12);
-  device.gpio14 = digitalRead(14);
-}
 void setOutput() {
   digitalWrite(14, device.gpio14);
 }
@@ -63,9 +59,9 @@ void getData() {
 }
 
 void setupDevice() {
-  pinMode(14, OUTPUT);
-  digitalWrite(14, LOW);
-  setOutput();
+  // pinMode(14, OUTPUT);
+  // digitalWrite(14, LOW);
+  // setOutput();
 }
 
 void loopDevice(uint32_t now) {

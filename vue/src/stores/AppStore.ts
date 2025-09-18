@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { changeTheme, localGet } from '@/utils/helpers';
 
-import type { INotificationItem, IStateApp, IDialog } from '@/utils/types/types.ts';
+import type { INotificationItem, IStateApp, IDialog } from 'vuesp-components/types';
 
 const initialState = (): IStateApp => ({
   menu: [],

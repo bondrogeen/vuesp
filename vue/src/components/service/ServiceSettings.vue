@@ -1,16 +1,16 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <VCardGray title="Wi-Fi">
+    <v-card-gray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <VSelect :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></VSelect>
+        <v-select :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
 
-        <VTextField v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
+        <v-text-field v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
           <template #icon>
-            <IconSearch></IconSearch>
+            <v-icons name="IconSearch"></v-icons>
           </template>
-        </VTextField>
+        </v-text-field>
 
-        <VTextField
+        <v-text-field
           id="wifiPass"
           v-model="v.wifiPass.value"
           label="Password"
@@ -21,13 +21,13 @@
           @on-icon="showPass = !showPass"
         >
           <template #icon>
-            <IconEyeOpen v-if="showPass"></IconEyeOpen>
+            <v-icons name="IconEyeOpen" v-if="showPass"></v-icons>
 
-            <IconEyeClose v-else></IconEyeClose>
+            <v-icons name="IconEyeClose" v-else></v-icons>
           </template>
-        </VTextField>
+        </v-text-field>
 
-        <VTextField
+        <v-text-field
           v-model="v.rePassword.value"
           label="Repeat password"
           :disabled="isWifi"
@@ -37,15 +37,15 @@
           @on-icon="showPass = !showPass"
         >
           <template #icon>
-            <IconEyeOpen v-if="showPass"></IconEyeOpen>
+            <v-icons name="IconEyeOpen" v-if="showPass"></v-icons>
 
-            <IconEyeClose v-else></IconEyeClose>
+            <v-icons name="IconEyeClose" v-else></v-icons>
           </template>
-        </VTextField>
+        </v-text-field>
       </div>
-    </VCardGray>
+    </v-card-gray>
 
-    <VCardGray title="IP Settings">
+    <v-card-gray title="IP Settings">
       <template #header>
         <div class="col-span-full">
           <VCheckbox v-model="settings.wifiDhcp">DHCP</VCheckbox>
@@ -53,17 +53,17 @@
       </template>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <VTextField v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
+        <v-text-field v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
 
-        <VTextField v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
+        <v-text-field v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
 
-        <VTextField v-model="v.wifiGateway.value" label="Gateway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
+        <v-text-field v-model="v.wifiGateway.value" label="Gateway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
 
-        <VTextField v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
+        <v-text-field v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
-    </VCardGray>
+    </v-card-gray>
 
-    <VCardGray title="Security">
+    <v-card-gray title="Security">
       <template #header>
         <div class="col-span-full">
           <VCheckbox v-model="settings.authMode">AUTHENTICATION</VCheckbox>
@@ -71,9 +71,9 @@
       </template>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <VTextField v-model="v.authLogin.value" label="Login" :disabled="isAuth" />
+        <v-text-field v-model="v.authLogin.value" label="Login" :disabled="isAuth" />
 
-        <VTextField
+        <v-text-field
           v-model="v.authPass.value"
           class="col-end-2"
           label="Password"
@@ -84,13 +84,13 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <IconEyeOpen v-if="showAuthPass"></IconEyeOpen>
+            <v-icons name="IconEyeOpen" v-if="showAuthPass"></v-icons>
 
-            <IconEyeClose v-else></IconEyeClose>
+            <v-icons name="IconEyeClose" v-else></v-icons>
           </template>
-        </VTextField>
+        </v-text-field>
 
-        <VTextField
+        <v-text-field
           v-model="v.reAuthPassword.value"
           label="Password"
           :type="showAuthPass ? 'text' : 'password'"
@@ -100,23 +100,24 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <IconEyeOpen v-if="showAuthPass"></IconEyeOpen>
+            <v-icons name="IconEyeOpen" v-if="showAuthPass"></v-icons>
 
-            <IconEyeClose v-else></IconEyeClose>
+            <v-icons name="IconEyeClose" v-else></v-icons>
           </template>
-        </VTextField>
+        </v-text-field>
       </div>
-    </VCardGray>
+    </v-card-gray>
 
-    <VCardGray title="Update">
+    <v-card-gray title="Update">
       <div class="mb-4 flex items-center">
         <div class="md:flex flex-auto gap-4">
           <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
 
-          <v-text-field-file v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
+          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
             <span>{{ getFileNames(files) }}</span>
-          </v-text-field-file>
+          </VTextFieldFile>
         </div>
+
         <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
       </div>
 
@@ -124,16 +125,16 @@
         <div class="md:flex flex-auto gap-4">
           <h6 class="text-gray-600 bg:text-gray-400">LittleFS:</h6>
 
-          <v-text-field-file v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
+          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
             <span>{{ getFileNames(files) }}</span>
-          </v-text-field-file>
+          </VTextFieldFile>
         </div>
 
         <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
       </div>
-    </VCardGray>
+    </v-card-gray>
 
-    <VCardGray title="System">
+    <v-card-gray title="System">
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
@@ -145,13 +146,13 @@
 
         <v-button class="min-w-[100px]" color="red" size="small" @click="emit('reset', $event)">Reset</v-button>
       </div>
-    </VCardGray>
+    </v-card-gray>
 
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <icon-dots class="rotate-90"></icon-dots>
+            <v-icons name="IconDots" class="rotate-90"></v-icons>
           </v-button>
         </template>
 
@@ -159,7 +160,7 @@
       </v-dropdown>
     </Teleport>
 
-    <AppDialog v-if="showDialog" title="SCAN" size="sm" @close="onClose">
+    <app-dialog v-if="showDialog" title="SCAN" size="sm" @close="onClose">
       <div>
         <v-list v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
@@ -183,7 +184,7 @@
       <template #footer>
         <v-button color="blue" @click="onScan(true)">Scan</v-button>
       </template>
-    </AppDialog>
+    </app-dialog>
   </div>
 </template>
 
@@ -195,7 +196,8 @@ import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/utils/types/simbol';
 
-import type { IStateScan, IStateSettings, IListWiFi, ITextFieldFile, ITextFieldEvent } from '@/utils/types/types.ts';
+import type { IStateScan, IStateSettings, IListWiFi, ITextFieldFile, ITextFieldEvent } from 'vuesp-components/types';
+import { VCheckbox, VTextFieldFile } from 'vuesp-components';
 
 interface Props {
   modelValue?: IStateSettings;

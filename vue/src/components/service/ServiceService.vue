@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { computed, ref, defineEmits, inject, nextTick } from 'vue';
 
-import type { ITextFieldFile, ITextFieldEvent } from '@/utils/types/types.ts';
+import type { ITextFieldFile, ITextFieldEvent } from 'vuesp-components/types';
 
 import { DialogKey } from '@/utils/types/simbol';
 

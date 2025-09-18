@@ -34,7 +34,7 @@
 import { ref, computed, defineProps, onMounted } from 'vue';
 import { toByte, secToTime } from '@/utils/helpers.ts';
 
-import type { IStateInfo } from '@/utils/types/types.ts';
+import type { IStateInfo } from 'vuesp-components/types';
 
 const { id = 0, firmware = [], totalBytes = 0, usedBytes = 0, uptime = 0 } = defineProps<IStateInfo>();
 
