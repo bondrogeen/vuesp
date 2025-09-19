@@ -70,13 +70,13 @@ import { toByte, debounce } from '@/utils/helpers.ts';
 
 import { DialogKey } from '@/utils/types/simbol';
 
-import type { IListItem, ITextFieldEvent, IStateInfo, IStateFile } from 'vuesp-components/types';
+import type { IListItem, ITextFieldEvent, IStoreInfo, IStoreFile } from 'vuesp-components/types';
 import  { VTextFieldFile } from 'vuesp-components';
 
 interface Props {
-  files: IStateFile[];
+  files: IStoreFile[];
   modelValue?: string[];
-  info?: IStateInfo;
+  info?: IStoreInfo;
   url?: string;
 }
 
@@ -107,7 +107,7 @@ const path = computed({
 });
 
 const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.id !== 1 : true));
-const sortFiles = computed(() => JSON.parse(JSON.stringify(files)).sort((a: IStateFile, b: IStateFile) => (a.isFile > b.isFile ? 1 : -1)));
+const sortFiles = computed(() => JSON.parse(JSON.stringify(files)).sort((a: IStoreFile, b: IStoreFile) => (a.isFile > b.isFile ? 1 : -1)));
 const getFullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const fileName = (name: string) => `${getFullPath.value}${name}`;
 
@@ -166,7 +166,7 @@ const onUpload = async (data: ITextFieldEvent) => {
       date.append(`file[${i}]`, file, fileName);
     }
   }
-  const { totalBytes = 0, usedBytes = 0 }: IStateInfo = info;
+  const { totalBytes = 0, usedBytes = 0 }: IStoreInfo = info;
   if (totalSize < totalBytes - usedBytes) {
     const res = await (await fetch(url, { method: 'POST', body: date })).json();
     if (res?.state) onUpdate();

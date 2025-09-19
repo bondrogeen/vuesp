@@ -1,21 +1,21 @@
+import type { IWebSocket } from 'vuesp-components/types';
+
 import { defineStore } from 'pinia';
+import { useWebSocketStore } from './WebSocketStore.ts';
 
 import { struct } from '@/utils/struct.ts';
 
-import { useWebSocketStore } from './WebSocketStore.ts';
 import event from '@/assets/js/event.ts';
 import { log } from '@/utils/debug.ts';
 
-import type { IWebSocket } from 'vuesp-components/types';
 
 const initialState = (): IWebSocket => ({
   socket: null,
   pingClient: 5000,
   pingDevice: 0,
-  struct: null,
 });
 
-export const useWebSocket = defineStore('websocket', {
+export const useWebSocket = defineStore('webSocket', {
   state: initialState,
   actions: {
     init() {

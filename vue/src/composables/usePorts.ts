@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import type { IGpio } from 'vuesp-components/types';
+import type { IStoreGpio } from 'vuesp-components/types';
 
 import { ref } from 'vue';
 import { getBinary, onUploadBinary } from '@/utils/fs';
@@ -15,7 +15,7 @@ export const usePorts = (onSend: (data: any) => void) => {
     value: number;
   }
 
-  const ports: Ref<Record<string | number, IGpio>> = ref({});
+  const ports: Ref<Record<string | number, IStoreGpio>> = ref({});
 
   const enum GPIOMode {
     INPUT,
@@ -41,19 +41,19 @@ export const usePorts = (onSend: (data: any) => void) => {
     { name: 'CHANGE', value: 3 }, // 0x03
   ];
 
-  const isOutput = ({ mode }: IGpio) => [GPIOMode.OUTPUT, GPIOMode.OUTPUT_OPEN_DRAIN].includes(mode);
-  const isInput = ({ mode }: IGpio) => [GPIOMode.INPUT, GPIOMode.INPUT_PULLUP].includes(mode);
+  const isOutput = ({ mode }: IStoreGpio) => [GPIOMode.OUTPUT, GPIOMode.OUTPUT_OPEN_DRAIN].includes(mode);
+  const isInput = ({ mode }: IStoreGpio) => [GPIOMode.INPUT, GPIOMode.INPUT_PULLUP].includes(mode);
 
-  const onMode = ({ gpio }: IGpio, { value }: TypeMode) => (ports.value[gpio].mode = value);
-  const onInputValue = ({ gpio }: IGpio, { value }: TypeMode) => (ports.value[gpio].mode = value);
+  const onMode = ({ gpio }: IStoreGpio, { value }: TypeMode) => (ports.value[gpio].mode = value);
+  const onInputValue = ({ gpio }: IStoreGpio, { value }: TypeMode) => (ports.value[gpio].mode = value);
 
-  const onInterrupt = ({ gpio }: IGpio, { value }: TypeMode) => {
+  const onInterrupt = ({ gpio }: IStoreGpio, { value }: TypeMode) => {
     ports.value[gpio].interrupt = value;
   };
 
-  const getStateValue = (gpio: Record<string, IGpio>, port: IGpio) => gpio?.[port.gpio]?.value;
+  const getStateValue = (gpio: Record<string, IStoreGpio>, port: IStoreGpio) => gpio?.[port.gpio]?.value;
 
-  const onSetPort = (port: IGpio, value: number) => {
+  const onSetPort = (port: IStoreGpio, value: number) => {
     onSend({ comm: 'PORT', data: { ...port, command: command.GPIO_COMMAND_SET, value } });
   };
 
@@ -61,12 +61,12 @@ export const usePorts = (onSend: (data: any) => void) => {
     onSend({ comm: 'PORT', data: { command: command.GPIO_COMMAND_GET_ALL } });
   };
 
-  const onLoadDataGpio = async (): Promise<Record<string, IGpio>> => {
+  const onLoadDataGpio = async (): Promise<Record<string, IStoreGpio>> => {
     const array = await getBinary(pathGPIO);
     const data: ArrayBuffer[] = parseDateGPIO(array);
 
-    return data.reduce<Record<string, IGpio>>((acc, i) => {
-      const { object } = (struct.get(i) || {}) as { object: IGpio };
+    return data.reduce<Record<string, IStoreGpio>>((acc, i) => {
+      const { object } = (struct.get(i) || {}) as { object: IStoreGpio };
       const gpio = object.gpio;
       acc[gpio] = object;
       return acc;

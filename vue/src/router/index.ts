@@ -24,8 +24,8 @@ import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 // addMeta(routes)
 
 const router = createRouter({
-  linkActiveClass: 'text-primary',
-  linkExactActiveClass: 'text-primary',
+  linkActiveClass: '',
+  linkExactActiveClass: '',
   history: createWebHistory('/'),
   routes,
   scrollBehavior() {

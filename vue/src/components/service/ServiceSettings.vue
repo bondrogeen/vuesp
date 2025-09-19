@@ -2,7 +2,7 @@
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
     <v-card-gray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <v-select :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
+        <v-select class="mb-6" :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
 
         <v-text-field v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
           <template #icon>
@@ -138,7 +138,7 @@
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
-        <v-button class="min-w-[100px]" color="gray" size="small" @click="emit('reboot', $event)">Reboot</v-button>
+        <v-button class="min-w-[100px]" color="red" size="small" outline @click="emit('reboot', $event)">Reboot</v-button>
       </div>
 
       <div class="flex items-center mb-4">
@@ -196,20 +196,21 @@ import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/utils/types/simbol';
 
-import type { IStateScan, IStateSettings, IListWiFi, ITextFieldFile, ITextFieldEvent } from 'vuesp-components/types';
+import type { IStoreScan, IStoreSettings, IListItem, ITextFieldFile, ITextFieldEvent } from 'vuesp-components/types';
+
 import { VCheckbox, VTextFieldFile } from 'vuesp-components';
 
 interface Props {
-  modelValue?: IStateSettings;
-  scanList: IStateScan[];
+  modelValue?: IStoreSettings;
+  scanList: IStoreScan[];
 }
 
 const { modelValue = {}, scanList = [] } = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: IStateSettings): void;
+  (e: 'update:modelValue', value: IStoreSettings): void;
   (e: 'scan', value: boolean): void;
-  (e: 'save', value: IStateSettings): void;
+  (e: 'save', value: IStoreSettings): void;
   (e: 'reset', value: Event): void;
   (e: 'reboot', value: Event): void;
 }>();
@@ -305,10 +306,10 @@ const validators = {
 
 const { v, invalid, getError } = useForm(validators, form);
 
-const listWiFi: IListWiFi[] = [
-  { name: 'OFF', value: 0 },
-  { name: 'STA', value: 1 },
-  { name: 'AP', value: 2 },
+const listWiFi: IListItem[] = [
+  { id: 1, name: 'OFF', value: 0 },
+  { id: 2, name: 'STA', value: 1 },
+  { id: 3, name: 'AP', value: 2 },
   // { name: 'STA + AP', value: 3 },
 ];
 
@@ -325,7 +326,7 @@ const onMenu = () => {
 
 const listEncryption: string[] = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
-const onSelectSsid = ({ ssid }: IStateScan) => {
+const onSelectSsid = ({ ssid }: IStoreScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
   const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
@@ -346,7 +347,10 @@ const onScan = (value: boolean) => {
 };
 
 const onChange = (value: number) => (settings.value.wifiMode = value);
-const onSureOffWifi = ({ value }: IListWiFi) => (!value ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, value) }) : onChange(value));
+const onSureOffWifi = ({ value }: IListItem) => {
+  const v = value as number;
+  return !v ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, v) }) : onChange(v);
+};
 
 onMounted(() => {
   rePassword.value = settings.value.wifiPass;

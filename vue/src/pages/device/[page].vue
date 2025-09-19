@@ -18,24 +18,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
-import type { IStateSettings } from 'vuesp-components/types';
+import { DialogKey, NotificationKey } from '@/utils/types/simbol';
+import type { IStoreSettings } from 'vuesp-components/types';
 
 import { getPageTitle } from '@/utils/helpers';
 
 import { useConnection } from '@/composables/useConnection.js';
 
-import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
-import ServiceStorage from '@/components/service/ServiceStorage.vue';
-import ServiceSettings from '@/components/service/ServiceSettings.vue';
-
 import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 
-import { useRoute } from 'vue-router';
-
-import { DialogKey, NotificationKey } from '@/utils/types/simbol';
+import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
+import ServiceStorage from '@/components/service/ServiceStorage.vue';
+import ServiceSettings from '@/components/service/ServiceSettings.vue';
 
 useConnection(() => {
   webSocketStore.onSend('SETTINGS');
@@ -82,7 +80,7 @@ const onSend = ({ comm, data }: any) => {
   webSocketStore.onSend(comm, data);
 };
 
-const onSave = (settings: IStateSettings) => {
+const onSave = (settings: IStoreSettings) => {
   webSocketStore.onSend('SETTINGS', settings);
   dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };
