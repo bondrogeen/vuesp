@@ -2,7 +2,7 @@
   <div>
     <VCardGray title="Ports">
       <div class="relative flex flex-col">
-        <div v-for="port in ports" :key="port.gpio" class="flex flex-col md:gap-4">
+        <div v-for="port in ports" :key="port.gpio" class="flex flex-col md:gap-4 md:flex-row">
           <v-select class="max-w-[250px]" :value="port.mode" :label="`GPIO: ${port.gpio}`" hideMessage :list="listMode" @change="onMode(port, $event)" />
 
           <v-select v-if="isInput(port)" class="max-w-[250px]" hideMessage :value="port.interrupt" :label="`Interrupt: ${port.gpio}`" :list="listInterrupt" @change="onInterrupt(port, $event)" />
@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IWSSend, IGpio } from 'vuesp-components/types';
+import type { IWSSend, IStoreGpio } from 'vuesp-components/types';
 
 import { defineProps, defineEmits, onMounted } from 'vue';
 
@@ -52,10 +52,8 @@ import { defineProps, defineEmits, onMounted } from 'vue';
 
 import { usePorts } from '@/composables/usePorts.ts';
 
-// import { VSelect } from 'vuesp-components';
-
 interface Props {
-  gpio?: Record<string, IGpio>;
+  gpio?: Record<string, IStoreGpio>;
 }
 
 const { gpio = {} } = defineProps<Props>();

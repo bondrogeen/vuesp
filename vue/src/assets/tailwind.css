@@ -2,12 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source inline("dark:{flex,hidden} md:hidden dark:border-gray-700/50 dark:border-gray-700 lg:static dark:border-gray-800");
-
-@theme {
-  --color-primary: #24c0eb;
-  --color-secondary: #66d3f1;
-}
+@source inline("dark:{flex,hidden} md:hidden dark:border-gray-700/50 dark:border-gray-700 lg:static dark:border-gray-800 dark:bg-gray-900");
 
 @layer base {
   h1,

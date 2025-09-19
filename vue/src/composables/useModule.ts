@@ -1,10 +1,12 @@
-import type { TypeVuespData, TypePropertyString } from 'vuesp-data';
+import type { IDashboard, IDashboardItemString } from 'vuesp-components/types';
+
 import type { Ref } from 'vue';
 
 import { onMounted, ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import { VuespData } from 'vuesp-data';
+import { Dashboard } from 'vuesp-components/dashboard';
+
 import { loadModule, saveModule } from '@/utils/fs.ts';
 import { pathListDef, pathList } from '@/utils/const.ts';
 
@@ -14,7 +16,7 @@ export const useModule = () => {
   const webSocketStore = useWebSocketStore();
   const { main } = storeToRefs(webSocketStore);
 
-  const data: Ref<TypeVuespData | null> = ref(null);
+  const data: Ref<IDashboard | null> = ref(null);
 
   const getList = computed(() => data.value?.getList?.());
 
@@ -28,19 +30,19 @@ export const useModule = () => {
     return data.value?.get(id);
   };
 
-  const onEditItem = (item: TypePropertyString) => {
+  const onEditItem = (item: IDashboardItemString) => {
     if (!item.id) return;
     data.value?.editItem(item.id, { ...item });
   };
 
-  const onRemoveItem = (item: TypePropertyString) => {
+  const onRemoveItem = (item: IDashboardItemString) => {
     if (!item.id) return;
     data.value?.removeItem(item.id);
   };
 
   const onRestore = async () => {
     const module = await loadModule(pathListDef);
-    data.value = new VuespData(module.default);
+    data.value = new Dashboard(module.default);
     onSend('DEVICE');
   };
 
@@ -85,7 +87,7 @@ export const useModule = () => {
     if (!module) {
       module = await initModule(pathListDef);
     }
-    data.value = new VuespData(module?.default);
+    data.value = new Dashboard(module?.default);
     webSocketStore.onSend('DEVICE');
   });
 

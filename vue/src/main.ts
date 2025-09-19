@@ -12,14 +12,14 @@ import 'vuesp-components/dist/style.css';
 
 import '@/assets/tailwind.css';
 
-import { VuespKey } from '@/utils/types/simbol';
+import { PKGKey } from '@/utils/types/simbol';
 
 const pinia = createPinia();
 const app = createApp(App);
 
 (async () => {
   // @ts-ignore: Unreachable code error
-  app.provide(VuespKey, __APP__);
+  app.provide(PKGKey, __APP__);
   const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
   struct.init(res);
   app.use(pinia);

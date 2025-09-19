@@ -20,36 +20,35 @@
       </div>
     </div>
 
-    <AppDialog v-if="dialogItem" size="md" :title="isNew ? 'Add item' : 'Edit item'" @close="dialogItem = false">
+    <app-dialog v-if="dialogItem" size="md" :title="isNew ? 'Add item' : 'Edit item'" @close="dialogItem = false">
       <BlockItemEdit :item="item" :isNew="isNew" @save="onSave" @remove="onRemove"></BlockItemEdit>
-    </AppDialog>
+    </app-dialog>
 
-    <AppDialog v-if="dialogObject" size="md" title="Edit item" @close="dialogObject = false">
+    <app-dialog v-if="dialogObject" size="md" title="Edit item" @close="dialogObject = false">
       <div class="relative min-h-[200px] max-h-[400px] overflow-auto scrollbar">
         <VListObject :items="main" @click="onSelectId"></VListObject>
       </div>
-    </AppDialog>
+    </app-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty, TypePropertyString } from 'vuesp-data';
+import type { IDashboardItem, IDashboardItemString } from 'vuesp-components/types';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 
 import { useModule } from '@/composables/useModule.ts';
 
-import { functionToString } from 'vuesp-data';
+import { functionToString } from 'vuesp-components/dashboard';
 
 import { VListObject } from 'vuesp-components';
-// import type { IListMenu } from 'vuesp-components';
 
 const dialogItem = ref(false);
 const dialogObject = ref(false);
 const isNew = ref(false);
 
-const item: Ref<TypePropertyString> = ref({ id: '', name: '', keyValue: '' });
+const item: Ref<IDashboardItemString> = ref({ id: '', name: '', keyValue: '' });
 
 interface IListMenu {
   id: number;
@@ -78,22 +77,22 @@ const onMenuEvent = ({ id }: IListMenu) => {
 
 const getComponent = ({ type = 'info' }) => `card-${type}`;
 
-const setStateValue = ({ id, value }: TypeProperty) => {
+const setStateValue = ({ id, value }: IDashboardItem) => {
   setState(id, value);
 };
 
-const onDialog = (data: TypeProperty) => {
+const onDialog = (data: IDashboardItem) => {
   item.value = functionToString({ ...data });
   dialogItem.value = true;
   isNew.value = false;
 };
 
-const onSave = (item: TypePropertyString) => {
+const onSave = (item: IDashboardItemString) => {
   onEditItem(item);
   dialogItem.value = false;
 };
 
-const onRemove = (item: TypePropertyString) => {
+const onRemove = (item: IDashboardItemString) => {
   onRemoveItem(item);
   dialogItem.value = false;
 };
