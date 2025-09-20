@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2">
-    <VCardGray title="File system">
+    <card-gray title="File system">
       <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
@@ -48,7 +48,7 @@
           </v-dropdown>
         </v-list>
       </div>
-    </VCardGray>
+    </card-gray>
 
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
@@ -66,12 +66,12 @@
 
 <script setup lang="ts">
 import { defineProps, watchEffect, defineEmits, ref, onMounted, computed, inject, nextTick } from 'vue';
-import { toByte, debounce } from '@/utils/helpers.ts';
+import { toByte, debounce } from 'vuesp-components/helpers';
 
-import { DialogKey } from '@/utils/types/simbol';
+import { DialogKey } from '@/utils/simbol';
 
 import type { IListItem, ITextFieldEvent, IStoreInfo, IStoreFile } from 'vuesp-components/types';
-import  { VTextFieldFile } from 'vuesp-components';
+import { VTextFieldFile } from 'vuesp-components';
 
 interface Props {
   files: IStoreFile[];

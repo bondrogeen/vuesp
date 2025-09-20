@@ -1,8 +1,8 @@
 {
   "name": "vuesp",
   "version": "3.0.1",
-  "author": "bondrogeen",
-  "description": "Template for your arduino projects with a web interface.",
+  "author": "bondrogeen@gmail.com",
+  "description": "This is a Vue 3 web application for managing devices (e.g., IoT devices). The app interacts with devices via WebSockets, displays firmware and file system information, provides functions for uploading, deleting, and formatting files, and manages device services through a user-friendly interface.",
   "repository": {
     "type": "git",
     "url": "https://github.com/bondrogeen/vuesp"
@@ -42,7 +42,7 @@
     "tailwindcss": "^4.1.5",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",
-    "vuesp-components": "^1.0.0",
+    "vuesp-components": "^1.0.1",
     "vuesp-struct": "^1.1.2"
   },
   "devDependencies": {

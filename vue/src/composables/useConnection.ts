@@ -1,5 +1,5 @@
 import { onMounted, ref } from 'vue';
-import event from '@/assets/js/event';
+import { event } from '@/assets/js/';
 
 export const useConnection = (initData: () => void) => {
   const isInit = ref(false);

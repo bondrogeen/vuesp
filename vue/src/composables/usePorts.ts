@@ -2,8 +2,8 @@ import type { Ref } from 'vue';
 import type { IStoreGpio } from 'vuesp-components/types';
 
 import { ref } from 'vue';
-import { getBinary, onUploadBinary } from '@/utils/fs';
-import { struct } from '@/utils/struct.ts';
+import { getBinary, onUploadBinary } from 'vuesp-components/helpers';
+import { struct } from '@/assets/js/';
 
 import { command, parseDateGPIO, stringifyDateGPIO } from '@/utils/gpio';
 

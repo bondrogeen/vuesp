@@ -7,7 +7,7 @@
     </div>
 
     <template v-if="show">
-      <ServiceSettings v-if="isPage('settings')" v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" @reboot="onSureReboot" @reset="onSureReset" />
+      <ServiceSettings v-if="isPage('settings')" v-model="settings" :scan-list="scanList" @save="onSave" @scan="onScan" @reboot="onSureReboot" @reset="onSureReset" @info="onInfo" />
 
       <ServiceStorage v-if="isPage('storage')" v-model="path" :files="fileList" :info="main.info" @send="onSend" />
 
@@ -21,10 +21,10 @@ import { ref, computed, onMounted, inject, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
-import { DialogKey, NotificationKey } from '@/utils/types/simbol';
+import { DialogKey, NotificationKey } from '@/utils/simbol';
 import type { IStoreSettings } from 'vuesp-components/types';
 
-import { getPageTitle } from '@/utils/helpers';
+import { getPageTitle } from 'vuesp-components/helpers';
 
 import { useConnection } from '@/composables/useConnection.js';
 
@@ -41,9 +41,7 @@ useConnection(() => {
 });
 
 const appStore = useAppStore();
-const { menu } = storeToRefs(appStore);
-
-const title = computed(() => getPageTitle(menu.value, route.fullPath).name);
+const { menu, dialogInfo } = storeToRefs(appStore);
 
 const webSocketStore = useWebSocketStore();
 const { fileList, main, path, settings, scanList } = storeToRefs(webSocketStore);
@@ -52,6 +50,7 @@ const route = useRoute();
 
 const show = ref(false);
 
+const title = computed(() => getPageTitle(menu.value, route.fullPath)?.name);
 const page = computed(() => route.params.page);
 const isSettings = computed(() => settings.value?.key);
 
@@ -89,6 +88,8 @@ const onScan = (value: boolean) => {
   if (value) scanList.value = [];
   if (!scanList.value.length) webSocketStore.onSend('SCAN');
 };
+
+const onInfo = () => (dialogInfo.value = true);
 
 onMounted(() => {
   setTimeout(() => {

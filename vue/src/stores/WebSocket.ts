@@ -3,11 +3,11 @@ import type { IWebSocket } from 'vuesp-components/types';
 import { defineStore } from 'pinia';
 import { useWebSocketStore } from './WebSocketStore.ts';
 
-import { struct } from '@/utils/struct.ts';
+import { struct, event } from '@/assets/js/';
 
-import event from '@/assets/js/event.ts';
-import { log } from '@/utils/debug.ts';
+const debug = process.env.NODE_ENV === 'development';
 
+const log = (...arg: any) => (debug ? console.log(arg) : null);
 
 const initialState = (): IWebSocket => ({
   socket: null,

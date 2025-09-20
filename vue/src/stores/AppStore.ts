@@ -1,14 +1,18 @@
 import { defineStore } from 'pinia';
-import { changeTheme, localGet } from '@/utils/helpers';
+import { changeTheme, localGet } from 'vuesp-components/helpers';
 
 import type { INotificationItem, IStoreApp, IDialog } from 'vuesp-components/types';
 
-const initialState = (): IStoreApp => ({
+interface IAppState extends IStoreApp {
+  dialogInfo: boolean;
+}
+const initialState = (): IAppState => ({
   isLoading: false,
   theme: 'dark',
   dialog: { value: false },
   menu: [],
   notifications: [],
+  dialogInfo: false,
 });
 
 export const useAppStore = defineStore('app', {
