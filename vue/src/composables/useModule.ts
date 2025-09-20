@@ -7,7 +7,7 @@ import { storeToRefs } from 'pinia';
 
 import { Dashboard } from 'vuesp-components/dashboard';
 
-import { loadModule, saveModule } from '@/utils/fs.ts';
+import { loadModule, saveModule } from 'vuesp-components/helpers';
 import { pathListDef, pathList } from '@/utils/const.ts';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';

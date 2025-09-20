@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <v-card-gray title="Wi-Fi">
+    <card-gray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <v-select class="mb-6" :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
 
@@ -21,9 +21,9 @@
           @on-icon="showPass = !showPass"
         >
           <template #icon>
-            <v-icons name="IconEyeOpen" v-if="showPass"></v-icons>
+            <v-icons v-if="showPass" name="IconEyeOpen"></v-icons>
 
-            <v-icons name="IconEyeClose" v-else></v-icons>
+            <v-icons v-else name="IconEyeClose"></v-icons>
           </template>
         </v-text-field>
 
@@ -37,15 +37,15 @@
           @on-icon="showPass = !showPass"
         >
           <template #icon>
-            <v-icons name="IconEyeOpen" v-if="showPass"></v-icons>
+            <v-icons v-if="showPass" name="IconEyeOpen"></v-icons>
 
-            <v-icons name="IconEyeClose" v-else></v-icons>
+            <v-icons v-else name="IconEyeClose"></v-icons>
           </template>
         </v-text-field>
       </div>
-    </v-card-gray>
+    </card-gray>
 
-    <v-card-gray title="IP Settings">
+    <card-gray title="IP Settings">
       <template #header>
         <div class="col-span-full">
           <VCheckbox v-model="settings.wifiDhcp">DHCP</VCheckbox>
@@ -61,9 +61,9 @@
 
         <v-text-field v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
       </div>
-    </v-card-gray>
+    </card-gray>
 
-    <v-card-gray title="Security">
+    <card-gray title="Security">
       <template #header>
         <div class="col-span-full">
           <VCheckbox v-model="settings.authMode">AUTHENTICATION</VCheckbox>
@@ -84,9 +84,9 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <v-icons name="IconEyeOpen" v-if="showAuthPass"></v-icons>
+            <v-icons v-if="showAuthPass" name="IconEyeOpen"></v-icons>
 
-            <v-icons name="IconEyeClose" v-else></v-icons>
+            <v-icons v-else name="IconEyeClose"></v-icons>
           </template>
         </v-text-field>
 
@@ -100,15 +100,15 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <v-icons name="IconEyeOpen" v-if="showAuthPass"></v-icons>
+            <v-icons v-if="showAuthPass" name="IconEyeOpen"></v-icons>
 
-            <v-icons name="IconEyeClose" v-else></v-icons>
+            <v-icons v-else name="IconEyeClose"></v-icons>
           </template>
         </v-text-field>
       </div>
-    </v-card-gray>
+    </card-gray>
 
-    <v-card-gray title="Update">
+    <card-gray title="Update">
       <div class="mb-4 flex items-center">
         <div class="md:flex flex-auto gap-4">
           <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
@@ -132,9 +132,15 @@
 
         <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
       </div>
-    </v-card-gray>
+    </card-gray>
 
-    <v-card-gray title="System">
+    <card-gray title="System">
+      <template #header>
+        <button class="text-gray-400 cursor-pointer" @click="onInfo">
+          <v-icons name="IconInfo" class="size-5" />
+        </button>
+      </template>
+
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
@@ -146,7 +152,7 @@
 
         <v-button class="min-w-[100px]" color="red" size="small" @click="emit('reset', $event)">Reset</v-button>
       </div>
-    </v-card-gray>
+    </card-gray>
 
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
@@ -165,13 +171,13 @@
         <v-list v-slot="{ item }" :list="scanList">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
             <div class="mr-2">
-              <wifi-icon v-bind="item" />
+              <v-wifi-icon v-bind="item" />
             </div>
 
             <div>
-              <div class="text-title1">{{ item.ssid }}</div>
+              <div class="text-sm">{{ item.ssid }}</div>
 
-              <div class="text-gray-400 text-sm">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+              <div class="text-gray-400 text-xs">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
             </div>
           </div>
         </v-list>
@@ -194,7 +200,7 @@ import { required, max, min, sameAs, ip } from '@/utils/validate.js';
 
 import { useForm } from '@/composables/useForm.js';
 
-import { DialogKey } from '@/utils/types/simbol';
+import { DialogKey } from '@/utils/simbol';
 
 import type { IStoreScan, IStoreSettings, IListItem, ITextFieldFile, ITextFieldEvent } from 'vuesp-components/types';
 
@@ -213,6 +219,7 @@ const emit = defineEmits<{
   (e: 'save', value: IStoreSettings): void;
   (e: 'reset', value: Event): void;
   (e: 'reboot', value: Event): void;
+  (e: 'info', value: Event): void;
 }>();
 
 const dialog = inject(DialogKey, ({}) => {});
@@ -318,6 +325,7 @@ const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 const onSave = () => emit('save', settings.value);
+const onInfo = (e: Event) => emit('info', e);
 
 const onMenu = () => {
   if (invalid.value) return;

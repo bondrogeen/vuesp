@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VCardGray title="Ports">
+    <card-gray title="Ports">
       <div class="relative flex flex-col">
         <div v-for="port in ports" :key="port.gpio" class="flex flex-col md:gap-4 md:flex-row">
           <v-select class="max-w-[250px]" :value="port.mode" :label="`GPIO: ${port.gpio}`" hideMessage :list="listMode" @change="onMode(port, $event)" />
@@ -24,7 +24,7 @@
           ></v-text-field>
         </div>
       </div>
-    </VCardGray>
+    </card-gray>
 
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">

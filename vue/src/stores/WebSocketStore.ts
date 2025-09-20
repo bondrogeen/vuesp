@@ -4,8 +4,6 @@ import { useAppStore } from '@/stores/AppStore.js';
 
 import type { IStoreWebSocket, IStoreMain, IStoreInfo, IStoreFile, IStoreSettings, IStoreScan, IStoreGpio } from 'vuesp-components/types';
 
-const pkg = __APP__;
-
 const initialState = (): IStoreWebSocket => ({
   progress: {},
   scanList: [],
