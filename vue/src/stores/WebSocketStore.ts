@@ -1,46 +1,65 @@
 import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket.js';
-import { useAppStore } from '@/stores/AppStore.js';
 
-import type { IStoreWebSocket, IStoreMain, IStoreInfo, IStoreFile, IStoreSettings, IStoreScan, IStoreGpio } from 'vuesp-components/types';
+import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IStateInfo, IMessageSettings, IMessagePort, IMessageProgress } from '@/types';
 
-const initialState = (): IStoreWebSocket => ({
-  progress: {},
-  scanList: [],
-  fileList: [],
-  path: ['root'],
-  settings: {},
+const initialState = (): IStoreWebSocketStore => ({
+  progress: {
+    status: 0,
+    empty: 0,
+    size: 0,
+    length: 0,
+  },
+  settings: {
+    key: 1,
+    wifiDhcp: 1,
+    wifiMode: 1,
+    authMode: 1,
+    version: 1,
+    device: 0,
+    wifiIp: [],
+    wifiSubnet: [],
+    wifiGateway: [],
+    wifiDns: [],
+    wifiSsid: '',
+    wifiPass: '',
+    authLogin: '',
+    authPass: '',
+  },
   main: {
     gpio: {},
-    info: {},
+    info: {
+      key: 0,
+      id: 0,
+      firmware: [],
+      totalBytes: 0,
+      usedBytes: 0,
+      uptime: 0,
+      name: '',
+    },
     device: {},
     dallas: {},
   },
+  notifications: [],
 });
 
 export const useWebSocketStore = defineStore('webSocketStore', {
   state: initialState,
   actions: {
-    SET_INFO(info: IStoreInfo) {
+    SET_INFO(info: IStateInfo) {
       this.main.info = info;
       this.main = { ...this.main };
     },
-    SET_SCAN(data: IStoreScan) {
-      this.scanList = [...this.scanList, data];
-    },
-    SET_FILES(data: IStoreFile) {
-      this.fileList = [...this.fileList, data];
-    },
-    SET_SETTINGS(value: IStoreSettings) {
+    SET_SETTINGS(value: IMessageSettings) {
       this.settings = value;
     },
-    SET_PROGRESS(value: any) {
-      const app = useAppStore();
-      app.setNotification({ id: 1, text: 'Progress...', timeout: 60, ...value });
+    SET_PROGRESS(value: IMessageProgress) {
+      this.SET_NOTIFICATION({ id: 1, text: 'Progress...', timeout: 60, ...value });
       this.progress = value;
     },
-    SET_PORT(value: IStoreGpio) {
-      this.main.gpio[value.gpio] = value;
+    SET_PORT(value: IMessagePort) {
+      const gpio = value.gpio;
+      this.main.gpio[gpio] = value;
       this.main = { ...this.main };
     },
     SET_DALLAS(data: { address: number[] }) {
@@ -49,9 +68,22 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main = { ...this.main };
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
-      const name: keyof IStoreMain = key.toLowerCase() as keyof IStoreMain;
+      const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
       this.main[name] = object;
       this.main = { ...this.main };
+    },
+    SET_NOTIFICATION(notification: IMessageNotification) {
+      console.log(notification);
+      
+      const id = notification?.id || Date.now();
+      const timeout = notification?.timeout || 10;
+      const idx = this.notifications.findIndex((i) => i.id === id);
+
+      if (idx !== -1) {
+        this.notifications[idx] = { ...this.notifications[idx], ...notification, id, timeout };
+      } else {
+        this.notifications = [...this.notifications, { ...notification, id, timeout }];
+      }
     },
     onSend(comm: string, data?: any) {
       const store = useWebSocket();

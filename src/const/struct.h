@@ -7,10 +7,10 @@ enum keys {
   KEY_PROGRESS,
   KEY_FILES,
   KEY_REBOOT,
-  KEY_PINS,
   KEY_PORT,
   KEY_DEVICE,
   KEY_DALLAS,
+  KEY_NOTIFICATION,
   KEY_END
 };
 
@@ -79,12 +79,19 @@ struct Files {
 
 struct Port {
   uint8_t key;
-  uint8_t command;
   uint8_t gpio;
   uint8_t mode;
-  uint16_t value;
   uint8_t interrupt;
-  uint8_t disabled;
+  uint16_t value;
+  uint8_t state;
+  uint8_t command;
+};
+
+struct Notification {
+  uint8_t key;
+  uint8_t id;
+  uint16_t timeout;
+  char text[128];
 };
 
 struct Device {

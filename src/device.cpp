@@ -16,7 +16,15 @@ Device device = {
     0,
     "test"};
 
+Notification notification = {
+    KEY_NOTIFICATION,
+    0,
+    60,
+    "test"};
+
 uint32_t lastTimeDevice = 0;
+
+uint8_t iddd = 1;
 
 void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -27,6 +35,9 @@ void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, ui
 
 void onSend() {
   sendAll((uint8_t *)&device, sizeof(device), KEY_DEVICE);
+}
+void onSendNotification() {
+  sendAll((uint8_t *)&notification, sizeof(notification), KEY_NOTIFICATION);
 }
 
 void deviceGPIO() {
@@ -69,6 +80,10 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     getData();
     onSend();
+    notification.id = iddd++;
+    strcpy(notification.text, "Info");
+    // notification.text = "Info";
+    onSendNotification();
   }
 
   if (tasks[KEY_DEVICE]) {

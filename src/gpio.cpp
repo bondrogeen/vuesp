@@ -6,11 +6,11 @@
 #include "./include/tasks.h"
 
 Port ports[5] = {
-    {KEY_PORT, 0, 4, INPUT, 1, 0},
-    {KEY_PORT, 0, 5, OUTPUT, 0, 0},
-    {KEY_PORT, 0, 12, OUTPUT_OPEN_DRAIN, 1, 0},
-    {KEY_PORT, 0, 13, OUTPUT, 0, 0},
-    {KEY_PORT, 0, 14, OUTPUT, 1, 0},
+    {KEY_PORT, 4, INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, 1, GPIO_STATE_ON, GPIO_COMMAND_GET},
+    {KEY_PORT, 5, OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
+    {KEY_PORT, 12, OUTPUT, GPIO_INTERRUPT_OFF, 1, GPIO_STATE_ON, GPIO_COMMAND_GET},
+    {KEY_PORT, 13, OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
+    {KEY_PORT, 14, OUTPUT, GPIO_INTERRUPT_OFF, 1, GPIO_STATE_ON, GPIO_COMMAND_GET},
 };
 
 int ports_len = sizeof(ports) / sizeof(ports[0]);
@@ -44,9 +44,9 @@ void initGpio() {
       pinMode(pin, mode);
       digitalWrite(pin, value);
     }
-    // if (interrupt) {
-    //   attachInterrupt(pin, btnIsr, interrupt);
-    // }
+    if (mode == INPUT || mode == INPUT_PULLUP) {
+      attachInterrupt(pin, btnIsr, interrupt);
+    }
   }
 }
 

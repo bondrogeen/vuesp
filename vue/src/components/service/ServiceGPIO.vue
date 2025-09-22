@@ -1,8 +1,9 @@
 <template>
   <div>
     <card-gray title="Ports">
-      <div class="relative flex flex-col">
-        <div v-for="port in ports" :key="port.gpio" class="flex flex-col md:gap-4 md:flex-row">
+      <div class="relative flex flex-col gap-4">
+        {{ main.gpio }}
+        <!-- <div v-for="port in ports" :key="port.gpio" class="flex flex-col md:gap-4 md:flex-row">
           <v-select class="max-w-[250px]" :value="port.mode" :label="`GPIO: ${port.gpio}`" hideMessage :list="listMode" @change="onMode(port, $event)" />
 
           <v-select v-if="isInput(port)" class="max-w-[250px]" hideMessage :value="port.interrupt" :label="`Interrupt: ${port.gpio}`" :list="listInterrupt" @change="onInterrupt(port, $event)" />
@@ -22,7 +23,7 @@
             class="max-w-20"
             @update:modelValue="onInputValue"
           ></v-text-field>
-        </div>
+        </div> -->
       </div>
     </card-gray>
 
@@ -44,49 +45,44 @@
 </template>
 
 <script setup lang="ts">
-import type { IWSSend, IStoreGpio } from 'vuesp-components/types';
+// import type { IMessagePort } from '@/types';
 
-import { defineProps, defineEmits, onMounted } from 'vue';
+import { onMounted } from 'vue';
 
 // import { pathGPIO } from '@/utils/const.ts';
+import { command } from '@/utils/gpio';
 
-import { usePorts } from '@/composables/usePorts.ts';
+// import { usePorts } from '@/composables/usePorts.ts';
 
-interface Props {
-  gpio?: Record<string, IStoreGpio>;
-}
+import { useConnection } from '@/composables/useConnection.js';
 
-const { gpio = {} } = defineProps<Props>();
-
-const emit = defineEmits<{
-  (e: 'click', value: boolean): void;
-  (e: 'send', value: IWSSend): void;
-  (e: 'reboot', value: Event): void;
-}>();
+const { main } = useConnection((send: (command: string, data: unknown) => void) => {
+  send('PORT', { command: command.GPIO_COMMAND_GET_ALL });
+});
 
 const listMenu = [
   { name: 'Update', icon: 'IconUpdate' },
   { name: 'Save', icon: 'IconSave' },
 ];
 
-const onSend = (data: any) => {
-  emit('send', data);
-};
+// const onSend = (data: any) => {
+//   emit('send', data);
+// };
 
-const { ports, listMode, listInterrupt, init, onSetPort, onMode, onInterrupt, getStateValue, isOutput, isInput, onInputValue } = usePorts(onSend);
+// const { ports, listMode, listInterrupt, init, onSetPort, onMode, onInterrupt, getStateValue, isOutput, isInput, onInputValue, onSaveGpio } = usePorts(onSend);
 
 const onMenu = (e: Event) => {
-  onSave(e);
+  onSave();
+  console.log(e);
 };
 
-const onSave = async (e: Event) => {
-  // const data = stringifyDateGPIO(ports.value);
+const onSave = async () => {
+  // const data = onSaveGpio(ports.value);
   // const buffer = new Uint8Array(data).buffer;
-  // await onUploadBinary(pathGPIO, buffer);
-  emit('reboot', e);
+  // await uploadBinary(pathGPIO, buffer);
 };
 
 onMounted(async () => {
-  init();
+  // init();
 });
 </script>

@@ -36,14 +36,14 @@
 
     <app-dialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
 
-    <app-dialog v-if="dialogInfo" size="md" title="General information" @close="dialogInfo = false">
+    <app-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
       <BlockInfo v-bind="main.info" :pkg="pkg" class="w-full" />
     </app-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { IStorePackage, INotificationItem } from 'vuesp-components/types';
+import type { IPackage, IMessageNotification } from '@/types';
 
 import { ref, onMounted, onUnmounted, provide, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -57,15 +57,15 @@ import { BlockStatus, BlockInfo } from 'vuesp-components';
 
 import { PKGKey, DialogKey, NotificationKey } from '@/utils/simbol';
 
-const pkg: IStorePackage | undefined = inject(PKGKey);
+const pkg: IPackage | undefined = inject(PKGKey);
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
 
-const { menu, dialog, notifications, dialogInfo } = storeToRefs(appStore);
+const { menu, dialog, dialogInfo } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
-const { main } = storeToRefs(webSocketStore);
+const { main, notifications } = storeToRefs(webSocketStore);
 
 const isIframe = ref(false);
 const isSidebar = ref(false);
@@ -77,7 +77,7 @@ const route = useRoute();
 const router = useRouter();
 
 provide(DialogKey, appStore.setDialog);
-provide(NotificationKey, appStore.setNotification);
+provide(NotificationKey, webSocketStore.setNotification);
 
 const mode = import.meta.env.MODE;
 const proxy = import.meta.env.VITE_PROXY;
@@ -85,7 +85,7 @@ const proxy = import.meta.env.VITE_PROXY;
 const host = mode === 'production' ? window.location.host : proxy;
 
 const fullPath = computed(() => route.fullPath);
-const nameDevice = computed(() => main.value?.info?.name || 'Device');
+const nameDevice = computed(() => main.value?.info?.name || '');
 
 const connect = () => {
   const instance: WebSocket = new WebSocket(`ws://${host}/esp`);
@@ -104,7 +104,7 @@ const connect = () => {
 
 const onSidebar = (value: boolean) => (isSidebar.value = value);
 
-const onNotifications = (item: INotificationItem) => {
+const onNotifications = (item: IMessageNotification) => {
   notifications.value = notifications.value.filter((i) => i.id !== item.id);
 };
 
