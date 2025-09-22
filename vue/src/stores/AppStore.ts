@@ -1,18 +1,13 @@
 import { defineStore } from 'pinia';
-import { changeTheme, localGet } from 'vuesp-components/helpers';
+import { changeTheme, localGet, isNewVersion } from 'vuesp-components/helpers';
 
-import type { INotificationItem, IStoreApp, IDialog } from 'vuesp-components/types';
+import type { IStoreApp, IDialog } from '@/types';
 
-interface IAppState extends IStoreApp {
-  dialogInfo: boolean;
-}
-const initialState = (): IAppState => ({
-  isLoading: false,
+const initialState = (): IStoreApp => ({
   theme: 'dark',
   dialog: { value: false },
   menu: [],
-  notifications: [],
-  dialogInfo: false,
+  dialogInfo: isNewVersion(),
 });
 
 export const useAppStore = defineStore('app', {
@@ -32,17 +27,6 @@ export const useAppStore = defineStore('app', {
     },
     setDialog(data: IDialog) {
       this.dialog = data;
-    },
-    setNotification(notification: INotificationItem) {
-      const id = notification?.id || Date.now();
-      const timeout = notification?.timeout || 10;
-      const idx = this.notifications.findIndex((i) => i.id === id);
-
-      if (idx !== -1) {
-        this.notifications[idx] = { ...this.notifications[idx], ...notification, id, timeout };
-      } else {
-        this.notifications = [...this.notifications, { ...notification, id, timeout }];
-      }
     },
   },
 });

@@ -4,7 +4,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <v-select class="mb-6" :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
 
-        <v-text-field v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan(false)">
+        <v-text-field v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan">
           <template #icon>
             <v-icons name="IconSearch"></v-icons>
           </template>
@@ -144,13 +144,13 @@
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
 
-        <v-button class="min-w-[100px]" color="red" size="small" outline @click="emit('reboot', $event)">Reboot</v-button>
+        <v-button class="min-w-[100px]" color="red" size="small" outline @click="onSureReboot">Reboot</v-button>
       </div>
 
       <div class="flex items-center mb-4">
         <div class="flex-auto text-gray-600 bg:text-gray-400">Reset configuration</div>
 
-        <v-button class="min-w-[100px]" color="red" size="small" @click="emit('reset', $event)">Reset</v-button>
+        <v-button class="min-w-[100px]" color="red" size="small" @click="onSureReset">Reset</v-button>
       </div>
     </card-gray>
 
@@ -188,37 +188,29 @@
       </div>
 
       <template #footer>
-        <v-button color="blue" @click="onScan(true)">Scan</v-button>
+        <v-button color="blue" @click="onScan">Scan</v-button>
       </template>
     </app-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, defineProps, defineEmits, inject, onMounted, nextTick } from 'vue';
+import type { Ref } from 'vue';
+import type { TypeMessage, IMessageScan, IListItem, ITextFieldFile, ITextFieldEvent } from '@/types';
+
+import { computed, ref, defineEmits, inject, onMounted, nextTick } from 'vue';
 import { required, max, min, sameAs, ip } from '@/utils/validate.js';
+
+import { KEYS } from '@/types';
 
 import { useForm } from '@/composables/useForm.js';
 
 import { DialogKey } from '@/utils/simbol';
 
-import type { IStoreScan, IStoreSettings, IListItem, ITextFieldFile, ITextFieldEvent } from 'vuesp-components/types';
-
 import { VCheckbox, VTextFieldFile } from 'vuesp-components';
-
-interface Props {
-  modelValue?: IStoreSettings;
-  scanList: IStoreScan[];
-}
-
-const { modelValue = {}, scanList = [] } = defineProps<Props>();
+import { useConnection } from '@/composables/useConnection.js';
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: IStoreSettings): void;
-  (e: 'scan', value: boolean): void;
-  (e: 'save', value: IStoreSettings): void;
-  (e: 'reset', value: Event): void;
-  (e: 'reboot', value: Event): void;
   (e: 'info', value: Event): void;
 }>();
 
@@ -230,10 +222,17 @@ const showPass = ref(false);
 const showAuthPass = ref(false);
 const showDialog = ref(false);
 
-const settings = computed({
-  set: (value) => emit('update:modelValue', value),
-  get: () => modelValue,
-});
+const scanList: Ref<IMessageScan[]> = ref([]);
+
+const onMessage = ({ key, object }: TypeMessage) => {
+  if (key === KEYS.SCAN && object) scanList.value.push(object);
+};
+
+const onInit = (send: (command: string, data?: unknown) => void) => {
+  send(KEYS.SETTINGS);
+};
+
+const { onSend, settings } = useConnection(onInit, onMessage);
 
 const wifiIp = computed({
   set: (value) => value.split('.'),
@@ -324,7 +323,26 @@ const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.v
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
-const onSave = () => emit('save', settings.value);
+const onReboot = () => {
+  onSend(KEYS.REBOOT);
+};
+
+const onSave = () => {
+  onSend(KEYS.SETTINGS, settings.value);
+  dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
+};
+
+const onReset = () => {
+  settings.value.version = Math.floor(Math.random() * 65000);
+  nextTick(() => {
+    onSave();
+    onReboot();
+  });
+};
+
+const onSureReboot = () => dialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
+const onSureReset = () => dialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
+
 const onInfo = (e: Event) => emit('info', e);
 
 const onMenu = () => {
@@ -334,7 +352,7 @@ const onMenu = () => {
 
 const listEncryption: string[] = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
-const onSelectSsid = ({ ssid }: IStoreScan) => {
+const onSelectSsid = ({ ssid }: IMessageScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
   const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
@@ -349,9 +367,10 @@ const onClose = () => {
   showDialog.value = false;
 };
 
-const onScan = (value: boolean) => {
+const onScan = () => {
   showDialog.value = true;
-  emit('scan', value);
+  scanList.value = [];
+  onSend(KEYS.SCAN);
 };
 
 const onChange = (value: number) => (settings.value.wifiMode = value);

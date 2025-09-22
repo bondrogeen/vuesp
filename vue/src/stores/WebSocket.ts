@@ -1,15 +1,13 @@
-import type { IWebSocket } from 'vuesp-components/types';
+import type { IStoreWebSocket } from '@/types';
 
 import { defineStore } from 'pinia';
 import { useWebSocketStore } from './WebSocketStore.ts';
 
 import { struct, event } from '@/assets/js/';
 
-const debug = process.env.NODE_ENV === 'development';
+const log = (...arg: any) => (process.env.NODE_ENV === 'development' ? console.log(arg) : null);
 
-const log = (...arg: any) => (debug ? console.log(arg) : null);
-
-const initialState = (): IWebSocket => ({
+const initialState = (): IStoreWebSocket => ({
   socket: null,
   pingClient: 5000,
   pingDevice: 0,
@@ -20,8 +18,7 @@ export const useWebSocket = defineStore('webSocket', {
   actions: {
     init() {
       this.onSend('INFO');
-      this.onSend('DEVICE');
-      this.onSend('PORT');
+      // this.onSend('DEVICE');
       event.emit('init');
     },
     onopen() {
@@ -34,6 +31,7 @@ export const useWebSocket = defineStore('webSocket', {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
         const data = struct.get(message.data);
+        event.emit('messages', data);
         if (data) {
           const { object, key } = data;
           if (key !== 'PING') log(object, key);

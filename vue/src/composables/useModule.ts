@@ -7,7 +7,7 @@ import { storeToRefs } from 'pinia';
 
 import { Dashboard } from 'vuesp-components/dashboard';
 
-import { loadModule, saveModule } from 'vuesp-components/helpers';
+import { useFetch, uploadBinary } from 'vuesp-components/helpers';
 import { pathListDef, pathList } from '@/utils/const.ts';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
@@ -40,6 +40,11 @@ export const useModule = () => {
     data.value?.removeItem(item.id);
   };
 
+  const loadModule = async (path: string, init?: RequestInit) => {
+    const text = await useFetch.get(path, init).then((res) => res.text());
+    return await import('data:text/javascript,' + text);
+  };
+
   const onRestore = async () => {
     const module = await loadModule(pathListDef);
     data.value = new Dashboard(module.default);
@@ -49,7 +54,7 @@ export const useModule = () => {
   const onSaveModule = async () => {
     const content = data?.value?.saveList();
     if (content) {
-      await saveModule(pathList, content);
+      await uploadBinary(pathList, content);
     }
   };
 
