@@ -99,26 +99,24 @@ const isLoading = ref(false);
 
 const path = ref(['root']);
 
-const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => (a.isFile > b.isFile ? 1 : -1)));
+const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
 
 const fileName = (name: string) => `${fullPath.value}${name}`;
 const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.id !== 1 : true));
 const isLast = (path: string[], i: number) => path.length > i + 1;
 
 const onMessage = ({ key, object }: TypeMessage) => {
-  if (key === KEYS.FILES && object) files.value.push(object);
+  if (key === 'FILES' && object) files.value.push(object);
 };
 
-const onInit = (send: (command: string, data: unknown) => void) => {
-  send(KEYS.FILES, { name: fullPath.value });
-};
-
-const { main, onSend } = useConnection(onInit, onMessage);
+const { main, onSend } = useConnection((send) => {
+  send(KEYS.FILES, { command: 0, name: fullPath.value });
+}, onMessage);
 
 const onUpdate = () => {
   isLoading.value = true;
   files.value = [];
-  onSend(KEYS.FILES, { name: fullPath.value });
+  onSend(KEYS.FILES, { command: 0, name: fullPath.value });
   onSend(KEYS.INFO);
 };
 

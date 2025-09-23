@@ -1,4 +1,5 @@
-import type { IDashboard, IDashboardItemString } from 'vuesp-components/types';
+import type { IDashboard, IDashboardItemString, TypeSend } from '@/types';
+import { KEYS } from '@/types';
 
 import type { Ref } from 'vue';
 
@@ -23,7 +24,7 @@ export const useModule = () => {
   const setState = (id: string, value: any, options?: any) => {
     data.value?.set(id, value);
     const { device } = data.value?.getData();
-    onSend('DEVICE', { ...device, ...options });
+    onSend(KEYS.DEVICE, { ...device, ...options });
   };
 
   const getState = (id: string) => {
@@ -48,7 +49,7 @@ export const useModule = () => {
   const onRestore = async () => {
     const module = await loadModule(pathListDef);
     data.value = new Dashboard(module.default);
-    onSend('DEVICE');
+    onSend(KEYS.DEVICE);
   };
 
   const onSaveModule = async () => {
@@ -60,11 +61,11 @@ export const useModule = () => {
 
   const onSaveDef = () => {
     const device = main.value.device;
-    onSend('DEVICE', { ...device, command: 4 });
+    onSend(KEYS.DEVICE, { ...device, command: 4 });
   };
 
-  const onSend = (key: string, data?: any) => {
-    webSocketStore.onSend(key, data);
+  const onSend: TypeSend = (key, object) => {
+    webSocketStore.onSend(key, object);
   };
 
   watch(
@@ -93,7 +94,7 @@ export const useModule = () => {
       module = await initModule(pathListDef);
     }
     data.value = new Dashboard(module?.default);
-    webSocketStore.onSend('DEVICE');
+    webSocketStore.onSend(KEYS.DEVICE);
   });
 
   return { main, data, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef, onSend };

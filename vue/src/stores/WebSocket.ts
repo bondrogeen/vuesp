@@ -1,4 +1,4 @@
-import type { IStoreWebSocket } from '@/types';
+import type { IStoreWebSocket, TypeMessage } from '@/types';
 
 import { defineStore } from 'pinia';
 import { useWebSocketStore } from './WebSocketStore.ts';
@@ -18,7 +18,7 @@ export const useWebSocket = defineStore('webSocket', {
   actions: {
     init() {
       this.onSend('INFO');
-      // this.onSend('DEVICE');
+      // this.onSend(KEYS.INFO);
       event.emit('init');
     },
     onopen() {
@@ -31,7 +31,7 @@ export const useWebSocket = defineStore('webSocket', {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
         const data = struct.get(message.data);
-        event.emit('messages', data);
+        event.emit('messages', data as TypeMessage);
         if (data) {
           const { object, key } = data;
           if (key !== 'PING') log(object, key);
@@ -55,10 +55,10 @@ export const useWebSocket = defineStore('webSocket', {
       event.emit('connected', false);
       log(data);
     },
-    onSend(comm: string, data?: any) {
-      log(comm, data);
+    onSend<K extends TypeMessage['key'], O extends TypeMessage['object']>(key: K, object?: O) {
+      log(key, object);
       if (this.socket && this.socket.readyState === WebSocket.OPEN && this.isConnect) {
-        const buffer = struct.set(comm, data);
+        const buffer = struct.set(key, object as Record<string, unknown>);
         if (buffer) this.socket.send(buffer);
       }
     },

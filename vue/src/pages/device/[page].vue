@@ -7,7 +7,7 @@
     </div>
 
     <template v-if="show">
-      <ServiceSettings v-if="isPage('settings')" @info="onInfo" />
+      <ServiceSettings v-if="isPage('settings')" />
 
       <ServiceStorage v-if="isPage('storage')" />
 
@@ -19,28 +19,25 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { storeToRefs } from 'pinia';
 
 import { getPageTitle } from 'vuesp-components/helpers';
 
-import { useAppStore } from '@/stores/AppStore.js';
+import { useConnection } from '@/composables/useConnection.js';
 
 import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
 import ServiceStorage from '@/components/service/ServiceStorage.vue';
 import ServiceSettings from '@/components/service/ServiceSettings.vue';
 
-const appStore = useAppStore();
-const { menu, dialogInfo } = storeToRefs(appStore);
+const { menu } = useConnection();
 
 const route = useRoute();
+
 const show = ref(false);
 
 const title = computed(() => getPageTitle(menu.value, route.fullPath)?.name);
 const page = computed(() => route.params.page);
 
 const isPage = (value: string) => page.value === value;
-
-const onInfo = () => (dialogInfo.value = true);
 
 onMounted(() => {
   setTimeout(() => {

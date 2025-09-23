@@ -2,34 +2,31 @@ import { onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { event } from '@/assets/js/';
 
+import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
-import type { TypeMessage } from '@/types';
 
-export const useConnection = (init: (send: (comm: string, data?: any) => void) => void, messages?: (data: TypeMessage) => void) => {
+import type { TypeMessage, TypeSend } from '@/types';
+
+export const useConnection = (init?: (send: TypeSend) => void, messages?: (message: TypeMessage) => void) => {
   console.log('useConnection');
 
   const webSocketStore = useWebSocketStore();
-  const { ...arg } = storeToRefs(webSocketStore);
+  const { ...socket } = storeToRefs(webSocketStore);
 
+  const appStore = useAppStore();
+  const { ...app } = storeToRefs(appStore);
 
-  const isInit = ref(false);
   const isConnected = ref(false);
 
   event.on('init', () => {
-    isInit.value = true;
-    init(webSocketStore.onSend);
+    if (init) init(webSocketStore.onSend);
   });
 
   if (messages) {
-    event.on('messages', (data: TypeMessage) => {
-      messages(data);
+    event.on('messages', (message: TypeMessage) => {
+      messages(message);
     });
   }
-
-  event.on('init', () => {
-    isInit.value = true;
-    init(webSocketStore.onSend);
-  });
 
   event.on('connected', (value) => {
     isConnected.value = value;
@@ -38,8 +35,8 @@ export const useConnection = (init: (send: (comm: string, data?: any) => void) =
   const onSend = webSocketStore.onSend;
 
   onMounted(() => {
-    init(webSocketStore.onSend);
+    if (init) init(webSocketStore.onSend);
   });
 
-  return { ...arg, isInit, isConnected, onSend };
+  return { ...socket, ...app, isConnected, onSend };
 };

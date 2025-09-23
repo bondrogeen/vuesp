@@ -24,8 +24,6 @@ Notification notification = {
 
 uint32_t lastTimeDevice = 0;
 
-uint8_t iddd = 1;
-
 void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
   if (task == KEY_DEVICE && info->len == sizeof(device)) {
@@ -40,9 +38,10 @@ void onSendNotification() {
   sendAll((uint8_t *)&notification, sizeof(notification), KEY_NOTIFICATION);
 }
 
-void deviceGPIO() {
-  uint8_t value = digitalRead(13);
-  Serial.println(value);
+void deviceGPIO(Port *port) {
+  // uint8_t value = digitalRead(13);
+  Serial.print(port->gpio);
+  Serial.println(port->value);
 }
 
 void getGPIO() {
@@ -80,10 +79,10 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     getData();
     onSend();
-    notification.id = iddd++;
-    strcpy(notification.text, "Info");
+    // notification.id++;
+    // strcpy(notification.text, "Info");
     // notification.text = "Info";
-    onSendNotification();
+    // onSendNotification();
   }
 
   if (tasks[KEY_DEVICE]) {

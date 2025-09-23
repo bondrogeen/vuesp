@@ -77,7 +77,7 @@ const route = useRoute();
 const router = useRouter();
 
 provide(DialogKey, appStore.setDialog);
-provide(NotificationKey, webSocketStore.setNotification);
+provide(NotificationKey, webSocketStore.SET_NOTIFICATION);
 
 const mode = import.meta.env.MODE;
 const proxy = import.meta.env.VITE_PROXY;
