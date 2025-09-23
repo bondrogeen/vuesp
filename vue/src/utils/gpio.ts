@@ -1,83 +1,41 @@
-export const mask = {
-  GPIO_VALUE: 0b00000001,
-  GPIO_STATUS: 0b00000010,
-  GPIO_INTERRUPT: 0b00001100,
-  GPIO_MODE: 0b01110000,
-  GPIO_DISABLED: 0b10000000,
+import type { IListItem } from '@/types';
+
+export const MODE = {
+  INPUT: 0,
+  OUTPUT: 1,
+  INPUT_PULLUP: 2,
+  OUTPUT_OPEN_DRAIN: 3,
 };
 
-export const command = {
+export const COMMAND = {
   GPIO_COMMAND_GET: 0,
   GPIO_COMMAND_SET: 1,
   GPIO_COMMAND_GET_ALL: 2,
 };
 
-export const parseDateGPIO = (array: any): ArrayBuffer[] => {
-  const arr: ArrayBuffer[] = [];
-  const length = 8; // Port length
-  for (let i = 0; i < array.length; i += length) {
-    const data = array.slice(i, i + length);
-    const uint8View = new Uint8Array(data);
-    arr.push(uint8View.buffer);
-  }
-  return arr;
-};
+export const listMenu = [
+  { name: 'Update', icon: 'IconUpdate' },
+  { name: 'Save', icon: 'IconSave' },
+];
 
-export const stringifyDateGPIO = (object: any) => {
-  const arr = [];
+export const listMode: IListItem[] = [
+  { id: 1, name: 'INPUT', value: 0 }, // 0x00
+  { id: 2, name: 'INPUT_PULLUP', value: 2 }, // 0x02
+  { id: 3, name: 'OUTPUT', value: 1 }, // 0x01
+  { id: 4, name: 'OUTPUT_OPEN_DRAIN', value: 3 }, // 0x03
+  // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
+  // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
+  // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07
+];
 
-  for (const key in object) {
-    arr.push(object[key].gpio);
-    arr.push(object[key].data);
-  }
-  return arr;
-};
+export const listInterrupt: IListItem[] = [
+  { id: 1, name: 'OFF', value: 0 }, // 0x00
+  { id: 2, name: 'RISING', value: 1 }, // 0x01
+  { id: 3, name: 'FALLING', value: 2 }, // 0x02
+  { id: 4, name: 'CHANGE', value: 3 }, // 0x03
+];
 
 export const getBit = (byte: number, mask: number) => (byte & mask ? 1 : 0);
-
 export const setBit = (byte: number, mask: number) => (byte |= mask);
-
 export const clearBit = (byte: number, mask: number) => (byte &= ~mask);
-
 export const toggleBit = (byte: number, mask: number) => (byte ^= mask);
-
-export const getData = (byte: number): any => {
-  return {
-    disabled: (byte & mask.GPIO_DISABLED) >> 7,
-    mode: (byte & mask.GPIO_MODE) >> 4,
-    interrupt: (byte & mask.GPIO_INTERRUPT) >> 2,
-    status: (byte & mask.GPIO_STATUS) >> 1,
-    value: (byte & mask.GPIO_VALUE) >> 0,
-  };
-};
-
-export const setData = (obj: any) => {
-  let data = 0;
-  data = obj.value ? setBit(data, mask.GPIO_VALUE) : clearBit(data, mask.GPIO_VALUE);
-  data = obj.disabled ? setBit(data, mask.GPIO_DISABLED) : clearBit(data, mask.GPIO_DISABLED);
-  data = obj.status ? setBit(data, mask.GPIO_STATUS) : clearBit(data, mask.GPIO_STATUS);
-  data = clearBit(data, mask.GPIO_MODE);
-  data |= (obj.mode & 0b111) << 4;
-  return data;
-};
-
-export const getKey = (byte: number, key: string) => {
-  return getData(byte)?.[key];
-};
-
-// export const setData = byte => {
-//   return {
-//     value: getBit(byte, mask.GPIO_VALUE),
-//     mode: getBit(byte, mask.GPIO_MODE),
-//     disabled: getBit(byte, mask.GPIO_DISABLED),
-//     status: getBit(byte, mask.GPIO_STATUS),
-//   };
-// };
-
-export const getValue = (data: number) => {
-  return Boolean(data | mask.GPIO_VALUE);
-};
-
-// export const getValue = () => {
-
-// }

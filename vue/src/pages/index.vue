@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IDashboardItem, IDashboardItemString } from 'vuesp-components/types';
+import type { IDashboardItem, IDashboardItemString, IListItem } from '@/types';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
@@ -50,12 +50,7 @@ const isNew = ref(false);
 
 const item: Ref<IDashboardItemString> = ref({ id: '', name: '', keyValue: '' });
 
-interface IListMenu {
-  id: number;
-  name: string;
-}
-
-const listMenu: IListMenu[] = [
+const listMenu: IListItem[] = [
   { id: 1, name: 'Add item' },
   { id: 2, name: 'Restore items' },
   { id: 3, name: 'Save items' },
@@ -64,12 +59,14 @@ const listMenu: IListMenu[] = [
 
 const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
 
-const onMenuEvent = ({ id }: IListMenu) => {
-  if (id === 1) {
-    dialogObject.value = true;
-    isNew.value = true;
-    item.value = { id: 'device.test.1', name: 'device.test', keyValue: 'device.test', type: 'info', icon: 'light' };
-  }
+const onCreate = () => {
+  dialogObject.value = true;
+  isNew.value = true;
+  item.value = { id: 'device.test.1', name: 'device.test', keyValue: 'device.test', type: 'info', icon: 'light' };
+};
+
+const onMenuEvent = ({ id }: IListItem) => {
+  if (id === 1) onCreate();
   if (id === 2) onRestore();
   if (id === 3) onSaveModule();
   if (id === 4) onSaveDef();

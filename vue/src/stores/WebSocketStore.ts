@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket.js';
 
-import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IStateInfo, IMessageSettings, IMessagePort, IMessageProgress } from '@/types';
+import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IStateInfo, IMessageSettings, IMessagePort, IMessageProgress, TypeMessage } from '@/types';
 
 const initialState = (): IStoreWebSocketStore => ({
   progress: {
@@ -57,9 +57,9 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.SET_NOTIFICATION({ id: 1, text: 'Progress...', timeout: 60, ...value });
       this.progress = value;
     },
-    SET_PORT(value: IMessagePort) {
-      const gpio = value.gpio;
-      this.main.gpio[gpio] = value;
+    SET_PORT(port: IMessagePort) {
+      const gpio = port.gpio.toString();
+      this.main.gpio[gpio] = port;
       this.main = { ...this.main };
     },
     SET_DALLAS(data: { address: number[] }) {
@@ -73,8 +73,6 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main = { ...this.main };
     },
     SET_NOTIFICATION(notification: IMessageNotification) {
-      console.log(notification);
-      
       const id = notification?.id || Date.now();
       const timeout = notification?.timeout || 10;
       const idx = this.notifications.findIndex((i) => i.id === id);
@@ -85,9 +83,9 @@ export const useWebSocketStore = defineStore('webSocketStore', {
         this.notifications = [...this.notifications, { ...notification, id, timeout }];
       }
     },
-    onSend(comm: string, data?: any) {
+    onSend(key: TypeMessage['key'], object?: TypeMessage['object']) {
       const store = useWebSocket();
-      store.onSend(comm, data);
+      store.onSend(key, object);
     },
   },
   getters: {

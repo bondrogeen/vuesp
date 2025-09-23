@@ -196,9 +196,9 @@
 
 <script setup lang="ts">
 import type { Ref } from 'vue';
-import type { TypeMessage, IMessageScan, IListItem, ITextFieldFile, ITextFieldEvent } from '@/types';
+import type { TypeMessage, IMessageScan, IListItem, ITextFieldFile, ITextFieldEvent, TypeSend } from '@/types';
 
-import { computed, ref, defineEmits, inject, onMounted, nextTick } from 'vue';
+import { computed, ref, inject, onMounted, nextTick } from 'vue';
 import { required, max, min, sameAs, ip } from '@/utils/validate.js';
 
 import { KEYS } from '@/types';
@@ -210,10 +210,6 @@ import { DialogKey } from '@/utils/simbol';
 import { VCheckbox, VTextFieldFile } from 'vuesp-components';
 import { useConnection } from '@/composables/useConnection.js';
 
-const emit = defineEmits<{
-  (e: 'info', value: Event): void;
-}>();
-
 const dialog = inject(DialogKey, ({}) => {});
 
 const listMenu = [{ name: 'Save', icon: 'IconSave' }];
@@ -222,17 +218,17 @@ const showPass = ref(false);
 const showAuthPass = ref(false);
 const showDialog = ref(false);
 
-const scanList: Ref<IMessageScan[]> = ref([]);
+const scanList: Ref<Partial<IMessageScan>[]> = ref([]);
 
 const onMessage = ({ key, object }: TypeMessage) => {
   if (key === KEYS.SCAN && object) scanList.value.push(object);
 };
 
-const onInit = (send: (command: string, data?: unknown) => void) => {
+const onInit = (send: TypeSend) => {
   send(KEYS.SETTINGS);
 };
 
-const { onSend, settings } = useConnection(onInit, onMessage);
+const { dialogInfo, onSend, settings } = useConnection(onInit, onMessage);
 
 const wifiIp = computed({
   set: (value) => value.split('.'),
@@ -343,7 +339,9 @@ const onReset = () => {
 const onSureReboot = () => dialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
 const onSureReset = () => dialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
-const onInfo = (e: Event) => emit('info', e);
+const onInfo = () => {
+  dialogInfo.value = true;
+};
 
 const onMenu = () => {
   if (invalid.value) return;

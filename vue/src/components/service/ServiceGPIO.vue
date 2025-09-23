@@ -2,28 +2,36 @@
   <div>
     <card-gray title="Ports">
       <div class="relative flex flex-col gap-4">
-        {{ main.gpio }}
-        <!-- <div v-for="port in ports" :key="port.gpio" class="flex flex-col md:gap-4 md:flex-row">
-          <v-select class="max-w-[250px]" :value="port.mode" :label="`GPIO: ${port.gpio}`" hideMessage :list="listMode" @change="onMode(port, $event)" />
+        <div v-for="port in main.gpio" :key="port.gpio" class="flex flex-col md:gap-4 md:flex-row">
+          <v-select class="max-w-[250px]" :value="port.mode" :label="`GPIO: ${port.gpio}`" :disabled="!port.state" hideMessage :list="listMode" @change="onMode(port, $event)" />
 
-          <v-select v-if="isInput(port)" class="max-w-[250px]" hideMessage :value="port.interrupt" :label="`Interrupt: ${port.gpio}`" :list="listInterrupt" @change="onInterrupt(port, $event)" />
+          <v-select
+            v-if="isInput(port)"
+            class="max-w-[250px]"
+            hideMessage
+            :value="port.interrupt"
+            :disabled="!port.state"
+            :label="`Interrupt: ${port.gpio}`"
+            :list="listInterrupt"
+            @change="onInterrupt(port, $event)"
+          />
 
           <div class="md:hidden flex-auto"></div>
 
-          <v-button v-if="isOutput(port)" color="blue" class="w-20" :disabled="!port.mode" @click="onSetPort(port, getStateValue(gpio, port) ? 0 : 1)">
-            {{ getStateValue(gpio, port) ? 'ON' : 'OFF' }}
+          <v-button v-if="isOutput(port)" color="blue" class="w-20" :disabled="!port.mode" @click="onSetPort(port, port.value ? 0 : 1)">
+            {{ port.value ? 'ON' : 'OFF' }}
           </v-button>
 
           <v-text-field
             v-if="isInput(port)"
             hideMessage
-            :modelValue="getStateValue(gpio, port)"
+            :modelValue="port.value"
             :disabled="isInput(port)"
             label="Value"
             class="max-w-20"
-            @update:modelValue="onInputValue"
+            @update:modelValue="onInputValue(port, $event)"
           ></v-text-field>
-        </div> -->
+        </div>
       </div>
     </card-gray>
 
@@ -36,7 +44,7 @@
         </template>
 
         <v-list v-slot="{ item }" :list="listMenu" @click="onMenu">
-          <component :is="item.icon"></component>
+          <v-icons :name="item.icon" class="size-5"></v-icons>
           <span class="ms-2">{{ item.name }}</span>
         </v-list>
       </v-dropdown>
@@ -45,31 +53,25 @@
 </template>
 
 <script setup lang="ts">
-// import type { IMessagePort } from '@/types';
+import type { IListItem, IMessagePort } from '@/types';
+import { KEYS } from '@/types';
 
-import { onMounted } from 'vue';
-
-// import { pathGPIO } from '@/utils/const.ts';
-import { command } from '@/utils/gpio';
-
-// import { usePorts } from '@/composables/usePorts.ts';
+import { MODE, COMMAND, listMenu, listMode, listInterrupt } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection.js';
 
-const { main } = useConnection((send: (command: string, data: unknown) => void) => {
-  send('PORT', { command: command.GPIO_COMMAND_GET_ALL });
+const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.OUTPUT, MODE.OUTPUT_OPEN_DRAIN].includes(mode);
+const isInput = ({ mode = 0 }: IMessagePort) => [MODE.INPUT, MODE.INPUT_PULLUP].includes(mode);
+
+const onInputValue = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.gpio[gpio].value = value as number);
+
+const onMode = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.gpio[gpio].mode = value as number);
+const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.gpio[gpio].interrupt = value as number);
+const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
+
+const { main, onSend } = useConnection((send) => {
+  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
 });
-
-const listMenu = [
-  { name: 'Update', icon: 'IconUpdate' },
-  { name: 'Save', icon: 'IconSave' },
-];
-
-// const onSend = (data: any) => {
-//   emit('send', data);
-// };
-
-// const { ports, listMode, listInterrupt, init, onSetPort, onMode, onInterrupt, getStateValue, isOutput, isInput, onInputValue, onSaveGpio } = usePorts(onSend);
 
 const onMenu = (e: Event) => {
   onSave();
@@ -77,12 +79,6 @@ const onMenu = (e: Event) => {
 };
 
 const onSave = async () => {
-  // const data = onSaveGpio(ports.value);
-  // const buffer = new Uint8Array(data).buffer;
-  // await uploadBinary(pathGPIO, buffer);
+  onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
 };
-
-onMounted(async () => {
-  // init();
-});
 </script>

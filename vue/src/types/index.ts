@@ -1,15 +1,6 @@
-import type {
-  IMessageInfo,
-  IMessageSettings,
-  IMessageFile,
-  IMessageScan,
-  IMessagePort,
-  IMessageProgress,
-  IMessageReboot,
-  IStateApp,
-  IStateWebSocket,
-  IStateWebSocketStore,
-} from 'vuesp-components/types';
+import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, TypeConstMessage } from 'vuesp-components/types';
+
+export type * from 'vuesp-components/types';
 
 export const enum KEYS {
   INIT = 'INIT',
@@ -26,49 +17,27 @@ export const enum KEYS {
   DALLAS = 'DALLAS',
 }
 
-export type * from 'vuesp-components/types';
-
-interface IKeyMessageSettings {
-  key: KEYS.SETTINGS;
-  object: IMessageSettings;
+export interface IMessageDevice {
+  key?: number;
+  command: number;
+  gpio12: number;
+  gpio14: number;
+  analog: number;
+  pwm: number;
+  now: number;
+  message: string;
 }
 
-interface IKeyMessageInfo {
-  key: KEYS.INFO;
-  object: IMessageInfo;
+interface IKeyMessageDevice {
+  key: 'DEVICE';
+  object?: IMessageDevice | Partial<IMessageDevice>;
 }
 
-interface IKeyMessagePing {
-  key: KEYS.PING;
-  object: IMessageFile;
-}
+export type TypeMessage = (TypeConstMessage & {}) | IKeyMessageDevice;
 
-interface IKeyMessageScan {
-  key: KEYS.SCAN;
-  object: IMessageScan;
-}
+type TypeMessageMap = { [K in TypeMessage['key']]: Extract<TypeMessage, { key: K }>['object'] };
 
-interface IKeyMessageProgress {
-  key: KEYS.PROGRESS;
-  object: IMessageProgress;
-}
-
-interface IKeyMessageFiles {
-  key: KEYS.FILES;
-  object: IMessageFile;
-}
-
-interface IKeyMessageReboot {
-  key: KEYS.REBOOT;
-  object: IMessageReboot;
-}
-
-interface IKeyMessagePort {
-  key: KEYS.PORT;
-  object: IMessagePort;
-}
-
-export type TypeMessage = IKeyMessageSettings | IKeyMessageInfo | IKeyMessagePing | IKeyMessageScan | IKeyMessageProgress | IKeyMessageFiles | IKeyMessageReboot | IKeyMessagePort;
+export type TypeSend = <K extends keyof TypeMessageMap>(key: K, object?: TypeMessageMap[K]) => void;
 
 export interface IMyMessageSettings extends IMessageSettings {
   EthIp?: [];
