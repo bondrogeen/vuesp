@@ -8,8 +8,6 @@ import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
 import type { TypeMessage, TypeSend } from '@/types';
 
 export const useConnection = (init?: (send: TypeSend) => void, messages?: (message: TypeMessage) => void) => {
-  console.log('useConnection');
-
   const webSocketStore = useWebSocketStore();
   const { ...socket } = storeToRefs(webSocketStore);
 
@@ -33,10 +31,11 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
   });
 
   const onSend = webSocketStore.onSend;
+  const onDialog = appStore.setDialog;
 
   onMounted(() => {
     if (init) init(webSocketStore.onSend);
   });
 
-  return { ...socket, ...app, isConnected, onSend };
+  return { ...socket, ...app, isConnected, onSend, onDialog };
 };

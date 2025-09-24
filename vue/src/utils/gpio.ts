@@ -11,12 +11,11 @@ export const COMMAND = {
   GPIO_COMMAND_GET: 0,
   GPIO_COMMAND_SET: 1,
   GPIO_COMMAND_GET_ALL: 2,
+  GPIO_COMMAND_SAVE: 3,
+  GPIO_COMMAND_CHANGE: 4,
 };
 
-export const listMenu = [
-  { name: 'Update', icon: 'IconUpdate' },
-  { name: 'Save', icon: 'IconSave' },
-];
+export const listMenu: IListItem[] = [{ id: 1, name: 'Save' }];
 
 export const listMode: IListItem[] = [
   { id: 1, name: 'INPUT', value: 0 }, // 0x00

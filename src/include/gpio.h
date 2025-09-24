@@ -12,6 +12,8 @@
 #define GPIO_COMMAND_GET 0
 #define GPIO_COMMAND_SET 1
 #define GPIO_COMMAND_GET_ALL 2
+#define GPIO_COMMAND_SAVE 3
+#define GPIO_COMMAND_CHANGE 4
 
 #include "./init.h"
 #include "./tasks.h"
