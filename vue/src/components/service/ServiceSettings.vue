@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
     <card-gray title="Wi-Fi">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <v-select class="mb-6" :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
@@ -198,25 +198,23 @@
 import type { Ref } from 'vue';
 import type { TypeMessage, IMessageScan, IListItem, ITextFieldFile, ITextFieldEvent, TypeSend } from '@/types';
 
-import { computed, ref, inject, onMounted, nextTick } from 'vue';
+import { computed, ref, nextTick, watch } from 'vue';
 import { required, max, min, sameAs, ip } from '@/utils/validate.js';
 
 import { KEYS } from '@/types';
 
 import { useForm } from '@/composables/useForm.js';
 
-import { DialogKey } from '@/utils/simbol';
-
 import { VCheckbox, VTextFieldFile } from 'vuesp-components';
 import { useConnection } from '@/composables/useConnection.js';
-
-const dialog = inject(DialogKey, ({}) => {});
 
 const listMenu = [{ name: 'Save', icon: 'IconSave' }];
 
 const showPass = ref(false);
 const showAuthPass = ref(false);
 const showDialog = ref(false);
+const rePassword = ref('');
+const reAuthPassword = ref('');
 
 const scanList: Ref<Partial<IMessageScan>[]> = ref([]);
 
@@ -228,79 +226,26 @@ const onInit = (send: TypeSend) => {
   send(KEYS.SETTINGS);
 };
 
-const { dialogInfo, onSend, settings } = useConnection(onInit, onMessage);
+const { settings, dialogInfo, onSend, onDialog } = useConnection(onInit, onMessage);
 
-const wifiIp = computed({
-  set: (value) => value.split('.'),
-  get: () => (settings?.value?.wifiIp || []).join('.'),
-});
-const wifiSubnet = computed({
-  set: (value) => value.split('.'),
-  get: () => (settings?.value?.wifiSubnet || []).join('.'),
-});
-const wifiGateway = computed({
-  set: (value) => value.split('.'),
-  get: () => (settings?.value?.wifiGateway || []).join('.'),
-});
-const wifiDns = computed({
-  set: (value) => value.split('.'),
-  get: () => (settings?.value?.wifiDns || []).join('.'),
-});
-const wifiSsid = computed({
-  set: (value) => (settings.value.wifiSsid = value),
-  get: () => settings?.value?.wifiSsid,
-});
-const wifiPass = computed({
-  set: (value) => (settings.value.wifiPass = value),
-  get: () => settings?.value?.wifiPass,
-});
-const authLogin = computed({
-  set: (value) => (settings.value.authLogin = value),
-  get: () => settings?.value?.authLogin,
-});
-const authPass = computed({
-  set: (value) => (settings.value.authPass = value),
-  get: () => settings?.value?.authPass,
-});
+const wifiIp = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiIp || []).join('.') });
+const wifiSubnet = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiSubnet || []).join('.') });
+const wifiGateway = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiGateway || []).join('.') });
+const wifiDns = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiDns || []).join('.') });
+const wifiSsid = computed({ set: (value) => (settings.value.wifiSsid = value), get: () => settings?.value?.wifiSsid });
+const wifiPass = computed({ set: (value) => (settings.value.wifiPass = value), get: () => settings?.value?.wifiPass });
+const authLogin = computed({ set: (value) => (settings.value.authLogin = value), get: () => settings?.value?.authLogin });
+const authPass = computed({ set: (value) => (settings.value.authPass = value), get: () => settings?.value?.authPass });
 
-const rePassword = ref(settings.value.wifiPass);
-const reAuthPassword = ref(settings.value.authPass);
-
-const form = {
-  wifiSsid,
-  wifiPass,
-  rePassword,
-
-  wifiIp,
-  wifiSubnet,
-  wifiGateway,
-  wifiDns,
-
-  authLogin,
-  authPass,
-  reAuthPassword,
-};
-
+const form = { wifiSsid, wifiPass, rePassword, wifiIp, wifiSubnet, wifiGateway, wifiDns, authLogin, authPass, reAuthPassword };
 const validators = {
   wifiSsid: { required, max: max(32) },
-  wifiPass: {
-    required,
-    max,
-    min,
-    sameAs: (value: string) => sameAs(value, rePassword.value || ''),
-  },
-  rePassword: {
-    required,
-    max,
-    min,
-    sameAs: (value: string) => sameAs(value, wifiPass.value || ''),
-  },
-
+  wifiPass: { required, max, min, sameAs: (value: string) => sameAs(value, rePassword.value || '') },
+  rePassword: { required, max, min, sameAs: (value: string) => sameAs(value, wifiPass.value || '') },
   wifiIp: { ip },
   wifiSubnet: { ip },
   wifiGateway: { ip },
   wifiDns: { ip },
-
   authLogin: { required, max: max(12) },
   authPass: { required, max: max(12), sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
   reAuthPassword: { required, max: max(12), sameAs: (value: string) => sameAs(value, authPass.value || '') },
@@ -325,7 +270,7 @@ const onReboot = () => {
 
 const onSave = () => {
   onSend(KEYS.SETTINGS, settings.value);
-  dialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
+  onDialog({ value: true, title: 'Done', message: 'Do you want to restart your device?', callback: onReboot });
 };
 
 const onReset = () => {
@@ -336,8 +281,8 @@ const onReset = () => {
   });
 };
 
-const onSureReboot = () => dialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
-const onSureReset = () => dialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
+const onSureReboot = () => onDialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
+const onSureReset = () => onDialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
 const onInfo = () => {
   dialogInfo.value = true;
@@ -361,9 +306,7 @@ const onSelectSsid = ({ ssid }: IMessageScan) => {
   onClose();
 };
 
-const onClose = () => {
-  showDialog.value = false;
-};
+const onClose = () => (showDialog.value = false);
 
 const onScan = () => {
   showDialog.value = true;
@@ -371,15 +314,19 @@ const onScan = () => {
   onSend(KEYS.SCAN);
 };
 
+watch(
+  () => settings.value,
+  () => {
+    rePassword.value = settings.value.wifiPass;
+    reAuthPassword.value = settings.value.authPass;
+  }
+);
+
 const onChange = (value: number) => (settings.value.wifiMode = value);
 const onSureOffWifi = ({ value }: IListItem) => {
   const v = value as number;
-  return !v ? dialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, v) }) : onChange(v);
+  return !v ? onDialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, v) }) : onChange(v);
 };
-
-onMounted(() => {
-  rePassword.value = settings.value.wifiPass;
-});
 
 const data = { LittleFS: null, firmware: null };
 
@@ -403,14 +350,14 @@ const onFlash = async (name: string) => {
   }
   if (!files.length) return;
   const res = await (await fetch('/update', { method: 'POST', body: date })).json();
-  if (res?.state) dialog({ value: true, title: 'Done', message: 'Reboot...' });
+  if (res?.state) onDialog({ value: true, title: 'Done', message: 'Reboot...' });
 };
 
 const updateFirmware = () => nextTick(() => onFlash('firmware'));
 const updateLittleFS = () => nextTick(() => onFlash('LittleFS'));
 
 const onSureFlash = (name: string) =>
-  dialog({
+  onDialog({
     value: true,
     message: `Are you sure you want to update the ${name}? <br/> <p class="mt-2" >${getName(name)}</p>`,
     callback: name === 'firmware' ? updateFirmware : updateLittleFS,

@@ -55,7 +55,7 @@ import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import { BlockStatus, BlockInfo } from 'vuesp-components';
 
-import { PKGKey, DialogKey, NotificationKey } from '@/utils/simbol';
+import { PKGKey } from '@/utils/simbol';
 
 const pkg: IPackage | undefined = inject(PKGKey);
 
@@ -75,9 +75,6 @@ let messageListener: ((event: MessageEvent) => void) | null = null;
 
 const route = useRoute();
 const router = useRouter();
-
-provide(DialogKey, appStore.setDialog);
-provide(NotificationKey, webSocketStore.SET_NOTIFICATION);
 
 const mode = import.meta.env.MODE;
 const proxy = import.meta.env.VITE_PROXY;

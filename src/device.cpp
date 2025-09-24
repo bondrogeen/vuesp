@@ -38,10 +38,14 @@ void onSendNotification() {
   sendAll((uint8_t *)&notification, sizeof(notification), KEY_NOTIFICATION);
 }
 
+// only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port *port) {
-  // uint8_t value = digitalRead(13);
   Serial.print(port->gpio);
   Serial.println(port->value);
+}
+
+void deviceGPIOInterrupt() {
+
 }
 
 void getGPIO() {

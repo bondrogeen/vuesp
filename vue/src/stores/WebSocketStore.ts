@@ -51,6 +51,8 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main = { ...this.main };
     },
     SET_SETTINGS(value: IMessageSettings) {
+      console.log(value);
+      
       this.settings = value;
     },
     SET_PROGRESS(value: IMessageProgress) {

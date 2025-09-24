@@ -69,11 +69,9 @@ import type { Ref } from 'vue';
 import type { IListItem, ITextFieldEvent, IMessageFile, TypeMessage } from '@/types';
 import { KEYS } from '@/types';
 
-import { watchEffect, ref, computed, inject, nextTick } from 'vue';
+import { watchEffect, ref, computed, nextTick } from 'vue';
 
 import { toByte, debounce, useFetch, createDownloadLink } from 'vuesp-components/helpers';
-
-import { DialogKey } from '@/utils/simbol';
 
 import { useConnection } from '@/composables/useConnection.js';
 
@@ -94,7 +92,6 @@ const listMenu: IListItem[] = [
   { id: 2, name: 'Remove' },
 ];
 
-const dialog = inject(DialogKey, ({}) => {});
 const isLoading = ref(false);
 
 const path = ref(['root']);
@@ -109,7 +106,7 @@ const onMessage = ({ key, object }: TypeMessage) => {
   if (key === 'FILES' && object) files.value.push(object);
 };
 
-const { main, onSend } = useConnection((send) => {
+const { main, onSend, onDialog } = useConnection((send) => {
   send(KEYS.FILES, { command: 0, name: fullPath.value });
 }, onMessage);
 
@@ -155,7 +152,7 @@ const onFormat = async () => {
   if (res?.state) onUpdate();
 };
 
-const onSureFormat = () => dialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
+const onSureFormat = () => onDialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
 
 const onUpload = async (data: ITextFieldEvent) => {
   const totalSize = data?.info?.totalSize || 0;
@@ -175,19 +172,19 @@ const onUpload = async (data: ITextFieldEvent) => {
     const res = await useFetch.post(URL, { body }).then((r) => r.json());
     if (res?.state) onUpdate();
   } else {
-    dialog({ value: true, message: 'No free space' });
+    onDialog({ value: true, message: 'No free space' });
   }
 };
 
 const onDelete = async (name: string) => {
   const res = await useFetch.delete(`${URL}?file=${fileName(name)}`).then((r) => r.json());
   if (res?.state) onUpdate();
-  else dialog({ value: true, message: 'Directory is not empty' });
+  else onDialog({ value: true, message: 'Directory is not empty' });
 };
 
 const onSureDelete = (name: string) => {
   if (fileName(name).includes('www')) {
-    dialog({ value: true, message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
+    onDialog({ value: true, message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
   } else {
     onDelete(name);
   }
