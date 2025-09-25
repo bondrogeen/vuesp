@@ -1,4 +1,5 @@
 import type { IStoreWebSocket, TypeMessage } from '@/types';
+import { KEYS } from '@/types';
 
 import { defineStore } from 'pinia';
 import { useWebSocketStore } from './WebSocketStore.ts';
@@ -17,8 +18,7 @@ export const useWebSocket = defineStore('webSocket', {
   state: initialState,
   actions: {
     init() {
-      this.onSend('INFO');
-      // this.onSend(KEYS.INFO);
+      this.onSend(KEYS.INFO);
       event.emit('init');
     },
     onopen() {
@@ -34,7 +34,7 @@ export const useWebSocket = defineStore('webSocket', {
         event.emit('messages', data as TypeMessage);
         if (data) {
           const { object, key } = data;
-          if (key !== 'PING') log(object, key);
+          if (key !== KEYS.PING) log(object, key);
           const store = useWebSocketStore();
 
           const isStoreMethod = (key: string): key is keyof typeof store => key in store && typeof store[key as keyof typeof store] === 'function';

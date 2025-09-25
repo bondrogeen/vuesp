@@ -23,7 +23,7 @@
       <div class="relative min-h-[260px]">
         <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
 
-        <v-list v-slot="{ item: { name, size, isDir, isFile } }" :list="sortFiles">
+        <v-list v-slot="{ item: { name, size, isDir, isFile } }" className="" :list="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
               <v-icons name="IconFolder" v-if="isDir"></v-icons>

@@ -2,7 +2,7 @@
   <div>
     <card-gray title="Ports">
       <div class="relative grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-        <div v-for="port in main.gpio" :key="port.gpio" class="p-4 bg-gray-700/10 rounded-md">
+        <div v-for="port in main.gpio" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md">
           <h5 class="text-sm mb-2">{{ `GPIO: ${port.gpio} ${!port.state ? '(Disabled)' : ''}` }}</h5>
 
           <div class="flex flex-col gap-4 md:flex-row">
@@ -71,12 +71,19 @@ const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem) => {
   onSend(KEYS.PORT, { ...main.value.gpio[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 
-const { main, onSend } = useConnection((send) => {
+const { main, onSend, onDialog } = useConnection((send) => {
   send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
 });
 
+const onReboot = () => {
+  onSend(KEYS.REBOOT);
+};
+
+const onSureReboot = () => onDialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
+
 const onSave = async () => {
   onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_SAVE });
+  onSureReboot();
 };
 
 const onMenu = ({ id }: IListItem) => {
