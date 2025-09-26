@@ -21,6 +21,8 @@ const app = createApp(App);
   // @ts-ignore: Unreachable code error
   app.provide(PKGKey, __APP__);
   const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
+  console.log(res);
+
   struct.init(res);
   app.use(pinia);
   app.use(vuesp);

@@ -2,7 +2,7 @@
   <div>
     <card-gray title="Ports">
       <div class="relative grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-        <div v-for="port in main.gpio" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md">
+        <div v-for="port in main.ports" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md border border-gray-200 dark:border-gray-700/40">
           <h5 class="text-sm mb-2">{{ `GPIO: ${port.gpio} ${!port.state ? '(Disabled)' : ''}` }}</h5>
 
           <div class="flex flex-col gap-4 md:flex-row">
@@ -59,16 +59,16 @@ const isInput = ({ mode = 0 }: IMessagePort) => [MODE.INPUT, MODE.INPUT_PULLUP].
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
 
-const onInputValue = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.gpio[gpio].value = value as number);
+const onInputValue = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.ports[gpio].value = value as number);
 
 const onMode = ({ gpio }: IMessagePort, { value }: IListItem) => {
-  main.value.gpio[gpio].mode = value as number;
-  onSend(KEYS.PORT, { ...main.value.gpio[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
+  main.value.ports[gpio].mode = value as number;
+  onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 
 const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem) => {
-  main.value.gpio[gpio].interrupt = value as number;
-  onSend(KEYS.PORT, { ...main.value.gpio[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
+  main.value.ports[gpio].interrupt = value as number;
+  onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 
 const { main, onSend, onDialog } = useConnection((send) => {

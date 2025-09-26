@@ -12,8 +12,8 @@ Device device = {
     0,
     255,
     0,
-    0,
-    0,
+    100,
+    1566565655,
     "test"};
 
 Notification notification = {
@@ -53,7 +53,7 @@ void getGPIO() {
 }
 
 void setupFirstDevice() {
-  getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+  // getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
   // getLoadDef(DEF_PATH_MODBUS, (uint8_t *)&modbusSetting, sizeof(modbusSetting));
 }
 
@@ -95,7 +95,7 @@ void loopDevice(uint32_t now) {
       setOutput();
     }
     if (device.command == 3) {
-      setPWM();
+      // setPWM();
     }
     if (device.command == 4) {
       writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
