@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import type { IPackage, IMessageNotification } from '@/types';
 
-import { ref, onMounted, onUnmounted, provide, computed, inject } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { storeToRefs } from 'pinia';

@@ -27,7 +27,7 @@ const initialState = (): IStoreWebSocketStore => ({
     authPass: '',
   },
   main: {
-    gpio: {},
+    ports: {},
     info: {
       key: 0,
       id: 0,
@@ -51,8 +51,6 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main = { ...this.main };
     },
     SET_SETTINGS(value: IMessageSettings) {
-      console.log(value);
-      
       this.settings = value;
     },
     SET_PROGRESS(value: IMessageProgress) {
@@ -61,7 +59,7 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     },
     SET_PORT(port: IMessagePort) {
       const gpio = port.gpio.toString();
-      this.main.gpio[gpio] = port;
+      this.main.ports[gpio] = port;
       this.main = { ...this.main };
     },
     SET_DALLAS(data: { address: number[] }) {
@@ -71,6 +69,7 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
       const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
+      if (['ping', 'files', 'progress', 'scan'].includes(name)) return;
       this.main[name] = object;
       this.main = { ...this.main };
     },

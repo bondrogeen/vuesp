@@ -1,8 +1,8 @@
-import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, TypeConstMessage } from 'vuesp-components/types';
+import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage } from 'vuesp-components/types';
 
 export type * from 'vuesp-components/types';
 
-export const enum KEYS {
+export enum KEYS {
   INIT = 'INIT',
   SETTINGS = 'SETTINGS',
   INFO = 'INFO',
@@ -39,11 +39,23 @@ type TypeMessageMap = { [K in TypeMessage['key']]: Extract<TypeMessage, { key: K
 
 export type TypeSend = <K extends keyof TypeMessageMap>(key: K, object?: TypeMessageMap[K]) => void;
 
+export interface IStateDevice {
+  key: number;
+  now: number;
+  pwm: number;
+  analog: number;
+}
+
 export interface IMyMessageSettings extends IMessageSettings {
   EthIp?: [];
   EthSubnet?: [];
   EthGateway?: [];
   EthDns?: [];
+}
+
+export interface IMyIStateMain extends IStateMain {
+  device: IStateDevice;
+  dallas: any;
 }
 
 export interface IStoreApp extends IStateApp {
@@ -53,4 +65,5 @@ export interface IStoreWebSocket extends IStateWebSocket {}
 
 export interface IStoreWebSocketStore extends IStateWebSocketStore {
   settings: IMyMessageSettings;
+  main: IMyIStateMain;
 }

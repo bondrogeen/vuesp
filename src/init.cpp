@@ -40,7 +40,7 @@ void reboot() {
 
 void WiFiEvent(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
-  if (event == 7 || event == 3, event == 115) {
+  if (event == 7 || event == 3 || event == 115) {
     Serial.println(WiFi.localIP());
     isConnected = 1;
   }
