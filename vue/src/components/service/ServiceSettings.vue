@@ -168,7 +168,7 @@
 
     <app-dialog v-if="showDialog" title="SCAN" size="sm" @close="onClose">
       <div>
-        <v-list v-slot="{ item }" :list="scanList">
+        <v-list v-slot="{ item }" :list="scanList" className="">
           <div class="flex items-center w-full" @click="onSelectSsid(item)">
             <div class="mr-2">
               <v-wifi-icon v-bind="item" />
