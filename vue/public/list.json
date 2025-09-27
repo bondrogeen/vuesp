@@ -93,7 +93,7 @@
     "modify": ["val", "new Date(val * 1000).toLocaleDateString()"]
   },
   {
-    "id": "device.message",
+    "id": "device.input",
     "name": "message",
     "type": "input",
     "icon": "IconSearch",
