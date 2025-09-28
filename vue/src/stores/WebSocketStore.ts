@@ -11,7 +11,6 @@ const initialState = (): IStoreWebSocketStore => ({
     length: 0,
   },
   settings: {
-    key: 1,
     wifiDhcp: 1,
     wifiMode: 1,
     authMode: 1,
@@ -29,7 +28,6 @@ const initialState = (): IStoreWebSocketStore => ({
   main: {
     ports: {},
     info: {
-      key: 0,
       id: 0,
       firmware: [],
       totalBytes: 0,
@@ -37,7 +35,11 @@ const initialState = (): IStoreWebSocketStore => ({
       uptime: 0,
       name: '',
     },
-    device: {},
+    device: {
+      now: 0,
+      pwm: 0,
+      analog: 0,
+    },
     dallas: {},
   },
   notifications: [],

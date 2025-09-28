@@ -83,13 +83,13 @@ const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const URL = '/fs';
 
 const mainMenu: IListItem[] = [
-  { id: 2, name: 'Upload' },
-  { id: 3, name: 'Reload' },
-  { id: 4, name: 'Format' },
+  { id: 2, name: 'Upload', value: 1 },
+  { id: 3, name: 'Reload', value: 1 },
+  { id: 4, name: 'Format', value: 1 },
 ];
 const listMenu: IListItem[] = [
-  { id: 1, name: 'Download' },
-  { id: 2, name: 'Remove' },
+  { id: 1, name: 'Download', value: 1 },
+  { id: 2, name: 'Remove', value: 1 },
 ];
 
 const isLoading = ref(false);

@@ -15,7 +15,7 @@ export const COMMAND = {
   GPIO_COMMAND_CHANGE: 4,
 };
 
-export const listMenu: IListItem[] = [{ id: 1, name: 'Save' }];
+export const listMenu: IListItem[] = [{ id: 1, name: 'Save', value: 1 }];
 
 export const listMode: IListItem[] = [
   { id: 1, name: 'INPUT', value: 0 }, // 0x00
