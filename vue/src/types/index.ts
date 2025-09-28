@@ -40,7 +40,7 @@ type TypeMessageMap = { [K in TypeMessage['key']]: Extract<TypeMessage, { key: K
 export type TypeSend = <K extends keyof TypeMessageMap>(key: K, object?: TypeMessageMap[K]) => void;
 
 export interface IStateDevice {
-  key: number;
+  key?: number;
   now: number;
   pwm: number;
   analog: number;
