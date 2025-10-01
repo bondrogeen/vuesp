@@ -1,23 +1,25 @@
 import type { IListItem, IDashboardItem } from '@/types';
 import type { Ref } from 'vue';
 
-import { onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { useFetch } from 'vuesp-components/helpers';
 import { pathListDef, pathList } from '@/utils/const';
 
 export const useDashboard = () => {
   const listMenu: IListItem[] = [
-    { id: 1, name: 'Add', value: 1 },
-    { id: 2, name: 'Save', value: 3 },
-    { id: 3, name: 'Restore', value: 2 },
-    { id: 4, name: 'Default', value: 4 },
+    { name: 'Add', value: 1 },
+    { name: 'Save', value: 3 },
+    { name: 'Restore', value: 2 },
+    { name: 'Default', value: 4 },
   ];
 
   const dialogItem = ref(false);
 
   const item: Ref<IDashboardItem | null> = ref(null);
   const items: Ref<IDashboardItem[]> = ref([]);
+
+  const getComponent = ({ type = 'info' }) => `card-${type}`;
 
   const onCreate = () => {
     item.value = null;
@@ -35,11 +37,11 @@ export const useDashboard = () => {
   const onSaveModule = async () => {};
   const onSaveDef = () => {};
 
-  const onMenu = ({ id }: IListItem) => {
-    if (id === 1) onCreate();
-    if (id === 2) onSaveModule();
-    if (id === 3) onRestore();
-    if (id === 4) onSaveDef();
+  const onMenu = ({ value }: IListItem) => {
+    if (value === 1) onCreate();
+    if (value === 2) onSaveModule();
+    if (value === 3) onRestore();
+    if (value === 4) onSaveDef();
   };
 
   const onDialog = (data: IDashboardItem) => {
@@ -55,5 +57,5 @@ export const useDashboard = () => {
     items.value = data;
   });
 
-  return { listMenu, dialogItem, item, items, onMenu, onDialog, onButton };
+  return { listMenu, dialogItem, item, items, getComponent, onMenu, onDialog, onButton };
 };
