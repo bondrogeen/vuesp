@@ -65,7 +65,7 @@ uint8_t readPort(uint8_t port) {
 void getAll() {
   for (int i = 0; i < ports_len; i++) {
     ports[i].value = digitalRead(ports[i].gpio);
-    send((uint8_t *)&ports[i], sizeof(ports[i]), KEY_PORT);
+    sendAll((uint8_t *)&ports[i], sizeof(ports[i]), KEY_PORT);
   }
 }
 
@@ -75,7 +75,7 @@ void setMode() {
       ports[i] = port;
     }
   }
-  send((uint8_t *)&port, sizeof(port), KEY_PORT);
+  sendAll((uint8_t *)&port, sizeof(port), KEY_PORT);
 }
 
 void setValue() {
@@ -94,7 +94,7 @@ void checkInterrupt() {
       ports[i].value = port.value;
       deviceGPIO(&port);
     }
-    send((uint8_t *)&port, sizeof(port), KEY_PORT);
+    sendAll((uint8_t *)&port, sizeof(port), KEY_PORT);
   }
 }
 

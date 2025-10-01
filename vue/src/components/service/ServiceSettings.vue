@@ -6,7 +6,7 @@
 
         <v-text-field v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan">
           <template #icon>
-            <v-icons name="IconSearch"></v-icons>
+            <v-icons name="Search"></v-icons>
           </template>
         </v-text-field>
 
@@ -21,9 +21,9 @@
           @on-icon="showPass = !showPass"
         >
           <template #icon>
-            <v-icons v-if="showPass" name="IconEyeOpen"></v-icons>
+            <v-icons v-if="showPass" name="EyeOpen"></v-icons>
 
-            <v-icons v-else name="IconEyeClose"></v-icons>
+            <v-icons v-else name="EyeClose"></v-icons>
           </template>
         </v-text-field>
 
@@ -37,9 +37,9 @@
           @on-icon="showPass = !showPass"
         >
           <template #icon>
-            <v-icons v-if="showPass" name="IconEyeOpen"></v-icons>
+            <v-icons v-if="showPass" name="EyeOpen"></v-icons>
 
-            <v-icons v-else name="IconEyeClose"></v-icons>
+            <v-icons v-else name="EyeClose"></v-icons>
           </template>
         </v-text-field>
       </div>
@@ -84,9 +84,9 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <v-icons v-if="showAuthPass" name="IconEyeOpen"></v-icons>
+            <v-icons v-if="showAuthPass" name="EyeOpen"></v-icons>
 
-            <v-icons v-else name="IconEyeClose"></v-icons>
+            <v-icons v-else name="EyeClose"></v-icons>
           </template>
         </v-text-field>
 
@@ -100,9 +100,9 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <v-icons v-if="showAuthPass" name="IconEyeOpen"></v-icons>
+            <v-icons v-if="showAuthPass" name="EyeOpen"></v-icons>
 
-            <v-icons v-else name="IconEyeClose"></v-icons>
+            <v-icons v-else name="EyeClose"></v-icons>
           </template>
         </v-text-field>
       </div>
@@ -137,7 +137,7 @@
     <card-gray title="System">
       <template #header>
         <button class="text-gray-400 cursor-pointer" @click="onInfo">
-          <v-icons name="IconInfo" class="size-5" />
+          <v-icons name="Info" class="size-5" />
         </button>
       </template>
 
@@ -158,7 +158,7 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="IconDots" class="rotate-90"></v-icons>
+            <v-icons name="Dots" class="rotate-90"></v-icons>
           </v-button>
         </template>
 
@@ -254,9 +254,9 @@ const validators = {
 const { v, invalid, getError } = useForm(validators, form);
 
 const listWiFi: IListItem[] = [
-  { id: 1, name: 'OFF', value: 0 },
-  { id: 2, name: 'STA', value: 1 },
-  { id: 3, name: 'AP', value: 2 },
+  { name: 'OFF', value: 0 },
+  { name: 'STA', value: 1 },
+  { name: 'AP', value: 2 },
   // { name: 'STA + AP', value: 3 },
 ];
 

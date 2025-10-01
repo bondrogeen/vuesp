@@ -11,7 +11,7 @@
           >
             <div>{{ value }}</div>
 
-            <v-icons name="IconChevron" v-if="isLast(path, i)" class="h-5 w-4 -rotate-90"></v-icons>
+            <v-icons v-if="isLast(path, i)" name="Chevron" class="h-5 w-4 -rotate-90"></v-icons>
           </div>
         </div>
 
@@ -26,8 +26,8 @@
         <v-list v-slot="{ item: { name, size, isDir, isFile } }" className="" :list="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
-              <v-icons name="IconFolder" v-if="isDir"></v-icons>
-              <v-icons name="IconFile" v-else></v-icons>
+              <v-icons name="Folder" v-if="isDir"></v-icons>
+              <v-icons name="File" v-else></v-icons>
             </div>
 
             <div>
@@ -40,7 +40,7 @@
           <v-dropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <button @click="on.click">
-                <v-icons name="IconDots" class="rotate-90"></v-icons>
+                <v-icons name="Dots" class="rotate-90"></v-icons>
               </button>
             </template>
 
@@ -54,7 +54,7 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="IconDots" class="rotate-90"></v-icons>
+            <v-icons name="Dots" class="rotate-90"></v-icons>
           </v-button>
         </template>
 
@@ -83,13 +83,13 @@ const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const URL = '/fs';
 
 const mainMenu: IListItem[] = [
-  { id: 2, name: 'Upload', value: 1 },
-  { id: 3, name: 'Reload', value: 1 },
-  { id: 4, name: 'Format', value: 1 },
+  { name: 'Upload', value: 2 },
+  { name: 'Reload', value: 3 },
+  { name: 'Format', value: 4 },
 ];
 const listMenu: IListItem[] = [
-  { id: 1, name: 'Download', value: 1 },
-  { id: 2, name: 'Remove', value: 1 },
+  { name: 'Download', value: 1 },
+  { name: 'Remove', value: 2 },
 ];
 
 const isLoading = ref(false);
@@ -99,7 +99,7 @@ const path = ref(['root']);
 const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
 
 const fileName = (name: string) => `${fullPath.value}${name}`;
-const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.id !== 1 : true));
+const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.value !== 1 : true));
 const isLast = (path: string[], i: number) => path.length > i + 1;
 
 const onMessage = ({ key, object }: TypeMessage) => {
@@ -136,15 +136,15 @@ const onClickUpload = () => {
   if (el) el.click();
 };
 
-const onEventService = ({ id }: IListItem) => {
-  if (id === 2) onClickUpload();
-  if (id === 3) onUpdate();
-  if (id === 4) onSureFormat();
+const onEventService = ({ value }: IListItem) => {
+  if (value === 2) onClickUpload();
+  if (value === 3) onUpdate();
+  if (value === 4) onSureFormat();
 };
 
-const onEventList = (name: string, { id }: IListItem) => {
-  if (id === 1) createDownloadLink(`${URL}?file=${fileName(name)}`, name);
-  if (id === 2) onSureDelete(name);
+const onEventList = (name: string, { value }: IListItem) => {
+  if (value === 1) createDownloadLink(`${URL}?file=${fileName(name)}`, name);
+  if (value === 2) onSureDelete(name);
 };
 
 const onFormat = async () => {

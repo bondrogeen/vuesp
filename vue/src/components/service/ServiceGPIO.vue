@@ -36,7 +36,7 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="IconDots" class="rotate-90"></v-icons>
+            <v-icons name="Dots" class="rotate-90"></v-icons>
           </v-button>
         </template>
 
@@ -54,11 +54,14 @@ import { MODE, COMMAND, listMenu, listMode, listInterrupt } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection.js';
 
+const { main, onSend, onDialog } = useConnection((send) => {
+  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
+});
+
 const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.OUTPUT, MODE.OUTPUT_OPEN_DRAIN].includes(mode);
 const isInput = ({ mode = 0 }: IMessagePort) => [MODE.INPUT, MODE.INPUT_PULLUP].includes(mode);
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
-
 const onInputValue = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.ports[gpio].value = value as number);
 
 const onMode = ({ gpio }: IMessagePort, { value }: IListItem) => {
@@ -71,14 +74,7 @@ const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem) => {
   onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 
-const { main, onSend, onDialog } = useConnection((send) => {
-  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
-});
-
-const onReboot = () => {
-  onSend(KEYS.REBOOT);
-};
-
+const onReboot = () => onSend(KEYS.REBOOT);
 const onSureReboot = () => onDialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
 
 const onSave = async () => {
@@ -86,7 +82,7 @@ const onSave = async () => {
   onSureReboot();
 };
 
-const onMenu = ({ id }: IListItem) => {
-  if (id === 1) onSave();
+const onMenu = ({ value }: IListItem) => {
+  if (value === 1) onSave();
 };
 </script>

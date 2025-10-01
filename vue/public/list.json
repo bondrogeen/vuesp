@@ -3,103 +3,101 @@
     "id": "ports.4",
     "name": "ports.4",
     "type": "button",
-    "icon": "IconLight",
-    "options": { "disabled": 1 },
-    "parameters": ["ports.4.value", "ports.4"],
+    "icon": "Light",
+    "opts": { "disabled": 1 },
+    "args": ["ports.4.value", "ports.4"],
     "set": "({ ...a, value: v, command: 1 })",
-    "get": "v ? 1 : 0",
-    "modify": "v ? 'ON' : 'OFF'"
+    "get": "v",
+    "getTo": "v ? 'ON' : 'OFF'"
   },
   {
     "id": "ports.5",
     "name": "ports.5",
     "type": "button",
-    "icon": "IconLight",
-    "options": { "disabled": 1 },
-    "parameters": ["ports.5.value", "ports.5"],
+    "icon": "Light",
+    "opts": { "disabled": 1 },
+    "args": ["ports.5.value", "ports.5"],
     "set": "({ ...a, value: v, command: 1 })",
-    "get": "v ? 1 : 0",
-    "modify": "v ? 'ON' : 'OFF'"
+    "get": "v",
+    "getTo": "v ? 'ON' : 'OFF'"
   },
   {
     "id": "ports.12",
     "name": "ports.12",
     "type": "button",
-    "icon": "IconBulb",
-    "options": { "min": 0, "max": 255, "step": 1 },
-    "parameters": ["ports.12.value", "ports.12"],
+    "icon": "Bulb",
+    "args": ["ports.12.value", "ports.12"],
     "set": "({ ...a, value: v, command: 1 })",
-    "get": "v ? 1 : 0",
-    "modify": "v ? 'ON' : 'OFF'"
+    "get": "v",
+    "getTo": "v ? 'ON' : 'OFF'"
   },
   {
     "id": "ports.13",
     "name": "ports.13",
     "type": "button",
-    "icon": "IconBulb",
-    "options": { "min": 0, "max": 255, "step": 1 },
-    "parameters": ["ports.13.value", "ports.13"],
+    "icon": "Bulb",
+    "args": ["ports.13.value", "ports.13"],
     "set": "({ ...a, value: v, command: 1 })",
-    "get": "v ? 1 : 0",
-    "modify": "v ? 'ON' : 'OFF'"
+    "get": "v",
+    "getTo": "v ? 'ON' : 'OFF'"
   },
   {
     "id": "ports.14",
     "name": "ports.14",
     "type": "button",
-    "icon": "IconBulb",
-    "options": { "min": 0, "max": 255, "step": 1 },
-    "parameters": ["ports.14.value", "ports.14"],
+    "icon": "Bulb",
+    "args": ["ports.14.value", "ports.14"],
     "set": "({ ...a, value: v, command: 1 })",
-    "get": "v ? 1 : 0",
-    "modify": "v ? 'ON' : 'OFF'"
+    "get": "v",
+    "getTo": "v ? 'ON' : 'OFF'"
   },
-  { "id": "device.analog", "name": "adc", "type": "info", "icon": "IconAir", "parameters": ["device.analog"], "get": "v", "modify": "`${v} ℃`" },
-
+  { "id": "device.analog", "name": "adc", "type": "info", "icon": "Air", "args": ["device.analog"], "get": "v", "getTo": "`${v} ℃`" },
   {
     "id": "device.pwm",
     "name": "pwm",
     "type": "dimmer",
-    "icon": "IconVent",
-    "options": { "min": 0, "max": 255 },
-    "parameters": ["device.pwm", "device"],
+    "icon": "Vent",
+    "opts": { "min": 0, "max": 255, "step": 1 },
+    "args": ["device.pwm", "device"],
     "set": "({ ...a, pwm: v, command: 3 })",
     "get": "v",
-    "modify": "v"
+    "getTo": "v"
   },
   {
     "id": "device.now",
     "name": "now",
     "type": "date",
-    "icon": "IconNoti",
-    "parameters": ["device.now", "device"],
+    "icon": "Noti",
+    "args": ["device.now", "device"],
     "set": "({ ...a, now: v, command: 1 })",
     "get": "v",
-    "modify": "new Date(v * 1000).toLocaleDateString()"
+    "getTo": "new Date(v * 1000).toLocaleDateString()"
   },
   {
     "id": "device.message",
     "name": "message",
     "type": "list",
-    "icon": "IconStore",
-    "list": [
-      { "name": "Item1", "value": "item-1" },
-      { "name": "Item2", "value": "item-2" },
-      { "name": "Item3", "value": "item-3" }
-    ],
-    "parameters": ["device.message", "device"],
+    "icon": "Store",
+    "opts": {
+      "list": [
+        { "name": "Item1", "value": "1" },
+        { "name": "Item2", "value": "2" },
+        { "name": "Item3", "value": "3" }
+      ]
+    },
+    "args": ["device.message", "device"],
     "set": "({ ...a, message: v, command: 1 })",
     "get": "v",
-    "modify": "new Date(v * 1000).toLocaleDateString()"
+    "getTo": "new Date(v * 1000).toLocaleDateString()"
   },
   {
     "id": "device.input",
     "name": "message",
     "type": "input",
-    "icon": "IconSearch",
-    "parameters": ["device.message", "device"],
+    "icon": "Search",
+    "args": ["device.message", "device"],
     "set": "({ ...a, message: v, command: 1 })",
     "get": "v",
-    "modify": "v"
+    "getTo": "v"
   }
 ]
