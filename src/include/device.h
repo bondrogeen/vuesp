@@ -19,9 +19,14 @@
 #define ADDRESS_OUTPUT 0x24
 #define ADDRESS_INPUT 0x22
 
+#define DEVICE_COMMAND_SAVE 254
+#define DEVICE_COMMAND_GET 1
+#define DEVICE_COMMAND_SET 2
+#define DEVICE_COMMAND_GET_ALL 3
+#define DEVICE_COMMAND_CHANGE 4
+
 void setupDevice();
 void setupFirstDevice();
-void getGPIO();
 void deviceGPIO(Port *port);
 void deviceGPIOInterrupt();
 void loopDevice(uint32_t now);

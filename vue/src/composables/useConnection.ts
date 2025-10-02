@@ -1,6 +1,7 @@
 import { onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { event } from '@/assets/js/';
+import Queue from '@/assets/js/queue';
 
 import { useAppStore } from '@/stores/AppStore.js';
 import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
@@ -16,8 +17,16 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
 
   const isConnected = ref(false);
 
+  const queue = new Queue<{ key: TypeMessage['key']; object?: TypeMessage['object'] }>(100, ({ key, object }) => {
+    webSocketStore.onSend(key, object);
+  });
+
+  const onSend = (key: TypeMessage['key'], object?: TypeMessage['object']) => {
+    queue.add({ key, object });
+  };
+
   event.on('init', () => {
-    if (init) init(webSocketStore.onSend);
+    if (init) init(onSend);
   });
 
   if (messages) {
@@ -30,11 +39,10 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
     isConnected.value = value;
   });
 
-  const onSend = webSocketStore.onSend;
   const onDialog = appStore.setDialog;
 
   onMounted(() => {
-    if (init) init(webSocketStore.onSend);
+    if (init) init(onSend);
   });
 
   return { ...socket, ...app, isConnected, onSend, onDialog };
