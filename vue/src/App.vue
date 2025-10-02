@@ -22,7 +22,20 @@
       </app-aside>
 
       <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
-        <app-header v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="isSidebar = !isSidebar" />
+        <app-header v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="isSidebar = !isSidebar">
+          <!-- <v-dropdown right="0" left="unset" top="0" hideOnClick>
+            <template #activator="{ on }">
+              <v-button type="icon" color="gray" @click="on.click">
+                <span :class="notifications.length ? 'hidden' : 'flex'" class="absolute right-0 top-0.5 z-1 h-2 w-2 rounded-full bg-orange-400 flex">
+                  <span class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
+                </span>
+                <IconNoti class="h-5 w-5" />
+              </v-button>
+            </template>
+
+            <v-list :list="listMenu" @click="onMenu"></v-list>
+          </v-dropdown> -->
+        </app-header>
 
         <app-notification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
 

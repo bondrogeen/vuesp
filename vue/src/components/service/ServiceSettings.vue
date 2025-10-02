@@ -52,6 +52,7 @@
         </div>
       </template>
 
+      {{ v.wifiIp.value }}
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <v-text-field v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
 
@@ -199,7 +200,7 @@ import type { Ref } from 'vue';
 import type { TypeMessage, IMessageScan, IListItem, ITextFieldFile, ITextFieldEvent, TypeSend } from '@/types';
 
 import { computed, ref, nextTick, watch } from 'vue';
-import { required, max, min, sameAs, ip } from '@/utils/validate.js';
+import { required, maxLen, minLen, sameAs, ip } from '@/utils/validate.js';
 
 import { KEYS } from '@/types';
 
@@ -239,16 +240,16 @@ const authPass = computed({ set: (value) => (settings.value.authPass = value), g
 
 const form = { wifiSsid, wifiPass, rePassword, wifiIp, wifiSubnet, wifiGateway, wifiDns, authLogin, authPass, reAuthPassword };
 const validators = {
-  wifiSsid: { required, max: max(32) },
-  wifiPass: { required, max, min, sameAs: (value: string) => sameAs(value, rePassword.value || '') },
-  rePassword: { required, max, min, sameAs: (value: string) => sameAs(value, wifiPass.value || '') },
+  wifiSsid: { required, max: maxLen(32) },
+  wifiPass: { required, max: maxLen(32), min: minLen(8), sameAs: (value: string) => sameAs(value, rePassword.value || '') },
+  rePassword: { required, max: maxLen(32), min: minLen(8), sameAs: (value: string) => sameAs(value, wifiPass.value || '') },
   wifiIp: { ip },
   wifiSubnet: { ip },
   wifiGateway: { ip },
   wifiDns: { ip },
-  authLogin: { required, max: max(12) },
-  authPass: { required, max: max(12), sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
-  reAuthPassword: { required, max: max(12), sameAs: (value: string) => sameAs(value, authPass.value || '') },
+  authLogin: { required, max: maxLen(12) },
+  authPass: { required, max: maxLen(12), sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
+  reAuthPassword: { required, max: maxLen(12), sameAs: (value: string) => sameAs(value, authPass.value || '') },
 };
 
 const { v, invalid, getError } = useForm(validators, form);

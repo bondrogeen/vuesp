@@ -17,6 +17,10 @@ void getInfo(Info* infoFS) {
   return;
 }
 
+bool createDir(const char* path) {
+  return LittleFS.mkdir(path);
+}
+
 uint8_t readFile(const char* path, uint8_t* buf, size_t size) {
   File file = LittleFS.open(path, "r");
   if (!file || file.isDirectory()) {
@@ -28,17 +32,6 @@ uint8_t readFile(const char* path, uint8_t* buf, size_t size) {
     file.close();
     return 1;
   }
-}
-
-// void writeFile(const char* path, const uint8_t* buf, size_t size) {
-//   File file = LittleFS.open(path, FILE_WRITE);
-//   file.write(buf, size);
-//   delay(1);
-//   file.close();
-// }
-
-bool createDir(const char* path) {
-  return LittleFS.mkdir(path);
 }
 
 void writeFile(const char* path, const uint8_t* buf, size_t size) {
@@ -59,9 +52,7 @@ void writeFile(const char* path, const uint8_t* buf, size_t size) {
   }
 
   File file = LittleFS.open(path, "w");
-  if (!file) {
-    return;
-  }
+  if (!file) return;
   file.write(buf, size);
   delay(1);
   file.close();
