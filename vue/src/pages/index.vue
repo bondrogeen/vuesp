@@ -79,7 +79,10 @@ const onRestore = async () => {
   dashboard.value = res.dashboard;
 };
 const onSave = async () => await uploadJson('/tmp/dashboard.json', dashboard.value);
-const onDefault = () => onSend(KEYS.DEVICE, { command: 254 });
+const onDefault = () => {
+  onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_SAVE });
+  onSend(KEYS.DEVICE, { command: 254 });
+};
 
 const onMenu = ({ value }: IListItem) => {
   if (value === 1) onCreate();

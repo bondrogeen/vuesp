@@ -38,13 +38,6 @@ void getADC() {
   device.analog = analogRead(A0);
 }
 
-void setPWM() {
-  analogWrite(13, device.pwm);
-}
-void setOutput() {
-  digitalWrite(14, device.gpio14);
-}
-
 void getData() {
   getADC();
 }
@@ -70,8 +63,6 @@ void loopDevice(uint32_t now) {
   if (tasks[KEY_DEVICE]) {
     tasks[KEY_DEVICE] = 0;
     if (device.command == DEVICE_COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
-    // if (device.command == DEVICE_COMMAND_SAVE) setOutput();
-    // if (device.command == DEVICE_COMMAND_SAVE) setPWM();
 
     device.command = 0;
     onSend();

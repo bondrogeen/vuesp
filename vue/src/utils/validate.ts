@@ -7,9 +7,13 @@ const minValue = (min: number, v: number) => v && +v >= min;
 const maxValue = (max: number, v: number) => v && +v <= max;
 
 export const isDate = (v: unknown) => (v && v instanceof Date && !isNaN(v.valueOf())) || 'Invalid Date';
-export const isNumber = (v: string) => (typeof v === 'number' && !isNaN(v)) || 'Value is a number.';
-export const required = (v: string) => Boolean(v && v.length) || 'Required.';
-export const sameAs = (a: string, b: string) => a === b || 'Passwords do not match';
+export const isNumber = (v: string) => (typeof v === 'number' && !isNaN(v)) || 'Value is a number';
+export const required = (v: string) => Boolean(v && v.length) || 'Required';
+export const sameAs =
+  (name: string, m = 'Field do not match') =>
+  (v: string, vals: Record<string, any> = {}) =>
+    v === vals[name] || m;
+
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Invalid Email';
 export const minLen = (i: number) => (v: string) => minLength(i, v) || `Min length ${i}`;
 export const maxLen = (i: number) => (v: string) => maxLength(i, v) || `Max length ${i}`;

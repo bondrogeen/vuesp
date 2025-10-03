@@ -15,9 +15,7 @@
           </div>
         </div>
 
-        <div>
-          <VTextFieldFile @change="onUpload"></VTextFieldFile>
-        </div>
+        <VFile multiple="multiple" @change="onUpload"></VFile>
       </div>
 
       <div class="relative min-h-[260px]">
@@ -66,7 +64,7 @@
 
 <script setup lang="ts">
 import type { Ref } from 'vue';
-import type { IListItem, ITextFieldEvent, IMessageFile, TypeMessage } from '@/types';
+import type { IListItem, IMessageFile, TypeMessage } from '@/types';
 import { KEYS } from '@/types';
 
 import { watchEffect, ref, computed, nextTick } from 'vue';
@@ -75,7 +73,7 @@ import { toByte, debounce, useFetch, createDownloadLink } from 'vuesp-components
 
 import { useConnection } from '@/composables/useConnection.js';
 
-import { VTextFieldFile } from 'vuesp-components';
+import { VFile } from 'vuesp-components';
 
 const files: Ref<IMessageFile[]> = ref([]);
 const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
@@ -148,28 +146,25 @@ const onEventList = (name: string, { value }: IListItem) => {
 };
 
 const onFormat = async () => {
-  const res = await useFetch.post(`${URL}?format=true`).then((r) => r.json());
+  const res = await useFetch.$post(`${URL}?format=true`);
   if (res?.state) onUpdate();
 };
 
 const onSureFormat = () => onDialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
 
-const onUpload = async (data: ITextFieldEvent) => {
-  const totalSize = data?.info?.totalSize || 0;
-  const files = data?.files || [];
-
+const onUpload = async (files: FileList | null) => {
+  if (!files) return;
+  let totalSize = 0;
   const body = new FormData();
   for (let i = 0; i < files.length; i++) {
-    const file: File | null = files.item(i);
-    if (file) {
-      const fileName = `${fullPath.value}${file.name}`;
-      body.append(`file[${i}]`, file, fileName);
-    }
+    const file = files.item(i);
+    if (!file) return;
+    totalSize += file.size;
+    body.append(`file[${i}]`, file, `${fullPath.value}${file.name}`);
   }
   const { totalBytes = 0, usedBytes = 0 } = main.value.info;
-
   if (totalSize < totalBytes - usedBytes) {
-    const res = await useFetch.post(URL, { body }).then((r) => r.json());
+    const res = await useFetch.$post(URL, { body });
     if (res?.state) onUpdate();
   } else {
     onDialog({ value: true, message: 'No free space' });
@@ -177,7 +172,7 @@ const onUpload = async (data: ITextFieldEvent) => {
 };
 
 const onDelete = async (name: string) => {
-  const res = await useFetch.delete(`${URL}?file=${fileName(name)}`).then((r) => r.json());
+  const res = await useFetch.$delete(`${URL}?file=${fileName(name)}`);
   if (res?.state) onUpdate();
   else onDialog({ value: true, message: 'Directory is not empty' });
 };
@@ -189,8 +184,6 @@ const onSureDelete = (name: string) => {
     onDelete(name);
   }
 };
-
-// const getFile = async (path: string) => await useFetch.get(`/fs?file=${path}`).then((r) => r.text());
 
 const onLoad = debounce(() => {
   isLoading.value = false;
