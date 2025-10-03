@@ -5,6 +5,7 @@ export const MODE = {
   OUTPUT: 1,
   INPUT_PULLUP: 2,
   OUTPUT_OPEN_DRAIN: 3,
+  PWM: 128,
 };
 
 export const COMMAND = {
@@ -22,6 +23,7 @@ export const listMode: IListItem[] = [
   { name: 'INPUT_PULLUP', value: 2 }, // 0x02
   { name: 'OUTPUT', value: 1 }, // 0x01
   { name: 'OUTPUT_OPEN_DRAIN', value: 3 }, // 0x03
+  { name: 'PWM', value: 128 }, // 0x03
   // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
   // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
   // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07

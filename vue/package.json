@@ -1,6 +1,6 @@
 {
   "name": "vuesp",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": "bondrogeen@gmail.com",
   "description": "This is a Vue 3 web application for managing devices (e.g., IoT devices). The app interacts with devices via WebSockets, displays firmware and file system information, provides functions for uploading, deleting, and formatting files, and manages device services through a user-friendly interface.",
   "repository": {
@@ -28,6 +28,7 @@
   ],
   "scripts": {
     "preview": "vite preview",
+    "build-web": "vue-tsc -b && vite build",
     "build": "npm run increment && npm run recovery && npm run parser && vue-tsc -b && vite build && npm run firmware",
     "lint": "vue-cli-service lint",
     "dev": "vite",

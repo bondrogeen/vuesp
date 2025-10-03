@@ -18,7 +18,7 @@
               </v-button>
 
               <v-text-field
-                v-if="isInput(port)"
+                v-if="isInput(port) || isPWM(port)"
                 hideMessage
                 :modelValue="port.value"
                 :disabled="isInput(port) || !port.state"
@@ -60,9 +60,10 @@ const { main, onSend, onDialog } = useConnection((send) => {
 
 const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.OUTPUT, MODE.OUTPUT_OPEN_DRAIN].includes(mode);
 const isInput = ({ mode = 0 }: IMessagePort) => [MODE.INPUT, MODE.INPUT_PULLUP].includes(mode);
+const isPWM = ({ mode = 0 }: IMessagePort) => [MODE.PWM].includes(mode);
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
-const onInputValue = ({ gpio }: IMessagePort, { value }: IListItem) => (main.value.ports[gpio].value = value as number);
+const onInputValue = (port: IMessagePort, value: string) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value: +value });
 
 const onMode = ({ gpio }: IMessagePort, { value }: IListItem) => {
   main.value.ports[gpio].mode = value as number;

@@ -4,42 +4,21 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         <v-select class="mb-6" :value="settings.wifiMode" label="Mode" :list="listWiFi" @change="onSureOffWifi"></v-select>
 
-        <v-text-field v-model="v.wifiSsid.value" label="SSID" :disabled="isWifi" :append-button="!isWifi" :message="getError('wifiSsid')" @blur="v.wifiSsid.blur" @on-icon="onScan">
+        <v-text-field v-model="wifiSsid" v-bind="wifiSsidAttrs" label="SSID" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
           <template #icon>
             <v-icons name="Search"></v-icons>
           </template>
         </v-text-field>
 
-        <v-text-field
-          id="wifiPass"
-          v-model="v.wifiPass.value"
-          label="Password"
-          :disabled="isWifi"
-          :type="showPass ? 'text' : 'password'"
-          :message="getError('wifiPass')"
-          @blur="v.wifiPass.blur"
-          @on-icon="showPass = !showPass"
-        >
+        <v-text-field id="wifiPass" v-model="wifiPass" v-bind="wifiPassAttrs" label="Password" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
           <template #icon>
-            <v-icons v-if="showPass" name="EyeOpen"></v-icons>
-
-            <v-icons v-else name="EyeClose"></v-icons>
+            <v-icons class="size-5" :name="showPass ? 'EyeOpen' : 'EyeClose'"></v-icons>
           </template>
         </v-text-field>
 
-        <v-text-field
-          v-model="v.rePassword.value"
-          label="Repeat password"
-          :disabled="isWifi"
-          :message="getError('rePassword')"
-          :type="showPass ? 'text' : 'password'"
-          @blur="v.rePassword.blur"
-          @on-icon="showPass = !showPass"
-        >
+        <v-text-field v-model="rePassword" v-bind="rePasswordAttrs" label="Repeat password" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
           <template #icon>
-            <v-icons v-if="showPass" name="EyeOpen"></v-icons>
-
-            <v-icons v-else name="EyeClose"></v-icons>
+            <v-icons class="size-5" :name="showPass ? 'EyeOpen' : 'EyeClose'"></v-icons>
           </template>
         </v-text-field>
       </div>
@@ -52,15 +31,14 @@
         </div>
       </template>
 
-      {{ v.wifiIp.value }}
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <v-text-field v-model="v.wifiIp.value" label="IP" :message="getError('wifiIp')" :disabled="isWifiDHCP" @blur="v.wifiIp.blur" />
+        <v-text-field v-model="wifiIp" v-bind="wifiIpAttrs" label="IP" :disabled="isWifiDHCP" />
 
-        <v-text-field v-model="v.wifiSubnet.value" label="Subnet" :message="getError('wifiSubnet')" :disabled="isWifiDHCP" @blur="v.wifiSubnet.blur" />
+        <v-text-field v-model="wifiSubnet" v-bind="wifiSubnetAttrs" label="Subnet" :disabled="isWifiDHCP" />
 
-        <v-text-field v-model="v.wifiGateway.value" label="Gateway" :message="getError('wifiGateway')" :disabled="isWifiDHCP" @blur="v.wifiGateway.blur" />
+        <v-text-field v-model="wifiGateway" v-bind="wifiGatewayAttrs" label="Gateway" :disabled="isWifiDHCP" />
 
-        <v-text-field v-model="v.wifiDns.value" label="DNS" :message="getError('wifiDns')" :disabled="isWifiDHCP" @blur="v.wifiDns.blur" />
+        <v-text-field v-model="wifiDns" v-bind="wifiDnsAttrs" label="DNS" :disabled="isWifiDHCP" />
       </div>
     </card-gray>
 
@@ -72,87 +50,42 @@
       </template>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <v-text-field v-model="v.authLogin.value" label="Login" :disabled="isAuth" />
+        <v-text-field v-model="authLogin" v-bind="authLoginAttrs" label="Login" :disabled="isAuth" />
 
         <v-text-field
-          v-model="v.authPass.value"
-          class="col-end-2"
+          v-model="authPass"
+          v-bind="authPassAttrs"
           label="Password"
+          class="col-end-2"
           :type="showAuthPass ? 'text' : 'password'"
           :disabled="isAuth"
-          :message="getError('authPass')"
-          @blur="v.authPass.blur"
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <v-icons v-if="showAuthPass" name="EyeOpen"></v-icons>
-
-            <v-icons v-else name="EyeClose"></v-icons>
+            <v-icons class="size-5" :name="showAuthPass ? 'EyeOpen' : 'EyeClose'"></v-icons>
           </template>
         </v-text-field>
 
-        <v-text-field
-          v-model="v.reAuthPassword.value"
-          label="Password"
-          :type="showAuthPass ? 'text' : 'password'"
-          :disabled="isAuth"
-          :message="getError('reAuthPassword')"
-          @blur="v.reAuthPassword.blur"
-          @on-icon="showAuthPass = !showAuthPass"
-        >
+        <v-text-field v-model="reAuthPassword" v-bind="reAuthPasswordAttrs" label="Password" :type="showAuthPass ? 'text' : 'password'" :disabled="isAuth" @on-icon="showAuthPass = !showAuthPass">
           <template #icon>
-            <v-icons v-if="showAuthPass" name="EyeOpen"></v-icons>
-
-            <v-icons v-else name="EyeClose"></v-icons>
+            <v-icons class="size-5" :name="showAuthPass ? 'EyeOpen' : 'EyeClose'"></v-icons>
           </template>
         </v-text-field>
       </div>
     </card-gray>
 
     <card-gray title="Update">
-      <div class="mb-4 flex items-center">
-        <div class="md:flex flex-auto gap-4">
-          <h6 class="text-gray-600 bg:text-gray-400">Firmware:</h6>
-
-          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateFirmware">
-            <span>{{ getFileNames(files) }}</span>
-          </VTextFieldFile>
-        </div>
-
-        <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledFirmware" @click="onSureFlash('firmware')">Update</v-button>
-      </div>
-
-      <div class="flex items-center gap-4 mb-4">
-        <div class="md:flex flex-auto gap-4">
-          <h6 class="text-gray-600 bg:text-gray-400">LittleFS:</h6>
-
-          <VTextFieldFile v-slot="{ files }" accept=".bin" @change="onUpdateLittleFS">
-            <span>{{ getFileNames(files) }}</span>
-          </VTextFieldFile>
-        </div>
-
-        <v-button class="min-w-[100px]" color="blue" size="small" :disabled="isDisabledLittleFS" @click="onSureFlash('LittleFS')">Update</v-button>
-      </div>
+      <BlockUpdate :onDialog="onDialog" />
     </card-gray>
 
     <card-gray title="System">
       <template #header>
-        <button class="text-gray-400 cursor-pointer" @click="onInfo">
+        <button class="text-gray-400 cursor-pointer" @click="dialogInfo = true">
           <v-icons name="Info" class="size-5" />
         </button>
       </template>
 
-      <div class="flex items-center mb-4">
-        <div class="flex-auto text-gray-600 bg:text-gray-400">Reboot device</div>
-
-        <v-button class="min-w-[100px]" color="red" size="small" outline @click="onSureReboot">Reboot</v-button>
-      </div>
-
-      <div class="flex items-center mb-4">
-        <div class="flex-auto text-gray-600 bg:text-gray-400">Reset configuration</div>
-
-        <v-button class="min-w-[100px]" color="red" size="small" @click="onSureReset">Reset</v-button>
-      </div>
+      <BlockService @reset="onSureReset" @reboot="onSureReboot" />
     </card-gray>
 
     <Teleport to="[data-slot='device']">
@@ -168,54 +101,34 @@
     </Teleport>
 
     <app-dialog v-if="showDialog" title="SCAN" size="sm" @close="onClose">
-      <div>
-        <v-list v-slot="{ item }" :list="scanList" className="">
-          <div class="flex items-center w-full" @click="onSelectSsid(item)">
-            <div class="mr-2">
-              <v-wifi-icon v-bind="item" />
-            </div>
-
-            <div>
-              <div class="text-sm">{{ item.ssid }}</div>
-
-              <div class="text-gray-400 text-xs">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
-            </div>
-          </div>
-        </v-list>
-
-        <div v-if="!scanList.length" class="flex justify-center">
-          <v-loader class="text-primary"></v-loader>
-        </div>
-      </div>
-
-      <template #footer>
-        <v-button color="blue" @click="onScan">Scan</v-button>
-      </template>
+      <BlockScan :items="scanList" @select="onSelectSsid" @scan="onScan" />
     </app-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Ref } from 'vue';
-import type { TypeMessage, IMessageScan, IListItem, ITextFieldFile, ITextFieldEvent, TypeSend } from '@/types';
+import type { TypeMessage, IMessageScan, IListItem, TypeSend } from '@/types';
 
 import { computed, ref, nextTick, watch } from 'vue';
 import { required, maxLen, minLen, sameAs, ip } from '@/utils/validate.js';
 
 import { KEYS } from '@/types';
 
-import { useForm } from '@/composables/useForm.js';
+import { useForm } from 'vuesp-components/composables';
 
-import { VCheckbox, VTextFieldFile } from 'vuesp-components';
 import { useConnection } from '@/composables/useConnection.js';
+import { arrToStr, strToArr } from 'vuesp-components/helpers';
 
-const listMenu = [{ name: 'Save', icon: 'IconSave' }];
+import { VCheckbox, BlockUpdate } from 'vuesp-components';
+import BlockScan from '@/components/block/BlockScan.vue';
+import BlockService from '@/components/block/BlockService.vue';
+
+const listMenu: IListItem[] = [{ name: 'Save', value: 1 }];
 
 const showPass = ref(false);
 const showAuthPass = ref(false);
 const showDialog = ref(false);
-const rePassword = ref('');
-const reAuthPassword = ref('');
 
 const scanList: Ref<Partial<IMessageScan>[]> = ref([]);
 
@@ -229,30 +142,59 @@ const onInit = (send: TypeSend) => {
 
 const { settings, dialogInfo, onSend, onDialog } = useConnection(onInit, onMessage);
 
-const wifiIp = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiIp || []).join('.') });
-const wifiSubnet = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiSubnet || []).join('.') });
-const wifiGateway = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiGateway || []).join('.') });
-const wifiDns = computed({ set: (value) => value.split('.'), get: () => (settings?.value?.wifiDns || []).join('.') });
-const wifiSsid = computed({ set: (value) => (settings.value.wifiSsid = value), get: () => settings?.value?.wifiSsid });
-const wifiPass = computed({ set: (value) => (settings.value.wifiPass = value), get: () => settings?.value?.wifiPass });
-const authLogin = computed({ set: (value) => (settings.value.authLogin = value), get: () => settings?.value?.authLogin });
-const authPass = computed({ set: (value) => (settings.value.authPass = value), get: () => settings?.value?.authPass });
+const { defineField, handleSubmit } = useForm({
+  validationSchema: {
+    wifiSsid: [required, maxLen(32)],
+    wifiPass: [required, maxLen(32), minLen(8)],
+    rePassword: [required, maxLen(32), minLen(8), sameAs('wifiPass')],
+    wifiIp: [ip],
+    wifiSubnet: [ip],
+    wifiGateway: [ip],
+    wifiDns: [ip],
+    authLogin: [required, maxLen(12)],
+    authPass: [required, maxLen(12)],
+    reAuthPassword: [required, maxLen(12), sameAs('authPass')],
+  },
+});
 
-const form = { wifiSsid, wifiPass, rePassword, wifiIp, wifiSubnet, wifiGateway, wifiDns, authLogin, authPass, reAuthPassword };
-const validators = {
-  wifiSsid: { required, max: maxLen(32) },
-  wifiPass: { required, max: maxLen(32), min: minLen(8), sameAs: (value: string) => sameAs(value, rePassword.value || '') },
-  rePassword: { required, max: maxLen(32), min: minLen(8), sameAs: (value: string) => sameAs(value, wifiPass.value || '') },
-  wifiIp: { ip },
-  wifiSubnet: { ip },
-  wifiGateway: { ip },
-  wifiDns: { ip },
-  authLogin: { required, max: maxLen(12) },
-  authPass: { required, max: maxLen(12), sameAs: (value: string) => sameAs(value, reAuthPassword.value || '') },
-  reAuthPassword: { required, max: maxLen(12), sameAs: (value: string) => sameAs(value, authPass.value || '') },
-};
+const [wifiSsid, wifiSsidAttrs] = defineField<string>('wifiSsid');
+const [wifiPass, wifiPassAttrs] = defineField<string>('wifiPass');
+const [rePassword, rePasswordAttrs] = defineField<string>('rePassword');
+const [wifiIp, wifiIpAttrs] = defineField<string>('wifiIp');
+const [wifiSubnet, wifiSubnetAttrs] = defineField<string>('wifiSubnet');
+const [wifiGateway, wifiGatewayAttrs] = defineField<string>('wifiGateway');
+const [wifiDns, wifiDnsAttrs] = defineField<string>('wifiDns');
+const [authLogin, authLoginAttrs] = defineField<string>('authLogin');
+const [authPass, authPassAttrs] = defineField<string>('authPass');
+const [reAuthPassword, reAuthPasswordAttrs] = defineField<string>('reAuthPassword');
 
-const { v, invalid, getError } = useForm(validators, form);
+watch(
+  () => settings.value,
+  () => {
+    wifiSsid.value = settings.value.wifiSsid;
+    wifiPass.value = settings.value.wifiPass;
+    rePassword.value = settings.value.wifiPass;
+    wifiIp.value = arrToStr(settings.value.wifiIp);
+    wifiSubnet.value = arrToStr(settings.value.wifiSubnet);
+    wifiGateway.value = arrToStr(settings.value.wifiGateway);
+    wifiDns.value = arrToStr(settings.value.wifiDns);
+    authLogin.value = settings.value.authLogin;
+    authPass.value = settings.value.authPass;
+    reAuthPassword.value = settings.value.authPass;
+  }
+);
+
+const onSubmit = handleSubmit(async (values) => {
+  settings.value.wifiSsid = values.wifiSsid;
+  settings.value.wifiPass = values.wifiPass;
+  settings.value.wifiIp = strToArr(values.wifiIp);
+  settings.value.wifiSubnet = strToArr(values.wifiSubnet);
+  settings.value.wifiGateway = strToArr(values.wifiGateway);
+  settings.value.wifiDns = strToArr(values.wifiDns);
+  settings.value.authLogin = values.authLogin;
+  settings.value.authPass = values.authPass;
+  onSave();
+});
 
 const listWiFi: IListItem[] = [
   { name: 'OFF', value: 0 },
@@ -285,25 +227,15 @@ const onReset = () => {
 const onSureReboot = () => onDialog({ value: true, message: 'Do you want to restart your device?', callback: onReboot });
 const onSureReset = () => onDialog({ value: true, message: 'The configuration will be reset to default. <br/>Are you sure?', callback: onReset });
 
-const onInfo = () => {
-  dialogInfo.value = true;
-};
-
 const onMenu = () => {
-  if (invalid.value) return;
-  onSave();
+  onSubmit();
 };
-
-const listEncryption: string[] = ['OPEN', 'WEP', 'WPA_PSK', 'WPA2_PSK', 'WPA_WPA2_PSK', 'MAX', '', 'NO', 'AUTO'];
 
 const onSelectSsid = ({ ssid }: IMessageScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
   const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
-  if (input) {
-    input.select();
-    input.focus();
-  }
+  if (input) input.focus();
   onClose();
 };
 
@@ -315,52 +247,9 @@ const onScan = () => {
   onSend(KEYS.SCAN);
 };
 
-watch(
-  () => settings.value,
-  () => {
-    rePassword.value = settings.value.wifiPass;
-    reAuthPassword.value = settings.value.authPass;
-  }
-);
-
 const onChange = (value: number) => (settings.value.wifiMode = value);
 const onSureOffWifi = ({ value }: IListItem) => {
   const v = value as number;
   return !v ? onDialog({ value: true, message: 'You are about to disable Wi-Fi. Are you sure?', callback: onChange.bind(this, v) }) : onChange(v);
 };
-
-const data = { LittleFS: null, firmware: null };
-
-const selectFile = ref<any>(data);
-
-const onUpdateFirmware = (e: ITextFieldEvent) => (selectFile.value.firmware = e);
-const onUpdateLittleFS = (e: ITextFieldEvent) => (selectFile.value.LittleFS = e);
-const isDisabledFirmware = computed(() => Boolean(!selectFile.value?.firmware));
-const isDisabledLittleFS = computed(() => Boolean(!selectFile.value?.LittleFS));
-
-const getFileNames = (files: ITextFieldFile[]) => (files.length ? files.map((i) => `${i.name} (${i.size}) Byte`).join('') : 'Select a file...');
-const getName = (name: string) => (selectFile.value?.[name]?.info?.files || []).map((i: ITextFieldFile) => `File: ${i.name} <br/> Size: ${i.size} B`).join('');
-
-const onFlash = async (name: string) => {
-  if (!selectFile.value?.[name]) return;
-  const { files } = selectFile.value[name];
-  const date = new FormData();
-  for (let i = 0; i < files.length; i++) {
-    const file = files.item(i);
-    date.append(`file[${i}]`, file, `${name}.bin`);
-  }
-  if (!files.length) return;
-  const res = await (await fetch('/update', { method: 'POST', body: date })).json();
-  if (res?.state) onDialog({ value: true, title: 'Done', message: 'Reboot...' });
-};
-
-const updateFirmware = () => nextTick(() => onFlash('firmware'));
-const updateLittleFS = () => nextTick(() => onFlash('LittleFS'));
-
-const onSureFlash = (name: string) =>
-  onDialog({
-    value: true,
-    message: `Are you sure you want to update the ${name}? <br/> <p class="mt-2" >${getName(name)}</p>`,
-    callback: name === 'firmware' ? updateFirmware : updateLittleFS,
-  });
 </script>
