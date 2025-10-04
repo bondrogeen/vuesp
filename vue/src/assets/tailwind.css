@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source inline("dark:{flex,hidden} md:hidden dark:border-gray-700/50 dark:border-gray-700 lg:static dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 rounded-full lg:flex");
+@source inline("dark:{flex,hidden} md:hidden md:flex dark:border-gray-700/50 dark:border-gray-700 lg:static dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 rounded-full lg:flex md:w-80");
 
 @layer base {
   h1,
@@ -27,47 +27,5 @@
   }
   h5 {
     @apply text-sm md:text-base font-bold;
-  }
-}
-
-@layer utilities {
-  .no-scrollbar {
-    overflow-x: auto;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar::-webkit-scrollbar-track {
-    border-radius: 100vh;
-    @apply bg-gray-200;
-  }
-  .scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-400;
-    border-radius: 100vh;
-  }
-
-  .scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
-  }
-
-  .dark {
-    .scrollbar::-webkit-scrollbar-track {
-      @apply bg-gray-800;
-    }
-
-    .scrollbar::-webkit-scrollbar-thumb {
-      @apply bg-gray-600;
-    }
-
-    .scrollbar::-webkit-scrollbar-thumb:hover {
-      @apply bg-gray-600;
-    }
   }
 }

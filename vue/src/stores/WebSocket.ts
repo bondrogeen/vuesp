@@ -36,9 +36,7 @@ export const useWebSocket = defineStore('webSocket', {
           const { object, key } = data;
           if (key !== KEYS.PING) log(object, key);
           const store = useWebSocketStore();
-
           const isStoreMethod = (key: string): key is keyof typeof store => key in store && typeof store[key as keyof typeof store] === 'function';
-
           if (isStoreMethod(`SET_${key}`)) {
             const methodName = `SET_${key}` as keyof typeof store;
             const method = store[methodName] as Function;

@@ -111,13 +111,13 @@ import type { Ref } from 'vue';
 import type { TypeMessage, IMessageScan, IListItem, TypeSend } from '@/types';
 
 import { computed, ref, nextTick, watch } from 'vue';
-import { required, maxLen, minLen, sameAs, ip } from '@/utils/validate.js';
+import { required, maxLen, minLen, sameAs, ip } from '@/utils/validate';
 
 import { KEYS } from '@/types';
 
 import { useForm } from 'vuesp-components/composables';
 
-import { useConnection } from '@/composables/useConnection.js';
+import { useConnection } from '@/composables/useConnection';
 import { arrToStr, strToArr } from 'vuesp-components/helpers';
 
 import { VCheckbox, BlockUpdate } from 'vuesp-components';

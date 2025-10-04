@@ -87,7 +87,7 @@
       "type": "input",
       "icon": "Search",
       "args": ["device.message", "device"],
-      "set": "({ ...a, message: v, command: 1})"
+      "set": "({ ...a, message: v, command: 3})"
     }
   ],
   "menu": [

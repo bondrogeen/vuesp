@@ -18,14 +18,14 @@ export default defineConfig(({ mode }) => {
   return {
     build: {
       outDir: env.VITE_OUTPUT_DIR,
-      filenameHashing: false,
+      emptyOutDir: true,
       cssCodeSplit: false,
       rollupOptions: {
         output: {
           inlineDynamicImports: true,
-          entryFileNames: `assets/[name].js`,
-          chunkFileNames: `assets/[name].js`,
-          assetFileNames: `assets/[name].[ext]`,
+          entryFileNames: `assets/[name][hash].js`,
+          chunkFileNames: `assets/[name][hash].js`,
+          assetFileNames: `assets/[name][hash].[ext]`,
         },
       },
     },
@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      allowedHosts: ['vuesp.ru', 'test.vuesp.ru'],
+      allowedHosts: ['test.vuesp.ru'],
       host: '0.0.0.0',
       port: 3000,
       proxy: {

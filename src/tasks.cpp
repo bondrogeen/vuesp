@@ -8,9 +8,10 @@ uint8_t tasks[KEY_END];
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
+Notification notification = {KEY_NOTIFICATION, 0, 10, ""};
 
-void onWsEventTasks(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
-  AwsFrameInfo *info = (AwsFrameInfo *)arg;
+void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
+  AwsFrameInfo* info = (AwsFrameInfo*)arg;
   tasks[task] = true;
   if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
     memcpy(&settings, data, sizeof(settings));
@@ -25,7 +26,7 @@ void onWsEventTasks(void *arg, uint8_t *data, size_t len, uint32_t clientId, uin
 }
 
 #if defined(ESP8266)
-void getFile(char *name) {
+void getFile(char* name) {
   Dir dir = LittleFS.openDir(name);
   while (dir.next()) {
     memset(files.name, 0, sizeof(files.name));
@@ -33,14 +34,14 @@ void getFile(char *name) {
     files.size = dir.fileSize();
     files.isFile = dir.isFile();
     files.isDir = dir.isDirectory();
-    wsSend((uint8_t *)&files, sizeof(files));
+    wsSend((uint8_t*)&files, sizeof(files));
   }
   tasks[KEY_FILES] = false;
 }
 
 #elif defined(ESP32)
 
-void getFile(char *name) {
+void getFile(char* name) {
   File root = LittleFS.open(name);
   File file = root.openNextFile();
   String str = "";
@@ -50,7 +51,7 @@ void getFile(char *name) {
     files.size = file.size();
     files.isFile = !file.isDirectory();
     files.isDir = file.isDirectory();
-    wsSend((uint8_t *)&files, sizeof(files));
+    wsSend((uint8_t*)&files, sizeof(files));
     file = root.openNextFile();
   }
   tasks[KEY_FILES] = false;
@@ -67,25 +68,31 @@ void scanWiFi() {
     scan.rssi = WiFi.RSSI(i);
     scan.encryptionType = WiFi.encryptionType(i);
     // scan.isHidden = WiFi.isHidden(i);
-    wsSend((uint8_t *)&scan, sizeof(scan));
+    wsSend((uint8_t*)&scan, sizeof(scan));
   };
   tasks[KEY_SCAN] = false;
 }
 
-void send(uint8_t *message, size_t len, uint8_t task) {
+void send(uint8_t* message, size_t len, uint8_t task) {
   wsSend(message, len);
   tasks[task] = false;
 }
-void sendAll(uint8_t *message, size_t len, uint8_t task) {
+void sendAll(uint8_t* message, size_t len, uint8_t task) {
   wsSendAll(message, len);
   tasks[task] = false;
 }
 
+void sendNotification(const char* message) {
+  notification.id++;
+  strcpy(notification.text, message);
+  sendAll((uint8_t*)&notification, sizeof(notification), KEY_NOTIFICATION);
+}
+
 void loopTask(uint32_t now) {
-  if (tasks[KEY_SETTINGS]) send((uint8_t *)&settings, sizeof(settings), KEY_SETTINGS);
+  if (tasks[KEY_SETTINGS]) send((uint8_t*)&settings, sizeof(settings), KEY_SETTINGS);
   if (tasks[KEY_INFO]) {
     getInfo(&infoFS);
-    send((uint8_t *)&infoFS, sizeof(infoFS), KEY_INFO);
+    send((uint8_t*)&infoFS, sizeof(infoFS), KEY_INFO);
   }
   if (tasks[KEY_FILES]) getFile(files.name);
   if (tasks[KEY_REBOOT]) reboot();

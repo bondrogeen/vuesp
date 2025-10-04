@@ -71,7 +71,7 @@ import { watchEffect, ref, computed, nextTick } from 'vue';
 
 import { toByte, debounce, useFetch, createDownloadLink } from 'vuesp-components/helpers';
 
-import { useConnection } from '@/composables/useConnection.js';
+import { useConnection } from '@/composables/useConnection';
 
 import { VFile } from 'vuesp-components';
 
