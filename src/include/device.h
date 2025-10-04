@@ -8,8 +8,7 @@
 #define DEVICE_COMMAND_SAVE 254
 #define DEVICE_COMMAND_GET 1
 #define DEVICE_COMMAND_SET 2
-#define DEVICE_COMMAND_GET_ALL 3
-#define DEVICE_COMMAND_CHANGE 4
+#define DEVICE_COMMAND_TEXT 3
 
 void setupDevice();
 void setupFirstDevice();

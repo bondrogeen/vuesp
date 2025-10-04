@@ -3,8 +3,8 @@ import { storeToRefs } from 'pinia';
 import { event } from '@/assets/js/';
 import Queue from '@/assets/js/queue';
 
-import { useAppStore } from '@/stores/AppStore.js';
-import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
+import { useAppStore } from '@/stores/AppStore';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import type { TypeMessage, TypeSend } from '@/types';
 

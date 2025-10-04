@@ -52,7 +52,7 @@ import { KEYS } from '@/types';
 
 import { MODE, COMMAND, listMenu, listMode, listInterrupt } from '@/utils/gpio';
 
-import { useConnection } from '@/composables/useConnection.js';
+import { useConnection } from '@/composables/useConnection';
 
 const { main, onSend, onDialog } = useConnection((send) => {
   send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });

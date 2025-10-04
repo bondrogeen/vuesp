@@ -22,7 +22,7 @@ import { useRoute } from 'vue-router';
 
 import { getPageTitle } from 'vuesp-components/helpers';
 
-import { useConnection } from '@/composables/useConnection.js';
+import { useConnection } from '@/composables/useConnection';
 
 import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
 import ServiceStorage from '@/components/service/ServiceStorage.vue';

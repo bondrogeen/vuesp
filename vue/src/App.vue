@@ -22,28 +22,17 @@
       </app-aside>
 
       <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
-        <app-header v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="isSidebar = !isSidebar">
-          <!-- <v-dropdown right="0" left="unset" top="0" hideOnClick>
-            <template #activator="{ on }">
-              <v-button type="icon" color="gray" @click="on.click">
-                <span :class="notifications.length ? 'hidden' : 'flex'" class="absolute right-0 top-0.5 z-1 h-2 w-2 rounded-full bg-orange-400 flex">
-                  <span class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
-                </span>
-                <IconNoti class="h-5 w-5" />
-              </v-button>
-            </template>
-
-            <v-list :list="listMenu" @click="onMenu"></v-list>
-          </v-dropdown> -->
-        </app-header>
-
-        <app-notification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
+        <app-header v-if="!isIframe" :change-theme="appStore.changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isNotif = !isNotif"></app-header>
 
         <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
           <div :class="isIframe ? '' : 'container mx-auto'">
             <router-view />
           </div>
         </main>
+
+        <app-progress v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.SET_PROGRESS" />
+
+        <app-notification :isNotif="isNotif" :notifications="notifications" @close="isNotif = false" />
       </div>
     </div>
 
@@ -56,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IPackage, IMessageNotification } from '@/types';
+import type { IPackage } from '@/types';
 
 import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -78,10 +67,11 @@ const webSocketStore = useWebSocketStore();
 
 const { menu, dialog, dialogInfo } = storeToRefs(appStore);
 const { socket, isConnect } = storeToRefs(webSocket);
-const { main, notifications } = storeToRefs(webSocketStore);
+const { main, notifications, progress } = storeToRefs(webSocketStore);
 
 const isIframe = ref(false);
 const isSidebar = ref(false);
+const isNotif = ref(false);
 
 let ping: ReturnType<typeof setInterval> | null = null;
 let messageListener: ((event: MessageEvent) => void) | null = null;
@@ -112,11 +102,12 @@ const connect = () => {
   socket.value = instance;
 };
 
+const changeNotif = (value: boolean) => (isNotif.value = value);
 const onSidebar = (value: boolean) => (isSidebar.value = value);
 
-const onNotifications = (item: IMessageNotification) => {
-  notifications.value = notifications.value.filter((i) => i.id !== item.id);
-};
+// const onNotifications = (item: IMessageNotification) => {
+//   notifications.value = notifications.value.filter((i) => i.id !== item.id);
+// };
 
 onMounted(async () => {
   ping = setInterval(webSocket.onPing, 1000);
