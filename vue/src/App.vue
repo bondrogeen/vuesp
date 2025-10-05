@@ -1,74 +1,98 @@
 <template>
   <div class="h-[100dvh] min-h-full flex flex-col">
-    <AppOverlay v-if="!isConnect" @click="onClose">
-      <div class="mb-4">Disconnected</div>
+    <app-overlay v-if="!isConnect">
+      <div class="text-2xl font-bold mb-4">Disconnected</div>
 
       <div class="flex justify-center">
         <v-loader class="text-primary"></v-loader>
       </div>
-    </AppOverlay>
+    </app-overlay>
 
-    <template v-else>
-      <div class="flex h-screen overflow-hidden">
-        <AppAside v-if="!isIframe" :info="main.info" :menu="menu" :sidebarToggle="sidebarToggle" @sidebar="sidebarToggle = !sidebarToggle" />
+    <div class="flex h-screen overflow-hidden">
+      <app-aside v-if="!isIframe" :isSidebar="isSidebar" @sidebar="onSidebar">
+        <h3 class="mb-4 text-xs h-5 uppercase flex items-center gap-2 justify-between" :class="isSidebar ? 'lg:hidden' : ''">
+          <span v-if="nameDevice" class="text-gray-400 text-nowrap">{{ nameDevice }}</span>
+        </h3>
 
-        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
-          <AppHeader v-if="!isIframe" :change-theme="appStore.changeTheme" @sidebar="sidebarToggle = !sidebarToggle" />
+        <app-nav :menu="menu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar" />
 
-          <AppNotification class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" :notifications="notifications" @close="onNotifications" />
+        <div class="flex-auto"></div>
 
-          <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
-            <div :class="isIframe ? '' : 'container mx-auto'">
-              <router-view />
-            </div>
-          </main>
-        </div>
+        <BlockStatus v-bind="main.info" :pkg="pkg" class="mb-4 w-full rounded-2xl bg-gray-100 px-4 py-4 text-center dark:bg-white/[0.03]" :class="isSidebar ? 'lg:hidden' : ''" />
+      </app-aside>
+
+      <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
+        <app-header v-if="!isIframe" :change-theme="appStore.changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isNotif = !isNotif"></app-header>
+
+        <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
+          <div :class="isIframe ? '' : 'container mx-auto'">
+            <router-view />
+          </div>
+        </main>
+
+        <app-progress v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.SET_PROGRESS" />
+
+        <app-notification
+          :isNotif="isNotif"
+          :notifications="notifications"
+          @close="isNotif = false"
+          @remove="webSocketStore.REMOVE_NOTIFICATION"
+          @read="webSocketStore.READ_NOTIFICATION"
+          @read-all="webSocketStore.READ_ALL_NOTIFICATION"
+        />
       </div>
-    </template>
+    </div>
 
-    <AppDialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
+    <app-dialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
+
+    <app-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
+      <BlockInfo v-bind="main.info" :pkg="pkg" class="w-full" />
+    </app-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, provide } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useAppStore } from '@/stores/AppStore.js';
-import { useWebSocket } from '@/stores/WebSocket.js';
-import { useWebSocketStore } from '@/stores/WebSocketStore.ts';
+import type { IPackage } from '@/types';
 
-import type { INotificationItem } from '@/utils/types/types.ts';
-
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import AppAside from '@/components/app/AppAside.vue';
+import { storeToRefs } from 'pinia';
+import { useAppStore } from '@/stores/AppStore';
+import { useWebSocket } from '@/stores/WebSocket';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
 
-import { DialogKey, NotificationKey } from '@/utils/types/simbol';
+import { BlockStatus, BlockInfo } from 'vuesp-components';
+
+import { PKGKey } from '@/utils/simbol';
+
+const pkg: IPackage | undefined = inject(PKGKey);
 
 const appStore = useAppStore();
 const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
-const { menu, dialog, notifications } = storeToRefs(appStore);
-const { socket, isConnect } = storeToRefs(webSocket);
-const { main } = storeToRefs(webSocketStore);
 
-const drawer = ref(false);
+const { menu, dialog, dialogInfo } = storeToRefs(appStore);
+const { socket, isConnect } = storeToRefs(webSocket);
+const { main, notifications, progress } = storeToRefs(webSocketStore);
+
 const isIframe = ref(false);
-const sidebarToggle = ref(false);
+const isSidebar = ref(false);
+const isNotif = ref(false);
 
 let ping: ReturnType<typeof setInterval> | null = null;
-let messageListener: ((event: MessageEvent) => void) | null = null; // Для очистки слушателя
+let messageListener: ((event: MessageEvent) => void) | null = null;
 
 const route = useRoute();
 const router = useRouter();
-
-provide(DialogKey, appStore.setDialog);
-provide(NotificationKey, appStore.setNotification);
 
 const mode = import.meta.env.MODE;
 const proxy = import.meta.env.VITE_PROXY;
 
 const host = mode === 'production' ? window.location.host : proxy;
+
+const fullPath = computed(() => route.fullPath);
+const nameDevice = computed(() => main.value?.info?.name || '');
 
 const connect = () => {
   const instance: WebSocket = new WebSocket(`ws://${host}/esp`);
@@ -85,16 +109,9 @@ const connect = () => {
   socket.value = instance;
 };
 
-const onClose = () => {
-  drawer.value = false;
-  dialog.value = {};
-};
+const onSidebar = (value: boolean) => (isSidebar.value = value);
 
-const onNotifications = (item: INotificationItem) => {
-  notifications.value = notifications.value.filter((i) => i.id !== item.id);
-};
-
-onMounted(() => {
+onMounted(async () => {
   ping = setInterval(webSocket.onPing, 1000);
   setTimeout(connect, 100);
   appStore.init(route.query);

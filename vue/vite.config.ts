@@ -4,8 +4,12 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import VueRouter from 'unplugin-vue-router/vite';
 import { compression } from 'vite-plugin-compression2';
+import pkg from '../vue/package.json';
 
 const path = fileURLToPath(new URL('./src', import.meta.url));
+
+const { name, version, author, description, repository, license, homepage, bugs } = pkg;
+const info = { name, version, author, description, repository, license, homepage, bugs };
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,14 +18,14 @@ export default defineConfig(({ mode }) => {
   return {
     build: {
       outDir: env.VITE_OUTPUT_DIR,
-      filenameHashing: false,
+      emptyOutDir: true,
       cssCodeSplit: false,
       rollupOptions: {
         output: {
           inlineDynamicImports: true,
-          entryFileNames: `assets/[name].js`,
-          chunkFileNames: `assets/[name].js`,
-          assetFileNames: `assets/[name].[ext]`,
+          entryFileNames: `assets/[name][hash].js`,
+          chunkFileNames: `assets/[name][hash].js`,
+          assetFileNames: `assets/[name][hash].[ext]`,
         },
       },
     },
@@ -44,7 +48,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      allowedHosts: ['vuesp.ru', 'test.vuesp.ru', 'home.vuesp.ru'],
+      allowedHosts: ['test.vuesp.ru'],
       host: '0.0.0.0',
       port: 3000,
       proxy: {
@@ -65,6 +69,9 @@ export default defineConfig(({ mode }) => {
           target: `http://${env.VITE_PROXY}`,
         },
       },
+    },
+    define: {
+      __APP__: info,
     },
   };
 });

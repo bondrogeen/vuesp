@@ -1,32 +1,29 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 
-import { useWebSocket } from '@/stores/WebSocket';
+import { struct } from '@/assets/js/';
 
 import App from '@/App.vue';
 import router from '@/router/index.ts';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import VuespComponents from 'vuesp-components';
-import 'vuesp-components/dist/vuesp-components.css';
+import vuesp from 'vuesp-components';
+
+import 'vuesp-components/dist/style.css';
 
 import '@/assets/tailwind.css';
 
-// import { add } from "./components/global";
-import directives from '@/utils/directives/index.ts';
+import { PKGKey } from '@/utils/simbol';
 
 const pinia = createPinia();
 const app = createApp(App);
 
-directives.forEach(({ name, directive }) => app.directive(name, directive));
-// add(app);
-
 (async () => {
+  // @ts-ignore: Unreachable code error
+  app.provide(PKGKey, __APP__);
+  const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
+  struct.init(res);
   app.use(pinia);
-  app.use(VuespComponents);
-  const store = useWebSocket();
-  await store.onStruct();
+  app.use(vuesp);
   app.use(router);
   app.mount('#appVuesp');
 })();

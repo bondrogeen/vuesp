@@ -1,17 +1,15 @@
 import { defineStore } from 'pinia';
-import { changeTheme, localGet } from '@/utils/helpers';
+import { changeTheme, localGet, isNewVersion, useFetch } from 'vuesp-components/helpers';
+import { pathList } from '@/utils/const';
 
-import type { INotificationItem, IStateApp, IDialog } from '@/utils/types/types.ts';
+import type { IStoreApp, IDialog } from '@/types';
 
-const initialState = (): IStateApp => ({
-  menu: [],
-  isLoading: false,
+const initialState = (): IStoreApp => ({
   theme: 'dark',
-  dialog: {
-    value: false,
-  },
-  notifications: [],
-  struct: {},
+  dialog: { value: false },
+  menu: [],
+  dashboard: [],
+  dialogInfo: isNewVersion(),
 });
 
 export const useAppStore = defineStore('app', {
@@ -23,7 +21,10 @@ export const useAppStore = defineStore('app', {
         this.theme = theme;
       }
       changeTheme(this.theme);
-      this.menu = await (await fetch(`/menu.json`, { method: 'GET' })).json();
+      const res = await useFetch.$get(`/default.json`, { method: 'GET' });
+      this.menu = res?.menu || [];
+      const dashboard = await useFetch.$get(`/fs?file=${pathList}`);
+      this.dashboard = dashboard || res?.dashboard || [];
     },
     changeTheme(value?: string) {
       this.theme = value || (this.theme === 'light' ? 'dark' : 'light');
@@ -31,17 +32,6 @@ export const useAppStore = defineStore('app', {
     },
     setDialog(data: IDialog) {
       this.dialog = data;
-    },
-    setNotification(notification: INotificationItem) {
-      const id = notification?.id || Date.now();
-      const timeout = notification?.timeout || 10;
-      const idx = this.notifications.findIndex((i) => i.id === id);
-
-      if (idx !== -1) {
-        this.notifications[idx] = { ...this.notifications[idx], ...notification, id, timeout };
-      } else {
-        this.notifications = [...this.notifications, { ...notification, id, timeout }];
-      }
     },
   },
 });

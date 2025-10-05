@@ -3,107 +3,111 @@
     <div class="mb-6 flex items-center justify-between">
       <h1>Home</h1>
 
-      <v-dropdown right="0" left="unset" top="0">
+      <v-dropdown right="0" left="unset" top="0" hideOnClick>
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <icon-dots class="rotate-90"></icon-dots>
+            <v-icons name="Dots" class="rotate-90"></v-icons>
           </v-button>
         </template>
 
-        <v-list :list="listMenu" @click="onMenuEvent"></v-list>
+        <v-list :list="listMenu" @click="onMenu"></v-list>
       </v-dropdown>
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fill,_minmax(130px,_1fr))] gap-4">
-      <div v-for="(item, i) of getList" :key="item.id" :class="i === 2 ? '' : ''">
-        <component :is="getComponent(item)" v-bind="item" :value="getState(item.id)" @setState="setStateValue" @edit="onDialog(item)"></component>
-      </div>
-    </div>
+    <VDragDrop :items="dashboard" class="grid grid-cols-[repeat(auto-fill,_minmax(130px,_1fr))] gap-4" @update:items="dashboard = $event">
+      <template #default="{ item }">
+        <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)" @edit="onDialog(getState(item))"></component>
+      </template>
+    </VDragDrop>
 
-    <AppDialog v-if="dialogItem" size="md" :title="isNew ? 'Add item' : 'Edit item'" @close="dialogItem = false">
-      <BlockItemEdit :item="item" :isNew="isNew" @save="onSave" @remove="onRemove"></BlockItemEdit>
-    </AppDialog>
-
-    <AppDialog v-if="dialogObject" size="md" title="Edit item" @close="dialogObject = false">
-      <div class="relative min-h-[200px] max-h-[400px] overflow-auto scrollbar">
-        <VListObject :items="main" @click="onSelectId"></VListObject>
-      </div>
-    </AppDialog>
+    <app-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : 'Add'" @close="dialogItem = false">
+      <item-edit class="min-h-[330px]" :item="item" :object="main" @button="onButton">
+        <template #default="{ item }">
+          <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)"></component>
+        </template>
+      </item-edit>
+    </app-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TypeProperty, TypePropertyString } from 'vuesp-data';
+import type { IListItem, IDashboardItem } from '@/types';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
+import { setStateItem, getStateItem } from 'vuesp-components/dashboard';
+import { useFetch, uploadJson } from 'vuesp-components/helpers';
 
-import { useModule } from '@/composables/useModule.ts';
+import { KEYS } from '@/types';
+import { COMMAND } from '@/utils/gpio';
 
-import { functionToString } from 'vuesp-data';
+import { useConnection } from '@/composables/useConnection';
+import { pathListDef } from '@/utils/const';
 
-import VListObject from '@/components/general/VListObject.vue';
+import { VDragDrop } from 'vuesp-components';
+
+const { dashboard, main, onSend } = useConnection((send) => {
+  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
+  send(KEYS.DEVICE);
+});
 
 const dialogItem = ref(false);
-const dialogObject = ref(false);
-const isNew = ref(false);
-
-const item: Ref<TypePropertyString> = ref({ id: '', name: '', keyValue: '' });
-
-interface IListMenu {
-  id: number;
-  name: string;
-}
-
-const listMenu: IListMenu[] = [
-  { id: 1, name: 'Add item' },
-  { id: 2, name: 'Restore items' },
-  { id: 3, name: 'Save items' },
-  { id: 4, name: 'Save default state' },
-];
-
-const { main, getList, getState, setState, onSaveModule, onRemoveItem, onEditItem, onRestore, onSaveDef } = useModule();
-
-const onMenuEvent = ({ id }: IListMenu) => {
-  if (id === 1) {
-    dialogObject.value = true;
-    isNew.value = true;
-    item.value = { id: 'device.test.1', name: 'device.test', keyValue: 'device.test', type: 'info', icon: 'light' };
-  }
-  if (id === 2) onRestore();
-  if (id === 3) onSaveModule();
-  if (id === 4) onSaveDef();
-};
+const item: Ref<IDashboardItem | null> = ref(null);
 
 const getComponent = ({ type = 'info' }) => `card-${type}`;
 
-const setStateValue = ({ id, value }: TypeProperty) => {
-  setState(id, value);
-};
-
-const onDialog = (data: TypeProperty) => {
-  item.value = functionToString({ ...data });
-  dialogItem.value = true;
-  isNew.value = false;
-};
-
-const onSave = (item: TypePropertyString) => {
-  onEditItem(item);
+const onButton = (key: string, item: IDashboardItem) => {
+  if (key === 'add') dashboard.value.push(item);
+  if (key === 'save') dashboard.value = dashboard.value.map((i) => (i.id === item.id ? item : i));
+  if (key === 'remove') dashboard.value = dashboard.value.filter((i) => i.id !== item.id);
   dialogItem.value = false;
 };
 
-const onRemove = (item: TypePropertyString) => {
-  onRemoveItem(item);
-  dialogItem.value = false;
+const listMenu: IListItem[] = [
+  { name: 'Add', value: 1 },
+  { name: 'Save', value: 2 },
+  { name: 'Restore', value: 3 },
+  { name: 'Default', value: 4 },
+];
+
+const onCreate = () => {
+  item.value = null;
+  dialogItem.value = true;
+};
+const onRestore = async () => {
+  const res = await useFetch.$get(pathListDef);
+  dashboard.value = res.dashboard;
+};
+const onSave = async () => await uploadJson('/tmp/dashboard.json', dashboard.value);
+const onDefault = () => {
+  onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_SAVE });
+  onSend(KEYS.DEVICE, { command: 254 });
 };
 
-const onSelectId = (id: string) => {
-  item.value.id = id;
-  item.value.keyValue = id;
-  item.value.name = id;
-  item.value.get = '(value) => value';
+const onMenu = ({ value }: IListItem) => {
+  if (value === 1) onCreate();
+  if (value === 2) onSave();
+  if (value === 3) onRestore();
+  if (value === 4) onDefault();
+};
 
-  dialogObject.value = false;
+const onDialog = (data: IDashboardItem) => {
+  item.value = data;
   dialogItem.value = true;
+};
+
+const getState = (item: IDashboardItem) => getStateItem(item, main.value);
+
+const setState = (item: IDashboardItem, value: unknown) => {
+  const data = setStateItem(item, value, main.value);
+  if (Array.isArray(data)) {
+    data.forEach((el) => {
+      const key = el?.key;
+      if (key && el) onSend(key, el);
+    });
+    return;
+  }
+  const key = data.key;
+  if (key && data) onSend(key, data);
 };
 </script>

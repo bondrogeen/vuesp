@@ -22,7 +22,7 @@
 #define DEF_AUTH_PASS "admin"
 
 #define DEF_DIR_DEVICE "/tmp"
-#define DEF_PATH_CONFIG DEF_DIR_DEVICE "/config.io"
+#define DEF_PATH_CONFIG DEF_DIR_DEVICE "/device.io"
 #define DEF_PATH_GPIO DEF_DIR_DEVICE "/gpio.io"
 
 #ifndef DEF_DEVICE_NAME
