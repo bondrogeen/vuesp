@@ -60,7 +60,7 @@ void writeFile(const char* path, const uint8_t* buf, size_t size) {
 
 void getLoadDef(const char* path, uint8_t* buf, size_t size) {
   uint8_t isOk = readFile(path, buf, size);
-  if (!isOk) {
-    writeFile(path, buf, size);
-  }
+  // if (!isOk) {
+  //   writeFile(path, buf, size);
+  // }
 }

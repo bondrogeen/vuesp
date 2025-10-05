@@ -22,7 +22,7 @@
       </app-aside>
 
       <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
-        <app-header v-if="!isIframe" :change-theme="appStore.changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isNotif = !isNotif"></app-header>
+        <app-header v-if="!isIframe" :change-theme="changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isNotif = !isNotif"></app-header>
 
         <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
           <div :class="isIframe ? '' : 'container mx-auto'">
@@ -52,94 +52,29 @@
 </template>
 
 <script setup lang="ts">
-import type { IPackage } from '@/types';
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 
-import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-
-import { storeToRefs } from 'pinia';
-import { useAppStore } from '@/stores/AppStore';
-import { useWebSocket } from '@/stores/WebSocket';
 import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import { BlockStatus, BlockInfo } from 'vuesp-components';
 
-import { PKGKey } from '@/utils/simbol';
+import { useFrame } from '@/composables/useFrame';
+import { useSocket } from '@/composables/useSocket';
+import { useConnection } from '@/composables/useConnection';
 
-const pkg: IPackage | undefined = inject(PKGKey);
+const { isIframe } = useFrame();
+const { isConnect } = useSocket();
+const { pkg, menu, dialog, dialogInfo, main, notifications, progress, changeTheme } = useConnection();
 
-const appStore = useAppStore();
-const webSocket = useWebSocket();
 const webSocketStore = useWebSocketStore();
 
-const { menu, dialog, dialogInfo } = storeToRefs(appStore);
-const { socket, isConnect } = storeToRefs(webSocket);
-const { main, notifications, progress } = storeToRefs(webSocketStore);
-
-const isIframe = ref(false);
 const isSidebar = ref(false);
 const isNotif = ref(false);
 
-let ping: ReturnType<typeof setInterval> | null = null;
-let messageListener: ((event: MessageEvent) => void) | null = null;
-
 const route = useRoute();
-const router = useRouter();
-
-const mode = import.meta.env.MODE;
-const proxy = import.meta.env.VITE_PROXY;
-
-const host = mode === 'production' ? window.location.host : proxy;
 
 const fullPath = computed(() => route.fullPath);
 const nameDevice = computed(() => main.value?.info?.name || '');
-
-const connect = () => {
-  const instance: WebSocket = new WebSocket(`ws://${host}/esp`);
-  instance.binaryType = 'arraybuffer';
-  instance.onopen = webSocket.onopen;
-  instance.onmessage = webSocket.onmessage;
-  instance.onclose = (e: CloseEvent) => {
-    webSocket.onclose(e);
-    if (e.code !== 1000) {
-      setTimeout(connect, 2000);
-    }
-  };
-  instance.onerror = webSocket.onerror;
-  socket.value = instance;
-};
-
 const onSidebar = (value: boolean) => (isSidebar.value = value);
-
-onMounted(async () => {
-  ping = setInterval(webSocket.onPing, 1000);
-  setTimeout(connect, 100);
-  appStore.init(route.query);
-
-  if (window.self !== window.top) {
-    isIframe.value = true;
-    const html = document.querySelector('html');
-    if (html) {
-      html.classList.add('no-scrollbar');
-    }
-
-    messageListener = (event: MessageEvent) => {
-      console.log('Data:', event);
-      if (event?.data?.type === 'theme') {
-        appStore.changeTheme(event.data.value);
-      }
-      if (event?.data?.type === 'route') {
-        const data = event.data.data;
-        router.push(data);
-      }
-    };
-    window.addEventListener('message', messageListener);
-  }
-});
-
-onUnmounted(() => {
-  if (ping) clearInterval(ping);
-  if (socket.value) socket.value.close(1000);
-  if (messageListener) window.removeEventListener('message', messageListener);
-});
 </script>

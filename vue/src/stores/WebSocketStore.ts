@@ -2,27 +2,23 @@ import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket';
 import { localGet, localSet } from 'vuesp-components/helpers';
 
-import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IStateInfo, IMessageSettings, IMessagePort, IMessageProgress, TypeMessage } from '@/types';
+import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IMessageSettings, IMessagePort, IMessageProgress, TypeMessage } from '@/types';
 
 const initialState = (): IStoreWebSocketStore => ({
-  progress: { status: 0, empty: 0, size: 0, length: 0 },
-  settings: { wifiDhcp: 1, wifiMode: 1, authMode: 1, version: 1, device: 0, wifiIp: [], wifiSubnet: [], wifiGateway: [], wifiDns: [], wifiSsid: '', wifiPass: '', authLogin: '', authPass: '' },
   main: {
     ports: {},
     info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '' },
     device: { now: 0, pwm: 0, analog: 0 },
     dallas: {},
   },
+  settings: { wifiDhcp: 1, wifiMode: 1, authMode: 1, version: 1, device: 0, wifiIp: [], wifiSubnet: [], wifiGateway: [], wifiDns: [], wifiSsid: '', wifiPass: '', authLogin: '', authPass: '' },
+  progress: { status: 0, empty: 0, size: 0, length: 0 },
   notifications: localGet('notifications') || [],
 });
 
 export const useWebSocketStore = defineStore('webSocketStore', {
   state: initialState,
   actions: {
-    SET_INFO(info: IStateInfo) {
-      this.main.info = info;
-      this.main = { ...this.main };
-    },
     SET_SETTINGS(value: IMessageSettings) {
       this.settings = value;
     },
@@ -67,7 +63,5 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       store.onSend(key, object);
     },
   },
-  getters: {
-    isConnect: () => useWebSocket()?.isConnect || false,
-  },
+  getters: {},
 });

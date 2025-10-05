@@ -53,6 +53,8 @@ import { KEYS } from '@/types';
 import { MODE, COMMAND, listMenu, listMode, listInterrupt } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection';
+import { useFetch } from 'vuesp-components/helpers';
+import { PATH_FS, pathGPIO } from '@/utils/const';
 
 const { main, onSend, onDialog } = useConnection((send) => {
   send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
@@ -82,8 +84,13 @@ const onSave = async () => {
   onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_SAVE });
   onSureReboot();
 };
+const onRestore = async () => {
+  const res = await useFetch.$delete(`${PATH_FS}?file=${pathGPIO}`);
+  if (res?.state) onReboot();
+};
 
 const onMenu = ({ value }: IListItem) => {
   if (value === 1) onSave();
+  if (value === 2) onRestore();
 };
 </script>

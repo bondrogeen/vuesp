@@ -5,26 +5,23 @@ import { pathList } from '@/utils/const';
 import type { IStoreApp, IDialog } from '@/types';
 
 const initialState = (): IStoreApp => ({
-  theme: 'dark',
+  theme: localGet('theme') || 'dark',
   dialog: { value: false },
   menu: [],
   dashboard: [],
   dialogInfo: isNewVersion(),
+  pkg: { name: '', version: '' },
 });
 
 export const useAppStore = defineStore('app', {
   state: initialState,
   actions: {
     async init({ theme }: { theme?: string }) {
-      this.theme = localGet('theme') || 'dark';
-      if (theme && ['light', 'dark'].includes(theme)) {
-        this.theme = theme;
-      }
+      if (theme && ['light', 'dark'].includes(theme)) this.theme = theme;
       changeTheme(this.theme);
-      const res = await useFetch.$get(`/default.json`, { method: 'GET' });
-      this.menu = res?.menu || [];
+
       const dashboard = await useFetch.$get(`/fs?file=${pathList}`);
-      this.dashboard = dashboard || res?.dashboard || [];
+      if (dashboard) this.dashboard = dashboard;
     },
     changeTheme(value?: string) {
       this.theme = value || (this.theme === 'light' ? 'dark' : 'light');

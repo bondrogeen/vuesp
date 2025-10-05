@@ -40,10 +40,11 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
   });
 
   const onDialog = appStore.setDialog;
+  const changeTheme = appStore.changeTheme;
 
   onMounted(() => {
     if (init) init(onSend);
   });
 
-  return { ...socket, ...app, isConnected, onSend, onDialog };
+  return { ...socket, ...app, isConnected, onSend, onDialog, changeTheme };
 };

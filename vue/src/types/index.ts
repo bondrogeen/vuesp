@@ -1,4 +1,4 @@
-import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage } from 'vuesp-components/types';
+import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage, IPackage } from 'vuesp-components/types';
 
 export type * from 'vuesp-components/types';
 
@@ -60,6 +60,7 @@ export interface IMyIStateMain extends IStateMain {
 
 export interface IStoreApp extends IStateApp {
   dialogInfo: boolean;
+  pkg: IPackage;
 }
 export interface IStoreWebSocket extends IStateWebSocket {}
 

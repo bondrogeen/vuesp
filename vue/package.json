@@ -29,12 +29,13 @@
   "scripts": {
     "preview": "vite preview",
     "build-web": "vue-tsc -b && vite build",
-    "build": "npm run increment && npm run recovery && npm run parser && vue-tsc -b && vite build && npm run firmware",
+    "build": "npm run increment && npm run recovery && npm run parser && npm run json && vue-tsc -b && vite build && npm run firmware",
     "lint": "vue-cli-service lint",
     "dev": "vite",
     "increment": "node ../scripts/increment.js",
     "firmware": "cd ../ && sh scripts/script.sh build",
     "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
+    "json": "node ./utils/json.js ./json/  ./public",
     "recovery": "node ./utils/script.js /recovery/ ../src/pages"
   },
   "dependencies": {

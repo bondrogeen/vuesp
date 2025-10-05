@@ -70,6 +70,7 @@ import { KEYS } from '@/types';
 import { watchEffect, ref, computed, nextTick } from 'vue';
 
 import { toByte, debounce, useFetch, createDownloadLink } from 'vuesp-components/helpers';
+import { PATH_FS } from '@/utils/const';
 
 import { useConnection } from '@/composables/useConnection';
 
@@ -77,8 +78,6 @@ import { VFile } from 'vuesp-components';
 
 const files: Ref<IMessageFile[]> = ref([]);
 const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
-
-const URL = '/fs';
 
 const mainMenu: IListItem[] = [
   { name: 'Upload', value: 2 },
@@ -141,12 +140,12 @@ const onEventService = ({ value }: IListItem) => {
 };
 
 const onEventList = (name: string, { value }: IListItem) => {
-  if (value === 1) createDownloadLink(`${URL}?file=${fileName(name)}`, name);
+  if (value === 1) createDownloadLink(`${PATH_FS}?file=${fileName(name)}`, name);
   if (value === 2) onSureDelete(name);
 };
 
 const onFormat = async () => {
-  const res = await useFetch.$post(`${URL}?format=true`);
+  const res = await useFetch.$post(`${PATH_FS}?format=true`);
   if (res?.state) onUpdate();
 };
 
@@ -164,7 +163,7 @@ const onUpload = async (files: FileList | null) => {
   }
   const { totalBytes = 0, usedBytes = 0 } = main.value.info;
   if (totalSize < totalBytes - usedBytes) {
-    const res = await useFetch.$post(URL, { body });
+    const res = await useFetch.$post(PATH_FS, { body });
     if (res?.state) onUpdate();
   } else {
     onDialog({ value: true, message: 'No free space' });
@@ -172,7 +171,7 @@ const onUpload = async (files: FileList | null) => {
 };
 
 const onDelete = async (name: string) => {
-  const res = await useFetch.$delete(`${URL}?file=${fileName(name)}`);
+  const res = await useFetch.$delete(`${PATH_FS}?file=${fileName(name)}`);
   if (res?.state) onUpdate();
   else onDialog({ value: true, message: 'Directory is not empty' });
 };
