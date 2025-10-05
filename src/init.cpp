@@ -40,7 +40,7 @@ void reboot() {
 
 void WiFiEvent(WiFiEvent_t event) {
   Serial.printf("[WiFi-event] event: %d\n", event);
-  if (event == 7 || event == 3, event == 115) {
+  if (event == 7 || event == 3 || event == 115) {
     Serial.println(WiFi.localIP());
     isConnected = 1;
   }
@@ -60,7 +60,7 @@ void initWiFi() {
   }
 }
 
-void udpSend(uint8_t *message, size_t len) {
+void udpSend(uint8_t* message, size_t len) {
   udp.beginPacket(UDP_IP, UDP_PORT);
   udp.write(message, len);
   udp.endPacket();
@@ -85,7 +85,7 @@ void updateIp() {
 void udpIncoming() {
   int size = udp.parsePacket();
   if (!size) return;
-  udp.read((uint8_t *)&udpPacket, sizeof(udpPacket));
+  udp.read((uint8_t*)&udpPacket, sizeof(udpPacket));
   if (udpPacket.command == 99) {
     Serial.println(udpPacket.deviceId);
     udpPacket.deviceId = infoFS.id;
@@ -94,7 +94,7 @@ void udpIncoming() {
     udpPacket.firmware[2] = infoFS.firmware[2];
     strcpy(udpPacket.name, infoFS.name);
     udpPacket.command = 98;
-    udpSend((uint8_t *)&udpPacket, sizeof(udpPacket));
+    udpSend((uint8_t*)&udpPacket, sizeof(udpPacket));
   }
 }
 
