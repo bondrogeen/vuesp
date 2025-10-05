@@ -83,11 +83,11 @@
     },
     {
       "id": "device.input",
-      "name": "message",
+      "name": "Notification",
       "type": "input",
-      "icon": "Search",
-      "args": ["device.message", "device"],
-      "set": "({ ...a, message: v, command: 3})"
+      "icon": "Noti",
+      "args": ["device.input"],
+      "set": "({ key:11, text: v, color: 4, date: 0})"
     }
   ],
   "menu": [

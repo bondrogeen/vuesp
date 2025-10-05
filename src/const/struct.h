@@ -89,8 +89,10 @@ struct Port {
 
 struct Notification {
   uint8_t key;
-  uint8_t id;
-  uint16_t timeout;
+  uint8_t isNew;
+  uint8_t color;
+  uint8_t timeout;
+  uint32_t date;
   char text[128];
 };
 

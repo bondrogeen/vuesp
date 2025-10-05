@@ -46,8 +46,20 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main = { ...this.main };
     },
     SET_NOTIFICATION(notification: IMessageNotification) {
-      const id = notification?.id || Date.now();
-      this.notifications = [...this.notifications, { ...notification, id }];
+      const date = notification?.date || Date.now();
+      this.notifications = [...this.notifications, { ...notification, date }];
+      localSet('notifications', this.notifications);
+    },
+    READ_NOTIFICATION(notification: IMessageNotification) {
+      this.notifications = this.notifications.map((i) => (notification.date === i.date ? { ...i, isNew: 0 } : i));
+      localSet('notifications', this.notifications);
+    },
+    READ_ALL_NOTIFICATION() {
+      this.notifications = this.notifications.map((i) => ({ ...i, isNew: 0 }));
+      localSet('notifications', this.notifications);
+    },
+    REMOVE_NOTIFICATION(notification: IMessageNotification) {
+      this.notifications = this.notifications.filter((i) => i.date !== notification.date);
       localSet('notifications', this.notifications);
     },
     onSend(key: TypeMessage['key'], object?: TypeMessage['object']) {

@@ -32,7 +32,14 @@
 
         <app-progress v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.SET_PROGRESS" />
 
-        <app-notification :isNotif="isNotif" :notifications="notifications" @close="isNotif = false" />
+        <app-notification
+          :isNotif="isNotif"
+          :notifications="notifications"
+          @close="isNotif = false"
+          @remove="webSocketStore.REMOVE_NOTIFICATION"
+          @read="webSocketStore.READ_NOTIFICATION"
+          @read-all="webSocketStore.READ_ALL_NOTIFICATION"
+        />
       </div>
     </div>
 
@@ -102,12 +109,7 @@ const connect = () => {
   socket.value = instance;
 };
 
-const changeNotif = (value: boolean) => (isNotif.value = value);
 const onSidebar = (value: boolean) => (isSidebar.value = value);
-
-// const onNotifications = (item: IMessageNotification) => {
-//   notifications.value = notifications.value.filter((i) => i.id !== item.id);
-// };
 
 onMounted(async () => {
   ping = setInterval(webSocket.onPing, 1000);

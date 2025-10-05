@@ -49,12 +49,12 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     getData();
     onSendDevice();
-    // sendNotification("Привет");
+    now % 2 ? sendNotificationText("Done", NOTIF_COLOR_BLUE) : sendNotificationText("Error", NOTIF_COLOR_RED);
   }
 
   if (tasks[KEY_DEVICE]) {
     if (device.command == DEVICE_COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
-    if (device.command == DEVICE_COMMAND_TEXT) sendNotification(device.message);
+    if (device.command == DEVICE_COMMAND_TEXT) sendNotification();
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;
