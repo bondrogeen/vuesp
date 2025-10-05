@@ -8,7 +8,7 @@ uint8_t tasks[KEY_END];
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
-Notification notification = {KEY_NOTIFICATION, 0, 10, ""};
+Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, ""};
 
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
@@ -22,6 +22,9 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
   }
   if (task == KEY_PORT && info->len == sizeof(port)) {
     memcpy(&port, data, sizeof(port));
+  }
+  if (task == KEY_NOTIFICATION && info->len == sizeof(notification)) {
+    memcpy(&notification, data, sizeof(notification));
   }
 }
 
@@ -82,10 +85,15 @@ void sendAll(uint8_t* message, size_t len, uint8_t task) {
   tasks[task] = false;
 }
 
-void sendNotification(const char* message) {
-  notification.id++;
-  strcpy(notification.text, message);
+void sendNotification() {
   sendAll((uint8_t*)&notification, sizeof(notification), KEY_NOTIFICATION);
+  tasks[KEY_NOTIFICATION] = false;
+}
+void sendNotificationText(const char* message, uint8_t color) {
+  notification.color = color;
+  memset(notification.text, 0, sizeof(notification.text));
+  strcpy(notification.text, message);
+  sendNotification();
 }
 
 void loopTask(uint32_t now) {
@@ -97,4 +105,5 @@ void loopTask(uint32_t now) {
   if (tasks[KEY_FILES]) getFile(files.name);
   if (tasks[KEY_REBOOT]) reboot();
   if (tasks[KEY_SCAN]) scanWiFi();
+  if (tasks[KEY_NOTIFICATION]) sendNotification();
 }
