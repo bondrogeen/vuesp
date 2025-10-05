@@ -87,7 +87,7 @@
       "type": "input",
       "icon": "Noti",
       "args": ["device.input"],
-      "set": "({ key:11, text: v, color: 4, date: 0})"
+      "set": "({ key:11,text:v,color:4,date: 0,isNew:1})"
     }
   ],
   "menu": [

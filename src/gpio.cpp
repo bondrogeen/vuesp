@@ -1,5 +1,7 @@
 #include "./include/gpio.h"
 
+#include <OneWire.h>
+
 #include "./include/device.h"
 #include "./include/files.h"
 #include "./include/init.h"
@@ -10,7 +12,7 @@ Port ports[5] = {
     {KEY_PORT, 4, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
     {KEY_PORT, 5, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_OFF, GPIO_COMMAND_GET},
     {KEY_PORT, 12, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
-    {KEY_PORT, 13, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
+    {KEY_PORT, 13, GPIO_MODE_ONEWIRE, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
     {KEY_PORT, 14, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
 };
 #elif defined(ESP32)
@@ -23,10 +25,16 @@ Port ports[5] = {
 };
 #endif
 
+OneWire ds(0);
+
+Dallas ht1 = {KEY_DALLAS};
+
 int ports_len = sizeof(ports) / sizeof(ports[0]);
 
 volatile uint8_t btnStatus = 0;
 uint32_t debounce = 0;
+uint32_t lastTimeGPIO = 0;
+uint32_t isOneWire = 0;
 
 void ICACHE_RAM_ATTR btnIsr() {
   btnStatus = 1;
@@ -35,7 +43,13 @@ void ICACHE_RAM_ATTR btnIsr() {
 void initGPIO() {
   for (uint8_t i = 0; i < ports_len; i++) {
     port = ports[i];
-
+    if (port.mode == GPIO_MODE_ONEWIRE) {
+      if (!isOneWire) {
+        ds.begin(port.gpio);
+        isOneWire = 1;
+      }
+      continue;
+    }
     if (port.mode == GPIO_MODE_PWM) {
       pinMode(port.gpio, OUTPUT);
       analogWrite(port.gpio, port.value);
@@ -91,6 +105,26 @@ void checkInterrupt() {
   }
 }
 
+float getTemperature(uint8_t* address1) {
+  uint16_t temp;
+  ds.reset();
+  ds.select(address1);
+  ds.write(0xBE);
+  temp = (ds.read() | ds.read() << 8);
+
+  ds.reset();
+  ds.select(address1);
+  ds.write(0x44, 1);
+  return (float)temp / 16.0;
+}
+
+void findDallas() {
+  while (ds.search(ht1.address) == 1) {
+    ht1.temp = getTemperature(ht1.address);
+    sendAll((uint8_t*)&ht1, sizeof(ht1), KEY_DALLAS);
+  }
+}
+
 void setupFirstGPIO() {
   getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
   initGPIO();
@@ -105,6 +139,13 @@ void loopGPIO(uint32_t now) {
     btnStatus = 0;
     checkInterrupt();
     deviceGPIOInterrupt();
+  }
+
+  if (now - lastTimeGPIO > 10000) {
+    lastTimeGPIO = now;
+    if (isOneWire) {
+      findDallas();
+    }
   }
 
   if (tasks[KEY_PORT]) {

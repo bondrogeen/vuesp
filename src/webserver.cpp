@@ -20,29 +20,29 @@ String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
-void wsSend(uint8_t *message, size_t len) {
+void wsSend(uint8_t* message, size_t len) {
   ws.binary(clientID, message, len);
 }
-void wsSendAll(uint8_t *message, size_t len) {
+void wsSendAll(uint8_t* message, size_t len) {
   ws.binaryAll(message, len);
 }
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
-    ws.binaryAll((uint8_t *)&progress, sizeof(progress));
+    ws.binaryAll((uint8_t*)&progress, sizeof(progress));
     hold = 0;
   }
   hold++;
 }
 
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
   clientID = client->id();
-  if (type == WS_EVT_CONNECT)
+  if (type == WS_EVT_CONNECT) {
     countClient += clientID;
-  else if (type == WS_EVT_DISCONNECT)
+  } else if (type == WS_EVT_DISCONNECT) {
     countClient -= clientID;
-  else if (type == WS_EVT_DATA) {
-    AwsFrameInfo *info = (AwsFrameInfo *)arg;
+  } else if (type == WS_EVT_DATA) {
+    AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (info->opcode == WS_BINARY) {
       if (info->final && info->index == 0 && info->len == len) {
         uint8_t task = data[0];
@@ -54,11 +54,11 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   }
 }
 
-void onReqUpload(AsyncWebServerRequest *request) {
+void onReqUpload(AsyncWebServerRequest* request) {
   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
   uint8_t method = request->method();
   if (request->hasParam("file")) {
-    const AsyncWebParameter *p = request->getParam("file");
+    const AsyncWebParameter* p = request->getParam("file");
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
@@ -75,7 +75,7 @@ void onReqUpload(AsyncWebServerRequest *request) {
   request->send(404, RES_TYPE_JSON, status(0));
 }
 
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
@@ -89,19 +89,20 @@ void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uin
   sendProgress();
 }
 
-void onReqUpdate(AsyncWebServerRequest *request) {
+void onReqUpdate(AsyncWebServerRequest* request) {
   uint8_t isReboot = !Update.hasError();
-  AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
+  AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
   request->send(response);
   if (isReboot) reboot();
 }
 
-void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
     progress.size = 0;
+    sendNotificationText("Update", NOTIF_COLOR_BLUE);
     progress.length = request->contentLength();
 #if defined(ESP8266)
     Update.runAsync(true);
@@ -118,9 +119,9 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
   sendProgress();
 }
 
-void onRecovery(AsyncWebServerRequest *request) {
+void onRecovery(AsyncWebServerRequest* request) {
   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
-  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
+  AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
   response->addHeader("Content-Encoding", "gzip");
   request->send(response);
 }
@@ -131,11 +132,11 @@ void onRecovery(AsyncWebServerRequest *request) {
 //   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
 //   request->send(response);
 // }
-void onRedirectRecovery(AsyncWebServerRequest *request) {
+void onRedirectRecovery(AsyncWebServerRequest* request) {
   request->redirect("/recovery");
 }
 
-void onRedirectHome(AsyncWebServerRequest *request) {
+void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
@@ -165,7 +166,7 @@ void loopServer(uint32_t now) {
         sendProgress();
         progress.status = 5;
       } else {
-        ws.binaryAll((uint8_t *)&ping, sizeof(ping));
+        ws.binaryAll((uint8_t*)&ping, sizeof(ping));
       }
       // ws.cleanupClients();
     }

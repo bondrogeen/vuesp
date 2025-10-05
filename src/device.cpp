@@ -1,5 +1,7 @@
 #include "./include/device.h"
 
+#include <Wire.h>
+
 #include "./include/UnixTime.h"
 #include "./include/files.h"
 #include "./include/gpio.h"
@@ -49,7 +51,6 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     getData();
     onSendDevice();
-    now % 2 ? sendNotificationText("Done", NOTIF_COLOR_BLUE) : sendNotificationText("Error", NOTIF_COLOR_RED);
   }
 
   if (tasks[KEY_DEVICE]) {
