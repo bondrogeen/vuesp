@@ -15,15 +15,19 @@ export const COMMAND = {
   GPIO_COMMAND_SET: 2,
   GPIO_COMMAND_GET_ALL: 3,
   GPIO_COMMAND_CHANGE: 4,
+  GPIO_COMMAND_RESTORE: 5,
 };
 
-export const listMenu: IListItem[] = [{ name: 'Save', value: 1 }];
+export const listMenu: IListItem[] = [
+  { name: 'Save', value: 1 },
+  { name: 'Restore', value: 2 },
+];
 
 export const listMode: IListItem[] = [
-  { name: 'INPUT', value: MODE.INPUT }, 
-  { name: 'INPUT_PULLUP', value: MODE.INPUT_PULLUP }, 
-  { name: 'OUTPUT', value: MODE.OUTPUT }, 
-  { name: 'OUTPUT_OPEN_DRAIN', value: MODE.OUTPUT_OPEN_DRAIN }, 
+  { name: 'INPUT', value: MODE.INPUT },
+  { name: 'INPUT_PULLUP', value: MODE.INPUT_PULLUP },
+  { name: 'OUTPUT', value: MODE.OUTPUT },
+  { name: 'OUTPUT_OPEN_DRAIN', value: MODE.OUTPUT_OPEN_DRAIN },
   { name: 'PWM', value: MODE.PWM },
   { name: 'ONEWIRE', value: MODE.ONEWIRE },
   // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04

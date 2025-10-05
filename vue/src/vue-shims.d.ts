@@ -4,20 +4,12 @@ declare module '*.vue' {
   export default component;
 }
 
-// import { ComponentCustomProperties } from 'vue';
+import type { I18nInstance } from './i18n';
 
-// declare module '@vue/runtime-core' {
-//   interface ComponentCustomProperties {
-//     $vuesp: {
-//       name: string;
-//       version: string;
-//       author: string;
-//       email: string;
-//       homepage: string;
-//       description: string;
-//       repository: { type: string; url: string };
-//       bugs: { url: string };
-//       license: string;
-//     };
-//   }
-// }
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    $i18n: I18nInstance;
+  }
+}
+
+export {};

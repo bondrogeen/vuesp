@@ -7,21 +7,30 @@ import App from '@/App.vue';
 import router from '@/router/index.ts';
 
 import vuesp from 'vuesp-components';
+import { useFetch } from 'vuesp-components/helpers';
+import { i18n } from 'vuesp-components/plugins';
 
 import 'vuesp-components/dist/style.css';
 
 import '@/assets/tailwind.css';
 
-import { PKGKey } from '@/utils/simbol';
-
 const pinia = createPinia();
 const app = createApp(App);
 
 (async () => {
-  // @ts-ignore: Unreachable code error
-  app.provide(PKGKey, __APP__);
-  const res = await (await fetch(`/struct.json`, { method: 'GET' })).json();
-  struct.init(res);
+  const resStruct = await useFetch.$get(`/struct.json`);
+  const { locales, ...resDefault } = await useFetch.$get(`/default.json`);
+  console.log(locales);
+
+  struct.init(resStruct);
+  pinia.use(({ store }) => {
+    if (resDefault && store.$id === 'app') {
+      store.$patch(resDefault);
+      // @ts-ignore: Unreachable code error
+      store.$patch({ pkg: __APP__ });
+    }
+  });
+  app.use(i18n, { locales });
   app.use(pinia);
   app.use(vuesp);
   app.use(router);

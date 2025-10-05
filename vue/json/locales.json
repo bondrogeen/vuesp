@@ -1,0 +1,22 @@
+{
+  "en": {
+    "home": "Home",
+    "security": "Security",
+    "scan": "Scan",
+    "rebootDevice": "Reboot device",
+    "resetconfig": "Reset configuration",
+    "reboot": "Reboot",
+    "reset": "Reset",
+    "done": "Done"
+  },
+  "ru": {
+    "home": "Главная",
+    "security": "Security",
+    "scan": "Сканирование",
+    "rebootDevice": "Перезагрузка устройства",
+    "resetconfig": "Сброс настроек",
+    "reboot": "Перезагрузка",
+    "reset": "Сброс",
+    "done": "Готово"
+  }
+}

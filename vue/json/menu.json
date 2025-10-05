@@ -1,0 +1,6 @@
+[
+  { "name": "Home", "icon": "Dashboard", "path": "/" },
+  { "name": "Settings", "icon": "Setting", "path": "/device/settings/" },
+  { "name": "Storage", "icon": "Store", "path": "/device/storage/" },
+  { "name": "GPIO", "icon": "Gpio", "path": "/device/gpio/" }
+]

@@ -1,9 +1,9 @@
 <template>
   <div class="container mx-auto">
     <div class="mb-6 flex items-center justify-between">
-      <h1>Home</h1>
+      <h1>{{ $i18n.t('home') }}</h1>
 
-      <v-dropdown right="0" left="unset" top="0" hideOnClick>
+      <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
             <v-icons name="Dots" class="rotate-90"></v-icons>
@@ -34,7 +34,7 @@
 import type { IListItem, IDashboardItem } from '@/types';
 import type { Ref } from 'vue';
 
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { setStateItem, getStateItem } from 'vuesp-components/dashboard';
 import { useFetch, uploadJson } from 'vuesp-components/helpers';
 
@@ -51,6 +51,7 @@ const { dashboard, main, onSend } = useConnection((send) => {
   send(KEYS.DEVICE);
 });
 
+const i18n = inject('i18n');
 const dialogItem = ref(false);
 const item: Ref<IDashboardItem | null> = ref(null);
 
@@ -62,6 +63,8 @@ const onButton = (key: string, item: IDashboardItem) => {
   if (key === 'remove') dashboard.value = dashboard.value.filter((i) => i.id !== item.id);
   dialogItem.value = false;
 };
+
+console.log(i18n.setLocale('ru'));
 
 const listMenu: IListItem[] = [
   { name: 'Add', value: 1 },
