@@ -6,6 +6,7 @@ export const MODE = {
   INPUT_PULLUP: 2,
   OUTPUT_OPEN_DRAIN: 3,
   PWM: 128,
+  ONEWIRE: 129,
 };
 
 export const COMMAND = {
@@ -19,11 +20,12 @@ export const COMMAND = {
 export const listMenu: IListItem[] = [{ name: 'Save', value: 1 }];
 
 export const listMode: IListItem[] = [
-  { name: 'INPUT', value: 0 }, // 0x00
-  { name: 'INPUT_PULLUP', value: 2 }, // 0x02
-  { name: 'OUTPUT', value: 1 }, // 0x01
-  { name: 'OUTPUT_OPEN_DRAIN', value: 3 }, // 0x03
-  { name: 'PWM', value: 128 }, // 0x03
+  { name: 'INPUT', value: MODE.INPUT }, 
+  { name: 'INPUT_PULLUP', value: MODE.INPUT_PULLUP }, 
+  { name: 'OUTPUT', value: MODE.OUTPUT }, 
+  { name: 'OUTPUT_OPEN_DRAIN', value: MODE.OUTPUT_OPEN_DRAIN }, 
+  { name: 'PWM', value: MODE.PWM },
+  { name: 'ONEWIRE', value: MODE.ONEWIRE },
   // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
   // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
   // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07

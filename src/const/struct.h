@@ -96,6 +96,14 @@ struct Notification {
   char text[128];
 };
 
+struct Dallas {
+  uint8_t key;
+  uint8_t comm;
+  uint16_t comm2;
+  uint8_t address[8];
+  float temp;
+};
+
 struct Device {
   uint8_t key;
   uint8_t command;
