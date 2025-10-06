@@ -11,22 +11,30 @@ const pathOutput = normalize(process.cwd() + '/' + output);
 
 const mergeJsonFiles = async (dir) => {
     try {
-        const files = await fs.readdir(dir);
-        const jsonFiles = files.filter(file => file.endsWith('.json'));
-        const mergedData = {};
-        for (const file of jsonFiles) {
-            const filePath = join(dir, file);
-            const fileContent = await fs.readFile(filePath, 'utf8');
-            const jsonData = JSON.parse(fileContent);
-            const fileName = file.replace('.json', '');
-            mergedData[fileName] = jsonData;
-        }
-        return mergedData;
+        const mergeDirectory = async (currentDir) => {
+            const items = await fs.readdir(currentDir);
+            const result = {};
+            for (const item of items) {
+                const itemPath = join(currentDir, item);
+                const stat = await fs.stat(itemPath);
+                if (stat.isDirectory()) {
+                    result[item] = await mergeDirectory(itemPath);
+                } else if (stat.isFile() && item.endsWith('.json')) {
+                    const fileContent = await fs.readFile(itemPath, 'utf8');
+                    const jsonData = JSON.parse(fileContent);
+                    const fileName = item.replace('.json', '');
+                    result[fileName] = jsonData;
+                }
+            }
+            return result;
+        };
+
+        return await mergeDirectory(dir);
     } catch (error) {
         console.error('Ошибка при объединении файлов:', error);
         throw error;
     }
-}
+};
 
 (async () => {
     try {

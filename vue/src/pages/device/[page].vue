@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-4 flex items-center justify-between">
-      <h1>{{ title }}</h1>
+      <h1>{{ $t(title) }}</h1>
 
       <div data-slot="device"></div>
     </div>

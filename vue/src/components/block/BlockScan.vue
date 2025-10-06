@@ -9,7 +9,7 @@
         <div>
           <div class="text-sm">{{ item.ssid }}</div>
 
-          <div class="text-gray-400 text-xs">{{ $i18n.t('security') }} : {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+          <div class="text-gray-400 text-xs">{{ $t('security') }} : {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
         </div>
       </div>
     </v-list>
@@ -19,7 +19,7 @@
     </div>
 
     <div class="flex justify-end mt-4">
-      <v-button color="blue" @click="onScan">{{ $i18n.t('scan') }}</v-button>
+      <v-button color="blue" @click="onScan">{{ $t('scan') }}</v-button>
     </div>
   </div>
 </template>
