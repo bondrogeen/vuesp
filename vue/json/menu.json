@@ -1,6 +1,6 @@
 [
-  { "name": "Home", "icon": "Dashboard", "path": "/" },
-  { "name": "Settings", "icon": "Setting", "path": "/device/settings/" },
-  { "name": "Storage", "icon": "Store", "path": "/device/storage/" },
-  { "name": "GPIO", "icon": "Gpio", "path": "/device/gpio/" }
+  { "name": "menu.home", "icon": "Dashboard", "path": "/" },
+  { "name": "menu.settings", "icon": "Setting", "path": "/device/settings/" },
+  { "name": "menu.storage", "icon": "Store", "path": "/device/storage/" },
+  { "name": "menu.gpio", "icon": "Gpio", "path": "/device/gpio/" }
 ]

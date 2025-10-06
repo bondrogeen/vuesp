@@ -1,7 +1,7 @@
 <template>
   <div class="container mx-auto">
     <div class="mb-6 flex items-center justify-between">
-      <h1>{{ $i18n.t('home') }}</h1>
+      <h1>{{ $t('home') }}</h1>
 
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
@@ -34,7 +34,7 @@
 import type { IListItem, IDashboardItem } from '@/types';
 import type { Ref } from 'vue';
 
-import { ref, inject } from 'vue';
+import { ref } from 'vue';
 import { setStateItem, getStateItem } from 'vuesp-components/dashboard';
 import { useFetch, uploadJson } from 'vuesp-components/helpers';
 
@@ -46,12 +46,15 @@ import { pathListDef } from '@/utils/const';
 
 import { VDragDrop } from 'vuesp-components';
 
+import { useLocale } from '@/composables/useLocale';
+
+const { $t } = useLocale();
+
 const { dashboard, main, onSend } = useConnection((send) => {
   send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
   send(KEYS.DEVICE);
 });
 
-const i18n = inject('i18n');
 const dialogItem = ref(false);
 const item: Ref<IDashboardItem | null> = ref(null);
 
@@ -64,13 +67,11 @@ const onButton = (key: string, item: IDashboardItem) => {
   dialogItem.value = false;
 };
 
-console.log(i18n.setLocale('ru'));
-
 const listMenu: IListItem[] = [
-  { name: 'Add', value: 1 },
-  { name: 'Save', value: 2 },
-  { name: 'Restore', value: 3 },
-  { name: 'Default', value: 4 },
+  { name: $t('add'), value: 1 },
+  { name: $t('save'), value: 2 },
+  { name: $t('restore'), value: 3 },
+  { name: $t('default'), value: 4 },
 ];
 
 const onCreate = () => {

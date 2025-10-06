@@ -20,8 +20,6 @@ const app = createApp(App);
 (async () => {
   const resStruct = await useFetch.$get(`/struct.json`);
   const { locales, ...resDefault } = await useFetch.$get(`/default.json`);
-  console.log(locales);
-
   struct.init(resStruct);
   pinia.use(({ store }) => {
     if (resDefault && store.$id === 'app') {

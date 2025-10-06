@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2">
-    <card-gray title="File system">
+    <card-gray :title="$t('fs')">
       <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
@@ -76,17 +76,21 @@ import { useConnection } from '@/composables/useConnection';
 
 import { VFile } from 'vuesp-components';
 
+import { useLocale } from '@/composables/useLocale';
+
+const { $t } = useLocale();
+
 const files: Ref<IMessageFile[]> = ref([]);
 const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 
 const mainMenu: IListItem[] = [
-  { name: 'Upload', value: 2 },
-  { name: 'Reload', value: 3 },
-  { name: 'Format', value: 4 },
+  { name: $t('upload'), value: 2 },
+  { name: $t('reload'), value: 3 },
+  { name: $t('format'), value: 4 },
 ];
 const listMenu: IListItem[] = [
-  { name: 'Download', value: 1 },
-  { name: 'Remove', value: 2 },
+  { name: $t('download'), value: 1 },
+  { name: $t('remove'), value: 2 },
 ];
 
 const isLoading = ref(false);
@@ -149,7 +153,7 @@ const onFormat = async () => {
   if (res?.state) onUpdate();
 };
 
-const onSureFormat = () => onDialog({ value: true, message: 'All files will be deleted. Are you sure?', callback: onFormat });
+const onSureFormat = () => onDialog({ value: true, message: $t('dialog.allDel'), callback: onFormat });
 
 const onUpload = async (files: FileList | null) => {
   if (!files) return;
@@ -178,7 +182,7 @@ const onDelete = async (name: string) => {
 
 const onSureDelete = (name: string) => {
   if (fileName(name).includes('www')) {
-    onDialog({ value: true, message: 'The file belongs to the "www" directory. <br/> Are you sure you want to delete it?', callback: onDelete.bind(this, name) });
+    onDialog({ value: true, message: $t('dialog.wwwDir'), callback: onDelete.bind(this, name) });
   } else {
     onDelete(name);
   }

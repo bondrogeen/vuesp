@@ -154,7 +154,7 @@ void loopGPIO(uint32_t now) {
     if (port.command == GPIO_COMMAND_SET) setValue();
     if (port.command == GPIO_COMMAND_GET_ALL) getAll();
     if (port.command == GPIO_COMMAND_CHANGE) updatePorts();
-
+    port.command = 0;
     tasks[KEY_PORT] = 0;
   };
 }
