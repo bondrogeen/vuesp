@@ -76,22 +76,25 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { localGet } from 'vuesp-components/helpers';
 
-import { BlockInfo } from 'vuesp-components';
+import { useWebSocketStore } from '@/stores/WebSocketStore';
 
 import { useFrame } from '@/composables/useFrame';
 import { useSocket } from '@/composables/useSocket';
-import { useConnection } from '@/composables/useConnection';
+import { useStore } from '@/composables/useStore';
 import { useLocale } from '@/composables/useLocale';
 
+import { BlockInfo } from 'vuesp-components';
 import BlockStatus from '@/components/block/BlockStatus.vue';
 
-const { $t } = useLocale();
+const { $t, setLocale } = useLocale();
+
+setLocale(localGet('locale') || navigator?.language);
 
 const { isIframe } = useFrame();
 const { isConnect } = useSocket();
-const { pkg, menu, dialog, dialogInfo, main, notifications, progress, changeTheme } = useConnection();
+const { pkg, menu, dialog, dialogInfo, main, notifications, progress, changeTheme } = useStore();
 
 const webSocketStore = useWebSocketStore();
 

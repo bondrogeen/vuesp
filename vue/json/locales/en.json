@@ -20,6 +20,7 @@
   "empty": "Empty",
   "prog": "Progress...",
   "dis": "Disabled",
+  "default": "Default",
   "min": "Min",
   "max": "Max",
   "ip": "IP",
@@ -65,12 +66,14 @@
   "selectFile": "Select a file...",
   "ports": "I/O ports",
   "selectLang": "Select language",
+  "lang": "Language",
   "locale": {
     "ru": "Russian",
     "en": "English"
   },
   "menu": {
     "home": "Home",
+    "dashboard": "Dashboard",
     "settings": "Settings",
     "storage": "Storage",
     "gpio": "GPIO"

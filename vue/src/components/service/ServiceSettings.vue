@@ -88,7 +88,7 @@
       <BlockService :locale="getLocale()" :locales="listLocale" @locale="onLocale" @reset="onSureReset" @reboot="onSureReboot" />
     </card-gray>
 
-    <Teleport to="[data-slot='device']">
+    <teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
@@ -98,7 +98,7 @@
 
         <v-list :list="listMenu" @click="onMenu"></v-list>
       </v-dropdown>
-    </Teleport>
+    </teleport>
 
     <app-dialog v-if="showDialog" :title="$t('scan')" size="sm" @close="onClose">
       <BlockScan :items="scanList" @select="onSelectSsid" @scan="onScan" />
@@ -121,11 +121,11 @@ import { useConnection } from '@/composables/useConnection';
 import { arrToStr, strToArr } from 'vuesp-components/helpers';
 
 import { VCheckbox } from 'vuesp-components';
+import { useLocale } from '@/composables/useLocale';
+
 import BlockScan from '@/components/block/BlockScan.vue';
 import BlockService from '@/components/block/BlockService.vue';
 import BlockUpdate from '@/components/block/BlockUpdate.vue';
-
-import { useLocale } from '@/composables/useLocale';
 
 const { $t, getLocale, setLocale, list } = useLocale();
 

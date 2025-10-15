@@ -1,24 +1,16 @@
-import { onMounted, ref } from 'vue';
-import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue';
 import { event } from '@/assets/js/';
 import Queue from '@/assets/js/queue';
 
-import { useAppStore } from '@/stores/AppStore';
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { useStore } from '@/composables/useStore';
 
 import type { TypeMessage, TypeSend } from '@/types';
 
 export const useConnection = (init?: (send: TypeSend) => void, messages?: (message: TypeMessage) => void) => {
-  const webSocketStore = useWebSocketStore();
-  const { ...socket } = storeToRefs(webSocketStore);
-
-  const appStore = useAppStore();
-  const { ...app } = storeToRefs(appStore);
-
-  const isConnected = ref(false);
+  const store = useStore();
 
   const queue = new Queue<{ key: TypeMessage['key']; object?: TypeMessage['object'] }>(100, ({ key, object }) => {
-    webSocketStore.onSend(key, object);
+    store.wsSend(key, object);
   });
 
   const onSend = (key: TypeMessage['key'], object?: TypeMessage['object']) => {
@@ -26,7 +18,7 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
   };
 
   event.on('init', () => {
-    if (init) init(onSend);
+    if (!store.isInit.value && init) init(onSend);
   });
 
   if (messages) {
@@ -35,16 +27,9 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
     });
   }
 
-  event.on('connected', (value) => {
-    isConnected.value = value;
-  });
-
-  const onDialog = appStore.setDialog;
-  const changeTheme = appStore.changeTheme;
-
   onMounted(() => {
-    if (init) init(onSend);
+    if (store.isInit.value && init) init(onSend);
   });
 
-  return { ...socket, ...app, isConnected, onSend, onDialog, changeTheme };
+  return { ...store, onSend };
 };

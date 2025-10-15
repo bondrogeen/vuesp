@@ -68,7 +68,7 @@ void initGPIO() {
 void getAll() {
   for (int i = 0; i < ports_len; i++) {
     if (ports[i].mode != GPIO_MODE_PWM) ports[i].value = digitalRead(ports[i].gpio);
-    sendAll((uint8_t*)&ports[i], sizeof(ports[i]), KEY_PORT);
+    wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
   }
 }
 
@@ -78,7 +78,7 @@ void updatePorts() {
       ports[i] = port;
     }
   }
-  sendAll((uint8_t*)&port, sizeof(port), KEY_PORT);
+  wsSendAll((uint8_t*)&port, sizeof(port));
 }
 
 void setValue() {
@@ -101,7 +101,7 @@ void checkInterrupt() {
       ports[i].value = port.value;
       deviceGPIO(&port);
     }
-    sendAll((uint8_t*)&port, sizeof(port), KEY_PORT);
+    wsSendAll((uint8_t*)&port, sizeof(port));
   }
 }
 
@@ -121,7 +121,7 @@ float getTemperature(uint8_t* address1) {
 void findDallas() {
   while (ds.search(ht1.address) == 1) {
     ht1.temp = getTemperature(ht1.address);
-    sendAll((uint8_t*)&ht1, sizeof(ht1), KEY_DALLAS);
+    wsSendAll((uint8_t*)&ht1, sizeof(ht1));
   }
 }
 
@@ -149,7 +149,6 @@ void loopGPIO(uint32_t now) {
   }
 
   if (tasks[KEY_PORT]) {
-    Serial.println(tasks[KEY_PORT]);
     if (port.command == GPIO_COMMAND_SAVE) writeFile(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
     if (port.command == GPIO_COMMAND_SET) setValue();
     if (port.command == GPIO_COMMAND_GET_ALL) getAll();

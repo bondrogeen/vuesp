@@ -14,104 +14,38 @@
       </v-dropdown>
     </div>
 
-    <VDragDrop :items="dashboard" class="grid grid-cols-[repeat(auto-fill,_minmax(130px,_1fr))] gap-4" @update:items="dashboard = $event">
-      <template #default="{ item }">
-        <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)" @edit="onDialog(getState(item))"></component>
-      </template>
-    </VDragDrop>
+    <p class="text-lg font-bold mb-4">
+      {{ pkg.description }}
+    </p>
 
-    <app-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : 'Add'" @close="dialogItem = false">
-      <item-edit class="min-h-[330px]" :item="item" :object="main" @button="onButton">
-        <template #default="{ item }">
-          <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)"></component>
-        </template>
-      </item-edit>
-    </app-dialog>
+    <div>
+      {{ main.info }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { IListItem, IDashboardItem } from '@/types';
-import type { Ref } from 'vue';
-
-import { ref } from 'vue';
-import { setStateItem, getStateItem } from 'vuesp-components/dashboard';
-import { useFetch, uploadJson } from 'vuesp-components/helpers';
+import type { IListItem } from '@/types';
 
 import { KEYS } from '@/types';
-import { COMMAND } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection';
-import { pathListDef } from '@/utils/const';
-
-import { VDragDrop } from 'vuesp-components';
 
 import { useLocale } from '@/composables/useLocale';
 
 const { $t } = useLocale();
 
-const { dashboard, main, onSend } = useConnection((send) => {
-  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
+const { pkg, main, onSend } = useConnection((send) => {
   send(KEYS.DEVICE);
 });
 
-const dialogItem = ref(false);
-const item: Ref<IDashboardItem | null> = ref(null);
+const listMenu: IListItem[] = [{ name: $t('btnUpdate'), value: 2 }];
 
-const getComponent = ({ type = 'info' }) => `card-${type}`;
-
-const onButton = (key: string, item: IDashboardItem) => {
-  if (key === 'add') dashboard.value.push(item);
-  if (key === 'save') dashboard.value = dashboard.value.map((i) => (i.id === item.id ? item : i));
-  if (key === 'remove') dashboard.value = dashboard.value.filter((i) => i.id !== item.id);
-  dialogItem.value = false;
-};
-
-const listMenu: IListItem[] = [
-  { name: $t('add'), value: 1 },
-  { name: $t('save'), value: 2 },
-  { name: $t('restore'), value: 3 },
-  { name: $t('default'), value: 4 },
-];
-
-const onCreate = () => {
-  item.value = null;
-  dialogItem.value = true;
-};
-const onRestore = async () => {
-  const res = await useFetch.$get(pathListDef);
-  dashboard.value = res.dashboard;
-};
-const onSave = async () => await uploadJson('/tmp/dashboard.json', dashboard.value);
-const onDefault = () => {
-  onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_SAVE });
-  onSend(KEYS.DEVICE, { command: 254 });
+const onUpdate = () => {
+  onSend('INFO');
 };
 
 const onMenu = ({ value }: IListItem) => {
-  if (value === 1) onCreate();
-  if (value === 2) onSave();
-  if (value === 3) onRestore();
-  if (value === 4) onDefault();
-};
-
-const onDialog = (data: IDashboardItem) => {
-  item.value = data;
-  dialogItem.value = true;
-};
-
-const getState = (item: IDashboardItem) => getStateItem(item, main.value);
-
-const setState = (item: IDashboardItem, value: unknown) => {
-  const data = setStateItem(item, value, main.value);
-  if (Array.isArray(data)) {
-    data.forEach((el) => {
-      const key = el?.key;
-      if (key && el) onSend(key, el);
-    });
-    return;
-  }
-  const key = data.key;
-  if (key && data) onSend(key, data);
+  if (value === 2) onUpdate();
 };
 </script>
