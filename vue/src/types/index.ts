@@ -15,6 +15,7 @@ export enum KEYS {
   PORT = 'PORT',
   DEVICE = 'DEVICE',
   DALLAS = 'DALLAS',
+  BUFFER = 'BUFFER',
 }
 
 export interface IMessageDevice {
@@ -28,12 +29,24 @@ export interface IMessageDevice {
   message: string;
 }
 
+export interface IMessageBuffer {
+  key?: number;
+  head: number;
+  tail: number;
+  count: number;
+  data: number[];
+}
+
+interface IKeyMessageBuffer {
+  key: 'BUFFER';
+  object?: IMessageBuffer | Partial<IMessageBuffer>;
+}
 interface IKeyMessageDevice {
   key: 'DEVICE';
   object?: IMessageDevice | Partial<IMessageDevice>;
 }
 
-export type TypeMessage = (TypeConstMessage & {}) | IKeyMessageDevice;
+export type TypeMessage = (TypeConstMessage & {}) | IKeyMessageDevice | IKeyMessageBuffer;
 
 type TypeMessageMap = { [K in TypeMessage['key']]: Extract<TypeMessage, { key: K }>['object'] };
 

@@ -11,6 +11,7 @@ enum keys {
   KEY_DEVICE,
   KEY_DALLAS,
   KEY_NOTIFICATION,
+  KEY_BUFFER,
   KEY_END
 };
 
@@ -107,10 +108,17 @@ struct Dallas {
 struct Device {
   uint8_t key;
   uint8_t command;
-  uint8_t gpio12;
-  uint8_t gpio14;
   uint16_t analog;
   uint16_t pwm;
   uint32_t now;
   char message[32];
+};
+
+struct Buffer {
+  uint8_t key;
+  uint8_t empty;
+  uint16_t head;
+  uint16_t tail;
+  uint16_t count;
+  int8_t data[256];
 };

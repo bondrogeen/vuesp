@@ -1,7 +1,7 @@
 import type { I18nInstance } from 'vuesp-components/types';
 import { inject } from 'vue';
 
-import { localGet, localSet } from 'vuesp-components/helpers';
+import { localSet } from 'vuesp-components/helpers';
 
 export const useLocale = () => {
   const i18n = inject<I18nInstance>('i18n');
@@ -14,10 +14,6 @@ export const useLocale = () => {
     i18n.setLocale(locale);
     localSet('locale', i18n.getLocale());
   };
-
-  i18n.setLocale(localGet('locale') || navigator?.language);
-
-  // setLocale(localGet('locale') || navigator?.language);
 
   const getLocale = () => i18n.getLocale();
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-6 flex items-center justify-between">
       <h1>{{ $t(title) }}</h1>
 
       <div data-slot="device"></div>
@@ -20,15 +20,17 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { getPageTitle } from 'vuesp-components/helpers';
+import { storeToRefs } from 'pinia';
+import { useAppStore } from '@/stores/AppStore';
 
-import { useConnection } from '@/composables/useConnection';
+import { getPageTitle } from 'vuesp-components/helpers';
 
 import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
 import ServiceStorage from '@/components/service/ServiceStorage.vue';
 import ServiceSettings from '@/components/service/ServiceSettings.vue';
 
-const { menu } = useConnection();
+const appStore = useAppStore();
+const { menu } = storeToRefs(appStore);
 
 const route = useRoute();
 
