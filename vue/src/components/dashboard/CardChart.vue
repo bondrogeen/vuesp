@@ -4,7 +4,7 @@
     <template #dialog-value>Average {{ getValue }} °C</template>
 
     <template #dialog>
-      <div class="w-full overflow-x-auto">
+      <div class="w-full overflow-x-auto scrollbar">
         <div class="h-[300px] min-w-10" :style="{ width: dataLength * 30 + 'px' }">
           <canvas :id="getID(props)" height="300" width="0"></canvas>
         </div>

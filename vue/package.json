@@ -29,14 +29,14 @@
   "scripts": {
     "preview": "vite preview",
     "build-web": "vue-tsc -b && vite build",
-    "build": "npm run increment && npm run recovery && npm run parser && npm run json && vue-tsc -b && vite build && npm run firmware",
-    "lint": "vue-cli-service lint",
+    "build": "npm run scripts && npm run build-web && npm run firmware",
     "dev": "vite",
-    "increment": "node ../scripts/increment.js",
     "firmware": "cd ../ && sh scripts/script.sh build",
-    "parser": "node ./utils/parser.js ../src/const/struct.h  ./public",
-    "json": "node ./utils/json.js ./json/  ./public",
-    "recovery": "node ./utils/script.js /recovery/ ../src/pages"
+    "scripts": "npm run increment && npm run recovery && npm run struct && npm run json",
+    "increment": "node ./scripts/increment.js",
+    "struct": "node ./scripts/struct.js ../src/const/struct.h  ./public",
+    "json": "node ./scripts/json.js ./json/  ./public",
+    "recovery": "node ./scripts/recovery.js /recovery/ ../src/pages"
   },
   "dependencies": {
     "@vueuse/core": "13.9.0",
@@ -44,7 +44,7 @@
     "tailwindcss": "4.1.13",
     "vue": "3.5.22",
     "vue-router": "4.5.1",
-    "vuesp-components": "1.1.1",
+    "vuesp-components": "1.1.2",
     "vuesp-struct": "1.3.0"
   },
   "devDependencies": {

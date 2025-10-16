@@ -8,7 +8,7 @@ uint8_t tasks[KEY_END];
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
-Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, ""};
+Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, "Notification"};
 
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo* info = (AwsFrameInfo*)arg;

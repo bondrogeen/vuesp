@@ -20,5 +20,7 @@ then
   ~/.platformio/penv/bin/pio run && 
   ~/.platformio/penv/bin/pio run --target buildfs &&
   cp ./build/esp8266/firmware.bin ./firmware/esp8266/ | cp ./build/esp8266/littlefs.bin ./firmware/esp8266/ &&
+  cp ./build/esp32-c3-devkitm-1/firmware.bin ./firmware/esp32-c3-devkitm-1/ | cp ./build/esp32-c3-devkitm-1/littlefs.bin ./firmware/esp32-c3-devkitm-1/ &&
+  cp ./build/pico32/firmware.bin ./firmware/pico32/ | cp ./build/pico32/littlefs.bin ./firmware/pico32/ &&
   cp ./build/esp32/firmware.bin ./firmware/esp32/ | cp ./build/esp32/littlefs.bin ./firmware/esp32/
 fi

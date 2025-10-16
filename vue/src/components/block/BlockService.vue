@@ -1,8 +1,8 @@
 <template>
-  <div class="flex items-center mb-4">
-    <div class="flex-auto text-gray-600 bg:text-gray-400">{{ $t('selectLang') }}</div>
+  <div class="md:flex items-center mb-4">
+    <div class="flex-auto text-gray-600 bg:text-gray-400 mb-2">{{ $t('selectLang') }}</div>
 
-    <div class="max-w-50">
+    <div class="md:max-w-50">
       <v-select :value="locale" :label="$t('lang')" :list="locales" @change="onLocale"></v-select>
     </div>
   </div>
