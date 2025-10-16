@@ -109,7 +109,6 @@ struct Device {
   uint8_t key;
   uint8_t command;
   uint16_t analog;
-  uint16_t pwm;
   uint32_t now;
   char message[32];
 };

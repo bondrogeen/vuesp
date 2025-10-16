@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source inline("dark:{flex,hidden} md:hidden md:flex dark:border-gray-700/50 dark:border-gray-700 lg:static dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 rounded-full lg:flex md:w-80");
+@source inline("dark:{flex,hidden} md:hidden md:flex dark:border-gray-700/50 dark:border-gray-700 lg:static dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 rounded-full lg:flex md:w-80 dark:bg-gray-900/50");
 
 @layer base {
   h1,

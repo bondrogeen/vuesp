@@ -1,8 +1,11 @@
 <template>
   <div v-for="(file, key) in files" :key="key" class="mb-4 flex items-center">
     <VFile accept=".bin" @change="files[key] = $event" class="flex-auto">
-      <h6 class="text-gray-600 bg:text-gray-400 first-letter:uppercase min-w-19">{{ key }}:</h6>
-      {{ getFileNames(file) }}
+      <div class="md:flex">
+        <h6 class="text-gray-600 bg:text-gray-400 first-letter:uppercase min-w-19">{{ key }}:</h6>
+
+        {{ getFileNames(file) }}
+      </div>
     </VFile>
 
     <v-button class="min-w-[100px]" color="blue" size="small" :disabled="Boolean(!file)" @click="onSureFlash(key)">{{ $t('btnUpdate') }}</v-button>

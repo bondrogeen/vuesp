@@ -40,22 +40,13 @@
   {
     "id": "ports.14",
     "name": "ports.14",
-    "type": "button",
-    "icon": "Bulb",
+    "type": "dimmer",
+    "icon": "Vent",
     "args": ["ports.14.value", "ports.14"],
     "set": "({ ...a, value: v, command: 2})",
     "getTo": "v ? 'ON' : 'OFF'"
   },
   { "id": "device.analog", "name": "adc", "type": "info", "icon": "Air", "args": ["device.analog"], "getTo": "`${v} ℃`" },
-  {
-    "id": "device.pwm",
-    "name": "pwm",
-    "type": "dimmer",
-    "icon": "Vent",
-    "opts": { "min": 0, "max": 255, "step": 1 },
-    "args": ["device.pwm", "device"],
-    "set": "({ ...a, pwm: v, command: 3})"
-  },
   {
     "id": "device.now",
     "name": "now",
@@ -81,12 +72,12 @@
     "set": "({ ...a, message: v, command: 1})"
   },
   {
-    "id": "device.input",
+    "id": "notification",
     "name": "Notification",
     "type": "input",
     "icon": "Noti",
-    "args": ["device.input"],
-    "set": "({ key:11,text:v,color:4,date: 0,isNew:1})"
+    "args": ["device.notification"],
+    "set": "({key:11,text:v,color:4,date:0,isNew:1})"
   },
   {
     "id": "buffer.head",
