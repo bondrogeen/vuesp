@@ -1,6 +1,6 @@
 <template>
   <div>
-    <card-gray :title="$t('ports')">
+    <card-main :title="$t('ports')">
       <div class="relative grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
         <div v-for="port in main.ports" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md border border-gray-200 dark:border-gray-700/40">
           <h5 class="text-sm mb-2">{{ `GPIO: ${port.gpio} ${!port.state ? `(${$t('dis')})` : ''}` }}</h5>
@@ -30,13 +30,13 @@
           </div>
         </div>
       </div>
-    </card-gray>
+    </card-main>
 
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="Dots" class="rotate-90"></v-icons>
+            <v-icon name="Dots" class="rotate-90"></v-icon>
           </v-button>
         </template>
 
@@ -53,7 +53,7 @@ import { KEYS } from '@/types';
 import { MODE, COMMAND } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection';
-import { useFetch } from 'vuesp-components/helpers';
+import { useFetch } from '@vueuse/core';
 import { PATH_FS, pathGPIO } from '@/utils/const';
 import { useLocale } from '@/composables/useLocale';
 
@@ -111,8 +111,8 @@ const onSave = async () => {
   onSureReboot();
 };
 const onRestore = async () => {
-  const res = await useFetch.$delete(`${PATH_FS}?file=${pathGPIO}`);
-  if (res?.state) onReboot();
+  const { data } = await useFetch(`${PATH_FS}?file=${pathGPIO}`).delete().json();
+  if (data.value?.state) onReboot();
 };
 
 const onMenu = ({ value }: IListItem) => {

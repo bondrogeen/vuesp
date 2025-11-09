@@ -6,7 +6,7 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="Dots" class="rotate-90"></v-icons>
+            <v-icon name="Dots" class="rotate-90"></v-icon>
           </v-button>
         </template>
 
@@ -36,7 +36,7 @@ import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 import { setStateItem, getStateItem } from 'vuesp-components/dashboard';
-import { useFetch, uploadJson } from 'vuesp-components/helpers';
+import { useFetch } from '@vueuse/core';
 
 import { KEYS } from '@/types';
 import { COMMAND } from '@/utils/gpio';
@@ -91,10 +91,16 @@ const onCreate = () => {
   dialogItem.value = true;
 };
 const onRestore = async () => {
-  const res = await useFetch.$get(pathListDef);
-  dashboard.value = res.dashboard;
+  const { data } = await useFetch(pathListDef).json();
+  dashboard.value = data.value.dashboard;
 };
-const onSave = async () => await uploadJson('/tmp/dashboard.json', dashboard.value);
+
+const onSave = async () => {
+  const body = new FormData();
+  body.append('file[0]', new Blob([JSON.stringify(dashboard.value)], { type: 'application/json' }), '/tmp/dashboard.json');
+  return await useFetch('/fs', { body }).post();
+};
+
 const onDefault = () => {
   onSend(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_SAVE });
   onSend(KEYS.DEVICE, { command: 254 });

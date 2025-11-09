@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2">
-    <card-gray :title="$t('fs')">
+    <card-main :title="$t('fs')">
       <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
@@ -11,7 +11,7 @@
           >
             <div>{{ value }}</div>
 
-            <v-icons v-if="isLast(path, i)" name="Chevron" class="h-5 w-4 -rotate-90"></v-icons>
+            <v-icon v-if="isLast(path, i)" name="Chevron" class="h-5 w-4 -rotate-90"></v-icon>
           </div>
         </div>
 
@@ -24,8 +24,8 @@
         <v-list v-slot="{ item: { name, size, isDir, isFile } }" className="" :list="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
-              <v-icons name="Folder" v-if="isDir"></v-icons>
-              <v-icons name="File" v-else></v-icons>
+              <v-icon name="Folder" v-if="isDir"></v-icon>
+              <v-icon name="File" v-else></v-icon>
             </div>
 
             <div>
@@ -38,7 +38,7 @@
           <v-dropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <button @click="on.click">
-                <v-icons name="Dots" class="rotate-90"></v-icons>
+                <v-icon name="Dots" class="rotate-90"></v-icon>
               </button>
             </template>
 
@@ -46,13 +46,13 @@
           </v-dropdown>
         </v-list>
       </div>
-    </card-gray>
+    </card-main>
 
     <Teleport to="[data-slot='device']">
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="Dots" class="rotate-90"></v-icons>
+            <v-icon name="Dots" class="rotate-90"></v-icon>
           </v-button>
         </template>
 
@@ -69,7 +69,9 @@ import { KEYS } from '@/types';
 
 import { watchEffect, ref, computed, nextTick } from 'vue';
 
-import { toByte, debounce, useFetch, createDownloadLink } from 'vuesp-components/helpers';
+import { toByte, createDownloadLink } from 'vuesp-components/helpers';
+import { useFetch, useDebounceFn } from '@vueuse/core';
+
 import { PATH_FS } from '@/utils/const';
 
 import { useConnection } from '@/composables/useConnection';
@@ -149,8 +151,8 @@ const onEventList = (name: string, { value }: IListItem) => {
 };
 
 const onFormat = async () => {
-  const res = await useFetch.$post(`${PATH_FS}?format=true`);
-  if (res?.state) onUpdate();
+  const { data } = await useFetch(`${PATH_FS}?format=true`).post().json();
+  if (data.value?.state) onUpdate();
 };
 
 const onSureFormat = () => onDialog({ value: true, message: $t('dialog.allDel'), callback: onFormat });
@@ -167,16 +169,18 @@ const onUpload = async (files: FileList | null) => {
   }
   const { totalBytes = 0, usedBytes = 0 } = main.value.info;
   if (totalSize < totalBytes - usedBytes) {
-    const res = await useFetch.$post(PATH_FS, { body });
-    if (res?.state) onUpdate();
+    const { data } = await useFetch(PATH_FS, { body }).post().json();
+    if (data.value?.state) onUpdate();
   } else {
     onDialog({ value: true, message: 'No free space' });
   }
 };
 
 const onDelete = async (name: string) => {
-  const res = await useFetch.$delete(`${PATH_FS}?file=${fileName(name)}`);
-  if (res?.state) onUpdate();
+  const { data } = await useFetch(`${PATH_FS}?file=${fileName(name)}`)
+    .delete()
+    .json();
+  if (data.value?.state) onUpdate();
   else onDialog({ value: true, message: 'Directory is not empty' });
 };
 
@@ -188,7 +192,7 @@ const onSureDelete = (name: string) => {
   }
 };
 
-const onLoad = debounce(() => {
+const onLoad = useDebounceFn((_?: IMessageFile[]) => {
   isLoading.value = false;
 }, 300);
 

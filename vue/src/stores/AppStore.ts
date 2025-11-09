@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { changeTheme, localGet, isNewVersion, useFetch } from 'vuesp-components/helpers';
+import { changeTheme, localGet, isNewVersion } from 'vuesp-components/helpers';
+import { useFetch } from '@vueuse/core';
 import { pathList } from '@/utils/const';
 
 import type { IStoreApp, IDialog } from '@/types';
@@ -20,8 +21,8 @@ export const useAppStore = defineStore('app', {
       if (theme && ['light', 'dark'].includes(theme)) this.theme = theme;
       changeTheme(this.theme);
 
-      const dashboard = await useFetch.$get(`/fs?file=${pathList}`);
-      if (dashboard) this.dashboard = dashboard;
+      const { data } = await useFetch(`/fs?file=${pathList}`).json();
+      if (data.value) this.dashboard = data.value;
     },
     changeTheme(value?: string) {
       this.theme = value || (this.theme === 'light' ? 'dark' : 'light');
