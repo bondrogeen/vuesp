@@ -6,7 +6,7 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icons name="Dots" class="rotate-90"></v-icons>
+            <v-icon name="Dots" class="rotate-90"></v-icon>
           </v-button>
         </template>
 
@@ -14,7 +14,7 @@
       </v-dropdown>
     </div>
 
-    <p class="text-lg font-bold mb-4">
+    <p class="text-lg font-bold mb-4 text-gray-400 max-w-200">
       {{ pkg.description }}
     </p>
 

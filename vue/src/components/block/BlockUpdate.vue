@@ -16,11 +16,12 @@
 import type { IDialog } from '@/types/';
 
 import { nextTick, defineProps, reactive } from 'vue';
-import { toByte, useFetch } from 'vuesp-components/helpers';
+import { toByte } from 'vuesp-components/helpers';
 
 import { VFile } from 'vuesp-components';
 
 import { useLocale } from '@/composables/useLocale';
+import { useFetch } from '@vueuse/core';
 
 interface Props {
   onDialog: (data: IDialog) => void;
@@ -52,8 +53,8 @@ const onFlash = async (files: FileList | null, name: string) => {
     if (!file) return;
     body.append(`file[${i}]`, file, name);
   }
-  const res = await useFetch.$post('/update', { body });
-  if (res?.state) onDialog({ value: true, title: 'Done', message: 'Reboot...' });
+  const { data } = await useFetch('/update', { body }).post().json();
+  if (data.value?.state) onDialog({ value: true, title: 'Done', message: 'Reboot...' });
 };
 
 const updateFirmware = () => nextTick(() => onFlash(files.firmware, 'firmware.bin'));

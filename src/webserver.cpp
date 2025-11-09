@@ -94,7 +94,7 @@ void onReqUpdate(AsyncWebServerRequest* request) {
   AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
   request->send(response);
-  if (isReboot) reboot();
+  tasks[KEY_REBOOT] = true;
 }
 
 void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {

@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { useFetch } from '@vueuse/core';
 
 import { struct } from '@/assets/js/';
 
@@ -7,7 +8,6 @@ import App from '@/App.vue';
 import router from '@/router/index.ts';
 
 import vuesp from 'vuesp-components';
-import { useFetch } from 'vuesp-components/helpers';
 import { i18n } from 'vuesp-components/plugins';
 
 import 'vuesp-components/dist/style.css';
@@ -18,9 +18,10 @@ const pinia = createPinia();
 const app = createApp(App);
 
 (async () => {
-  const resStruct = await useFetch.$get(`/struct.json`);
-  const { locales, ...resDefault } = await useFetch.$get(`/default.json`);
-  struct.init(resStruct);
+  const resStruct = await useFetch(`/struct.json`).get().json();
+  const res = await useFetch(`/default.json`).get().json();
+  const { locales, ...resDefault } = res.data.value;
+  struct.init(resStruct.data.value);
   pinia.use(({ store }) => {
     if (resDefault && store.$id === 'app') {
       store.$patch(resDefault);
