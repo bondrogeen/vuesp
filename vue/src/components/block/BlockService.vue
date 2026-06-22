@@ -21,7 +21,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits } from 'vue';
 import type { IListItem } from 'vuesp-components/types';
 
 interface Props {

@@ -26,7 +26,6 @@
 
 <script setup lang="ts">
 import type { IMessageScan } from '@/types';
-import { defineEmits, defineProps } from 'vue';
 
 interface Props {
   items: Partial<IMessageScan>[];
