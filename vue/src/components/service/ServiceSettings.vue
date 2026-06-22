@@ -193,14 +193,14 @@ watch(
 );
 
 const onSubmit = handleSubmit(async (values) => {
-  settings.value.wifiSsid = values.wifiSsid;
-  settings.value.wifiPass = values.wifiPass;
-  settings.value.wifiIp = strToArr(values.wifiIp);
-  settings.value.wifiSubnet = strToArr(values.wifiSubnet);
-  settings.value.wifiGateway = strToArr(values.wifiGateway);
-  settings.value.wifiDns = strToArr(values.wifiDns);
-  settings.value.authLogin = values.authLogin;
-  settings.value.authPass = values.authPass;
+  settings.value.wifiSsid = values.wifiSsid as string;
+  settings.value.wifiPass = values.wifiPass as string;
+  settings.value.wifiIp = strToArr(values.wifiIp as string);
+  settings.value.wifiSubnet = strToArr(values.wifiSubnet as string);
+  settings.value.wifiGateway = strToArr(values.wifiGateway as string);
+  settings.value.wifiDns = strToArr(values.wifiDns as string);
+  settings.value.authLogin = values.authLogin as string;
+  settings.value.authPass = values.authPass as string;
   onSave();
 });
 
