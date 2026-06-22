@@ -1,21 +1,23 @@
 <template>
-  <div v-for="(file, key) in files" :key="key" class="mb-4 flex items-center">
-    <VFile accept=".bin" @change="files[key] = $event" class="flex-auto">
-      <div class="md:flex">
-        <h6 class="text-gray-600 bg:text-gray-400 first-letter:uppercase min-w-19">{{ key }}:</h6>
+  <div>
+    <div v-for="(file, key) in files" :key="key" class="mb-4 flex items-center">
+      <VFile accept=".bin" @change="files[key] = $event" class="flex-auto">
+        <div class="md:flex">
+          <h6 class="text-gray-600 bg:text-gray-400 first-letter:uppercase min-w-19">{{ key }}:</h6>
 
-        {{ getFileNames(file) }}
-      </div>
-    </VFile>
+          {{ getFileNames(file) }}
+        </div>
+      </VFile>
 
-    <v-button class="min-w-[100px]" color="blue" size="small" :disabled="Boolean(!file)" @click="onSureFlash(key)">{{ $t('btnUpdate') }}</v-button>
+      <v-button class="min-w-[100px]" color="blue" size="small" :disabled="Boolean(!file)" @click="onSureFlash(key)">{{ $t('btnUpdate') }}</v-button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { IDialog } from '@/types/';
 
-import { nextTick, defineProps, reactive } from 'vue';
+import { nextTick, reactive } from 'vue';
 import { toByte } from 'vuesp-components/helpers';
 
 import { VFile } from 'vuesp-components';

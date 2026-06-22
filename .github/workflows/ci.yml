@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+
+jobs:
+  frontend:
+    name: Frontend - Type Check, Lint, Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./vue
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "./vue/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build web
+        run: npm run build-web
+
+  backend:
+    name: Backend - PlatformIO Check
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - esp32
+          - esp32-c3-devkitm-1
+          - esp8266
+          - pico32
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Cache platformio
+        uses: actions/cache@v3
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Verify PlatformIO
+        run: pio --version
+
+      - name: Build firmware for ${{ matrix.platform }}
+        run: pio run -e ${{ matrix.platform }}
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if README exists
+        run: |
+          if [ -f README.md ]; then
+            echo "✅ README.md found"
+          else
+            echo "❌ README.md not found"
+            exit 1
+          fi
+
+      - name: Check if package.json is valid JSON
+        run: |
+          cat vue/package.json | jq . || exit 1
+
+      - name: Check if platformio.ini exists
+        run: |
+          if [ -f platformio.ini ]; then
+            echo "✅ platformio.ini found"
+          else
+            echo "❌ platformio.ini not found"
+            exit 1
+          fi

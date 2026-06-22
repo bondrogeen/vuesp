@@ -11,17 +11,25 @@ AsyncWebSocket ws("/esp");
 Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
-uint32_t countClient = 0;
 uint32_t clientID = 0;
 uint8_t hold = 255;
 uint32_t lastTime = 0;
+
+static bool isAuthenticated(AsyncWebServerRequest* request) {
+  if (!settings.authMode) return true;
+  if (request->authenticate(settings.authLogin, settings.authPass)) return true;
+  request->requestAuthentication();
+  return false;
+}
 
 String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
 void wsSend(uint8_t* message, size_t len) {
-  ws.binary(clientID, message, len);
+  if (clientID && ws.hasClient(clientID)) {
+    ws.binary(clientID, message, len);
+  }
 }
 void wsSendAll(uint8_t* message, size_t len) {
   ws.binaryAll(message, len);
@@ -37,10 +45,10 @@ void sendProgress() {
 
 void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
   clientID = client->id();
-  if (type == WS_EVT_CONNECT) {
-    countClient += clientID;
-  } else if (type == WS_EVT_DISCONNECT) {
-    countClient -= clientID;
+  if (type == WS_EVT_DISCONNECT) {
+    if (clientID && !ws.hasClient(clientID)) {
+      clientID = 0;
+    }
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (info->opcode == WS_BINARY) {
@@ -55,7 +63,7 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
 }
 
 void onReqUpload(AsyncWebServerRequest* request) {
-  if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+  if (!isAuthenticated(request)) return;
   uint8_t method = request->method();
   if (request->hasParam("file")) {
     const AsyncWebParameter* p = request->getParam("file");
@@ -90,6 +98,7 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onReqUpdate(AsyncWebServerRequest* request) {
+  if (!isAuthenticated(request)) return;
   uint8_t isReboot = !Update.hasError();
   AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
@@ -98,6 +107,7 @@ void onReqUpdate(AsyncWebServerRequest* request) {
 }
 
 void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
+  if (!isAuthenticated(request)) return;
   progress.size += len;
   progress.status = !index ? 1 : 2;
   if (!index) {
@@ -120,7 +130,7 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onRecovery(AsyncWebServerRequest* request) {
-  if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+  if (!isAuthenticated(request)) return;
   AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
   response->addHeader("Content-Encoding", "gzip");
   request->send(response);
@@ -159,7 +169,8 @@ void setupServer() {
 }
 
 void loopServer(uint32_t now) {
-  if (countClient) {
+  ws.cleanupClients();
+  if (ws.count()) {
     if (now - lastTime > 1000) {
       lastTime = now;
       if (progress.status == 0) {
@@ -168,7 +179,6 @@ void loopServer(uint32_t now) {
       } else {
         ws.binaryAll((uint8_t*)&ping, sizeof(ping));
       }
-      // ws.cleanupClients();
     }
   }
 }

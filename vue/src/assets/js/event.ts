@@ -19,7 +19,7 @@ class Event {
 
   off(name: string, fn: IEventFunction) {
     if (this.events[name]) {
-      for (var i = 0; i < this.events[name].length; i++) {
+      for (let i = 0; i < this.events[name].length; i++) {
         if (this.events[name][i] === fn) {
           this.events[name].splice(i, 1);
           break;

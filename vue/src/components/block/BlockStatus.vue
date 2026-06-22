@@ -3,7 +3,7 @@
     <div class="flex flex-col w-full items-center gap-2">
       <div class="relative block h-4 w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 select-none" :title="`${percent}%`">
         <div class="absolute left-[110px] top-1/2 -translate-1/2 text-sm font-bold text-black dark:text-white text-center leading-none">{{ percent }}%</div>
-        
+
         <div class="bg-blue-600 rounded-full h-4 overflow-hidden relative transition-all duration-500" :style="`width: ${percent}%`">
           <div class="absolute left-[110px] top-1/2 -translate-1/2 text-sm font-bold text-white text-center leading-none">{{ percent }}%</div>
         </div>
@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import type { IStateInfo } from '@/types/';
 
-import { ref, computed, defineProps, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { toByte, secToTime } from 'vuesp-components/helpers';
 
 import { useLocale } from '@/composables/useLocale';
