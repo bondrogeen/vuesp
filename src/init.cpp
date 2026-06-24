@@ -48,15 +48,23 @@ void WiFiEvent(WiFiEvent_t event) {
 
 void initWiFi() {
   if (settings.wifiMode) {
+    WiFi.onEvent(WiFiEvent);
     WiFi.setHostname(settings.wifiSsid);
-    WiFi.mode((WiFiMode_t)settings.wifiMode);
+    if (settings.wifiMode == WIFI_STA)
+      WiFi.mode(WIFI_STA);
+    else if (settings.wifiMode == WIFI_AP)
+      WiFi.mode(WIFI_AP);
+    else
+      WiFi.mode(WIFI_AP_STA);
+
+    WiFi.setSleep(false);
+
     if (!settings.wifiDhcp) {
       WiFi.config(settings.wifiIp, settings.wifiGateway, settings.wifiSubnet, settings.wifiDns);
     }
     if (settings.wifiMode == WIFI_STA) WiFi.begin(settings.wifiSsid, settings.wifiPass);
     if (settings.wifiMode == WIFI_AP) WiFi.softAP(settings.wifiSsid, settings.wifiPass);
-    WiFi.onEvent(WiFiEvent);
-    udp.begin(UDP_PORT);
+    // udp.begin(UDP_PORT);
   }
 }
 

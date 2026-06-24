@@ -108,16 +108,30 @@ struct Dallas {
 struct Device {
   uint8_t key;
   uint8_t command;
-  uint16_t analog;
-  uint32_t now;
-  char message[32];
-};
-
-struct Buffer {
-  uint8_t key;
-  uint8_t empty;
-  uint16_t head;
-  uint16_t tail;
-  uint16_t count;
-  int8_t data[256];
+  uint16_t voltage;
+  uint16_t current;
+  uint16_t balanceCapacity;
+  uint16_t rateCapacity;
+  uint16_t cycle;
+  uint16_t empty;
+  uint16_t balanceStatus;
+  uint16_t balanceStatusHigh;
+  uint16_t protectionStatus;
+  uint8_t version;
+  uint8_t rsoc;
+  uint8_t fet;
+  uint8_t series;
+  uint8_t temp;
+  uint8_t ntc;
+  uint16_t ntc1;
+  uint16_t ntc2;
+  uint16_t ntc3;
+  uint16_t cellLow;
+  uint16_t cellHigh;
+  uint16_t cellDiff;
+  uint16_t cellAvg;
+  uint8_t dateDay;
+  uint8_t dateMonth;
+  uint16_t dateYear;
+  uint16_t cellVoltage[14];
 };

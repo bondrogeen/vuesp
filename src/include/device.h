@@ -9,6 +9,7 @@
 #define DEVICE_COMMAND_GET 1
 #define DEVICE_COMMAND_SET 2
 #define DEVICE_COMMAND_TEXT 3
+#define BMS_LEN_RESPONSE 64
 
 void setupDevice();
 void setupFirstDevice();
