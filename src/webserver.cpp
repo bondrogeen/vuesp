@@ -131,9 +131,13 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 
 void onRecovery(AsyncWebServerRequest* request) {
   if (!isAuthenticated(request)) return;
-  AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
+  if (LittleFS.exists("/www/index.html")) {
+    request->redirect("/");
+  } else {
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  }
 }
 
 // void onGetData(AsyncWebServerRequest *request) {
@@ -142,8 +146,13 @@ void onRecovery(AsyncWebServerRequest* request) {
 //   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
 //   request->send(response);
 // }
-void onRedirectRecovery(AsyncWebServerRequest* request) {
-  request->redirect("/recovery");
+void onRoot(AsyncWebServerRequest* request) {
+  if (!isAuthenticated(request)) return;
+  if (LittleFS.exists("/www/index.html")) {
+    request->send(LittleFS, "/www/index.html", "text/html");
+  } else {
+    request->redirect("/recovery");
+  }
 }
 
 void onRedirectHome(AsyncWebServerRequest* request) {
@@ -163,8 +172,11 @@ void setupServer() {
   // server.on("/get", HTTP_GET, onGetData);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
-  server.on("/", HTTP_GET, onRedirectRecovery);
+  server.on("/", HTTP_GET, onRoot);
   server.on("*", HTTP_ANY, onRedirectHome);
+  // server.onNotFound([](AsyncWebServerRequest* request) {
+  //   request->send(404, "text/plain", "Not Found");
+  // });
   server.begin();
 }
 

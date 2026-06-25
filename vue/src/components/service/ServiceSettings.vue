@@ -6,7 +6,7 @@
 
         <v-text-field v-model="wifiSsid" v-bind="wifiSsidAttrs" :label="$t('ssid')" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
           <template #icon>
-            <v-icon name="search"></v-icon>
+            <v-icon name="Search"></v-icon>
           </template>
         </v-text-field>
 
@@ -116,6 +116,7 @@ import { required, maxLen, minLen, sameAs, ip } from '@/utils/validate';
 import { KEYS } from '@/types';
 
 import { useForm } from 'vuesp-components/composables';
+import type { ValidationSchema } from 'vuesp-components/types';
 
 import { useConnection } from '@/composables/useConnection';
 import { arrToStr, strToArr } from 'vuesp-components/helpers';
@@ -151,18 +152,19 @@ const onInit = (send: TypeSend) => {
 const { settings, dialogInfo, onSend, onDialog } = useConnection(onInit, onMessage);
 
 const { defineField, handleSubmit } = useForm({
-  validationSchema: {
-    wifiSsid: [required, maxLen(32)],
-    wifiPass: [required, minLen(8), maxLen(32)],
-    rePassword: [required, minLen(8), maxLen(32), sameAs('wifiPass')],
-    wifiIp: [ip],
-    wifiSubnet: [ip],
-    wifiGateway: [ip],
-    wifiDns: [ip],
-    authLogin: [required, maxLen(12)],
-    authPass: [required, maxLen(12)],
-    reAuthPassword: [required, maxLen(12), sameAs('authPass')],
-  },
+  validationSchema: (values) =>
+    ({
+      wifiSsid: [required, maxLen(32)],
+      wifiPass: values.wifiPass !== '' ? [required, minLen(8), maxLen(32)] : [],
+      rePassword: values.wifiPass !== '' ? [required, minLen(8), maxLen(32), sameAs('wifiPass')] : [],
+      wifiIp: [ip],
+      wifiSubnet: [ip],
+      wifiGateway: [ip],
+      wifiDns: [ip],
+      authLogin: settings.value.authMode ? [required, maxLen(12)] : [],
+      authPass: settings.value.authMode ? [required, maxLen(12)] : [],
+      reAuthPassword: settings.value.authMode ? [required, maxLen(12), sameAs('authPass')] : [],
+    }) as ValidationSchema,
 });
 
 const [wifiSsid, wifiSsidAttrs] = defineField<string>('wifiSsid');
@@ -180,8 +182,8 @@ watch(
   () => settings.value,
   () => {
     wifiSsid.value = settings.value.wifiSsid;
-    wifiPass.value = settings.value.wifiPass;
-    rePassword.value = settings.value.wifiPass;
+    if (settings.value.wifiPass) wifiPass.value = settings.value.wifiPass;
+    if (settings.value.wifiPass) rePassword.value = settings.value.wifiPass;
     wifiIp.value = arrToStr(settings.value.wifiIp);
     wifiSubnet.value = arrToStr(settings.value.wifiSubnet);
     wifiGateway.value = arrToStr(settings.value.wifiGateway);
@@ -192,7 +194,7 @@ watch(
   }
 );
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit((values) => {
   settings.value.wifiSsid = values.wifiSsid as string;
   settings.value.wifiPass = values.wifiPass as string;
   settings.value.wifiIp = strToArr(values.wifiIp as string);
@@ -242,6 +244,7 @@ const onMenu = () => {
 const onSelectSsid = ({ ssid }: IMessageScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
+  wifiSsid.value = ssid;
   const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
   if (input) input.focus();
   onClose();
