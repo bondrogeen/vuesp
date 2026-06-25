@@ -41,7 +41,7 @@ void getData() {
 }
 
 void setupDevice() {
-  Serial1.begin(9600, SERIAL_8N1, 20, 21);
+  Serial1.begin(9600, SERIAL_8N1, 5, 6);
 }
 
 void setupFirstDevice() {

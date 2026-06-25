@@ -13,7 +13,7 @@ const initialState = (): IStoreWebSocketStore => ({
   },
   settings: { wifiDhcp: 1, wifiMode: 1, authMode: 1, version: 1, device: 0, wifiIp: [], wifiSubnet: [], wifiGateway: [], wifiDns: [], wifiSsid: '', wifiPass: '', authLogin: '', authPass: '' },
   progress: { status: 0, empty: 0, size: 0, length: 0 },
-  notifications: localGet('notifications') || [],
+  notifications: localGet('notifications', true) || [],
 });
 
 export const useWebSocketStore = defineStore('webSocketStore', {

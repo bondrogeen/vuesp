@@ -1,5 +1,9 @@
 #include "./include/init.h"
 
+#if defined(ARDUINO_ESP32C3_DEV)
+#include "esp_wifi.h"
+#endif
+
 uint8_t isFirstWifi = 0;
 
 WiFiUDP udp;
@@ -48,6 +52,9 @@ void WiFiEvent(WiFiEvent_t event) {
 
 void initWiFi() {
   if (settings.wifiMode) {
+#if defined(ARDUINO_ESP32C3_DEV)
+    esp_wifi_set_max_tx_power(WIFI_POWER_8_5dBm);
+#endif
     WiFi.onEvent(WiFiEvent);
     WiFi.setHostname(settings.wifiSsid);
     if (settings.wifiMode == WIFI_STA)

@@ -1,90 +1,34 @@
 [
   {
-    "id": "ports.4",
-    "name": "ports.4",
-    "type": "button",
-    "icon": "Light",
-    "opts": { "disabled": 1 },
-    "args": ["ports.4.value", "ports.4"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "id": "device.voltage",
+    "name": "Voltage",
+    "type": "info",
+    "icon": "Info",
+    "args": ["device.voltage"],
+    "getTo": "`${v/100}V`"
   },
   {
-    "id": "ports.5",
-    "name": "ports.5",
-    "type": "button",
-    "icon": "Light",
-    "opts": { "disabled": 1 },
-    "args": ["ports.5.value", "ports.5"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "id": "device.rsoc",
+    "name": "Voltage",
+    "type": "info",
+    "icon": "Info",
+    "args": ["device.rsoc"],
+    "getTo": "`${v}%`"
   },
   {
-    "id": "ports.12",
-    "name": "ports.12",
-    "type": "button",
-    "icon": "Bulb",
-    "args": ["ports.12.value", "ports.12"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "id": "device.ntc1",
+    "name": "ntc1",
+    "type": "info",
+    "icon": "Info",
+    "args": ["device.ntc1"],
+    "getTo": "`${v/100}°C`"
   },
   {
-    "id": "ports.13",
-    "name": "ports.13",
-    "type": "button",
-    "icon": "Bulb",
-    "args": ["ports.13.value", "ports.13"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
-  },
-  {
-    "id": "ports.14",
-    "name": "ports.14",
-    "type": "dimmer",
-    "icon": "Vent",
-    "args": ["ports.14.value", "ports.14"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
-  },
-  { "id": "device.analog", "name": "adc", "type": "info", "icon": "Air", "args": ["device.analog"], "getTo": "`${v} ℃`" },
-  {
-    "id": "device.now",
-    "name": "now",
-    "type": "date",
-    "icon": "Noti",
-    "args": ["device.now", "device"],
-    "set": "({ ...a, now: v, command: 1})",
-    "getTo": "new Date(v * 1000).toLocaleDateString()"
-  },
-  {
-    "id": "device.message",
-    "name": "message",
-    "type": "list",
-    "icon": "Store",
-    "opts": {
-      "list": [
-        { "name": "Item1", "value": "1" },
-        { "name": "Item2", "value": "2" },
-        { "name": "Item3", "value": "3" }
-      ]
-    },
-    "args": ["device.message", "device"],
-    "set": "({ ...a, message: v, command: 1})"
-  },
-  {
-    "id": "notification",
-    "name": "Notification",
-    "type": "input",
-    "icon": "Noti",
-    "args": ["device.notification"],
-    "set": "({key:11,text:v,color:4,date:0,isNew:1})"
-  },
-  {
-    "id": "buffer.head",
-    "name": "Chart",
-    "type": "chart",
-    "icon": "TV",
-    "args": ["buffer.head", "buffer"],
-    "get": "a"
+    "id": "device.ntc",
+    "name": "ntc2",
+    "type": "info",
+    "icon": "Info",
+    "args": ["device.ntc2"],
+    "getTo": "`${v/100}°C`"
   }
 ]

@@ -89,6 +89,7 @@ import { BlockInfo } from 'vuesp-components';
 import BlockStatus from '@/components/block/BlockStatus.vue';
 
 const { $t, setLocale } = useLocale();
+console.log(localGet('locale'));
 
 setLocale(localGet('locale') || navigator?.language);
 
