@@ -54,9 +54,33 @@ export type TypeSend = <K extends keyof TypeMessageMap>(key: K, object?: TypeMes
 
 export interface IStateDevice {
   key?: number;
-  now: number;
-  pwm: number;
-  analog: number;
+  command: number;
+  voltage: number;
+  current: number;
+  balanceCapacity: number;
+  rateCapacity: number;
+  cycle: number;
+  empty: number;
+  balanceStatus: number;
+  balanceStatusHigh: number;
+  protectionStatus: number;
+  version: number;
+  rsoc: number;
+  fet: number;
+  series: number;
+  temp: number;
+  ntc: number;
+  ntc1: number;
+  ntc2: number;
+  ntc3: number;
+  cellLow: number;
+  cellHigh: number;
+  cellDiff: number;
+  cellAvg: number;
+  dateDay: number;
+  dateMonth: number;
+  dateYear: number;
+  cellVoltage: number[];
 }
 
 export interface IMyMessageSettings extends IMessageSettings {

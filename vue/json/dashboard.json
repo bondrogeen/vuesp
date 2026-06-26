@@ -3,13 +3,46 @@
     "id": "device.voltage",
     "name": "Voltage",
     "type": "info",
-    "icon": "Info",
+    "icon": "Power",
     "args": ["device.voltage"],
-    "getTo": "`${v/100}V`"
+    "get": "v/100",
+    "getTo": "`${v} V`"
+  },
+  {
+    "id": "device.cellHigh",
+    "name": "Cell high",
+    "type": "info",
+    "icon": "Light",
+    "args": ["device.cellHigh"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellLow",
+    "name": "Cell low",
+    "type": "info",
+    "icon": "Light",
+    "args": ["device.cellLow"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cycle",
+    "name": "Cycle",
+    "type": "info",
+    "icon": "Update",
+    "args": ["device.cycle"],
+    "getTo": "`${v}`"
+  },
+  {
+    "id": "device.dateDay",
+    "name": "Production date",
+    "type": "info",
+    "icon": "Noti",
+    "args": ["device.dateDay", "device.dateMonth", "device.dateYear"],
+    "getTo": "`${v}.${a}.${b}`"
   },
   {
     "id": "device.rsoc",
-    "name": "Voltage",
+    "name": "Battery capacity",
     "type": "info",
     "icon": "Info",
     "args": ["device.rsoc"],
@@ -19,16 +52,80 @@
     "id": "device.ntc1",
     "name": "ntc1",
     "type": "info",
-    "icon": "Info",
+    "icon": "Therm",
     "args": ["device.ntc1"],
-    "getTo": "`${v/100}°C`"
+    "getTo": "`${v/100} °C`"
   },
   {
     "id": "device.ntc",
     "name": "ntc2",
     "type": "info",
-    "icon": "Info",
+    "icon": "Therm",
     "args": ["device.ntc2"],
-    "getTo": "`${v/100}°C`"
+    "getTo": "`${v/100} °C`"
+  },
+  {
+    "id": "device.cellVoltage.0",
+    "name": "Cell voltage 1",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.0"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.1",
+    "name": "Cell voltage 2",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.1"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.2",
+    "name": "Cell voltage 3",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.2"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.3",
+    "name": "Cell voltage 4",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.3"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.4",
+    "name": "Cell voltage 5",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.4"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.5",
+    "name": "Cell voltage 6",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.5"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.6",
+    "name": "Cell voltage 7",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.6"],
+    "getTo": "`${v / 1000} V`"
+  },
+  {
+    "id": "device.cellVoltage.7",
+    "name": "Cell voltage 8",
+    "type": "info",
+    "icon": "Store",
+    "args": ["device.cellVoltage.0"],
+    "getTo": "`${v / 1000} V`"
   }
 ]

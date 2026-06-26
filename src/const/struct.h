@@ -109,7 +109,7 @@ struct Device {
   uint8_t key;
   uint8_t command;
   uint16_t voltage;
-  uint16_t current;
+  int16_t current;
   uint16_t balanceCapacity;
   uint16_t rateCapacity;
   uint16_t cycle;
