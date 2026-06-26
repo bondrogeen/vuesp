@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto">
+  <div>
     <div class="mb-6 flex items-center justify-between">
       <h1>{{ $t('menu.dashboard') }}</h1>
 
@@ -114,6 +114,8 @@ const onMenu = ({ value }: IListItem) => {
 };
 
 const onDialog = (data: IDashboardItem) => {
+  console.log(data);
+
   item.value = data;
   dialogItem.value = true;
 };
