@@ -45,6 +45,7 @@ struct Info {
   uint32_t id;
   uint32_t uptime;
   char name[20];
+  uint32_t board;
 };
 
 struct Ping {

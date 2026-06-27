@@ -35,6 +35,7 @@ void setupFirst() {
 
 void setupDelay() {
   infoFS.id = id;
+  infoFS.board = DEF_BOARD;
   char nameDevice[20];
   sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
   strcpy(infoFS.name, nameDevice);
