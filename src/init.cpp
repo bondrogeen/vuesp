@@ -48,6 +48,10 @@ void WiFiEvent(WiFiEvent_t event) {
     Serial.println(WiFi.localIP());
     isConnected = 1;
   }
+  if (event == 8 || event == 5 || event == 116) {
+    Serial.println("WiFi disconnected");
+    isConnected = 0;
+  }
 }
 
 void initWiFi() {
@@ -71,7 +75,7 @@ void initWiFi() {
     }
     if (settings.wifiMode == WIFI_STA) WiFi.begin(settings.wifiSsid, settings.wifiPass);
     if (settings.wifiMode == WIFI_AP) WiFi.softAP(settings.wifiSsid, settings.wifiPass);
-    // udp.begin(UDP_PORT);
+    udp.begin(UDP_PORT);
   }
 }
 

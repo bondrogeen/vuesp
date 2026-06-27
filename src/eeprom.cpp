@@ -4,25 +4,21 @@ void initEEprom() {
   EEPROM.begin(256);
 }
 
-void saveEEprom(Settings& settings) {
+bool saveSettings(Settings& settings) {
   EEPROM.put(CONFIG_START, settings);
-  EEPROM.commit();
-}
-
-void saveSettings(Settings& settings) {
-  EEPROM.put(CONFIG_START, settings);
-  EEPROM.commit();
+  return EEPROM.commit();
 }
 
 void loadConfig(Settings& settings, uint32_t id) {
-  uint16_t version = 345;
+  uint16_t version = 0;
   EEPROM.get(CONFIG_START + 4, version);
-  if (version == settings.version) {
+  if (version == SETTINGS_VERSION) {
     EEPROM.get(CONFIG_START, settings);
   } else {
     char nameDevice[20];
     sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
     strcpy(settings.wifiSsid, nameDevice);
+    settings.version = SETTINGS_VERSION;
     saveSettings(settings);
   }
 }
