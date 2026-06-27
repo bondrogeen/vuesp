@@ -48,6 +48,10 @@ void WiFiEvent(WiFiEvent_t event) {
     Serial.println(WiFi.localIP());
     isConnected = 1;
   }
+  if (event == 8 || event == 5 || event == 116) {
+    Serial.println("WiFi disconnected");
+    isConnected = 0;
+  }
 }
 
 void initWiFi() {
