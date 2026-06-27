@@ -33,9 +33,6 @@ void deviceGPIO(Port* port) {
   Serial.println(port->value);
 }
 
-void deviceGPIOInterrupt() {
-}
-
 void getADC() {
   device.analog = analogRead(A0);
 }
