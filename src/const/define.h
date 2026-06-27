@@ -34,3 +34,6 @@
 #ifndef DEF_DEVICE_FIRMWARE
 #define DEF_DEVICE_FIRMWARE {0, 0, 1}
 #endif
+#ifndef DEF_BOARD
+#define DEF_BOARD 1
+#endif
