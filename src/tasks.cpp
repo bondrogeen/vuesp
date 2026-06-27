@@ -6,6 +6,7 @@
 uint8_t tasks[KEY_END];
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
+char safePass[32];
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
 Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, "Notification"};
@@ -15,6 +16,10 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
   tasks[task] = true;
   if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
     memcpy(&settings, data, sizeof(settings));
+    if (strcmp(settings.wifiPass, DEF_HIDE_PASS) == 0) {
+      memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
+      strcpy(settings.wifiPass, safePass);
+    }
     saveSettings(settings);
   }
   if (task == KEY_FILES && info->len == sizeof(files)) {
@@ -85,6 +90,12 @@ void sendNotificationText(const char* message, uint8_t color) {
 
 void loopTask(uint32_t now) {
   if (tasks[KEY_SETTINGS]) {
+    if (strcmp(settings.wifiPass, DEF_HIDE_PASS) != 0) {
+      memset(safePass, 0, sizeof(safePass));
+      strcpy(safePass, settings.wifiPass);
+      memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
+      strcpy(settings.wifiPass, DEF_HIDE_PASS);
+    }
     wsSend((uint8_t*)&settings, sizeof(settings));
     tasks[KEY_SETTINGS] = false;
   };

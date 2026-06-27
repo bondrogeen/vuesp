@@ -21,6 +21,8 @@
 #define DEF_AUTH_LOGIN "admin"
 #define DEF_AUTH_PASS "admin"
 
+#define DEF_HIDE_PASS "********"
+
 #define DEF_DIR_DEVICE "/tmp"
 #define DEF_PATH_CONFIG DEF_DIR_DEVICE "/device.io"
 #define DEF_PATH_GPIO DEF_DIR_DEVICE "/gpio.io"
