@@ -90,8 +90,9 @@ uint8_t decToBcd(uint8_t val) {
 }
 
 void deviceGPIO(Port* port) {
-  Serial.print(port->gpio);
-  Serial.println(port->value);
+  if (port->gpio == 13) {
+    getGPIO();
+  }
 }
 
 void setDate(uint32_t unixTime) {

@@ -33,8 +33,8 @@ export const useWebSocket = defineStore('webSocket', {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
         const data = struct.get(message.data);
-        event.emit('messages', data as TypeMessage);
         if (data) {
+          event.emit('messages', data as TypeMessage);
           const { object, key } = data;
           if (key !== KEYS.PING) log(object, key);
           const store = useWebSocketStore();
