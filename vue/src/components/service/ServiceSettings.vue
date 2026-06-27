@@ -245,6 +245,8 @@ const onSelectSsid = ({ ssid }: IMessageScan) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
   wifiSsid.value = ssid;
+  wifiPass.value = '';
+  rePassword.value = '';
   const input: HTMLInputElement | null = document.querySelector('#wifiPass input');
   if (input) input.focus();
   onClose();

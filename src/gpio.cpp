@@ -33,7 +33,7 @@ Port ports[5] = {
 };
 #endif
 
-OneWire ds(0);
+OneWire* ds = nullptr;
 
 Dallas ht1 = {KEY_DALLAS};
 
@@ -53,7 +53,8 @@ void initGPIO() {
     port = ports[i];
     if (port.mode == GPIO_MODE_ONEWIRE) {
       if (!isOneWire) {
-        ds.begin(port.gpio);
+        if (ds) delete ds;
+        ds = new OneWire(port.gpio);
         isOneWire = 1;
       }
       continue;
@@ -114,20 +115,22 @@ void checkInterrupt() {
 }
 
 float getTemperature(uint8_t* address1) {
+  if (!ds) return -127.0f;
   uint16_t temp;
-  ds.reset();
-  ds.select(address1);
-  ds.write(0xBE);
-  temp = (ds.read() | ds.read() << 8);
+  ds->reset();
+  ds->select(address1);
+  ds->write(0xBE);
+  temp = (ds->read() | ds->read() << 8);
 
-  ds.reset();
-  ds.select(address1);
-  ds.write(0x44, 1);
+  ds->reset();
+  ds->select(address1);
+  ds->write(0x44, 1);
   return (float)temp / 16.0;
 }
 
 void findDallas() {
-  while (ds.search(ht1.address) == 1) {
+  if (!ds) return;
+  while (ds->search(ht1.address) == 1) {
     ht1.temp = getTemperature(ht1.address);
     wsSendAll((uint8_t*)&ht1, sizeof(ht1));
   }
@@ -146,7 +149,6 @@ void loopGPIO(uint32_t now) {
   if (btnStatus == 2 && now - debounce > 50) {
     btnStatus = 0;
     checkInterrupt();
-    deviceGPIOInterrupt();
   }
 
   if (now - lastTimeGPIO > 10000) {
