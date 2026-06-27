@@ -31,7 +31,7 @@
         <app-header v-if="!isIframe" :change-theme="changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isSidebarRight = !isSidebarRight"></app-header>
 
         <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
-          <div :class="isIframe ? '' : 'container mx-auto'">
+          <div :class="isIframe ? '' : 'container mx-auto h-full'">
             <router-view />
           </div>
         </main>
