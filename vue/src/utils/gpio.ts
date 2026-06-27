@@ -1,8 +1,16 @@
-export const MODE = {
+export const MODE_BOARD_1 = {
   INPUT: 0,
   OUTPUT: 1,
   INPUT_PULLUP: 2,
   OUTPUT_OPEN_DRAIN: 3,
+  PWM: 128,
+  ONEWIRE: 129,
+};
+export const MODE_BOARD_2 = {
+  INPUT: 1,
+  OUTPUT: 3,
+  INPUT_PULLUP: 5,
+  OUTPUT_OPEN_DRAIN: 13,
   PWM: 128,
   ONEWIRE: 129,
 };
