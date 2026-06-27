@@ -1,5 +1,9 @@
 #include "./include/init.h"
 
+#if defined(ARDUINO_ESP32C3_DEV)
+#include "esp_wifi.h"
+#endif
+
 uint8_t isFirstWifi = 0;
 
 WiFiUDP udp;
@@ -44,18 +48,33 @@ void WiFiEvent(WiFiEvent_t event) {
     Serial.println(WiFi.localIP());
     isConnected = 1;
   }
+  if (event == 8 || event == 5 || event == 116) {
+    Serial.println("WiFi disconnected");
+    isConnected = 0;
+  }
 }
 
 void initWiFi() {
   if (settings.wifiMode) {
+#if defined(ARDUINO_ESP32C3_DEV)
+    esp_wifi_set_max_tx_power(WIFI_POWER_8_5dBm);
+#endif
+    WiFi.onEvent(WiFiEvent);
     WiFi.setHostname(settings.wifiSsid);
-    WiFi.mode((WiFiMode_t)settings.wifiMode);
+    if (settings.wifiMode == WIFI_STA)
+      WiFi.mode(WIFI_STA);
+    else if (settings.wifiMode == WIFI_AP)
+      WiFi.mode(WIFI_AP);
+    else
+      WiFi.mode(WIFI_AP_STA);
+
+    WiFi.setSleep(false);
+
     if (!settings.wifiDhcp) {
       WiFi.config(settings.wifiIp, settings.wifiGateway, settings.wifiSubnet, settings.wifiDns);
     }
     if (settings.wifiMode == WIFI_STA) WiFi.begin(settings.wifiSsid, settings.wifiPass);
     if (settings.wifiMode == WIFI_AP) WiFi.softAP(settings.wifiSsid, settings.wifiPass);
-    WiFi.onEvent(WiFiEvent);
     udp.begin(UDP_PORT);
   }
 }

@@ -9,7 +9,7 @@
         <div>
           <div class="text-sm">{{ item.ssid }}</div>
 
-          <div class="text-gray-400 text-xs">Security: {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
+          <div class="text-gray-400 text-xs">{{ $t('security') }} : {{ listEncryption[item.encryptionType] || 'unknown' }}</div>
         </div>
       </div>
     </v-list>
@@ -19,14 +19,13 @@
     </div>
 
     <div class="flex justify-end mt-4">
-      <v-button color="blue" @click="onScan">Scan</v-button>
+      <v-button color="blue" @click="onScan">{{ $t('scan') }}</v-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { IMessageScan } from '@/types';
-import { defineEmits, defineProps } from 'vue';
 
 interface Props {
   items: Partial<IMessageScan>[];

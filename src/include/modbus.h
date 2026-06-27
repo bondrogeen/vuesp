@@ -9,7 +9,7 @@
 void setModbusSetup();
 uint8_t transmitData(uint8_t* buffer, size_t size, uint8_t isCheck);
 uint16_t getCrc16(uint8_t* data, uint16_t len);
-void uint16ToByte(uint16_t crc, uint8_t *bytes);
+void uint16ToByte(uint16_t crc, uint8_t* bytes);
 extern Modbus modbus;
 
 #endif

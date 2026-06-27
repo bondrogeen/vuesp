@@ -1,4 +1,4 @@
-import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage } from 'vuesp-components/types';
+import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage, IPackage } from 'vuesp-components/types';
 
 export type * from 'vuesp-components/types';
 
@@ -15,6 +15,7 @@ export enum KEYS {
   PORT = 'PORT',
   DEVICE = 'DEVICE',
   DALLAS = 'DALLAS',
+  BUFFER = 'BUFFER',
 }
 
 export interface IMessageDevice {
@@ -28,12 +29,24 @@ export interface IMessageDevice {
   message: string;
 }
 
+export interface IMessageBuffer {
+  key?: number;
+  head: number;
+  tail: number;
+  count: number;
+  data: number[];
+}
+
+interface IKeyMessageBuffer {
+  key: 'BUFFER';
+  object?: IMessageBuffer | Partial<IMessageBuffer>;
+}
 interface IKeyMessageDevice {
   key: 'DEVICE';
   object?: IMessageDevice | Partial<IMessageDevice>;
 }
 
-export type TypeMessage = (TypeConstMessage & {}) | IKeyMessageDevice;
+export type TypeMessage = (TypeConstMessage & {}) | IKeyMessageDevice | IKeyMessageBuffer;
 
 type TypeMessageMap = { [K in TypeMessage['key']]: Extract<TypeMessage, { key: K }>['object'] };
 
@@ -60,6 +73,7 @@ export interface IMyIStateMain extends IStateMain {
 
 export interface IStoreApp extends IStateApp {
   dialogInfo: boolean;
+  pkg: IPackage;
 }
 export interface IStoreWebSocket extends IStateWebSocket {}
 

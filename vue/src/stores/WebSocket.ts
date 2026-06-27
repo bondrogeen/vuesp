@@ -12,6 +12,7 @@ const initialState = (): IStoreWebSocket => ({
   socket: null,
   pingClient: 5000,
   pingDevice: 0,
+  isInit: false,
 });
 
 export const useWebSocket = defineStore('webSocket', {
@@ -20,6 +21,7 @@ export const useWebSocket = defineStore('webSocket', {
     init() {
       this.onSend(KEYS.INFO);
       event.emit('init');
+      this.isInit = true;
     },
     onopen() {
       this.pingDevice = Date.now();

@@ -6,15 +6,20 @@
 uint8_t tasks[KEY_END];
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
+char safePass[32];
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
-Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, ""};
+Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, "Notification"};
 
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
   tasks[task] = true;
   if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
     memcpy(&settings, data, sizeof(settings));
+    if (strcmp(settings.wifiPass, DEF_HIDE_PASS) == 0) {
+      memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
+      strcpy(settings.wifiPass, safePass);
+    }
     saveSettings(settings);
   }
   if (task == KEY_FILES && info->len == sizeof(files)) {
@@ -39,7 +44,6 @@ void getFile(char* name) {
     files.isDir = dir.isDirectory();
     wsSend((uint8_t*)&files, sizeof(files));
   }
-  tasks[KEY_FILES] = false;
 }
 
 #elif defined(ESP32)
@@ -57,7 +61,6 @@ void getFile(char* name) {
     wsSend((uint8_t*)&files, sizeof(files));
     file = root.openNextFile();
   }
-  tasks[KEY_FILES] = false;
 }
 #endif
 
@@ -73,21 +76,10 @@ void scanWiFi() {
     // scan.isHidden = WiFi.isHidden(i);
     wsSend((uint8_t*)&scan, sizeof(scan));
   };
-  tasks[KEY_SCAN] = false;
-}
-
-void send(uint8_t* message, size_t len, uint8_t task) {
-  wsSend(message, len);
-  tasks[task] = false;
-}
-void sendAll(uint8_t* message, size_t len, uint8_t task) {
-  wsSendAll(message, len);
-  tasks[task] = false;
 }
 
 void sendNotification() {
-  sendAll((uint8_t*)&notification, sizeof(notification), KEY_NOTIFICATION);
-  tasks[KEY_NOTIFICATION] = false;
+  wsSendAll((uint8_t*)&notification, sizeof(notification));
 }
 void sendNotificationText(const char* message, uint8_t color) {
   notification.color = color;
@@ -97,13 +89,33 @@ void sendNotificationText(const char* message, uint8_t color) {
 }
 
 void loopTask(uint32_t now) {
-  if (tasks[KEY_SETTINGS]) send((uint8_t*)&settings, sizeof(settings), KEY_SETTINGS);
+  if (tasks[KEY_SETTINGS]) {
+    if (strcmp(settings.wifiPass, DEF_HIDE_PASS) != 0) {
+      memset(safePass, 0, sizeof(safePass));
+      strcpy(safePass, settings.wifiPass);
+      memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
+      strcpy(settings.wifiPass, DEF_HIDE_PASS);
+    }
+    wsSend((uint8_t*)&settings, sizeof(settings));
+    tasks[KEY_SETTINGS] = false;
+  };
   if (tasks[KEY_INFO]) {
     getInfo(&infoFS);
-    send((uint8_t*)&infoFS, sizeof(infoFS), KEY_INFO);
+    wsSend((uint8_t*)&infoFS, sizeof(infoFS));
+    tasks[KEY_INFO] = false;
   }
-  if (tasks[KEY_FILES]) getFile(files.name);
+  if (tasks[KEY_FILES]) {
+    getFile(files.name);
+    tasks[KEY_FILES] = false;
+  }
   if (tasks[KEY_REBOOT]) reboot();
-  if (tasks[KEY_SCAN]) scanWiFi();
-  if (tasks[KEY_NOTIFICATION]) sendNotification();
+
+  if (tasks[KEY_SCAN]) {
+    scanWiFi();
+    tasks[KEY_SCAN] = false;
+  }
+  if (tasks[KEY_NOTIFICATION]) {
+    sendNotification();
+    tasks[KEY_NOTIFICATION] = false;
+  }
 }

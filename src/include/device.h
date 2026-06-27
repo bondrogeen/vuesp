@@ -21,8 +21,9 @@
 
 void setupDevice();
 void setupFirstDevice();
+void deviceGPIO(Port* port);
 void getGPIO();
 void loopDevice(uint32_t now);
-void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task);
+void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task);
 
 #endif
