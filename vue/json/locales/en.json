@@ -71,6 +71,10 @@
     "ru": "Russian",
     "en": "English"
   },
+  "message": {
+    "pageNotFound": "Page Not Found",
+    "pathExist": "The path {path} does not exist."
+  },
   "menu": {
     "home": "Home",
     "dashboard": "Dashboard",

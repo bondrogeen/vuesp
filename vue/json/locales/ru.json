@@ -71,6 +71,10 @@
     "ru": "Русский",
     "en": "English"
   },
+  "message": {
+    "pageNotFound": "Страница не найдена",
+    "pathExist": "Путь {path} не найден"
+  },
   "menu": {
     "home": "Главная",
     "dashboard": "Панель",

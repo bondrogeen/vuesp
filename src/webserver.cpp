@@ -89,11 +89,18 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
   if (!index) {
     progress.size = 0;
     progress.length = request->contentLength();
+    if (request->_tempFile) request->_tempFile.close();
     request->_tempFile = LittleFS.open(filename, "w");
+    if (!request->_tempFile) {
+      request->send(500, RES_TYPE_JSON, status(0));
+      return;
+    }
     // Serial.println(filename);
   }
-  if (len) request->_tempFile.write(data, len);
-  if (final) request->_tempFile.close();
+  if (len && request->_tempFile) request->_tempFile.write(data, len);
+  if (final) {
+    if (request->_tempFile) request->_tempFile.close();
+  }
   sendProgress();
 }
 
@@ -173,7 +180,7 @@ void setupServer() {
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
   server.on("/", HTTP_GET, onRoot);
-  server.on("*", HTTP_ANY, onRedirectHome);
+  server.on("*", HTTP_ANY, onRoot);
   // server.onNotFound([](AsyncWebServerRequest* request) {
   //   request->send(404, "text/plain", "Not Found");
   // });
