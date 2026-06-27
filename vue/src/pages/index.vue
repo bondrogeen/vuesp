@@ -40,7 +40,7 @@
           <div class="flex">
             <span
               class="flex justify-center flex-[0_0_110px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03]"
-              :class="{ 'animate-shake text-green-500': device.current < 0, 'animate-shake text-red-500/80': device.current > 0 }"
+              :class="{ 'animate-shake text-green-500': device.current > 0, 'animate-shake text-red-500/80': device.current < 0 }"
             >
               {{ getStatus(device.current) }}
             </span>
@@ -291,8 +291,8 @@ const getColorCell = (v: number) => {
   return '';
 };
 const getStatus = (v: number) => {
-  if (v < 0) return 'Charge';
-  if (v > 0) return 'Discharge';
+  if (v > 0) return 'Charge';
+  if (v < 0) return 'Discharge';
   return 'Normal';
 };
 
