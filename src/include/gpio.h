@@ -6,6 +6,7 @@
 #define GPIO_MODE_OUTPUT OUTPUT
 #define GPIO_MODE_OUTPUT_OPEN_DRAIN OUTPUT_OPEN_DRAIN
 #define GPIO_MODE_PWM 128
+#define GPIO_MODE_ONEWIRE 129
 
 #define GPIO_STATE_OFF 0
 #define GPIO_STATE_ON 1
@@ -20,6 +21,7 @@
 #define GPIO_COMMAND_SET 2
 #define GPIO_COMMAND_GET_ALL 3
 #define GPIO_COMMAND_CHANGE 4
+#define GPIO_COMMAND_RESTORE 5
 
 #include "./init.h"
 #include "./tasks.h"

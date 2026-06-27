@@ -11,38 +11,56 @@ AsyncWebSocket ws("/esp");
 Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
-uint32_t countClient = 0;
 uint32_t clientID = 0;
 uint8_t hold = 255;
 uint32_t lastTime = 0;
+uint8_t progressSendCount = 0;
+const uint8_t MAX_PROGRESS_SENDS = 10;
+
+static bool isAuthenticated(AsyncWebServerRequest* request) {
+  if (!settings.authMode) return true;
+  if (request->authenticate(settings.authLogin, settings.authPass)) return true;
+  request->requestAuthentication();
+  return false;
+}
 
 String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
-void wsSend(uint8_t *message, size_t len) {
-  ws.binary(clientID, message, len);
+void wsSend(uint8_t* message, size_t len) {
+  if (message == nullptr || len == 0) return;
+  if (clientID && ws.hasClient(clientID)) {
+    ws.binary(clientID, message, len);
+  }
 }
-void wsSendAll(uint8_t *message, size_t len) {
+
+void wsSendAll(uint8_t* message, size_t len) {
+  if (message == nullptr || len == 0) return;
   ws.binaryAll(message, len);
 }
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
-    ws.binaryAll((uint8_t *)&progress, sizeof(progress));
-    hold = 0;
+    if (ws.count() > 0) {
+      ws.binaryAll((uint8_t*)&progress, sizeof(progress));
+      hold = 0;
+    }
+    if (progress.status == 0 || progress.status == 5) {
+      progressSendCount = 0;
+    }
   }
   hold++;
 }
 
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
   clientID = client->id();
-  if (type == WS_EVT_CONNECT)
-    countClient += clientID;
-  else if (type == WS_EVT_DISCONNECT)
-    countClient -= clientID;
-  else if (type == WS_EVT_DATA) {
-    AwsFrameInfo *info = (AwsFrameInfo *)arg;
+  if (type == WS_EVT_DISCONNECT) {
+    if (clientID && !ws.hasClient(clientID)) {
+      clientID = 0;
+    }
+  } else if (type == WS_EVT_DATA) {
+    AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (info->opcode == WS_BINARY) {
       if (info->final && info->index == 0 && info->len == len) {
         uint8_t task = data[0];
@@ -54,11 +72,11 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
   }
 }
 
-void onReqUpload(AsyncWebServerRequest *request) {
-  if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+void onReqUpload(AsyncWebServerRequest* request) {
+  if (!isAuthenticated(request)) return;
   uint8_t method = request->method();
   if (request->hasParam("file")) {
-    const AsyncWebParameter *p = request->getParam("file");
+    const AsyncWebParameter* p = request->getParam("file");
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
@@ -70,38 +88,72 @@ void onReqUpload(AsyncWebServerRequest *request) {
   if (method == HTTP_POST) {
     progress.size = 0;
     progress.status = 0;
+    progressSendCount = 0;
     return request->send(200, RES_TYPE_JSON, status(1));
   }
   request->send(404, RES_TYPE_JSON, status(0));
 }
 
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
+  const uint32_t MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5MB
+
   progress.size += len;
   progress.status = !index ? 1 : 2;
+
+  if (progress.size > MAX_FILE_SIZE) {
+    if (request->_tempFile) {
+      request->_tempFile.close();
+      LittleFS.remove(filename);
+    }
+    progress.status = 0;
+    request->send(413, RES_TYPE_JSON, status(0));  // 413 Payload Too Large
+    return;
+  }
+
   if (!index) {
     progress.size = 0;
     progress.length = request->contentLength();
+    if (request->contentLength() > MAX_FILE_SIZE) {
+      request->send(413, RES_TYPE_JSON, status(0));
+      return;
+    }
+
+    if (request->_tempFile) request->_tempFile.close();
     request->_tempFile = LittleFS.open(filename, "w");
+    if (!request->_tempFile) {
+      request->send(500, RES_TYPE_JSON, status(0));
+      return;
+    }
     // Serial.println(filename);
   }
-  if (len) request->_tempFile.write(data, len);
-  if (final) request->_tempFile.close();
+  if (len && request->_tempFile) {
+    if (progress.size <= MAX_FILE_SIZE) request->_tempFile.write(data, len);
+  }
+  if (final) {
+    if (request->_tempFile) request->_tempFile.close();
+    progressSendCount = 0;
+  }
   sendProgress();
 }
 
-void onReqUpdate(AsyncWebServerRequest *request) {
+void onReqUpdate(AsyncWebServerRequest* request) {
+  if (!isAuthenticated(request)) return;
   uint8_t isReboot = !Update.hasError();
-  AsyncWebServerResponse *response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
+  AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
   request->send(response);
-  if (isReboot) reboot();
+  delay(100);
+  tasks[KEY_REBOOT] = true;
 }
 
-void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
+  if (!isAuthenticated(request)) return;
   progress.size += len;
   progress.status = !index ? 1 : 2;
+
   if (!index) {
     progress.size = 0;
+    sendNotificationText("Update", NOTIF_COLOR_BLUE);
     progress.length = request->contentLength();
 #if defined(ESP8266)
     Update.runAsync(true);
@@ -110,19 +162,43 @@ void onUpdate(AsyncWebServerRequest *request, String filename, size_t index, uin
     size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
     if (!Update.begin((cmd == 100) ? infoFS.totalBytes : maxSketchSpace, cmd)) {
       Update.printError(Serial);
-      return request->send(400, RES_TYPE_JSON, status(0));
+      request->send(400, RES_TYPE_JSON, status(0));
+      return;
     }
   }
-  if (!Update.hasError() && Update.write(data, len) != len) Update.printError(Serial);
-  if (final && !Update.end(true)) Update.printError(Serial);
+
+  if (!Update.hasError()) {
+    size_t written = Update.write(data, len);
+    if (written != len) {
+      Update.printError(Serial);
+    }
+  }
+
+  if (final) {
+    if (Update.hasError()) {
+      Update.printError(Serial);
+      request->send(500, RES_TYPE_JSON, status(0));
+      return;
+    }
+    if (!Update.end(true)) {
+      Update.printError(Serial);
+      request->send(500, RES_TYPE_JSON, status(0));
+      return;
+    }
+  }
+
   sendProgress();
 }
 
-void onRecovery(AsyncWebServerRequest *request) {
-  if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
-  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
-  response->addHeader("Content-Encoding", "gzip");
-  request->send(response);
+void onRecovery(AsyncWebServerRequest* request) {
+  if (!isAuthenticated(request)) return;
+  if (LittleFS.exists("/www/index.html")) {
+    request->redirect("/");
+  } else {
+    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  }
 }
 
 // void onGetData(AsyncWebServerRequest *request) {
@@ -131,11 +207,16 @@ void onRecovery(AsyncWebServerRequest *request) {
 //   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
 //   request->send(response);
 // }
-void onRedirectRecovery(AsyncWebServerRequest *request) {
-  request->redirect("/recovery");
+void onRoot(AsyncWebServerRequest* request) {
+  if (!isAuthenticated(request)) return;
+  if (LittleFS.exists("/www/index.html")) {
+    request->send(LittleFS, "/www/index.html", "text/html");
+  } else {
+    request->redirect("/recovery");
+  }
 }
 
-void onRedirectHome(AsyncWebServerRequest *request) {
+void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
@@ -152,22 +233,25 @@ void setupServer() {
   // server.on("/get", HTTP_GET, onGetData);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
-  server.on("/", HTTP_GET, onRedirectRecovery);
-  server.on("*", HTTP_ANY, onRedirectHome);
+  server.on("/", HTTP_GET, onRoot);
+  server.on("*", HTTP_ANY, onRoot);
+  // server.onNotFound([](AsyncWebServerRequest* request) {
+  //   request->send(404, "text/plain", "Not Found");
+  // });
   server.begin();
 }
 
 void loopServer(uint32_t now) {
-  if (countClient) {
+  ws.cleanupClients();
+  if (ws.count()) {
     if (now - lastTime > 1000) {
       lastTime = now;
       if (progress.status == 0) {
         sendProgress();
         progress.status = 5;
       } else {
-        ws.binaryAll((uint8_t *)&ping, sizeof(ping));
+        ws.binaryAll((uint8_t*)&ping, sizeof(ping));
       }
-      // ws.cleanupClients();
     }
   }
 }

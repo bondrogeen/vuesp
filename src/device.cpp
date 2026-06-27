@@ -1,6 +1,5 @@
 #include "./include/device.h"
 
-#include <OneWire.h>
 #include <Wire.h>
 
 #include "./include/UnixTime.h"
@@ -10,11 +9,8 @@
 #include "./include/modbus.h"
 #include "./include/tasks.h"
 
-OneWire ds(GPIO_HT1);
-
 UnixTime stamp(0);
 
-Dallas ht1 = {KEY_DALLAS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 DDS6619 sinotimer = {KEY_DDS6619, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 Device device = {
@@ -34,24 +30,21 @@ Device device = {
 
 uint32_t lastTimeDevice = 0;
 
-void onWsEventDevice(void *arg, uint8_t *data, size_t len, uint32_t clientId, uint8_t task) {
-  AwsFrameInfo *info = (AwsFrameInfo *)arg;
+void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
+  AwsFrameInfo* info = (AwsFrameInfo*)arg;
   if (task == KEY_DEVICE && info->len == sizeof(device)) {
     memcpy(&device, data, sizeof(device));
   }
-  if (task == KEY_MODBUS && info->len == sizeof(modbus)) {
-    memcpy(&modbus, data, sizeof(modbus));
-  }
+  // if (task == KEY_MODBUS && info->len == sizeof(modbus)) {
+  //   memcpy(&modbus, data, sizeof(modbus));
+  // }
 }
 
 void onSend() {
-  sendAll((uint8_t *)&device, sizeof(device), KEY_DEVICE);
-}
-void onSendTemp() {
-  sendAll((uint8_t *)&ht1, sizeof(ht1), KEY_DALLAS);
+  wsSendAll((uint8_t*)&device, sizeof(device));
 }
 void onSendModbus() {
-  sendAll((uint8_t *)&modbus, sizeof(modbus), KEY_MODBUS);
+  wsSendAll((uint8_t*)&modbus, sizeof(modbus));
 }
 
 void getInput() {
@@ -76,8 +69,8 @@ void setOutput() {
 
 void setDAC() {
 #if defined(ESP32)
-  dacWrite(DAC1, device.dac1);
-  dacWrite(DAC2, device.dac2);
+  // dacWrite(DAC1, device.dac1);
+  // dacWrite(DAC2, device.dac2);
 #endif
 }
 
@@ -94,6 +87,11 @@ uint8_t bcdToDec(uint8_t val) {
 
 uint8_t decToBcd(uint8_t val) {
   return ((val / 10) * 0x10) + (val % 10);
+}
+
+void deviceGPIO(Port* port) {
+  Serial.print(port->gpio);
+  Serial.println(port->value);
 }
 
 void setDate(uint32_t unixTime) {
@@ -137,7 +135,7 @@ void getGPIO() {
 }
 
 void setupFirstDevice() {
-  getLoadDef(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+  getLoadDef(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
   // getLoadDef(DEF_PATH_MODBUS, (uint8_t *)&modbusSetting, sizeof(modbusSetting));
 }
 
@@ -183,26 +181,6 @@ void scan() {
 // I2C device found at address 0x24  !
 // I2C device found at address 0x68  !
 
-float getTemperature(uint8_t *address1) {
-  uint16_t temp;
-  ds.reset();
-  ds.select(address1);
-  ds.write(0xBE);
-  temp = (ds.read() | ds.read() << 8);
-
-  ds.reset();
-  ds.select(address1);
-  ds.write(0x44, 1);
-  return (float)temp / 16.0;
-}
-
-void findDallas() {
-  while (ds.search(ht1.address) == 1) {
-    ht1.temp = getTemperature(ht1.address);
-    onSendTemp();
-  }
-}
-
 void getData() {
   getADC();
   getInput();
@@ -239,10 +217,9 @@ void loopDevice(uint32_t now) {
       setDAC();
     } else if (device.command == 4) {
       device.command = 0;
-      writeFile(DEF_PATH_CONFIG, (uint8_t *)&device, sizeof(device));
+      writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
     } else {
       getData();
-      findDallas();
     }
 
     device.command = 0;

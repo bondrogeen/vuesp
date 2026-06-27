@@ -1,0 +1,175 @@
+[
+  {
+    "id": "device.input.1",
+    "name": "input.1",
+    "type": "button",
+    "icon": "light",
+    "opts": { "disabled": 1 },
+    "args": ["device.input"],
+    "get": "(v & 1 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.input.2",
+    "name": "input.2",
+    "type": "button",
+    "icon": "light",
+    "opts": { "disabled": 1 },
+    "args": ["device.input"],
+    "get": "(v & 2 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.input.3",
+    "name": "input.3",
+    "type": "button",
+    "icon": "light",
+    "opts": { "disabled": 1 },
+    "args": ["device.input"],
+    "get": "(v & 4 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.input.4",
+    "name": "input.4",
+    "type": "button",
+    "icon": "light",
+    "opts": { "disabled": 1 },
+    "args": ["device.input"],
+    "get": "(v & 8 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.input.5",
+    "name": "input.5",
+    "type": "button",
+    "icon": "light",
+    "opts": { "disabled": 1 },
+    "args": ["device.input"],
+    "get": "(v & 16 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.input.6",
+    "name": "input.6",
+    "type": "button",
+    "icon": "light",
+    "opts": { "disabled": 1 },
+    "args": ["device.input"],
+    "get": "(v & 32 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.output.1",
+    "name": "output.1",
+    "type": "button",
+    "icon": "bulb",
+    "args": ["device.output", "device"],
+    "set": "({...a, output: !v ? (a.output &= ~1) : (a.output |= 1), command: 2 })",
+    "get": "(v & 1 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.output.2",
+    "name": "output.2",
+    "type": "button",
+    "icon": "bulb",
+    "args": ["device.output", "device"],
+    "set": "({...a, output: !v ? (a.output &= ~2) : (a.output |= 2), command: 2 })",
+    "get": "(v & 2 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.output.3",
+    "name": "output.3",
+    "type": "button",
+    "icon": "bulb",
+    "args": ["device.output", "device"],
+    "set": "({...a, output: !v ? (a.output &= ~4) : (a.output |= 4), command: 2 })",
+    "get": "(v & 4 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.output.4",
+    "name": "output.4",
+    "type": "button",
+    "icon": "bulb",
+    "args": ["device.output", "device"],
+    "set": "({...a, output: !v ? (a.output &= ~8) : (a.output |= 8), command: 2 })",
+    "get": "(v & 8 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.output.5",
+    "name": "output.5",
+    "type": "button",
+    "icon": "bulb",
+    "args": ["device.output", "device"],
+    "set": "({...a, output: !v ? (a.output &= ~16) : (a.output |= 16), command: 2 })",
+    "get": "(v & 16 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.output.6",
+    "name": "output.6",
+    "type": "button",
+    "icon": "bulb",
+    "args": ["device.output", "device"],
+    "set": "({...a, output: !v ? (a.output &= ~32) : (a.output |= 32), command: 2 })",
+    "get": "(v & 32 ? 1 : 0)",
+    "getTo": "v ? 'OFF' : 'ON'"
+  },
+  {
+    "id": "device.adc.1",
+    "name": "adc.1",
+    "type": "info",
+    "args": ["device.adc1"]
+  },
+  {
+    "id": "device.adc.2",
+    "name": "adc.2",
+    "type": "info",
+    "args": ["device.adc2"]
+  },
+  {
+    "id": "device.adc.3",
+    "name": "adc.3",
+    "type": "info",
+    "args": ["device.adc3"]
+  },
+  {
+    "id": "device.adc.4",
+    "name": "adc.4",
+    "type": "info",
+    "args": ["device.adc4"]
+  },
+  {
+    "id": "device.dac.1",
+    "name": "dac.1",
+    "type": "dimmer",
+    "icon": "vent",
+    "args": ["device"],
+    "set": "({ ...a, dac1: v, command: 3})",
+    "get": "v.dac1",
+    "getTo": "`${(((100 * v) / 255) / 10).toFixed(1)} V`"
+  },
+  {
+    "id": "device.dac.2",
+    "name": "dac.2",
+    "type": "dimmer",
+    "icon": "vent",
+    "args": ["device"],
+    "set": "({ ...a, dac2: v, command: 3})",
+    "get": "v.dac2",
+    "getTo": "`${(((100 * v) / 255) / 10).toFixed(1)} V`"
+  },
+  {
+    "id": "device.now",
+    "name": "now",
+    "type": "date",
+    "args": ["device"],
+    "set": "({...a, now: v,command: 1 })",
+    "get": "v.now",
+    "getTo": "new Date(v * 1000).toLocaleDateString()"
+  }
+]
