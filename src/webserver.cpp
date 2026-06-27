@@ -42,9 +42,8 @@ void wsSendAll(uint8_t* message, size_t len) {
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
-    if (ws.count() > 0 && progressSendCount < MAX_PROGRESS_SENDS) {
+    if (ws.count() > 0) {
       ws.binaryAll((uint8_t*)&progress, sizeof(progress));
-      progressSendCount++;
       hold = 0;
     }
     if (progress.status == 0 || progress.status == 5) {
@@ -151,6 +150,7 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
   if (!isAuthenticated(request)) return;
   progress.size += len;
   progress.status = !index ? 1 : 2;
+
   if (!index) {
     progress.size = 0;
     sendNotificationText("Update", NOTIF_COLOR_BLUE);
@@ -162,11 +162,31 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
     size_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
     if (!Update.begin((cmd == 100) ? infoFS.totalBytes : maxSketchSpace, cmd)) {
       Update.printError(Serial);
-      return request->send(400, RES_TYPE_JSON, status(0));
+      request->send(400, RES_TYPE_JSON, status(0));
+      return;
     }
   }
-  if (!Update.hasError() && Update.write(data, len) != len) Update.printError(Serial);
-  if (final && !Update.end(true)) Update.printError(Serial);
+
+  if (!Update.hasError()) {
+    size_t written = Update.write(data, len);
+    if (written != len) {
+      Update.printError(Serial);
+    }
+  }
+
+  if (final) {
+    if (Update.hasError()) {
+      Update.printError(Serial);
+      request->send(500, RES_TYPE_JSON, status(0));
+      return;
+    }
+    if (!Update.end(true)) {
+      Update.printError(Serial);
+      request->send(500, RES_TYPE_JSON, status(0));
+      return;
+    }
+  }
+
   sendProgress();
 }
 
