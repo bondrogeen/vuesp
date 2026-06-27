@@ -50,16 +50,22 @@
 import type { IListItem, IMessagePort } from '@/types';
 import { KEYS } from '@/types';
 
-import { MODE, COMMAND } from '@/utils/gpio';
+import { MODE_BOARD_1, MODE_BOARD_2, COMMAND } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection';
 import { useFetch } from '@vueuse/core';
 import { PATH_FS, pathGPIO } from '@/utils/const';
 import { useLocale } from '@/composables/useLocale';
+import { computed } from 'vue';
 
 const { $t } = useLocale();
 const { main, onSend, onDialog } = useConnection((send) => {
   send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
+});
+
+const MODE = computed(() => {
+  if (main.value.info.board === 2) return MODE_BOARD_2;
+  return MODE_BOARD_1;
 });
 
 const listMenu: IListItem[] = [
@@ -68,12 +74,12 @@ const listMenu: IListItem[] = [
 ];
 
 const listMode: IListItem[] = [
-  { name: 'INPUT', value: MODE.INPUT },
-  { name: 'INPUT_PULLUP', value: MODE.INPUT_PULLUP },
-  { name: 'OUTPUT', value: MODE.OUTPUT },
-  { name: 'OUTPUT_OPEN_DRAIN', value: MODE.OUTPUT_OPEN_DRAIN },
-  { name: 'PWM', value: MODE.PWM },
-  { name: 'ONEWIRE', value: MODE.ONEWIRE },
+  { name: 'INPUT', value: MODE.value.INPUT },
+  { name: 'INPUT_PULLUP', value: MODE.value.INPUT_PULLUP },
+  { name: 'OUTPUT', value: MODE.value.OUTPUT },
+  { name: 'OUTPUT_OPEN_DRAIN', value: MODE.value.OUTPUT_OPEN_DRAIN },
+  { name: 'PWM', value: MODE.value.PWM },
+  { name: 'ONEWIRE', value: MODE.value.ONEWIRE },
   // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
   // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
   // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07
@@ -86,9 +92,9 @@ const listInterrupt: IListItem[] = [
   { name: 'CHANGE', value: 3 }, // 0x03
 ];
 
-const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.OUTPUT, MODE.OUTPUT_OPEN_DRAIN].includes(mode);
-const isInput = ({ mode = 0 }: IMessagePort) => [MODE.INPUT, MODE.INPUT_PULLUP].includes(mode);
-const isPWM = ({ mode = 0 }: IMessagePort) => [MODE.PWM].includes(mode);
+const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.value.OUTPUT, MODE.value.OUTPUT_OPEN_DRAIN].includes(mode);
+const isInput = ({ mode = 0 }: IMessagePort) => [MODE.value.INPUT, MODE.value.INPUT_PULLUP].includes(mode);
+const isPWM = ({ mode = 0 }: IMessagePort) => [MODE.value.PWM].includes(mode);
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
 const onInputValue = (port: IMessagePort, value: string) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value: +value });
