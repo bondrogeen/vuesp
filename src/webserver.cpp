@@ -14,6 +14,8 @@ Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 uint32_t clientID = 0;
 uint8_t hold = 255;
 uint32_t lastTime = 0;
+uint8_t progressSendCount = 0;
+const uint8_t MAX_PROGRESS_SENDS = 10;
 
 static bool isAuthenticated(AsyncWebServerRequest* request) {
   if (!settings.authMode) return true;
@@ -27,18 +29,27 @@ String status(uint8_t state) {
 }
 
 void wsSend(uint8_t* message, size_t len) {
+  if (message == nullptr || len == 0) return;
   if (clientID && ws.hasClient(clientID)) {
     ws.binary(clientID, message, len);
   }
 }
+
 void wsSendAll(uint8_t* message, size_t len) {
+  if (message == nullptr || len == 0) return;
   ws.binaryAll(message, len);
 }
 
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
-    ws.binaryAll((uint8_t*)&progress, sizeof(progress));
-    hold = 0;
+    if (ws.count() > 0 && progressSendCount < MAX_PROGRESS_SENDS) {
+      ws.binaryAll((uint8_t*)&progress, sizeof(progress));
+      progressSendCount++;
+      hold = 0;
+    }
+    if (progress.status == 0 || progress.status == 5) {
+      progressSendCount = 0;
+    }
   }
   hold++;
 }
@@ -78,17 +89,36 @@ void onReqUpload(AsyncWebServerRequest* request) {
   if (method == HTTP_POST) {
     progress.size = 0;
     progress.status = 0;
+    progressSendCount = 0;
     return request->send(200, RES_TYPE_JSON, status(1));
   }
   request->send(404, RES_TYPE_JSON, status(0));
 }
 
 void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
+  const uint32_t MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5MB
+
   progress.size += len;
   progress.status = !index ? 1 : 2;
+
+  if (progress.size > MAX_FILE_SIZE) {
+    if (request->_tempFile) {
+      request->_tempFile.close();
+      LittleFS.remove(filename);
+    }
+    progress.status = 0;
+    request->send(413, RES_TYPE_JSON, status(0));  // 413 Payload Too Large
+    return;
+  }
+
   if (!index) {
     progress.size = 0;
     progress.length = request->contentLength();
+    if (request->contentLength() > MAX_FILE_SIZE) {
+      request->send(413, RES_TYPE_JSON, status(0));
+      return;
+    }
+
     if (request->_tempFile) request->_tempFile.close();
     request->_tempFile = LittleFS.open(filename, "w");
     if (!request->_tempFile) {
@@ -97,9 +127,12 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
     }
     // Serial.println(filename);
   }
-  if (len && request->_tempFile) request->_tempFile.write(data, len);
+  if (len && request->_tempFile) {
+    if (progress.size <= MAX_FILE_SIZE) request->_tempFile.write(data, len);
+  }
   if (final) {
     if (request->_tempFile) request->_tempFile.close();
+    progressSendCount = 0;
   }
   sendProgress();
 }
@@ -110,6 +143,7 @@ void onReqUpdate(AsyncWebServerRequest* request) {
   AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
   request->send(response);
+  delay(100);
   tasks[KEY_REBOOT] = true;
 }
 
