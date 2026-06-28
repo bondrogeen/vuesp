@@ -6,8 +6,14 @@
 #include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
+#include "./include/runner.h"
 #include "./include/tasks.h"
 #include "./libs/CircularBuffer.cpp"
+
+ScriptRunner scriptRunner;
+
+extern Port ports[];
+extern int ports_len;
 
 Buffer myBuffer = {KEY_BUFFER};
 
@@ -31,6 +37,9 @@ void onSendDevice() {
 void deviceGPIO(Port* port) {
   Serial.print(port->gpio);
   Serial.println(port->value);
+  // scriptRunner.addScript(3, "13:255,p50,13:0,p50", IGNORE);
+  Serial.println(infoFS.uptime);
+  scriptRunner.addScript(10, "if:?:uptime<20,13:250,p50,13:0,else,13:250,p10,13:0,end", IGNORE);
 }
 
 void getADC() {
@@ -42,6 +51,10 @@ void getData() {
 }
 
 void setupDevice() {
+  // scriptRunner.addScript(1, "[5]13:1,p20,13:0]", RESTART);
+  scriptRunner.initPorts(ports, ports_len);
+  scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
+  // scriptRunner.addScript(2, "[*]14:1,p50,14:0,p50]", RESTART);
 }
 
 void setupFirstDevice() {
@@ -49,12 +62,16 @@ void setupFirstDevice() {
 }
 
 void loopDevice(uint32_t now) {
+  scriptRunner.update();
+
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     getData();
     onSendDevice();
 
     buffer.push(random(-55, 55));
+    // Serial.println("Test 1: [3]14:1,p10,14:0,p10]");
+    // scriptRunner.addScript(3, "[3]14:1,p10,14:0,p10]", RESTART);
   }
 
   if (tasks[KEY_BUFFER]) {
