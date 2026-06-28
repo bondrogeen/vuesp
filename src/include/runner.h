@@ -1,4 +1,3 @@
-// ==================== runner.h ====================
 #ifndef RUNNER_H
 #define RUNNER_H
 
@@ -71,6 +70,9 @@ struct ScriptState {
   bool ifResult;
   bool skipElse;
   uint8_t ifDepth;
+
+  bool inWait;
+  uint32_t waitUntil;
 };
 
 class ScriptRunner {
@@ -96,6 +98,10 @@ class ScriptRunner {
   typedef bool (*DataProvider)(const char* id, DataType& type, uint32_t& value);
   void setDataProvider(DataProvider provider);
 
+  // ===== LOG PROVIDER =====
+  typedef void (*LogProvider)(const char* message);
+  void setLogProvider(LogProvider provider);
+
  private:
   ScriptState _active[MAX_ACTIVE_SCRIPTS];
   const char* _queueScript[QUEUE_SIZE];
@@ -111,6 +117,7 @@ class ScriptRunner {
   uint8_t _dataSourcesCount;
 
   DataProvider _dataProvider = nullptr;
+  LogProvider _logProvider = nullptr;
 
   int findById(uint8_t id) const;
   bool addToQueue(uint8_t id, const char* script, uint16_t len);
@@ -139,6 +146,9 @@ class ScriptRunner {
   bool isElse(const char* token);
   bool isEnd(const char* token);
   bool parseCondition(const char* token, ScriptState& s);
+
+  bool isWaitStart(const char* token);
+  bool handleWait(const char* token, ScriptState& s, uint32_t now);
 };
 
 #endif

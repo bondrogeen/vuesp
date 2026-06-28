@@ -55,7 +55,7 @@ bool dataProvider(const char* id, DataType& type, uint32_t& value) {
   Serial.println(id);
   if (strcmp(id, "uptime") == 0) {
     type = DATA_UINT32;
-    value = 30;
+    value = infoFS.uptime;
     return true;
   }
 
@@ -90,12 +90,23 @@ bool dataProvider(const char* id, DataType& type, uint32_t& value) {
   return false;
 }
 
+void logProvider(const char* message) {
+  Serial.println(message);
+
+  // Можно отправить в WebSocket:
+  // wsSendAll((uint8_t*)message, strlen(message));
+
+  // Можно сохранить в файл:
+  // appendToFile("/log.txt", message);
+}
+
 void setupDevice() {
   // scriptRunner.addScript(1, "[5]13:1,p20,13:0]", RESTART);
   scriptRunner.initPorts(ports, ports_len);
   // scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
   scriptRunner.setDataProvider(dataProvider);
-  scriptRunner.addScript(2, "[*]14:1,p50,14:0,p50]", RESTART);
+  scriptRunner.setLogProvider(logProvider);
+  scriptRunner.addScript(2, "[*]14:1,log:Temperature: ?:uptime,wait:5s,14:0,p50]", RESTART);
 }
 
 void setupFirstDevice() {

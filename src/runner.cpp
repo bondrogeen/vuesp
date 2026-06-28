@@ -1,4 +1,3 @@
-// ==================== runner.cpp ====================
 #include "./include/runner.h"
 
 ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
@@ -31,15 +30,23 @@ ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     _active[i].ifResult = false;
     _active[i].skipElse = false;
     _active[i].ifDepth = 0;
+
+    _active[i].inWait = false;
+    _active[i].waitUntil = 0;
   }
   _queueHead = 0;
   _queueTail = 0;
   _queueCount = 0;
   _portsCount = 0;
+  _dataSourcesCount = 0;
 }
 
 void ScriptRunner::setDataProvider(DataProvider provider) {
   _dataProvider = provider;
+}
+
+void ScriptRunner::setLogProvider(LogProvider provider) {
+  _logProvider = provider;
 }
 
 void ScriptRunner::initPorts(Port* ports, uint8_t count) {
@@ -55,6 +62,16 @@ void ScriptRunner::initPorts(Port* ports, uint8_t count) {
       _portsCount++;
     }
   }
+}
+
+void ScriptRunner::addDataSource(const char* id, DataType type, void* ptr) {
+  if (_dataSourcesCount >= MAX_DATA_SOURCES) return;
+
+  strncpy(_dataSources[_dataSourcesCount].id, id, 15);
+  _dataSources[_dataSourcesCount].id[15] = '\0';
+  _dataSources[_dataSourcesCount].type = type;
+  _dataSources[_dataSourcesCount].ptr = ptr;
+  _dataSourcesCount++;
 }
 
 bool ScriptRunner::addScript(uint8_t id, const char* script, ScriptConflict strategy) {
@@ -89,6 +106,37 @@ bool ScriptRunner::addScript(uint8_t id, const char* script, ScriptConflict stra
   }
 
   return addToQueue(id, script, len);
+}
+
+bool ScriptRunner::isWaitStart(const char* token) {
+  return strncmp(token, "wait:", 5) == 0;
+}
+
+bool ScriptRunner::handleWait(const char* token, ScriptState& s, uint32_t now) {
+  const char* valStr = token + 5;
+  uint32_t duration = 0;
+
+  uint32_t num = 0;
+  while (isdigit(*valStr)) {
+    num = num * 10 + (*valStr - '0');
+    valStr++;
+  }
+
+  if (*valStr == 's' || *valStr == 'S') {
+    duration = num * 1000;
+  } else if (*valStr == 'm' || *valStr == 'M') {
+    duration = num * 60000;
+  } else {
+    duration = num * 1000;
+  }
+
+  if (duration > 0) {
+    s.inWait = true;
+    s.waitUntil = now + duration;
+    return true;
+  }
+
+  return false;
 }
 
 void ScriptRunner::update() {
@@ -128,6 +176,14 @@ void ScriptRunner::update() {
     if (s.inPause) {
       if (now >= s.pauseUntil) {
         s.inPause = false;
+      } else {
+        continue;
+      }
+    }
+
+    if (s.inWait) {
+      if (now >= s.waitUntil) {
+        s.inWait = false;
       } else {
         continue;
       }
@@ -251,6 +307,78 @@ void ScriptRunner::update() {
         if (val > 0) {
           s.inPause = true;
           s.pauseUntil = now + (val * 100UL);
+        }
+      }
+      continue;
+    }
+
+    if (isWaitStart(token)) {
+      if (s.inIf && s.skipElse) {
+        continue;
+      }
+      handleWait(token, s, now);
+      continue;
+    }
+
+    // ===== LOG =====
+    if (strncmp(token, "log:", 4) == 0) {
+      if (s.inIf && s.skipElse) {
+        continue;
+      }
+      if (_logProvider) {
+        const char* msg = token + 4;
+
+        if (strstr(msg, "?:") != nullptr) {
+          char buffer[256];
+          const char* p = msg;
+          int pos = 0;
+
+          while (*p && pos < 250) {
+            if (p[0] == '?' && p[1] == ':') {
+              p += 2;
+
+              while (*p == ' ') p++;
+
+              const char* idStart = p;
+              while (*p && *p != ',' && *p != ' ' && *p != '\0' && *p != '?' && *p != ':') {
+                p++;
+              }
+
+              if (p[0] == '?' && p[1] == ':') {
+                p = idStart;
+                buffer[pos++] = '?';
+                buffer[pos++] = ':';
+                continue;
+              }
+
+              char id[16];
+              int idLen = p - idStart;
+              if (idLen >= 16) idLen = 15;
+              strncpy(id, idStart, idLen);
+              id[idLen] = '\0';
+
+              if (idLen > 0) {
+                uint32_t value;
+                DataType type;
+                if (_dataProvider && _dataProvider(id, type, value)) {
+                  pos += snprintf(buffer + pos, 250 - pos, "%u", value);
+                } else {
+                  pos += snprintf(buffer + pos, 250 - pos, "???");
+                }
+              } else {
+                buffer[pos++] = '?';
+                buffer[pos++] = ':';
+              }
+            } else {
+              buffer[pos++] = *p;
+              p++;
+            }
+          }
+          buffer[pos] = '\0';
+
+          _logProvider(buffer);
+        } else {
+          _logProvider(msg);
         }
       }
       continue;
@@ -439,6 +567,9 @@ void ScriptRunner::activateSlot(int idx, uint8_t id, const char* script, uint16_
   _active[idx].ifResult = false;
   _active[idx].skipElse = false;
   _active[idx].ifDepth = 0;
+
+  _active[idx].inWait = false;
+  _active[idx].waitUntil = 0;
 }
 
 PortState* ScriptRunner::findPort(uint8_t gpio) {
@@ -459,8 +590,21 @@ const PortState* ScriptRunner::findPort(uint8_t gpio) const {
   return nullptr;
 }
 
+DataSource* ScriptRunner::findDataSource(const char* id) {
+  for (int i = 0; i < _dataSourcesCount; i++) {
+    if (strcmp(_dataSources[i].id, id) == 0) {
+      return &_dataSources[i];
+    }
+  }
+  return nullptr;
+}
+
 bool ScriptRunner::getDataValue(const char* id, uint32_t& value) {
   if (getPortValue(id, value)) {
+    return true;
+  }
+
+  if (getDataSourceValue(id, value)) {
     return true;
   }
 
@@ -504,6 +648,28 @@ bool ScriptRunner::getPortValue(const char* id, uint32_t& value) {
   }
 
   return false;
+}
+
+bool ScriptRunner::getDataSourceValue(const char* id, uint32_t& value) {
+  DataSource* ds = findDataSource(id);
+  if (!ds) return false;
+
+  switch (ds->type) {
+    case DATA_INT:
+      value = *(int*)ds->ptr;
+      return true;
+    case DATA_UINT32:
+      value = *(uint32_t*)ds->ptr;
+      return true;
+    case DATA_BOOL:
+      value = *(bool*)ds->ptr ? 1 : 0;
+      return true;
+    case DATA_FLOAT:
+      value = (uint32_t)*(float*)ds->ptr;
+      return true;
+    default:
+      return false;
+  }
 }
 
 bool ScriptRunner::isLoopStart(const char* token) {
