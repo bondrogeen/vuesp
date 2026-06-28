@@ -3,6 +3,7 @@
 #include "./include/files.h"
 #include "./include/gpio.h"
 #include "./include/init.h"
+#include "./include/runner.h"
 #include "./include/tasks.h"
 #include "./include/webserver.h"
 // #include "./luas/LuaWrapper.h"
@@ -14,6 +15,8 @@ uint32_t id = ESP.getChipId();
 #elif defined(ESP32)
 uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 24);
 #endif
+
+ScriptRunner scriptRunner(RESTART);
 
 uint32_t now;
 uint32_t lastTimeMain;
@@ -63,6 +66,7 @@ void loop() {
   }
 
   if (isSetup) {
+    scriptRunner.update();
     loopServer(now);
     loopTask(now);
     loopGPIO(now);

@@ -1,9 +1,5 @@
 #include "./include/webserver.h"
 
-#include "./include/device.h"
-#include "./include/files.h"
-#include "./include/tasks.h"
-
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
 // AsyncWebSocketClient *client;
@@ -16,6 +12,8 @@ uint8_t hold = 255;
 uint32_t lastTime = 0;
 uint8_t progressSendCount = 0;
 const uint8_t MAX_PROGRESS_SENDS = 10;
+
+extern ScriptRunner scriptRunner;
 
 static bool isAuthenticated(AsyncWebServerRequest* request) {
   if (!settings.authMode) return true;
@@ -202,11 +200,50 @@ void onRecovery(AsyncWebServerRequest* request) {
 }
 
 // void onGetData(AsyncWebServerRequest *request) {
-//   if (!request->authenticate(settings.authLogin, settings.authPass)) return request->requestAuthentication();
+//   if (!isAuthenticated(request)) return;
 //   AsyncResponseStream *response = request->beginResponseStream("application/x-binary", sizeof(infoFS));
 //   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
 //   request->send(response);
 // }
+char cmdScriptBuffer[256];
+
+void onCmd(AsyncWebServerRequest* request) {
+  if (!request->hasParam("id") || !request->hasParam("script")) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  String idStr = request->getParam("id")->value();
+  String script = request->getParam("script")->value();
+
+  uint8_t id = idStr.toInt();
+
+  script.replace("%2C", ",");
+  script.replace("%3A", ":");
+  script.replace("%2A", "*");
+  script.replace("%2F", "/");
+  script.replace("%3C", "<");
+  script.replace("%3E", ">");
+  script.replace("%3D", "=");
+  script.replace("%21", "!");
+
+  if (id == 0) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  if (script.length() >= 255) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  strncpy(cmdScriptBuffer, script.c_str(), 255);
+  cmdScriptBuffer[255] = '\0';
+
+  bool result = scriptRunner.addScript(id, cmdScriptBuffer, RESTART);
+  request->send(200, RES_TYPE_JSON, status(result));
+}
+
 void onRoot(AsyncWebServerRequest* request) {
   if (!isAuthenticated(request)) return;
   if (LittleFS.exists("/www/index.html")) {
@@ -230,7 +267,7 @@ void setupServer() {
   }
 
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
-  // server.on("/get", HTTP_GET, onGetData);
+  server.on("/cmd", HTTP_GET, onCmd);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
   server.on("/", HTTP_GET, onRoot);

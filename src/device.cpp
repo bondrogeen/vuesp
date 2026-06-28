@@ -1,19 +1,6 @@
 #include "./include/device.h"
 
-#include <Wire.h>
-
-#include "./include/UnixTime.h"
-#include "./include/files.h"
-#include "./include/gpio.h"
-#include "./include/init.h"
-#include "./include/runner.h"
-#include "./include/tasks.h"
-#include "./libs/CircularBuffer.cpp"
-
-ScriptRunner scriptRunner;
-
-extern Port ports[];
-extern int ports_len;
+extern ScriptRunner scriptRunner;
 
 Buffer myBuffer = {KEY_BUFFER};
 
@@ -35,10 +22,10 @@ void onSendDevice() {
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port) {
-  Serial.print(port->gpio);
-  Serial.println(port->value);
+  // Serial.print(port->gpio);
+  // Serial.println(port->value);
   // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
-  Serial.println(infoFS.uptime);
+  // Serial.println(infoFS.uptime);
   if (port->value) scriptRunner.addScript(10, "if:?:uptime<20,13:*200/30,else,13:*200/10,end", IGNORE);
 }
 
@@ -100,12 +87,30 @@ void logProvider(const char* message) {
   // appendToFile("/log.txt", message);
 }
 
+void myStateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
+  Serial.print("🔔 GPIO ");
+  Serial.print(gpio);
+  Serial.print(" changed from ");
+  Serial.print(oldValue);
+  Serial.print(" to ");
+  Serial.println(newValue);
+
+  for (int i = 0; i < ports_len; i++) {
+    if (ports[i].gpio == gpio) {
+      ports[i].value = newValue;
+      break;
+    }
+  }
+  getAll();
+}
+
 void setupDevice() {
   // scriptRunner.addScript(1, "[5]13:1,p20,13:0]", RESTART);
   scriptRunner.initPorts(ports, ports_len);
   // scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
   scriptRunner.setDataProvider(dataProvider);
   scriptRunner.setLogProvider(logProvider);
+  scriptRunner.setStateChangeProvider(myStateChangeProvider);
   scriptRunner.addScript(2, "[*]14:1,log:Temperature: ?:uptime,wait:5s,14:0,p50]", RESTART);
 }
 
@@ -114,8 +119,6 @@ void setupFirstDevice() {
 }
 
 void loopDevice(uint32_t now) {
-  scriptRunner.update();
-
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     getData();

@@ -39,6 +39,7 @@ ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
   _queueCount = 0;
   _portsCount = 0;
   _dataSourcesCount = 0;
+  _lastStateChangeTime = 0;
 }
 
 void ScriptRunner::setDataProvider(DataProvider provider) {
@@ -47,6 +48,10 @@ void ScriptRunner::setDataProvider(DataProvider provider) {
 
 void ScriptRunner::setLogProvider(LogProvider provider) {
   _logProvider = provider;
+}
+
+void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) {
+  _stateChangeProvider = provider;
 }
 
 void ScriptRunner::initPorts(Port* ports, uint8_t count) {
@@ -320,7 +325,6 @@ void ScriptRunner::update() {
       continue;
     }
 
-    // ===== LOG =====
     if (strncmp(token, "log:", 4) == 0) {
       if (s.inIf && s.skipElse) {
         continue;
@@ -336,7 +340,6 @@ void ScriptRunner::update() {
           while (*p && pos < 250) {
             if (p[0] == '?' && p[1] == ':') {
               p += 2;
-
               while (*p == ' ') p++;
 
               const char* idStart = p;
@@ -355,6 +358,7 @@ void ScriptRunner::update() {
               int idLen = p - idStart;
               if (idLen >= 16) idLen = 15;
               strncpy(id, idStart, idLen);
+              id[idLen] = '\0';
               id[idLen] = '\0';
 
               if (idLen > 0) {
@@ -779,12 +783,12 @@ void ScriptRunner::startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint
   if (!p || !p->isOutput) return;
 
   if (p->mode != GPIO_MODE_PWM) {
-    setOutput(gpio, target);
+    setOutput(gpio, target, false);
     return;
   }
 
   if (duration == 0) {
-    setOutput(gpio, target);
+    setOutput(gpio, target, false);
     return;
   }
 
@@ -810,7 +814,7 @@ void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
   uint32_t elapsed = now - s.fadeStartTime;
 
   if (elapsed >= s.fadeDuration) {
-    setOutput(s.fadeGpio, s.fadeTarget);
+    setOutput(s.fadeGpio, s.fadeTarget, false);
     s.inFade = false;
   } else {
     int16_t delta = s.fadeTarget - s.fadeStartValue;
@@ -822,7 +826,7 @@ void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
       currentValue = s.fadeStartValue - (uint16_t)((uint32_t)(-delta) * elapsed / s.fadeDuration);
     }
 
-    setOutput(s.fadeGpio, currentValue);
+    setOutput(s.fadeGpio, currentValue, true);
   }
 }
 
@@ -884,7 +888,7 @@ void ScriptRunner::executeToken(const char* token, ScriptState& s) {
   if (strcmp(portStr, "a") == 0) {
     for (int i = 0; i < _portsCount; i++) {
       if (_ports[i].isOutput) {
-        setOutput(_ports[i].gpio, 0);
+        setOutput(_ports[i].gpio, 0, false);
       }
     }
     return;
@@ -910,7 +914,7 @@ void ScriptRunner::executeToken(const char* token, ScriptState& s) {
     if (isToggle) {
       handleToggle(gpio, value);
     } else {
-      setOutput(gpio, value);
+      setOutput(gpio, value, false);
     }
   }
 }
@@ -921,30 +925,39 @@ void ScriptRunner::handleToggle(uint8_t gpio, uint16_t toggleValue) {
 
   if (p->mode == GPIO_MODE_PWM) {
     if (p->value == 0) {
-      setOutput(gpio, toggleValue);
+      setOutput(gpio, toggleValue, false);
     } else {
-      setOutput(gpio, 0);
+      setOutput(gpio, 0, false);
     }
   } else {
     if (p->value == 0) {
-      setOutput(gpio, 255);
+      setOutput(gpio, 255, false);
     } else {
-      setOutput(gpio, 0);
+      setOutput(gpio, 0, false);
     }
   }
 }
 
-void ScriptRunner::setOutput(uint8_t gpio, uint16_t value) {
+void ScriptRunner::setOutput(uint8_t gpio, uint16_t value, bool isFadeStep) {
   PortState* p = findPort(gpio);
   if (!p || !p->isOutput) return;
 
   if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
 
+  uint16_t oldValue = p->value;
   p->value = value;
 
   if (p->mode == GPIO_MODE_PWM) {
     analogWrite(gpio, value);
   } else {
     digitalWrite(gpio, value > 0 ? HIGH : LOW);
+  }
+
+  if (!isFadeStep && _stateChangeProvider && oldValue != value) {
+    uint32_t now = millis();
+    if (now - _lastStateChangeTime >= 100) {
+      _lastStateChangeTime = now;
+      _stateChangeProvider(gpio, oldValue, value);
+    }
   }
 }

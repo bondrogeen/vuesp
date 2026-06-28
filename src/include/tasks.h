@@ -1,6 +1,8 @@
 #ifndef TASKS_H
 #define TASKS_H
 
+#include "./eeprom.h"
+#include "./files.h"
 #include "./init.h"
 #include "./webserver.h"
 

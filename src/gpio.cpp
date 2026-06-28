@@ -1,12 +1,5 @@
 #include "./include/gpio.h"
 
-#include <OneWire.h>
-
-#include "./include/device.h"
-#include "./include/files.h"
-#include "./include/init.h"
-#include "./include/tasks.h"
-
 #if defined(ESP8266)
 Port ports[5] = {
     {KEY_PORT, 4, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
@@ -43,6 +36,7 @@ volatile uint8_t btnStatus = 0;
 uint32_t debounce = 0;
 uint32_t lastTimeGPIO = 0;
 uint32_t isOneWire = 0;
+extern ScriptRunner scriptRunner;
 
 void ICACHE_RAM_ATTR btnIsr() {
   btnStatus = 1;
@@ -91,6 +85,7 @@ void updatePorts() {
 }
 
 void setValue() {
+  scriptRunner.setPortValue(port.gpio, port.value);
   if (port.mode == GPIO_MODE_PWM) {
     analogWrite(port.gpio, port.value);
   } else {
