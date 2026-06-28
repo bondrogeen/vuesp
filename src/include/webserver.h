@@ -5,13 +5,17 @@
 #include <ESPAsyncWebServer.h>
 
 #include "../pages/recovery.h"
+#include "./device.h"
+#include "./files.h"
 #include "./init.h"
+#include "./tasks.h"
+
 #define RES_TYPE_JSON "application/json"
 
 String status(uint8_t state);
 void setupServer();
 void loopServer(uint32_t now);
-void wsSend(uint8_t *message, size_t len);
-void wsSendAll(uint8_t *message, size_t len);
+void wsSend(uint8_t* message, size_t len);
+void wsSendAll(uint8_t* message, size_t len);
 
 #endif

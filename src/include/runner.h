@@ -8,7 +8,7 @@
 
 #define MAX_ACTIVE_SCRIPTS 4
 #define QUEUE_SIZE 4
-#define MAX_TOKEN_LEN 32
+#define MAX_TOKEN_LEN 64
 #define MAX_PWM_VALUE 255
 #define MAX_PORTS 16
 #define MAX_DATA_SOURCES 16
@@ -94,13 +94,14 @@ class ScriptRunner {
   void addDataSource(const char* id, DataType type, void* ptr);
   bool getDataValue(const char* id, uint32_t& value);
 
-  // ===== DATA PROVIDER =====
   typedef bool (*DataProvider)(const char* id, DataType& type, uint32_t& value);
   void setDataProvider(DataProvider provider);
 
-  // ===== LOG PROVIDER =====
   typedef void (*LogProvider)(const char* message);
   void setLogProvider(LogProvider provider);
+
+  typedef void (*StateChangeProvider)(uint8_t gpio, uint16_t oldValue, uint16_t newValue);
+  void setStateChangeProvider(StateChangeProvider provider);
 
  private:
   ScriptState _active[MAX_ACTIVE_SCRIPTS];
@@ -118,6 +119,8 @@ class ScriptRunner {
 
   DataProvider _dataProvider = nullptr;
   LogProvider _logProvider = nullptr;
+  StateChangeProvider _stateChangeProvider = nullptr;
+  uint32_t _lastStateChangeTime = 0;
 
   int findById(uint8_t id) const;
   bool addToQueue(uint8_t id, const char* script, uint16_t len);
@@ -125,7 +128,7 @@ class ScriptRunner {
 
   void executeToken(const char* token, ScriptState& s);
   void handleToggle(uint8_t gpio, uint16_t toggleValue);
-  void setOutput(uint8_t gpio, uint16_t value);
+  void setOutput(uint8_t gpio, uint16_t value, bool isFadeStep = false);
 
   void startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, bool isToggle, uint16_t toggleValue);
   void updateFade(ScriptState& s, uint32_t now);

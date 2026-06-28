@@ -1,8 +1,5 @@
 #include "./include/tasks.h"
 
-#include "./include/eeprom.h"
-#include "./include/files.h"
-
 uint8_t tasks[KEY_END];
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};

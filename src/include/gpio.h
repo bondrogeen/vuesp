@@ -23,11 +23,21 @@
 #define GPIO_COMMAND_CHANGE 4
 #define GPIO_COMMAND_RESTORE 5
 
+#include <OneWire.h>
+
+#include "./include/device.h"
+#include "./include/files.h"
+#include "./include/init.h"
+#include "./include/tasks.h"
 #include "./init.h"
 #include "./tasks.h"
 #include "./webserver.h"
 
 void setupFirstGPIO();
+void getAll();
 void loopGPIO(uint32_t now);
+
+extern Port ports[];
+extern int ports_len;
 
 #endif

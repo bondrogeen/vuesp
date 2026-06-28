@@ -1,7 +1,14 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#include <Wire.h>
+
+#include "./UnixTime.h"
+#include "./files.h"
+#include "./gpio.h"
 #include "./init.h"
+#include "./libs/CircularBuffer.cpp"
+#include "./runner.h"
 #include "./tasks.h"
 #include "./webserver.h"
 
