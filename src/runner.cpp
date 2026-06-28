@@ -1,11 +1,6 @@
 // ==================== runner.cpp ====================
 #include "./include/runner.h"
 
-// ============================================================
-// ===== РЕАЛИЗАЦИЯ МЕТОДОВ =====
-// ============================================================
-
-// ---- Конструктор ----
 ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     : _defaultStrategy(defaultStrategy) {
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
@@ -41,10 +36,12 @@ ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
   _queueTail = 0;
   _queueCount = 0;
   _portsCount = 0;
-  _dataSourcesCount = 0;
 }
 
-// ---- Инициализация портов ----
+void ScriptRunner::setDataProvider(DataProvider provider) {
+  _dataProvider = provider;
+}
+
 void ScriptRunner::initPorts(Port* ports, uint8_t count) {
   _portsCount = 0;
   for (int i = 0; i < count && i < MAX_PORTS; i++) {
@@ -56,117 +53,45 @@ void ScriptRunner::initPorts(Port* ports, uint8_t count) {
       _ports[_portsCount].value = ports[i].value;
       _ports[_portsCount].isOutput = true;
       _portsCount++;
-
-#if RUNNER_DEBUG
-      Serial.print("✅ Port initialized: GPIO ");
-      Serial.print(ports[i].gpio);
-      Serial.print(" mode ");
-      Serial.println(ports[i].mode);
-#endif
     }
   }
-#if RUNNER_DEBUG
-  Serial.print("✅ Total ports initialized: ");
-  Serial.println(_portsCount);
-#endif
 }
 
-// ---- Добавление источника данных ----
-void ScriptRunner::addDataSource(const char* id, DataType type, void* ptr) {
-  if (_dataSourcesCount >= MAX_DATA_SOURCES) {
-#if RUNNER_DEBUG
-    Serial.println("⚠️ Too many data sources!");
-#endif
-    return;
-  }
-
-  strncpy(_dataSources[_dataSourcesCount].id, id, 15);
-  _dataSources[_dataSourcesCount].id[15] = '\0';
-  _dataSources[_dataSourcesCount].type = type;
-  _dataSources[_dataSourcesCount].ptr = ptr;
-  _dataSourcesCount++;
-
-#if RUNNER_DEBUG
-  Serial.print("📊 Data source registered: ");
-  Serial.println(id);
-#endif
-}
-
-// ---- Добавление сценария ----
 bool ScriptRunner::addScript(uint8_t id, const char* script, ScriptConflict strategy) {
-#if RUNNER_DEBUG
-  Serial.print("📝 addScript ID:");
-  Serial.print(id);
-  Serial.print(" script: ");
-  Serial.println(script);
-#endif
-
   uint16_t len = strlen(script);
-  if (len > 255) {
-#if RUNNER_DEBUG
-    Serial.println("❌ Script too long!");
-#endif
-    return false;
-  }
+  if (len > 255) return false;
 
   int existingIdx = findById(id);
 
   if (existingIdx != -1) {
-#if RUNNER_DEBUG
-    Serial.print("   Script ID ");
-    Serial.print(id);
-    Serial.println(" already exists");
-#endif
-
     switch (strategy) {
       case IGNORE:
-#if RUNNER_DEBUG
-        Serial.println("   IGNORE");
-#endif
         return true;
       case RESTART:
-#if RUNNER_DEBUG
-        Serial.println("   RESTART");
-#endif
         activateSlot(existingIdx, id, script, len);
         return true;
       case RESTART_IF_SAME:
         if (strcmp(_active[existingIdx].script, script) == 0) {
-#if RUNNER_DEBUG
-          Serial.println("   RESTART_IF_SAME: same script, restarting");
-#endif
           activateSlot(existingIdx, id, script, len);
           return true;
         }
         break;
       case ADD_QUEUE:
-#if RUNNER_DEBUG
-        Serial.println("   ADD_QUEUE");
-#endif
         return addToQueue(id, script, len);
     }
   }
 
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
     if (!_active[i].active) {
-#if RUNNER_DEBUG
-      Serial.print("   Activating slot ");
-      Serial.println(i);
-#endif
       activateSlot(i, id, script, len);
       return true;
     }
   }
 
-#if RUNNER_DEBUG
-  Serial.println("   No free slots, adding to queue");
-#endif
   return addToQueue(id, script, len);
 }
 
-// ---- Обновление (выполнение) ----
 void ScriptRunner::update() {
-  // 1. Заполняем пустые слоты из очереди
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
     if (!_active[i].active && _queueCount > 0) {
       uint8_t id = _queueId[_queueHead];
@@ -178,21 +103,14 @@ void ScriptRunner::update() {
     }
   }
 
-  // 2. Round-robin по активным сценариям
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
     ScriptState& s = _active[i];
     if (!s.active) continue;
 
     uint32_t now = millis();
 
-    // ===== ЗАЩИТА 1: Глобальный таймаут =====
     if (!s.isInfinite) {
       if (now - s.startTime > 60000) {
-#if RUNNER_DEBUG
-        Serial.print("⏰ Script ");
-        Serial.print(s.id);
-        Serial.println(" timeout (60s)");
-#endif
         s.active = false;
         continue;
       }
@@ -200,8 +118,6 @@ void ScriptRunner::update() {
       s.startTime = now;
     }
 
-    // ===== ЗАЩИТА 2: Минимальный интервал 100 мс =====
-    // Пропускаем защиту, если мы в skipElse (чтобы не создавать задержек)
     if (!(s.inIf && s.skipElse)) {
       if (now - s.lastExecutionTime < 100) {
         continue;
@@ -209,7 +125,6 @@ void ScriptRunner::update() {
       s.lastExecutionTime = now;
     }
 
-    // Проверка паузы
     if (s.inPause) {
       if (now >= s.pauseUntil) {
         s.inPause = false;
@@ -218,7 +133,6 @@ void ScriptRunner::update() {
       }
     }
 
-    // ===== ПРОВЕРКА FADE =====
     if (s.inFade) {
       updateFade(s, now);
       if (s.inFade) {
@@ -226,19 +140,9 @@ void ScriptRunner::update() {
       }
     }
 
-    // Проверка окончания сценария
     if (s.pos >= s.scriptLen) {
-#if RUNNER_DEBUG
-      Serial.print("🔚 Script ");
-      Serial.print(s.id);
-      Serial.print(" pos >= len");
-#endif
-
       if (s.inLoop) {
         if (s.isInfinite) {
-#if RUNNER_DEBUG
-          Serial.println(" ♾️ Infinite loop restart");
-#endif
           s.pos = s.loopStartPos;
           s.inPause = false;
           continue;
@@ -251,14 +155,10 @@ void ScriptRunner::update() {
           }
         }
       }
-#if RUNNER_DEBUG
-      Serial.println(" ✅ Script completed");
-#endif
       s.active = false;
       continue;
     }
 
-    // ---- Парсинг токена ----
     const char* p = s.script + s.pos;
 
     while (*p == ' ' || *p == ',') {
@@ -305,7 +205,6 @@ void ScriptRunner::update() {
 
     const char* start = p;
 
-    // ---- Парсинг токена с поддержкой циклов ----
     if (*p == '[') {
       p++;
       while (*p && *p != ']' && (p - s.script) < s.scriptLen) {
@@ -334,30 +233,8 @@ void ScriptRunner::update() {
     token[len] = '\0';
     s.pos = p - s.script;
 
-// ===== ДЕБАГ =====
-#if RUNNER_DEBUG
-    Serial.print("🔍 [");
-    Serial.print(s.id);
-    Serial.print("] Token: '");
-    Serial.print(token);
-    Serial.print("' | inIf: ");
-    Serial.print(s.inIf);
-    Serial.print(" | ifResult: ");
-    Serial.print(s.ifResult);
-    Serial.print(" | skipElse: ");
-    Serial.print(s.skipElse);
-    Serial.print(" | ifDepth: ");
-    Serial.println(s.ifDepth);
-#endif
-
-    // ---- Обработка токенов ----
-
-    // ---- Пауза ----
     if (token[0] == 'p' || token[0] == 'P') {
       if (s.inIf && s.skipElse) {
-#if RUNNER_DEBUG
-        Serial.println("   ⏭️ SKIPPED (skipElse)");
-#endif
         continue;
       }
 
@@ -374,23 +251,12 @@ void ScriptRunner::update() {
         if (val > 0) {
           s.inPause = true;
           s.pauseUntil = now + (val * 100UL);
-#if RUNNER_DEBUG
-          Serial.print("   ⏸️ Pause ");
-          Serial.print(val * 100);
-          Serial.println("ms");
-#endif
         }
       }
       continue;
     }
 
-    // ---- Цикл: [N] или [*] ----
     if (isLoopStart(token)) {
-#if RUNNER_DEBUG
-      Serial.print("   🔁 LOOP START: ");
-      Serial.println(token);
-#endif
-
       s.loopStartPos = s.pos;
       s.inLoop = true;
 
@@ -398,62 +264,30 @@ void ScriptRunner::update() {
         s.isInfinite = true;
         s.repeatCount = 0;
         s.startTime = now;
-#if RUNNER_DEBUG
-        Serial.println("   ♾️ INFINITE LOOP");
-#endif
       } else {
         s.isInfinite = false;
         s.repeatCount = parseLoopCount(token);
-#if RUNNER_DEBUG
-        Serial.print("   🔢 REPEAT: ");
-        Serial.println(s.repeatCount);
-#endif
         if (s.repeatCount == 0) {
           s.inLoop = false;
-#if RUNNER_DEBUG
-          Serial.println("   ⚠️ repeatCount = 0, loop disabled");
-#endif
         }
       }
       continue;
     }
 
-    // ---- Конец цикла ----
     if (isLoopEnd(token)) {
-#if RUNNER_DEBUG
-      Serial.print("   🔚 LOOP END: ");
-      Serial.print(token);
-      Serial.print(" inLoop=");
-      Serial.print(s.inLoop);
-      Serial.print(" repeatCount=");
-      Serial.print(s.repeatCount);
-      Serial.print(" isInfinite=");
-      Serial.println(s.isInfinite);
-#endif
-
       if (s.inLoop) {
         if (s.isInfinite) {
-#if RUNNER_DEBUG
-          Serial.println("   ♾️ Infinite loop - restart");
-#endif
           s.pos = s.loopStartPos;
           s.inPause = false;
           continue;
         } else if (s.repeatCount > 0) {
           s.repeatCount--;
-#if RUNNER_DEBUG
-          Serial.print("   🔢 repeatCount decreased to ");
-          Serial.println(s.repeatCount);
-#endif
           if (s.repeatCount > 0) {
             s.pos = s.loopStartPos;
             s.inPause = false;
             continue;
           }
         }
-#if RUNNER_DEBUG
-        Serial.println("   ✅ Loop complete");
-#endif
         s.inLoop = false;
         s.isInfinite = false;
         s.repeatCount = 0;
@@ -461,13 +295,7 @@ void ScriptRunner::update() {
       continue;
     }
 
-    // ---- IF ----
     if (isIfStart(token)) {
-#if RUNNER_DEBUG
-      Serial.print("   🔀 IF: ");
-      Serial.println(token);
-#endif
-
       s.ifDepth++;
       s.inIf = true;
 
@@ -479,13 +307,7 @@ void ScriptRunner::update() {
       continue;
     }
 
-    // ---- ELSE ----
     if (isElse(token)) {
-#if RUNNER_DEBUG
-      Serial.print("   🔀 ELSE: ");
-      Serial.println(token);
-#endif
-
       if (s.inIf && s.ifDepth > 0) {
         if (s.ifResult) {
           s.skipElse = true;
@@ -497,13 +319,7 @@ void ScriptRunner::update() {
       continue;
     }
 
-    // ---- END ----
     if (isEnd(token)) {
-#if RUNNER_DEBUG
-      Serial.print("   🔀 END: ");
-      Serial.println(token);
-#endif
-
       if (s.ifDepth > 0) {
         s.ifDepth--;
         if (s.ifDepth == 0) {
@@ -515,37 +331,21 @@ void ScriptRunner::update() {
       continue;
     }
 
-    // ---- Пропуск токенов при skipElse ----
     if (s.inIf && s.skipElse) {
-#if RUNNER_DEBUG
-      Serial.println("   ⏭️ SKIPPED (skipElse)");
-#endif
       continue;
     }
 
-// ---- Обычное действие ----
-#if RUNNER_DEBUG
-    Serial.print("   ⚡ EXECUTE: ");
-    Serial.println(token);
-#endif
     executeToken(token, s);
   }
 }
 
-// ---- Остановка сценария по ID ----
 bool ScriptRunner::stopScript(uint8_t id) {
   int idx = findById(id);
   if (idx == -1) return false;
   _active[idx].active = false;
-#if RUNNER_DEBUG
-  Serial.print("🛑 Script ");
-  Serial.print(id);
-  Serial.println(" stopped");
-#endif
   return true;
 }
 
-// ---- Остановка всех сценариев ----
 void ScriptRunner::stopAll() {
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
     _active[i].active = false;
@@ -553,27 +353,18 @@ void ScriptRunner::stopAll() {
   _queueCount = 0;
   _queueHead = 0;
   _queueTail = 0;
-#if RUNNER_DEBUG
-  Serial.println("🛑 All scripts stopped");
-#endif
 }
 
-// ---- Проверка выполнения сценария ----
 bool ScriptRunner::isRunning(uint8_t id) const {
   return findById(id) != -1;
 }
 
-// ---- Проверка занятости ----
 bool ScriptRunner::isBusy() const {
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
     if (_active[i].active) return true;
   }
   return _queueCount > 0;
 }
-
-// ============================================================
-// ===== ПУБЛИЧНЫЕ МЕТОДЫ =====
-// ============================================================
 
 bool ScriptRunner::setPortValue(uint8_t gpio, uint16_t value) {
   PortState* p = findPort(gpio);
@@ -589,13 +380,6 @@ bool ScriptRunner::setPortValue(uint8_t gpio, uint16_t value) {
     digitalWrite(gpio, value > 0 ? HIGH : LOW);
   }
 
-#if RUNNER_DEBUG
-  Serial.print("🔧 setPortValue GPIO ");
-  Serial.print(gpio);
-  Serial.print(" = ");
-  Serial.println(value);
-#endif
-
   return true;
 }
 
@@ -606,12 +390,7 @@ uint16_t ScriptRunner::getPortValue(uint8_t gpio) const {
 }
 
 void ScriptRunner::syncInputs() {
-  // Для входов - можно читать состояния при необходимости
 }
-
-// ============================================================
-// ===== ПРИВАТНЫЕ МЕТОДЫ =====
-// ============================================================
 
 int ScriptRunner::findById(uint8_t id) const {
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
@@ -660,13 +439,6 @@ void ScriptRunner::activateSlot(int idx, uint8_t id, const char* script, uint16_
   _active[idx].ifResult = false;
   _active[idx].skipElse = false;
   _active[idx].ifDepth = 0;
-
-#if RUNNER_DEBUG
-  Serial.print("▶️ Script ");
-  Serial.print(id);
-  Serial.print(" activated, script: ");
-  Serial.println(script);
-#endif
 }
 
 PortState* ScriptRunner::findPort(uint8_t gpio) {
@@ -687,26 +459,16 @@ const PortState* ScriptRunner::findPort(uint8_t gpio) const {
   return nullptr;
 }
 
-DataSource* ScriptRunner::findDataSource(const char* id) {
-  for (int i = 0; i < _dataSourcesCount; i++) {
-    if (strcmp(_dataSources[i].id, id) == 0) {
-      return &_dataSources[i];
-    }
-  }
-  return nullptr;
-}
-
-// ============================================================
-// ===== МЕТОДЫ ДЛЯ ДАННЫХ =====
-// ============================================================
-
 bool ScriptRunner::getDataValue(const char* id, uint32_t& value) {
   if (getPortValue(id, value)) {
     return true;
   }
 
-  if (getDataSourceValue(id, value)) {
-    return true;
+  if (_dataProvider) {
+    DataType type;
+    if (_dataProvider(id, type, value)) {
+      return true;
+    }
   }
 
   return false;
@@ -744,32 +506,6 @@ bool ScriptRunner::getPortValue(const char* id, uint32_t& value) {
   return false;
 }
 
-bool ScriptRunner::getDataSourceValue(const char* id, uint32_t& value) {
-  DataSource* ds = findDataSource(id);
-  if (!ds) return false;
-
-  switch (ds->type) {
-    case DATA_INT:
-      value = *(int*)ds->ptr;
-      return true;
-    case DATA_UINT32:
-      value = *(uint32_t*)ds->ptr;
-      return true;
-    case DATA_BOOL:
-      value = *(bool*)ds->ptr ? 1 : 0;
-      return true;
-    case DATA_FLOAT:
-      value = (uint32_t)*(float*)ds->ptr;
-      return true;
-    default:
-      return false;
-  }
-}
-
-// ============================================================
-// ===== МЕТОДЫ ДЛЯ ЦИКЛОВ =====
-// ============================================================
-
 bool ScriptRunner::isLoopStart(const char* token) {
   if (token[0] != '[') return false;
   size_t len = strlen(token);
@@ -802,10 +538,6 @@ bool ScriptRunner::isInfiniteLoop(const char* token) {
   return strcmp(token, "[*]") == 0;
 }
 
-// ============================================================
-// ===== МЕТОДЫ ДЛЯ УСЛОВИЙ =====
-// ============================================================
-
 bool ScriptRunner::isIfStart(const char* token) {
   return strncmp(token, "if:", 3) == 0;
 }
@@ -822,9 +554,6 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
   const char* p = token + 3;
 
   if (p[0] != '?' || p[1] != ':') {
-#if RUNNER_DEBUG
-    Serial.println("   ⚠️ Invalid condition format (expected '?:')");
-#endif
     s.ifResult = false;
     return false;
   }
@@ -836,9 +565,6 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
   }
 
   if (*p == '\0') {
-#if RUNNER_DEBUG
-    Serial.println("   ⚠️ Invalid condition format (no operator)");
-#endif
     s.ifResult = false;
     return false;
   }
@@ -851,32 +577,13 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
 
   char op = *p;
   p++;
-
   uint32_t compareValue = atoi(p);
-
-#if RUNNER_DEBUG
-  Serial.print("   📊 Condition: ");
-  Serial.print(id);
-  Serial.print(" ");
-  Serial.print(op);
-  Serial.print(" ");
-  Serial.println(compareValue);
-#endif
 
   uint32_t currentValue;
   if (!getDataValue(id, currentValue)) {
-#if RUNNER_DEBUG
-    Serial.print("   ⚠️ Unknown data source: ");
-    Serial.println(id);
-#endif
     s.ifResult = false;
     return false;
   }
-
-#if RUNNER_DEBUG
-  Serial.print("   📊 Current value: ");
-  Serial.println(currentValue);
-#endif
 
   bool result = false;
   switch (op) {
@@ -893,27 +600,13 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
       result = currentValue != compareValue;
       break;
     default:
-#if RUNNER_DEBUG
-      Serial.print("   ⚠️ Unknown operator: ");
-      Serial.println(op);
-#endif
       result = false;
       break;
   }
 
   s.ifResult = result;
-
-#if RUNNER_DEBUG
-  Serial.print("   📊 Result: ");
-  Serial.println(result ? "TRUE" : "FALSE");
-#endif
-
   return result;
 }
-
-// ============================================================
-// ===== МЕТОДЫ ДЛЯ FADE =====
-// ============================================================
 
 void ScriptRunner::startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, bool isToggle, uint16_t toggleValue) {
   PortState* p = findPort(gpio);
@@ -937,18 +630,6 @@ void ScriptRunner::startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint
   s.fadeDuration = duration * 100UL;
   s.fadeIsToggle = isToggle;
   s.fadeToggleValue = toggleValue;
-
-#if RUNNER_DEBUG
-  Serial.print("   🌊 FADE START: GPIO ");
-  Serial.print(gpio);
-  Serial.print(" from ");
-  Serial.print(s.fadeStartValue);
-  Serial.print(" to ");
-  Serial.print(target);
-  Serial.print(" over ");
-  Serial.print(s.fadeDuration);
-  Serial.println("ms");
-#endif
 }
 
 void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
@@ -965,13 +646,6 @@ void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
   if (elapsed >= s.fadeDuration) {
     setOutput(s.fadeGpio, s.fadeTarget);
     s.inFade = false;
-
-#if RUNNER_DEBUG
-    Serial.print("   🌊 FADE COMPLETE: GPIO ");
-    Serial.print(s.fadeGpio);
-    Serial.print(" = ");
-    Serial.println(s.fadeTarget);
-#endif
   } else {
     int16_t delta = s.fadeTarget - s.fadeStartValue;
     uint16_t currentValue;
@@ -986,10 +660,6 @@ void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
   }
 }
 
-// ============================================================
-// ===== ВЫПОЛНЕНИЕ ТОКЕНА =====
-// ============================================================
-
 void ScriptRunner::executeToken(const char* token, ScriptState& s) {
   int starPos = -1;
   int colonPos = -1;
@@ -1001,74 +671,51 @@ void ScriptRunner::executeToken(const char* token, ScriptState& s) {
     if (token[i] == '/') slashPos = i;
   }
 
-  if (colonPos == -1) {
-#if RUNNER_DEBUG
-    Serial.print("⚠️ Invalid token (no colon): ");
-    Serial.println(token);
-#endif
-    return;
-  }
+  if (colonPos == -1) return;
 
   char portStr[8];
   strncpy(portStr, token, colonPos);
   portStr[colonPos] = '\0';
 
   for (int i = 0; portStr[i]; i++) {
-    if (!isdigit(portStr[i])) {
-#if RUNNER_DEBUG
-      Serial.print("⚠️ Invalid port: ");
-      Serial.println(portStr);
-#endif
-      return;
-    }
+    if (!isdigit(portStr[i])) return;
   }
   uint8_t gpio = atoi(portStr);
 
   char valStr[8];
-  if (slashPos != -1) {
-    strncpy(valStr, token + colonPos + 1, slashPos - colonPos - 1);
-    valStr[slashPos - colonPos - 1] = '\0';
-  } else {
-    strcpy(valStr, token + colonPos + 1);
+  const char* valStart = token + colonPos + 1;
+
+  if (*valStart == '*') {
+    valStart++;
   }
 
-  for (int i = 0; valStr[i]; i++) {
-    if (!isdigit(valStr[i]) && valStr[i] != '*') {
-#if RUNNER_DEBUG
-      Serial.print("⚠️ Invalid value: ");
-      Serial.println(valStr);
-#endif
-      return;
-    }
+  bool hasDigit = false;
+  for (int i = 0; valStart[i] && valStart[i] != '/' && valStart[i] != ','; i++) {
+    if (isdigit(valStart[i])) hasDigit = true;
   }
+
+  if (!hasDigit) return;
+
+  int i = 0;
+  while (valStart[i] && valStart[i] != '/' && i < 7) {
+    valStr[i] = valStart[i];
+    i++;
+  }
+  valStr[i] = '\0';
+
   uint16_t value = atoi(valStr);
-  if (value > MAX_PWM_VALUE) {
-#if RUNNER_DEBUG
-    Serial.print("⚠️ Value too high: ");
-    Serial.println(value);
-#endif
-    return;
-  }
+  if (value > MAX_PWM_VALUE) return;
 
   uint16_t duration = 0;
   if (slashPos != -1) {
     const char* durStr = token + slashPos + 1;
     for (int i = 0; durStr[i]; i++) {
-      if (!isdigit(durStr[i])) {
-#if RUNNER_DEBUG
-        Serial.print("⚠️ Invalid duration: ");
-        Serial.println(durStr);
-#endif
-        return;
-      }
+      if (!isdigit(durStr[i])) return;
     }
     duration = atoi(durStr);
   }
 
   if (strcmp(portStr, "a") == 0) {
-#if RUNNER_DEBUG
-    Serial.println("   🔘 ALL OFF");
-#endif
     for (int i = 0; i < _portsCount; i++) {
       if (_ports[i].isOutput) {
         setOutput(_ports[i].gpio, 0);
@@ -1078,40 +725,12 @@ void ScriptRunner::executeToken(const char* token, ScriptState& s) {
   }
 
   PortState* p = findPort(gpio);
-  if (!p) {
-#if RUNNER_DEBUG
-    Serial.print("⚠️ Port GPIO ");
-    Serial.print(gpio);
-    Serial.println(" not found!");
-#endif
-    return;
-  }
+  if (!p) return;
 
-  if (!p->isOutput) {
-#if RUNNER_DEBUG
-    Serial.print("⚠️ Port GPIO ");
-    Serial.print(gpio);
-    Serial.println(" is not output!");
-#endif
-    return;
-  }
+  if (!p->isOutput) return;
 
   bool isToggle = (starPos != -1);
   bool isFade = (duration > 0);
-
-#if RUNNER_DEBUG
-  Serial.print("   🔘 GPIO ");
-  Serial.print(gpio);
-  Serial.print(" value ");
-  Serial.print(value);
-  if (isToggle) Serial.print(" (toggle)");
-  if (isFade) {
-    Serial.print(" (fade ");
-    Serial.print(duration * 100);
-    Serial.print("ms)");
-  }
-  Serial.println();
-#endif
 
   if (isFade) {
     uint16_t target;
@@ -1133,13 +752,6 @@ void ScriptRunner::executeToken(const char* token, ScriptState& s) {
 void ScriptRunner::handleToggle(uint8_t gpio, uint16_t toggleValue) {
   PortState* p = findPort(gpio);
   if (!p || !p->isOutput) return;
-
-#if RUNNER_DEBUG
-  Serial.print("   🔄 Toggle GPIO ");
-  Serial.print(gpio);
-  Serial.print(" current value: ");
-  Serial.println(p->value);
-#endif
 
   if (p->mode == GPIO_MODE_PWM) {
     if (p->value == 0) {
@@ -1163,13 +775,6 @@ void ScriptRunner::setOutput(uint8_t gpio, uint16_t value) {
   if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
 
   p->value = value;
-
-#if RUNNER_DEBUG
-  Serial.print("   ⚡ setOutput GPIO ");
-  Serial.print(gpio);
-  Serial.print(" = ");
-  Serial.println(value);
-#endif
 
   if (p->mode == GPIO_MODE_PWM) {
     analogWrite(gpio, value);

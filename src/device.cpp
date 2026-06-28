@@ -37,9 +37,9 @@ void onSendDevice() {
 void deviceGPIO(Port* port) {
   Serial.print(port->gpio);
   Serial.println(port->value);
-  // scriptRunner.addScript(3, "13:255,p50,13:0,p50", IGNORE);
+  // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
   Serial.println(infoFS.uptime);
-  scriptRunner.addScript(10, "if:?:uptime<20,13:250,p50,13:0,else,13:250,p10,13:0,end", IGNORE);
+  if (port->value) scriptRunner.addScript(10, "if:?:uptime<20,13:*200/30,else,13:*200/10,end", IGNORE);
 }
 
 void getADC() {
@@ -50,11 +50,52 @@ void getData() {
   getADC();
 }
 
+bool dataProvider(const char* id, DataType& type, uint32_t& value) {
+  // Системные
+  Serial.println(id);
+  if (strcmp(id, "uptime") == 0) {
+    type = DATA_UINT32;
+    value = 30;
+    return true;
+  }
+
+  // if (strcmp(id, "heap") == 0) {
+  //   type = DATA_UINT32;
+  //   value = ESP.getFreeHeap();
+  //   return true;
+  // }
+
+  // // Устройство
+  // if (strcmp(id, "temp") == 0) {
+  //   type = DATA_FLOAT;
+  //   value = (uint32_t)(device.temperature * 10);
+  //   return true;
+  // }
+
+  // if (strcmp(id, "analog") == 0) {
+  //   type = DATA_INT;
+  //   value = device.analog;
+  //   return true;
+  // }
+
+  // Dallas датчики
+  // if (strncmp(id, "ds_", 3) == 0) {
+  //   type = DATA_FLOAT;
+  //   float temp = readDallasTemperature(id + 3);
+  //   if (temp < -50) return false;
+  //   value = (uint32_t)(temp * 10);
+  //   return true;
+  // }
+
+  return false;
+}
+
 void setupDevice() {
   // scriptRunner.addScript(1, "[5]13:1,p20,13:0]", RESTART);
   scriptRunner.initPorts(ports, ports_len);
-  scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
-  // scriptRunner.addScript(2, "[*]14:1,p50,14:0,p50]", RESTART);
+  // scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
+  scriptRunner.setDataProvider(dataProvider);
+  scriptRunner.addScript(2, "[*]14:1,p50,14:0,p50]", RESTART);
 }
 
 void setupFirstDevice() {

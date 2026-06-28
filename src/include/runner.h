@@ -14,9 +14,6 @@
 #define MAX_PORTS 16
 #define MAX_DATA_SOURCES 16
 
-// ===== ВКЛЮЧАЕМ ДЕБАГ =====
-#define RUNNER_DEBUG 1
-
 enum ScriptConflict : uint8_t {
   RESTART = 0,
   IGNORE = 1,
@@ -95,6 +92,10 @@ class ScriptRunner {
   void addDataSource(const char* id, DataType type, void* ptr);
   bool getDataValue(const char* id, uint32_t& value);
 
+  // ===== DATA PROVIDER =====
+  typedef bool (*DataProvider)(const char* id, DataType& type, uint32_t& value);
+  void setDataProvider(DataProvider provider);
+
  private:
   ScriptState _active[MAX_ACTIVE_SCRIPTS];
   const char* _queueScript[QUEUE_SIZE];
@@ -108,6 +109,8 @@ class ScriptRunner {
 
   DataSource _dataSources[MAX_DATA_SOURCES];
   uint8_t _dataSourcesCount;
+
+  DataProvider _dataProvider = nullptr;
 
   int findById(uint8_t id) const;
   bool addToQueue(uint8_t id, const char* script, uint16_t len);
@@ -138,4 +141,4 @@ class ScriptRunner {
   bool parseCondition(const char* token, ScriptState& s);
 };
 
-#endif  // RUNNER_H
+#endif
