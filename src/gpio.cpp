@@ -75,7 +75,7 @@ void getAll() {
   }
 }
 
-void updatePorts() {
+void updatePort() {
   for (int i = 0; i < ports_len; i++) {
     if (ports[i].gpio == port.gpio) {
       ports[i] = port;
@@ -84,15 +84,37 @@ void updatePorts() {
   wsSendAll((uint8_t*)&port, sizeof(port));
 }
 
-void setValue() {
-  scriptRunner.setPortValue(port.gpio, port.value);
-  if (port.mode == GPIO_MODE_PWM) {
-    analogWrite(port.gpio, port.value);
-  } else {
-    if (!(port.mode == INPUT || port.mode == INPUT_PULLUP)) digitalWrite(port.gpio, port.value);
-    port.value = digitalRead(port.gpio);
+void updatePort(uint8_t gpio, uint16_t value) {
+  for (int i = 0; i < ports_len; i++) {
+    if (ports[i].gpio == gpio) {
+      ports[i].value = value;
+      port = ports[i];
+    }
   }
-  updatePorts();
+  wsSendAll((uint8_t*)&port, sizeof(port));
+}
+
+void setValue(uint8_t gpio, uint16_t value, uint8_t mode) {
+  if (mode == GPIO_MODE_PWM) {
+    analogWrite(gpio, value);
+  } else {
+    if (!(mode == INPUT || mode == INPUT_PULLUP)) digitalWrite(gpio, value);
+  }
+}
+
+void setValue(uint8_t gpio, uint16_t value) {
+  for (int i = 0; i < ports_len; i++) {
+    if (ports[i].gpio == gpio) {
+      setValue(gpio, value, ports[i].mode);
+      break;
+    }
+  }
+}
+
+void setValueUpdate() {
+  setValue(port.gpio, port.value, port.mode);
+  port.value = digitalRead(port.gpio);
+  updatePort();
 }
 
 void checkInterrupt() {
@@ -155,9 +177,10 @@ void loopGPIO(uint32_t now) {
 
   if (tasks[KEY_PORT]) {
     if (port.command == GPIO_COMMAND_SAVE) writeFile(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
-    if (port.command == GPIO_COMMAND_SET) setValue();
+    if (port.command == GPIO_COMMAND_SET) setValueUpdate();
+
     if (port.command == GPIO_COMMAND_GET_ALL) getAll();
-    if (port.command == GPIO_COMMAND_CHANGE) updatePorts();
+    if (port.command == GPIO_COMMAND_CHANGE) updatePort();
     port.command = 0;
     tasks[KEY_PORT] = 0;
   };

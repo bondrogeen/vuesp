@@ -1,7 +1,89 @@
 #include "./include/runner.h"
 
+ScriptRunner* ScriptRunner::_instance = nullptr;
+
+const TokenHandler ScriptRunner::_handlers[] = {
+    {"[", 1, isLoopStart, handleLoopStart},
+    {"]", 1, isLoopEnd, handleLoopEnd},
+    {"if:", 5, isIfStart, handleIf},
+    {"else", 5, isElse, handleElse},
+    {"end", 5, isEnd, handleEnd},
+    {"log:", 10, isLog, handleLog},
+    {"wait:", 10, isWait, handleWait},
+    {"p", 10, isPause, handlePause},
+    {"u", 20, isVariable, handleVariable},
+    {NULL, 255, isGPIO, handleGPIO},
+};
+
+bool ScriptRunner::isPause(const char* token, ScriptState& s) {
+  return (token[0] == 'p' || token[0] == 'P') && isdigit(token[1]);
+}
+
+bool ScriptRunner::isWait(const char* token, ScriptState& s) {
+  return strncmp(token, "wait:", 5) == 0;
+}
+
+bool ScriptRunner::isLog(const char* token, ScriptState& s) {
+  return strncmp(token, "log:", 4) == 0;
+}
+
+bool ScriptRunner::isIfStart(const char* token, ScriptState& s) {
+  return strncmp(token, "if:", 3) == 0;
+}
+
+bool ScriptRunner::isElse(const char* token, ScriptState& s) {
+  return strcmp(token, "else") == 0;
+}
+
+bool ScriptRunner::isEnd(const char* token, ScriptState& s) {
+  return strcmp(token, "end") == 0;
+}
+
+bool ScriptRunner::isLoopStart(const char* token, ScriptState& s) {
+  if (token[0] != '[') return false;
+  size_t len = strlen(token);
+  if (len < 2) return false;
+  return token[len - 1] == ']';
+}
+
+bool ScriptRunner::isLoopEnd(const char* token, ScriptState& s) {
+  if (strcmp(token, "]") == 0) return true;
+  size_t len = strlen(token);
+  if (len > 0 && token[len - 1] == ']') {
+    return true;
+  }
+  return false;
+}
+
+bool ScriptRunner::isVariable(const char* token, ScriptState& s) {
+  if (token[0] != 'u') return false;
+  if (!isdigit(token[1])) return false;
+  if (token[2] != '=') return false;
+  return true;
+}
+
+bool ScriptRunner::isGPIO(const char* token, ScriptState& s) {
+  int colonPos = -1;
+  for (int i = 0; token[i]; i++) {
+    if (token[i] == ':') {
+      colonPos = i;
+      break;
+    }
+  }
+  if (colonPos == -1) return false;
+  for (int i = 0; i < colonPos; i++) {
+    if (!isdigit(token[i])) return false;
+  }
+  for (int i = 0; token[i]; i++) {
+    if (token[i] == '*') return false;
+  }
+  return true;
+}
+
 ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     : _defaultStrategy(defaultStrategy) {
+  _instance = this;
+
   for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) {
     _active[i].active = false;
     _active[i].id = 0;
@@ -23,8 +105,7 @@ ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     _active[i].fadeStartValue = 0;
     _active[i].fadeStartTime = 0;
     _active[i].fadeDuration = 0;
-    _active[i].fadeIsToggle = false;
-    _active[i].fadeToggleValue = 0;
+    _active[i].fadeIsPwm = false;
 
     _active[i].inIf = false;
     _active[i].ifResult = false;
@@ -34,12 +115,17 @@ ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     _active[i].inWait = false;
     _active[i].waitUntil = 0;
   }
+  for (int i = 0; i < MAX_UINT_VARS; i++) {
+    _uintVars[i] = 0;
+  }
   _queueHead = 0;
   _queueTail = 0;
   _queueCount = 0;
-  _portsCount = 0;
   _dataSourcesCount = 0;
   _lastStateChangeTime = 0;
+
+  _portOutputCallback = nullptr;
+  _stateChangeProvider = nullptr;
 }
 
 void ScriptRunner::setDataProvider(DataProvider provider) {
@@ -54,19 +140,8 @@ void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) {
   _stateChangeProvider = provider;
 }
 
-void ScriptRunner::initPorts(Port* ports, uint8_t count) {
-  _portsCount = 0;
-  for (int i = 0; i < count && i < MAX_PORTS; i++) {
-    if (ports[i].mode == GPIO_MODE_OUTPUT ||
-        ports[i].mode == GPIO_MODE_OUTPUT_OPEN_DRAIN ||
-        ports[i].mode == GPIO_MODE_PWM) {
-      _ports[_portsCount].gpio = ports[i].gpio;
-      _ports[_portsCount].mode = ports[i].mode;
-      _ports[_portsCount].value = ports[i].value;
-      _ports[_portsCount].isOutput = true;
-      _portsCount++;
-    }
-  }
+void ScriptRunner::setPortOutputCallback(PortOutputCallback callback) {
+  _portOutputCallback = callback;
 }
 
 void ScriptRunner::addDataSource(const char* id, DataType type, void* ptr) {
@@ -113,11 +188,32 @@ bool ScriptRunner::addScript(uint8_t id, const char* script, ScriptConflict stra
   return addToQueue(id, script, len);
 }
 
-bool ScriptRunner::isWaitStart(const char* token) {
-  return strncmp(token, "wait:", 5) == 0;
+bool ScriptRunner::handlePause(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inIf && s.skipElse) return true;
+
+  const char* valStr = token + 1;
+  bool isValid = true;
+  for (int i = 0; valStr[i]; i++) {
+    if (!isdigit(valStr[i])) {
+      isValid = false;
+      break;
+    }
+  }
+  if (isValid) {
+    uint8_t val = atoi(valStr);
+    if (val > 0) {
+      s.inPause = true;
+      s.pauseUntil = now + (val * 100UL);
+    }
+  }
+  return true;
 }
 
 bool ScriptRunner::handleWait(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inIf && s.skipElse) return true;
+
   const char* valStr = token + 5;
   uint32_t duration = 0;
 
@@ -142,6 +238,179 @@ bool ScriptRunner::handleWait(const char* token, ScriptState& s, uint32_t now) {
   }
 
   return false;
+}
+
+bool ScriptRunner::handleLog(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inIf && s.skipElse) return true;
+  if (_instance->_logProvider) {
+    const char* msg = token + 4;
+    if (strstr(msg, "?:") != nullptr) {
+      char buffer[256];
+      const char* p = msg;
+      int pos = 0;
+
+      while (*p && pos < 250) {
+        if (p[0] == '?' && p[1] == ':') {
+          p += 2;
+          while (*p == ' ') p++;
+
+          const char* idStart = p;
+          while (*p && *p != ',' && *p != ' ' && *p != '\0' && *p != '?' && *p != ':') {
+            p++;
+          }
+
+          if (p[0] == '?' && p[1] == ':') {
+            p = idStart;
+            buffer[pos++] = '?';
+            buffer[pos++] = ':';
+            continue;
+          }
+
+          char id[16];
+          int idLen = p - idStart;
+          if (idLen >= 16) idLen = 15;
+          strncpy(id, idStart, idLen);
+          id[idLen] = '\0';
+
+          if (idLen > 0) {
+            uint32_t value;
+            DataType type;
+            if (_instance->_dataProvider && _instance->_dataProvider(id, type, value)) {
+              pos += snprintf(buffer + pos, 250 - pos, "%u", value);
+            } else {
+              pos += snprintf(buffer + pos, 250 - pos, "???");
+            }
+          } else {
+            buffer[pos++] = '?';
+            buffer[pos++] = ':';
+          }
+        } else {
+          buffer[pos++] = *p;
+          p++;
+        }
+      }
+      buffer[pos] = '\0';
+      _instance->_logProvider(buffer);
+    } else {
+      _instance->_logProvider(msg);
+    }
+  }
+  return true;
+}
+
+bool ScriptRunner::handleIf(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  s.ifDepth++;
+  s.inIf = true;
+
+  if (_instance->parseCondition(token, s)) {
+    s.skipElse = false;
+  } else {
+    s.skipElse = true;
+  }
+  return true;
+}
+
+bool ScriptRunner::handleElse(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inIf && s.ifDepth > 0) {
+    if (s.ifResult) {
+      s.skipElse = true;
+    } else {
+      s.skipElse = false;
+      s.ifResult = true;
+    }
+  }
+  return true;
+}
+
+bool ScriptRunner::handleEnd(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.ifDepth > 0) {
+    s.ifDepth--;
+    if (s.ifDepth == 0) {
+      s.inIf = false;
+      s.skipElse = false;
+      s.ifResult = false;
+    }
+  }
+  return true;
+}
+
+bool ScriptRunner::handleLoopStart(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  s.loopStartPos = s.pos;
+  s.inLoop = true;
+
+  if (_instance->isInfiniteLoop(token)) {
+    s.isInfinite = true;
+    s.repeatCount = 0;
+    s.startTime = now;
+  } else {
+    s.isInfinite = false;
+    s.repeatCount = _instance->parseLoopCount(token);
+    if (s.repeatCount == 0) {
+      s.inLoop = false;
+    }
+  }
+  return true;
+}
+
+bool ScriptRunner::handleLoopEnd(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inLoop) {
+    if (s.isInfinite) {
+      s.pos = s.loopStartPos;
+      s.inPause = false;
+      return true;
+    } else if (s.repeatCount > 0) {
+      s.repeatCount--;
+      if (s.repeatCount > 0) {
+        s.pos = s.loopStartPos;
+        s.inPause = false;
+        return true;
+      }
+    }
+    s.inLoop = false;
+    s.isInfinite = false;
+    s.repeatCount = 0;
+  }
+  return true;
+}
+
+bool ScriptRunner::handleVariable(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inIf && s.skipElse) return true;
+
+  int idx = token[1] - '0';
+  if (idx < 0 || idx >= MAX_UINT_VARS) return true;
+
+  const char* val = token + 3;
+
+  if (strcmp(val, "+1") == 0) {
+    _instance->_uintVars[idx]++;
+    return true;
+  } else if (strcmp(val, "-1") == 0) {
+    _instance->_uintVars[idx]--;
+    return true;
+  } else if (val[0] == 'u' && isdigit(val[1])) {
+    int srcIdx = val[1] - '0';
+    if (srcIdx >= 0 && srcIdx < MAX_UINT_VARS) {
+      _instance->_uintVars[idx] = _instance->_uintVars[srcIdx];
+    }
+    return true;
+  } else {
+    _instance->_uintVars[idx] = atoi(val);
+    return true;
+  }
+}
+
+bool ScriptRunner::handleGPIO(const char* token, ScriptState& s, uint32_t now) {
+  if (!_instance) return false;
+  if (s.inIf && s.skipElse) return true;
+  _instance->executeToken(token, s);
+  return true;
 }
 
 void ScriptRunner::update() {
@@ -294,180 +563,7 @@ void ScriptRunner::update() {
     token[len] = '\0';
     s.pos = p - s.script;
 
-    if (token[0] == 'p' || token[0] == 'P') {
-      if (s.inIf && s.skipElse) {
-        continue;
-      }
-
-      const char* valStr = token + 1;
-      bool isValid = true;
-      for (int i = 0; valStr[i]; i++) {
-        if (!isdigit(valStr[i])) {
-          isValid = false;
-          break;
-        }
-      }
-      if (isValid) {
-        uint8_t val = atoi(valStr);
-        if (val > 0) {
-          s.inPause = true;
-          s.pauseUntil = now + (val * 100UL);
-        }
-      }
-      continue;
-    }
-
-    if (isWaitStart(token)) {
-      if (s.inIf && s.skipElse) {
-        continue;
-      }
-      handleWait(token, s, now);
-      continue;
-    }
-
-    if (strncmp(token, "log:", 4) == 0) {
-      if (s.inIf && s.skipElse) {
-        continue;
-      }
-      if (_logProvider) {
-        const char* msg = token + 4;
-
-        if (strstr(msg, "?:") != nullptr) {
-          char buffer[256];
-          const char* p = msg;
-          int pos = 0;
-
-          while (*p && pos < 250) {
-            if (p[0] == '?' && p[1] == ':') {
-              p += 2;
-              while (*p == ' ') p++;
-
-              const char* idStart = p;
-              while (*p && *p != ',' && *p != ' ' && *p != '\0' && *p != '?' && *p != ':') {
-                p++;
-              }
-
-              if (p[0] == '?' && p[1] == ':') {
-                p = idStart;
-                buffer[pos++] = '?';
-                buffer[pos++] = ':';
-                continue;
-              }
-
-              char id[16];
-              int idLen = p - idStart;
-              if (idLen >= 16) idLen = 15;
-              strncpy(id, idStart, idLen);
-              id[idLen] = '\0';
-              id[idLen] = '\0';
-
-              if (idLen > 0) {
-                uint32_t value;
-                DataType type;
-                if (_dataProvider && _dataProvider(id, type, value)) {
-                  pos += snprintf(buffer + pos, 250 - pos, "%u", value);
-                } else {
-                  pos += snprintf(buffer + pos, 250 - pos, "???");
-                }
-              } else {
-                buffer[pos++] = '?';
-                buffer[pos++] = ':';
-              }
-            } else {
-              buffer[pos++] = *p;
-              p++;
-            }
-          }
-          buffer[pos] = '\0';
-
-          _logProvider(buffer);
-        } else {
-          _logProvider(msg);
-        }
-      }
-      continue;
-    }
-
-    if (isLoopStart(token)) {
-      s.loopStartPos = s.pos;
-      s.inLoop = true;
-
-      if (isInfiniteLoop(token)) {
-        s.isInfinite = true;
-        s.repeatCount = 0;
-        s.startTime = now;
-      } else {
-        s.isInfinite = false;
-        s.repeatCount = parseLoopCount(token);
-        if (s.repeatCount == 0) {
-          s.inLoop = false;
-        }
-      }
-      continue;
-    }
-
-    if (isLoopEnd(token)) {
-      if (s.inLoop) {
-        if (s.isInfinite) {
-          s.pos = s.loopStartPos;
-          s.inPause = false;
-          continue;
-        } else if (s.repeatCount > 0) {
-          s.repeatCount--;
-          if (s.repeatCount > 0) {
-            s.pos = s.loopStartPos;
-            s.inPause = false;
-            continue;
-          }
-        }
-        s.inLoop = false;
-        s.isInfinite = false;
-        s.repeatCount = 0;
-      }
-      continue;
-    }
-
-    if (isIfStart(token)) {
-      s.ifDepth++;
-      s.inIf = true;
-
-      if (parseCondition(token, s)) {
-        s.skipElse = false;
-      } else {
-        s.skipElse = true;
-      }
-      continue;
-    }
-
-    if (isElse(token)) {
-      if (s.inIf && s.ifDepth > 0) {
-        if (s.ifResult) {
-          s.skipElse = true;
-        } else {
-          s.skipElse = false;
-          s.ifResult = true;
-        }
-      }
-      continue;
-    }
-
-    if (isEnd(token)) {
-      if (s.ifDepth > 0) {
-        s.ifDepth--;
-        if (s.ifDepth == 0) {
-          s.inIf = false;
-          s.skipElse = false;
-          s.ifResult = false;
-        }
-      }
-      continue;
-    }
-
-    if (s.inIf && s.skipElse) {
-      continue;
-    }
-
-    executeToken(token, s);
+    processToken(token, s, now);
   }
 }
 
@@ -496,32 +592,6 @@ bool ScriptRunner::isBusy() const {
     if (_active[i].active) return true;
   }
   return _queueCount > 0;
-}
-
-bool ScriptRunner::setPortValue(uint8_t gpio, uint16_t value) {
-  PortState* p = findPort(gpio);
-  if (!p || !p->isOutput) return false;
-
-  if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
-
-  p->value = value;
-
-  if (p->mode == GPIO_MODE_PWM) {
-    analogWrite(gpio, value);
-  } else {
-    digitalWrite(gpio, value > 0 ? HIGH : LOW);
-  }
-
-  return true;
-}
-
-uint16_t ScriptRunner::getPortValue(uint8_t gpio) const {
-  const PortState* p = findPort(gpio);
-  if (!p) return 0;
-  return p->value;
-}
-
-void ScriptRunner::syncInputs() {
 }
 
 int ScriptRunner::findById(uint8_t id) const {
@@ -564,8 +634,7 @@ void ScriptRunner::activateSlot(int idx, uint8_t id, const char* script, uint16_
   _active[idx].fadeStartValue = 0;
   _active[idx].fadeStartTime = 0;
   _active[idx].fadeDuration = 0;
-  _active[idx].fadeIsToggle = false;
-  _active[idx].fadeToggleValue = 0;
+  _active[idx].fadeIsPwm = false;
 
   _active[idx].inIf = false;
   _active[idx].ifResult = false;
@@ -574,24 +643,6 @@ void ScriptRunner::activateSlot(int idx, uint8_t id, const char* script, uint16_
 
   _active[idx].inWait = false;
   _active[idx].waitUntil = 0;
-}
-
-PortState* ScriptRunner::findPort(uint8_t gpio) {
-  for (int i = 0; i < _portsCount; i++) {
-    if (_ports[i].gpio == gpio) {
-      return &_ports[i];
-    }
-  }
-  return nullptr;
-}
-
-const PortState* ScriptRunner::findPort(uint8_t gpio) const {
-  for (int i = 0; i < _portsCount; i++) {
-    if (_ports[i].gpio == gpio) {
-      return &_ports[i];
-    }
-  }
-  return nullptr;
 }
 
 DataSource* ScriptRunner::findDataSource(const char* id) {
@@ -604,10 +655,6 @@ DataSource* ScriptRunner::findDataSource(const char* id) {
 }
 
 bool ScriptRunner::getDataValue(const char* id, uint32_t& value) {
-  if (getPortValue(id, value)) {
-    return true;
-  }
-
   if (getDataSourceValue(id, value)) {
     return true;
   }
@@ -617,38 +664,6 @@ bool ScriptRunner::getDataValue(const char* id, uint32_t& value) {
     if (_dataProvider(id, type, value)) {
       return true;
     }
-  }
-
-  return false;
-}
-
-bool ScriptRunner::getPortValue(const char* id, uint32_t& value) {
-  bool isNumber = true;
-  for (int i = 0; id[i]; i++) {
-    if (!isdigit(id[i])) {
-      isNumber = false;
-      break;
-    }
-  }
-
-  if (isNumber) {
-    uint8_t gpio = atoi(id);
-    PortState* p = findPort(gpio);
-    if (!p) return false;
-
-    if (p->mode == GPIO_MODE_INPUT || p->mode == GPIO_MODE_INPUT_PULLUP) {
-      value = digitalRead(gpio);
-      return true;
-    } else {
-      value = p->value;
-      return true;
-    }
-  }
-
-  if ((id[0] == 'A' || id[0] == 'a') && isdigit(id[1])) {
-    uint8_t pin = atoi(id + 1);
-    value = analogRead(pin);
-    return true;
   }
 
   return false;
@@ -778,43 +793,41 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
   return result;
 }
 
-void ScriptRunner::startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, bool isToggle, uint16_t toggleValue) {
-  PortState* p = findPort(gpio);
-  if (!p || !p->isOutput) return;
-
-  if (p->mode != GPIO_MODE_PWM) {
-    setOutput(gpio, target, false);
-    return;
-  }
+void ScriptRunner::startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, uint8_t portType) {
+  Serial.print("🌊 startFade: gpio=");
+  Serial.print(gpio);
+  Serial.print(" target=");
+  Serial.print(target);
+  Serial.print(" duration=");
+  Serial.print(duration);
+  Serial.print(" portType=");
+  Serial.println(portType);
 
   if (duration == 0) {
-    setOutput(gpio, target, false);
+    setOutput(gpio, target, false, portType);
     return;
   }
 
   s.inFade = true;
   s.fadeGpio = gpio;
   s.fadeTarget = target;
-  s.fadeStartValue = p->value;
+  s.fadeStartValue = 0;
   s.fadeStartTime = millis();
   s.fadeDuration = duration * 100UL;
-  s.fadeIsToggle = isToggle;
-  s.fadeToggleValue = toggleValue;
+  s.fadeIsPwm = (portType == PORT_TYPE_PWM);
 }
 
 void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
   if (!s.inFade) return;
 
-  PortState* p = findPort(s.fadeGpio);
-  if (!p || !p->isOutput) {
-    s.inFade = false;
-    return;
-  }
-
   uint32_t elapsed = now - s.fadeStartTime;
 
   if (elapsed >= s.fadeDuration) {
-    setOutput(s.fadeGpio, s.fadeTarget, false);
+    Serial.print("✅ FADE COMPLETE: gpio=");
+    Serial.print(s.fadeGpio);
+    Serial.print(" target=");
+    Serial.println(s.fadeTarget);
+    setOutput(s.fadeGpio, s.fadeTarget, false, s.fadeIsPwm ? PORT_TYPE_PWM : PORT_TYPE_DIGITAL);
     s.inFade = false;
   } else {
     int16_t delta = s.fadeTarget - s.fadeStartValue;
@@ -826,45 +839,52 @@ void ScriptRunner::updateFade(ScriptState& s, uint32_t now) {
       currentValue = s.fadeStartValue - (uint16_t)((uint32_t)(-delta) * elapsed / s.fadeDuration);
     }
 
-    setOutput(s.fadeGpio, currentValue, true);
+    setOutput(s.fadeGpio, currentValue, true, s.fadeIsPwm ? PORT_TYPE_PWM : PORT_TYPE_DIGITAL);
   }
 }
 
 void ScriptRunner::executeToken(const char* token, ScriptState& s) {
-  int starPos = -1;
+  Serial.print("⚡ executeToken: ");
+  Serial.println(token);
+
   int colonPos = -1;
   int slashPos = -1;
 
   for (int i = 0; token[i]; i++) {
     if (token[i] == ':') colonPos = i;
-    if (token[i] == '*') starPos = i;
     if (token[i] == '/') slashPos = i;
   }
 
-  if (colonPos == -1) return;
+  if (colonPos == -1) {
+    Serial.println("❌ No colon found");
+    return;
+  }
 
   char portStr[8];
   strncpy(portStr, token, colonPos);
   portStr[colonPos] = '\0';
 
   for (int i = 0; portStr[i]; i++) {
-    if (!isdigit(portStr[i])) return;
+    if (!isdigit(portStr[i])) {
+      Serial.print("❌ Invalid port: ");
+      Serial.println(portStr);
+      return;
+    }
   }
   uint8_t gpio = atoi(portStr);
 
   char valStr[8];
   const char* valStart = token + colonPos + 1;
 
-  if (*valStart == '*') {
-    valStart++;
-  }
-
   bool hasDigit = false;
   for (int i = 0; valStart[i] && valStart[i] != '/' && valStart[i] != ','; i++) {
     if (isdigit(valStart[i])) hasDigit = true;
   }
 
-  if (!hasDigit) return;
+  if (!hasDigit) {
+    Serial.println("❌ No digit in value");
+    return;
+  }
 
   int i = 0;
   while (valStart[i] && valStart[i] != '/' && i < 7) {
@@ -874,90 +894,79 @@ void ScriptRunner::executeToken(const char* token, ScriptState& s) {
   valStr[i] = '\0';
 
   uint16_t value = atoi(valStr);
-  if (value > MAX_PWM_VALUE) return;
+  if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
 
   uint16_t duration = 0;
+  uint8_t portType = PORT_TYPE_DIGITAL;
+
   if (slashPos != -1) {
     const char* durStr = token + slashPos + 1;
     for (int i = 0; durStr[i]; i++) {
       if (!isdigit(durStr[i])) return;
     }
     duration = atoi(durStr);
+    portType = PORT_TYPE_PWM;
+    Serial.print("   duration=");
+    Serial.println(duration);
+  } else {
+    if (value > 1) {
+      portType = PORT_TYPE_PWM;
+    } else {
+      portType = PORT_TYPE_DIGITAL;
+    }
   }
 
+  Serial.print("   gpio=");
+  Serial.print(gpio);
+  Serial.print(" value=");
+  Serial.print(value);
+  Serial.print(" portType=");
+  Serial.println(portType);
+
   if (strcmp(portStr, "a") == 0) {
-    for (int i = 0; i < _portsCount; i++) {
-      if (_ports[i].isOutput) {
-        setOutput(_ports[i].gpio, 0, false);
-      }
-    }
+    Serial.println("   ALL OFF (a:0)");
     return;
   }
 
-  PortState* p = findPort(gpio);
-  if (!p) return;
-
-  if (!p->isOutput) return;
-
-  bool isToggle = (starPos != -1);
-  bool isFade = (duration > 0);
-
-  if (isFade) {
-    uint16_t target;
-    if (isToggle) {
-      target = (p->value == 0) ? value : 0;
-      startFade(s, gpio, target, duration, true, value);
-    } else {
-      startFade(s, gpio, value, duration, false, 0);
-    }
+  if (duration > 0) {
+    startFade(s, gpio, value, duration, portType);
   } else {
-    if (isToggle) {
-      handleToggle(gpio, value);
-    } else {
-      setOutput(gpio, value, false);
-    }
+    setOutput(gpio, value, false, portType);
   }
 }
 
-void ScriptRunner::handleToggle(uint8_t gpio, uint16_t toggleValue) {
-  PortState* p = findPort(gpio);
-  if (!p || !p->isOutput) return;
-
-  if (p->mode == GPIO_MODE_PWM) {
-    if (p->value == 0) {
-      setOutput(gpio, toggleValue, false);
-    } else {
-      setOutput(gpio, 0, false);
-    }
-  } else {
-    if (p->value == 0) {
-      setOutput(gpio, 255, false);
-    } else {
-      setOutput(gpio, 0, false);
-    }
-  }
-}
-
-void ScriptRunner::setOutput(uint8_t gpio, uint16_t value, bool isFadeStep) {
-  PortState* p = findPort(gpio);
-  if (!p || !p->isOutput) return;
+void ScriptRunner::setOutput(uint8_t gpio, uint16_t value, bool isFadeStep, uint8_t portType) {
+  Serial.print("🔧 setOutput: gpio=");
+  Serial.print(gpio);
+  Serial.print(" value=");
+  Serial.print(value);
+  Serial.print(" portType=");
+  Serial.print(portType);
+  Serial.print(" isFadeStep=");
+  Serial.println(isFadeStep);
 
   if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
 
-  uint16_t oldValue = p->value;
-  p->value = value;
-
-  if (p->mode == GPIO_MODE_PWM) {
-    analogWrite(gpio, value);
+  if (_portOutputCallback) {
+    _portOutputCallback(gpio, value, portType);
   } else {
-    digitalWrite(gpio, value > 0 ? HIGH : LOW);
+    Serial.println("⚠️ _portOutputCallback is NULL!");
   }
 
-  if (!isFadeStep && _stateChangeProvider && oldValue != value) {
+  if (!isFadeStep && _stateChangeProvider) {
     uint32_t now = millis();
     if (now - _lastStateChangeTime >= 100) {
       _lastStateChangeTime = now;
-      _stateChangeProvider(gpio, oldValue, value);
+      _stateChangeProvider(gpio, 0, value);
     }
   }
+}
+
+bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now) {
+  for (int i = 0; _handlers[i].name != NULL || _handlers[i].handle == handleGPIO; i++) {
+    if (_handlers[i].canHandle(token, s)) {
+      return _handlers[i].handle(token, s, now);
+    }
+  }
+  return false;
 }
