@@ -26,7 +26,7 @@ void deviceGPIO(Port* port) {
   // Serial.println(port->value);
   // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
   // Serial.println(infoFS.uptime);
-  if (port->value) scriptRunner.addScript(10, "if:?:uptime<20,13:*200/30,else,13:*200/10,end", IGNORE);
+  if (port->value) scriptRunner.addScript(10, "u0=?:13,if:?:u0:0,13:200,else,13:0,end", IGNORE);
 }
 
 void getADC() {
@@ -90,28 +90,26 @@ void logProvider(const char* message) {
 void myStateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
   Serial.print("🔔 GPIO ");
   Serial.print(gpio);
-  Serial.print(" changed from ");
+  Serial.print(" from ");
   Serial.print(oldValue);
   Serial.print(" to ");
   Serial.println(newValue);
+  updatePort(gpio, newValue);
+}
 
-  for (int i = 0; i < ports_len; i++) {
-    if (ports[i].gpio == gpio) {
-      ports[i].value = newValue;
-      break;
-    }
-  }
-  getAll();
+void onPortOutput(uint8_t gpio, uint16_t value, uint8_t portType) {
+  setValue(gpio, value);
 }
 
 void setupDevice() {
-  // scriptRunner.addScript(1, "[5]13:1,p20,13:0]", RESTART);
-  scriptRunner.initPorts(ports, ports_len);
+  scriptRunner.addScript(1, "[5]14:1,p5,14:0,p5]", RESTART);
   // scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
   scriptRunner.setDataProvider(dataProvider);
   scriptRunner.setLogProvider(logProvider);
   scriptRunner.setStateChangeProvider(myStateChangeProvider);
-  scriptRunner.addScript(2, "[*]14:1,log:Temperature: ?:uptime,wait:5s,14:0,p50]", RESTART);
+  scriptRunner.setPortOutputCallback(onPortOutput);
+  // scriptRunner.addScript(2, "[*]14:1,wait:5s,14:0,wait:5s]", RESTART);
+  // scriptRunner.addScript(8, "[*]12:1,p5,12:0,wait:p5]", RESTART);
 }
 
 void setupFirstDevice() {

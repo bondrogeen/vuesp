@@ -34,8 +34,10 @@
 #include "./webserver.h"
 
 void setupFirstGPIO();
-void getAll();
 void loopGPIO(uint32_t now);
+void setValue(uint8_t gpio, uint16_t value);
+void setValue(uint8_t gpio, uint16_t value, uint8_t mode);
+void updatePort(uint8_t gpio, uint16_t value);
 
 extern Port ports[];
 extern int ports_len;
