@@ -26,7 +26,7 @@ void deviceGPIO(Port* port) {
   // Serial.println(port->value);
   // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
   // Serial.println(infoFS.uptime);
-  if (port->value) scriptRunner.addScript(10, "u0=?:13,if:?:u0:0,13:200,else,13:0,end", IGNORE);
+  if (port->value) scriptRunner.addScript(10, "if:$p13==0,$p13=200/50,else,$p13=0/30,end", IGNORE);
 }
 
 void getADC() {
@@ -37,43 +37,43 @@ void getData() {
   getADC();
 }
 
-bool dataProvider(const char* id, DataType& type, uint32_t& value) {
-  // Системные
+bool readProvider(const char* id, DataType& type, uint32_t& value) {
+  Serial.print("📖 readProvider: ");
   Serial.println(id);
-  if (strcmp(id, "uptime") == 0) {
-    type = DATA_UINT32;
-    value = infoFS.uptime;
-    return true;
+
+  if (id[0] == '$' && id[1] == 'p' && isdigit(id[2])) {
+    uint8_t gpio = atoi(id + 2);
+    Serial.print("   GPIO: ");
+    Serial.println(gpio);
+    for (int i = 0; i < ports_len; i++) {
+      if (ports[i].gpio == gpio) {
+        type = DATA_INT;
+        value = ports[i].value;
+        Serial.print("   → value: ");
+        Serial.println(value);
+        return true;
+      }
+    }
+    Serial.println("   ❌ Port not found!");
+    return false;
   }
 
-  // if (strcmp(id, "heap") == 0) {
-  //   type = DATA_UINT32;
-  //   value = ESP.getFreeHeap();
-  //   return true;
-  // }
+  Serial.println("   ❌ Not handled by readProvider");
+  return false;
+}
 
-  // // Устройство
-  // if (strcmp(id, "temp") == 0) {
-  //   type = DATA_FLOAT;
-  //   value = (uint32_t)(device.temperature * 10);
-  //   return true;
-  // }
+// ============================================================
+// ===== WRITE PROVIDER =====
+// ============================================================
 
-  // if (strcmp(id, "analog") == 0) {
-  //   type = DATA_INT;
-  //   value = device.analog;
-  //   return true;
-  // }
+bool writeProvider(const char* id, const char* value) {
+  Serial.print("✍️ writeProvider: ");
+  Serial.print(id);
+  Serial.print(" = ");
+  Serial.println(value);
 
-  // Dallas датчики
-  // if (strncmp(id, "ds_", 3) == 0) {
-  //   type = DATA_FLOAT;
-  //   float temp = readDallasTemperature(id + 3);
-  //   if (temp < -50) return false;
-  //   value = (uint32_t)(temp * 10);
-  //   return true;
-  // }
-
+  // Логируем, но ничего не делаем
+  // Возвращаем false, чтобы ScriptRunner использовал встроенную логику
   return false;
 }
 
@@ -87,13 +87,7 @@ void logProvider(const char* message) {
   // appendToFile("/log.txt", message);
 }
 
-void myStateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
-  Serial.print("🔔 GPIO ");
-  Serial.print(gpio);
-  Serial.print(" from ");
-  Serial.print(oldValue);
-  Serial.print(" to ");
-  Serial.println(newValue);
+void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
   updatePort(gpio, newValue);
 }
 
@@ -102,14 +96,15 @@ void onPortOutput(uint8_t gpio, uint16_t value, uint8_t portType) {
 }
 
 void setupDevice() {
-  scriptRunner.addScript(1, "[5]14:1,p5,14:0,p5]", RESTART);
+  // scriptRunner.addScript(1, "[5]14:1,p5,14:0,p5]", RESTART);
   // scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
-  scriptRunner.setDataProvider(dataProvider);
+  scriptRunner.setReadProvider(readProvider);
+  scriptRunner.setWriteProvider(writeProvider);
   scriptRunner.setLogProvider(logProvider);
-  scriptRunner.setStateChangeProvider(myStateChangeProvider);
+  scriptRunner.setStateChangeProvider(stateChangeProvider);
   scriptRunner.setPortOutputCallback(onPortOutput);
   // scriptRunner.addScript(2, "[*]14:1,wait:5s,14:0,wait:5s]", RESTART);
-  // scriptRunner.addScript(8, "[*]12:1,p5,12:0,wait:p5]", RESTART);
+  // scriptRunner.addScript(8, "[*]$p14=1,p50,$p14=0,p50]", RESTART);
 }
 
 void setupFirstDevice() {

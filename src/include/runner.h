@@ -9,6 +9,7 @@
 #define MAX_PWM_VALUE 255
 #define MAX_DATA_SOURCES 16
 #define MAX_UINT_VARS 5
+#define MAX_FLOAT_VARS 3
 
 #define PORT_TYPE_DIGITAL 0
 #define PORT_TYPE_PWM 1
@@ -90,8 +91,14 @@ class ScriptRunner {
   void addDataSource(const char* id, DataType type, void* ptr);
   bool getDataValue(const char* id, uint32_t& value);
 
-  typedef bool (*DataProvider)(const char* id, DataType& type, uint32_t& value);
-  void setDataProvider(DataProvider provider);
+  uint32_t getUintVar(uint8_t idx) const;
+  float getFloatVar(uint8_t idx) const;
+
+  typedef bool (*ReadProvider)(const char* id, DataType& type, uint32_t& value);
+  typedef bool (*WriteProvider)(const char* id, const char* value);
+
+  void setReadProvider(ReadProvider provider);
+  void setWriteProvider(WriteProvider provider);
 
   typedef void (*LogProvider)(const char* message);
   void setLogProvider(LogProvider provider);
@@ -124,13 +131,15 @@ class ScriptRunner {
   DataSource _dataSources[MAX_DATA_SOURCES];
   uint8_t _dataSourcesCount;
 
-  DataProvider _dataProvider = nullptr;
+  ReadProvider _readProvider = nullptr;
+  WriteProvider _writeProvider = nullptr;
   LogProvider _logProvider = nullptr;
   StateChangeProvider _stateChangeProvider = nullptr;
   PortOutputCallback _portOutputCallback = nullptr;
   uint32_t _lastStateChangeTime = 0;
 
   uint32_t _uintVars[MAX_UINT_VARS];
+  float _floatVars[MAX_FLOAT_VARS];
 
   static ScriptRunner* _instance;
 
@@ -139,9 +148,9 @@ class ScriptRunner {
   void activateSlot(int idx, uint8_t id, const char* script, uint16_t len);
 
   void executeToken(const char* token, ScriptState& s);
-  void setOutput(uint8_t gpio, uint16_t value, bool isFadeStep, uint8_t portType);
+  void setOutput(uint8_t gpio, uint16_t value, bool isFadeStep);
 
-  void startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, uint8_t portType);
+  void startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, uint16_t startValue);
   void updateFade(ScriptState& s, uint32_t now);
 
   bool getDataSourceValue(const char* id, uint32_t& value);
