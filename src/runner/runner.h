@@ -7,7 +7,6 @@
 #define QUEUE_SIZE 10
 #define MAX_TOKEN_LEN 80
 #define MAX_PWM_VALUE 255
-#define MAX_DATA_SOURCES 16
 #define MAX_UINT_VARS 10
 #define MAX_FLOAT_VARS 5
 #define MAX_REGISTERED_SCRIPTS 20
@@ -24,13 +23,6 @@ enum ScriptConflict : uint8_t {
   IGNORE = 1,
   RESTART_IF_SAME = 2,
   ADD_QUEUE = 3
-};
-
-enum DataType : uint8_t {
-  DATA_INT = 0,
-  DATA_FLOAT = 1,
-  DATA_UINT32 = 2,
-  DATA_BOOL = 3
 };
 
 enum PortAction : uint8_t {
@@ -51,12 +43,6 @@ union DataValue {
     uint8_t* data;
     uint8_t len;
   } stringVal;
-};
-
-struct DataSource {
-  char id[16];
-  DataType type;
-  void* ptr;
 };
 
 struct ScriptState {
@@ -107,13 +93,14 @@ class ScriptRunner {
   ScriptRunner(ScriptConflict defaultStrategy = RESTART);
 
   bool addScript(uint8_t id, const char* script, ScriptConflict strategy = RESTART);
+  bool registerScript(uint8_t id, const char* script);
+  bool runScript(uint8_t id);
   void update();
   bool stopScript(uint8_t id);
   void stopAll();
   bool isRunning(uint8_t id) const;
   bool isBusy() const;
 
-  void addDataSource(const char* id, DataType type, void* ptr);
   bool getDataValue(const char* id, uint32_t& value);
 
   uint32_t getUintVar(uint8_t idx) const;
@@ -149,6 +136,9 @@ class ScriptRunner {
 
  private:
   ScriptState _active[MAX_ACTIVE_SCRIPTS];
+  uint8_t _activeList[MAX_ACTIVE_SCRIPTS];
+  uint8_t _activeCount;
+  
   const char* _queueScript[QUEUE_SIZE];
   uint8_t _queueId[QUEUE_SIZE];
   uint16_t _queueLen[QUEUE_SIZE];
@@ -157,9 +147,6 @@ class ScriptRunner {
 
   ScriptEntry _registry[MAX_REGISTERED_SCRIPTS];
   uint8_t _registryCount;
-
-  DataSource _dataSources[MAX_DATA_SOURCES];
-  uint8_t _dataSourcesCount;
 
   DataProvider _dataProvider = nullptr;
   LogProvider _logProvider = nullptr;
@@ -174,6 +161,11 @@ class ScriptRunner {
 
   static ScriptRunner* _instance;
 
+  void resetScriptState(int idx);
+  bool checkScriptState(ScriptState& s, uint32_t now);
+  void addToActiveList(uint8_t idx);
+  void removeFromActiveList(uint8_t idx);
+
   int findById(uint8_t id) const;
   int findInRegistry(uint8_t id) const;
   void addToRegistry(uint8_t id, const char* script);
@@ -185,18 +177,17 @@ class ScriptRunner {
   void startFade(ScriptState& s, uint8_t gpio, uint16_t target, uint16_t duration, uint16_t startValue);
   void updateFade(ScriptState& s, uint32_t now);
 
-  bool getDataSourceValue(const char* id, uint32_t& value);
-  DataSource* findDataSource(const char* id);
   bool resolveValue(const char* p, uint32_t& value);
 
   uint32_t hashEvent(const char* str) const;
   uint8_t parseLoopCount(const char* token);
   bool isInfiniteLoop(const char* token);
-  bool parseSingleCondition(const char*& p, bool& result);
   bool parseCondition(const char* token, ScriptState& s);
   bool tryLoopContinue(ScriptState& s);
 
   bool processToken(const char* token, ScriptState& s, uint32_t now);
 };
+
+extern ScriptRunner scriptRunner;
 
 #endif

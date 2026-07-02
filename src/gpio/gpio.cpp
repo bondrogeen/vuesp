@@ -1,4 +1,4 @@
-#include "./include/gpio.h"
+#include "./gpio.h"
 
 #if defined(ESP8266)
 Port ports[5] = {
@@ -36,7 +36,6 @@ volatile uint8_t btnStatus = 0;
 uint32_t debounce = 0;
 uint32_t lastTimeGPIO = 0;
 uint32_t isOneWire = 0;
-extern ScriptRunner scriptRunner;
 
 void ICACHE_RAM_ATTR btnIsr() {
   btnStatus = 1;
@@ -163,9 +162,30 @@ void findDallas() {
   }
 }
 
+void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
+  updatePort(gpio, newValue);
+}
+
+bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
+  Serial.print("portProvider: ");
+  Serial.print(action);
+  Serial.print(" gpio: ");
+  Serial.println(gpio);
+  switch (action) {
+    case PORT_READ:
+      return getValue(gpio, value);
+    case PORT_WRITE:
+      setValue(gpio, value);
+      return true;
+  }
+  return false;
+}
+
 void setupFirstGPIO() {
   // getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
   initGPIO();
+  scriptRunner.setStateChangeProvider(stateChangeProvider);
+  scriptRunner.setPortProvider(portProvider);
 }
 
 void loopGPIO(uint32_t now) {

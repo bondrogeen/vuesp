@@ -1,7 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "./include/init.h"
+#include "./init/init.h"
 
 template <typename T, size_t SIZE>
 class CircularBuffer {

@@ -1,4 +1,4 @@
-#include "./include/webserver.h"
+#include "./webserver.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
@@ -12,8 +12,6 @@ uint8_t hold = 255;
 uint32_t lastTime = 0;
 uint8_t progressSendCount = 0;
 const uint8_t MAX_PROGRESS_SENDS = 10;
-
-extern ScriptRunner scriptRunner;
 
 static bool isAuthenticated(AsyncWebServerRequest* request) {
   if (!settings.authMode) return true;
