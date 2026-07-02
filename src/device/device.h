@@ -3,14 +3,9 @@
 
 #include <Wire.h>
 
-#include "./UnixTime.h"
-#include "./files.h"
-#include "./gpio.h"
-#include "./init.h"
-#include "./libs/CircularBuffer.cpp"
-#include "./runner.h"
-#include "./tasks.h"
-#include "./webserver.h"
+#include "../libs/UnixTime.h"
+#include "./gpio/gpio.h"
+#include "./runner/runner.h"
 
 #define DEVICE_COMMAND_SAVE 254
 #define DEVICE_COMMAND_GET 1

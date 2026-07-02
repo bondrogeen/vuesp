@@ -25,13 +25,14 @@
 
 #include <OneWire.h>
 
-#include "./include/device.h"
-#include "./include/files.h"
-#include "./include/init.h"
-#include "./include/tasks.h"
-#include "./init.h"
-#include "./tasks.h"
-#include "./webserver.h"
+#include "../init/init.h"
+#include "./webserver/webserver.h"
+// #include "./device/device.h"
+// #include "./files/files.h"
+// #include "./gpio/gpio.h"
+// #include "./init/init.h"
+// #include "./runner/runner.h"
+// #include "./tasks/tasks.h"
 
 void setupFirstGPIO();
 void loopGPIO(uint32_t now);

@@ -1,4 +1,4 @@
-#include "./include/eeprom.h"
+#include "./eeprom.h"
 
 void initEEprom() {
   EEPROM.begin(256);

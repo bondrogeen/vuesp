@@ -1,14 +1,10 @@
-#include "./include/device.h"
-#include "./include/eeprom.h"
-#include "./include/files.h"
-#include "./include/gpio.h"
-#include "./include/init.h"
-#include "./include/runner.h"
-#include "./include/tasks.h"
-#include "./include/webserver.h"
-// #include "./luas/LuaWrapper.h"
-
-// LuaWrapper lua;
+#include "./device/device.h"
+#include "./files/files.h"
+#include "./gpio/gpio.h"
+#include "./init/init.h"
+#include "./runner/runner.h"
+#include "./tasks/tasks.h"
+#include "./webserver/webserver.h"
 
 #if defined(ESP8266)
 uint32_t id = ESP.getChipId();
@@ -31,7 +27,12 @@ void setup() {
   initEEprom();
 }
 
+void logProvider(const char* message) {
+  Serial.println(message);
+}
+
 void setupFirst() {
+  scriptRunner.setLogProvider(logProvider);
   setupFirstDevice();
   setupFirstGPIO();
 }

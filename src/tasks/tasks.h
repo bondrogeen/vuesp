@@ -1,10 +1,10 @@
 #ifndef TASKS_H
 #define TASKS_H
 
-#include "./eeprom.h"
-#include "./files.h"
-#include "./init.h"
-#include "./webserver.h"
+#include "./eeprom/eeprom.h"
+#include "./init/init.h"
+#include "./files/files.h"
+#include "./webserver/webserver.h"
 
 #define NOTIF_COLOR_TRANSPARENT 0
 #define NOTIF_COLOR_GREEN 1

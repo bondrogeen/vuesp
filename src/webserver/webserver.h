@@ -5,10 +5,11 @@
 #include <ESPAsyncWebServer.h>
 
 #include "../pages/recovery.h"
-#include "./device.h"
-#include "./files.h"
-#include "./init.h"
-#include "./tasks.h"
+#include "./init/init.h"
+#include "./tasks/tasks.h"
+#include "./device/device.h"
+#include "./files/files.h"
+#include "./runner/runner.h"
 
 #define RES_TYPE_JSON "application/json"
 
