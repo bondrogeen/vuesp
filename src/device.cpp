@@ -26,7 +26,13 @@ void deviceGPIO(Port* port) {
   // Serial.println(port->value);
   // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
   // Serial.println(infoFS.uptime);
-  if (port->value) scriptRunner.addScript(10, "if:$p13==0,$p13=200/50,else,$p13=0/30,end", IGNORE);
+  if (port->value) {
+    scriptRunner.addScript(4, "$v0=+2,$f4=+2.5,log:Counter is $v0 $f4 $counter", RESTART);
+    scriptRunner.addScript(9, "$counter=+2,log:Counter is $counter,$s0=test,$s0+tttt,log:Length $s0#,log:String $s0", RESTART);
+    scriptRunner.addScript(5, "if:$v0>=5&&$f4>16.7,call:2,end", RESTART);
+  }
+  // scriptRunner.addScript(4, "$v1=$p13,log:Port 13 is $v1", RESTART);
+  // if (port->value) scriptRunner.addScript(10, "if:$p13==0,$p13=200/20,else,$p13=0/10,end", IGNORE);
 }
 
 void getADC() {
@@ -36,44 +42,25 @@ void getADC() {
 void getData() {
   getADC();
 }
-
-bool readProvider(const char* id, DataType& type, uint32_t& value) {
-  Serial.print("📖 readProvider: ");
-  Serial.println(id);
-
-  if (id[0] == '$' && id[1] == 'p' && isdigit(id[2])) {
-    uint8_t gpio = atoi(id + 2);
-    Serial.print("   GPIO: ");
-    Serial.println(gpio);
-    for (int i = 0; i < ports_len; i++) {
-      if (ports[i].gpio == gpio) {
-        type = DATA_INT;
-        value = ports[i].value;
-        Serial.print("   → value: ");
-        Serial.println(value);
-        return true;
+static uint32_t counter = 0;
+bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
+  Serial.print("📖 dataProvider: ");
+  Serial.print(id);
+  Serial.print(" kind: ");
+  Serial.print(kind);
+  Serial.print(" write: ");
+  Serial.println(write);
+  if (strcmp(id, "$counter") == 0) {
+    if (kind == KIND_UINT) {
+      if (write) {
+        counter = value.uintVal;
+      } else {
+        value.uintVal = counter;
       }
+      return true;
     }
-    Serial.println("   ❌ Port not found!");
-    return false;
   }
 
-  Serial.println("   ❌ Not handled by readProvider");
-  return false;
-}
-
-// ============================================================
-// ===== WRITE PROVIDER =====
-// ============================================================
-
-bool writeProvider(const char* id, const char* value) {
-  Serial.print("✍️ writeProvider: ");
-  Serial.print(id);
-  Serial.print(" = ");
-  Serial.println(value);
-
-  // Логируем, но ничего не делаем
-  // Возвращаем false, чтобы ScriptRunner использовал встроенную логику
   return false;
 }
 
@@ -91,20 +78,31 @@ void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
   updatePort(gpio, newValue);
 }
 
-void onPortOutput(uint8_t gpio, uint16_t value, uint8_t portType) {
-  setValue(gpio, value);
+bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
+  Serial.print("portProvider: ");
+  Serial.print(action);
+  Serial.print(" gpio: ");
+  Serial.println(gpio);
+  switch (action) {
+    case PORT_READ:
+      return getValue(gpio, value);
+    case PORT_WRITE:
+      setValue(gpio, value);
+      return true;
+  }
+  return false;
 }
 
 void setupDevice() {
-  // scriptRunner.addScript(1, "[5]14:1,p5,14:0,p5]", RESTART);
+  scriptRunner.addScript(1, "$v0=0,$f4=0", RESTART);
+  scriptRunner.addScript(2, "[5]$p13=255,p5,$p13=0,p5]", RESTART);
   // scriptRunner.addDataSource("uptime", DATA_UINT32, (void*)&infoFS.uptime);
-  scriptRunner.setReadProvider(readProvider);
-  scriptRunner.setWriteProvider(writeProvider);
+  scriptRunner.setDataProvider(dataProvider);
   scriptRunner.setLogProvider(logProvider);
   scriptRunner.setStateChangeProvider(stateChangeProvider);
-  scriptRunner.setPortOutputCallback(onPortOutput);
+  scriptRunner.setPortProvider(portProvider);
   // scriptRunner.addScript(2, "[*]14:1,wait:5s,14:0,wait:5s]", RESTART);
-  // scriptRunner.addScript(8, "[*]$p14=1,p50,$p14=0,p50]", RESTART);
+  scriptRunner.addScript(3, "[*]$p14=1,p50,$p14=0,p50]", RESTART);
 }
 
 void setupFirstDevice() {

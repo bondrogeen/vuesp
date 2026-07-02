@@ -111,6 +111,16 @@ void setValue(uint8_t gpio, uint16_t value) {
   }
 }
 
+uint16_t getValue(uint8_t gpio, uint16_t& value) {
+  for (int i = 0; i < ports_len; i++) {
+    if (ports[i].gpio == gpio) {
+      value = ports[i].value;
+      return true;
+    }
+  }
+  return false;
+}
+
 void setValueUpdate() {
   setValue(port.gpio, port.value, port.mode);
   port.value = digitalRead(port.gpio);
