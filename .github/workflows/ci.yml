@@ -74,7 +74,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v5
+          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v6
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -96,10 +96,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-dist
-          path: data/www
+          path: web-temp
+
+      - name: Merge web with data
+        run: |
+          cp -r data/* web-temp/ 2>/dev/null || true
+          rm -rf data
+          mv web-temp data
 
       - name: List data folder
-        run: ls -la data/www/ && ls -la data/www/assets/ || true
+        run: ls -la data/ && ls -la data/assets/ || true
 
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
