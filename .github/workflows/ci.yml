@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: "./vue/package-lock.json"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Type check
         run: npm run typecheck
@@ -64,7 +64,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}
+          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v2
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -74,11 +74,33 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
-      - name: Verify PlatformIO
-        run: pio --version
+      - name: Clean esptool cache
+        run: rm -rf ~/.platformio/packages/tool-esptoolpy
 
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
+
+  scriptrunner:
+    name: ScriptRunner - Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, clang++]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install compilers
+        run: sudo apt-get install -y g++ clang
+
+      - name: Build tests (${{ matrix.compiler }})
+        working-directory: vuesp/src/tests
+        run: ${{ matrix.compiler }} -std=c++11 -I../src -o test_runner test_runner.cpp arduino_stub.cpp ../runner.cpp
+
+      - name: Run tests (${{ matrix.compiler }})
+        working-directory: vuesp/src/tests
+        run: ./test_runner
 
   docs:
     name: Documentation
