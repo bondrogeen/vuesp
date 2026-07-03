@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [master, main, develop]
+    tags:
+      - 'v*'
   pull_request:
     branches: [master, main, develop]
 
@@ -64,7 +66,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v2
+          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v3
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -76,14 +78,21 @@ jobs:
 
       - name: Install esptool dependencies
         run: |
-          pip install rich_click
-          ~/.platformio/penv/bin/pip install rich_click || true
+          pip install rich_click intelhex
+          ~/.platformio/penv/bin/pip install rich_click intelhex || true
 
       - name: Clean esptool cache
         run: rm -rf ~/.platformio/packages/tool-esptoolpy
 
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.platform }}
+          path: build/${{ matrix.platform }}/firmware.bin
+          retention-days: 30
 
   scriptrunner:
     name: ScriptRunner - Unit Tests
@@ -106,6 +115,52 @@ jobs:
       - name: Run tests (${{ matrix.compiler }})
         working-directory: src/tests
         run: ./test_runner
+
+  release:
+    name: Release firmware
+    runs-on: ubuntu-latest
+    needs: [backend, scriptrunner, frontend]
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Download esp32 firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-esp32
+          path: release
+
+      - name: Download esp32-c3 firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-esp32-c3-devkitm-1
+          path: release
+
+      - name: Download esp8266 firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-esp8266
+          path: release
+
+      - name: Download pico32 firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-pico32
+          path: release
+
+      - name: Rename firmware files
+        run: |
+          cp release/firmware.bin release/vuesp-esp32.bin
+          cp release/firmware.bin release/vuesp-esp32c3.bin
+          cp release/firmware.bin release/vuesp-esp8266.bin
+          cp release/firmware.bin release/vuesp-pico32.bin
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/vuesp-*.bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docs:
     name: Documentation
