@@ -7,7 +7,7 @@ import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IMessageSe
 const initialState = (): IStoreWebSocketStore => ({
   main: {
     ports: {},
-    info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '' },
+    info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '', board: 0 },
     device: { now: 0, pwm: 0, analog: 0 },
     dallas: {},
   },
