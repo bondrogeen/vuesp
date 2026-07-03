@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
-          path: vue/dist
+          path: data/www
           retention-days: 1
 
   backend:
@@ -96,16 +96,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-dist
-          path: web-temp
-
-      - name: Merge web with data
-        run: |
-          cp -r data/* web-temp/ 2>/dev/null || true
-          rm -rf data
-          mv web-temp data
+          path: data/www
 
       - name: List data folder
-        run: ls -la data/ && ls -la data/assets/ || true
+        run: ls -la data/www/ && ls -la data/www/assets/ || true
 
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
