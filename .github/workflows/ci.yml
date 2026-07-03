@@ -66,7 +66,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v3
+          key: ${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}-v5
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -83,9 +83,6 @@ jobs:
 
       - name: Clean esptool cache
         run: rm -rf ~/.platformio/packages/tool-esptoolpy
-
-      - name: Make mklittlefs executable
-        run: chmod +x mklittlefs
 
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
