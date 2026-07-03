@@ -74,6 +74,11 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
+      - name: Install esptool dependencies
+        run: |
+          pip install rich_click
+          ~/.platformio/penv/bin/pip install rich_click || true
+
       - name: Clean esptool cache
         run: rm -rf ~/.platformio/packages/tool-esptoolpy
 
