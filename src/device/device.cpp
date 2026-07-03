@@ -29,9 +29,9 @@ void deviceGPIO(Port* port) {
   if (port->value) {
     // scriptRunner.addScript(1, "$v0=255,log:v0=$v0,$v0=&15,log:AND 15=$v0,$v0=|240,log:OR 240=$v0,$v0=^255,log:XOR 255=$v0,$v0=~,log:NOT=$v0,$v0=1,log:v0=$v0,$v0=<<3,log:SHL 3=$v0,$v0=>>1,log:SHR 1=$v0", RESTART);
 
-    // scriptRunner.addScript(4, "$v0=+2,$f4=+2.5,log:Counter is $v0 $f4 $counter", RESTART);
-    // scriptRunner.addScript(9, "$counter=+2,log:Counter is $counter,$s0=test,$s0+tttt,$v1=153,$v1=@99,log:Length $s0#,log:String $s0 $v1", RESTART);
-    // scriptRunner.addScript(5, "if:$v0>=5&&$f4>16.7,call:2,end", RESTART);
+    scriptRunner.addScript(4, "$v0=+2,$f4=+2.5,log:Counter is $v0 $f4 $counter", RESTART);
+    scriptRunner.addScript(9, "$counter=+2,log:Counter is $counter,$s0=test,$s0+tttt,$v1=153,$v1=@99,log:Length $s0#,log:String $s0 $v1", RESTART);
+    scriptRunner.addScript(5, "if:$v0>=5&&$f4>16.7,call:2,end", RESTART);
   }
   // scriptRunner.addScript(4, "$v1=$p13,log:Port 13 is $v1", RESTART);
   if (port->value) {
