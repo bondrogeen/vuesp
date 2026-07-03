@@ -1,7 +1,11 @@
 #ifndef RUNNER_H
 #define RUNNER_H
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#else
+#include "../tests/arduino_stub.h"
+#endif
 
 #define MAX_ACTIVE_SCRIPTS 10
 #define QUEUE_SIZE 10
@@ -138,7 +142,7 @@ class ScriptRunner {
   ScriptState _active[MAX_ACTIVE_SCRIPTS];
   uint8_t _activeList[MAX_ACTIVE_SCRIPTS];
   uint8_t _activeCount;
-  
+
   const char* _queueScript[QUEUE_SIZE];
   uint8_t _queueId[QUEUE_SIZE];
   uint16_t _queueLen[QUEUE_SIZE];

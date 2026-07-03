@@ -1,4 +1,8 @@
+#ifdef ARDUINO
 #include "./runner.h"
+#else
+#include "runner.h"
+#endif
 
 ScriptRunner* ScriptRunner::_instance = nullptr;
 
@@ -202,7 +206,33 @@ bool ScriptRunner::resolveValue(const char* p, uint32_t& value) {
   char type = p[1];
   if (type == 'v') { int idx = 0; p += 2; while (isdigit(*p)) { idx = idx * 10 + (*p - '0'); p++; } if (idx >= 0 && idx < MAX_UINT_VARS) { value = _instance->_uintVars[idx]; return true; } }
   else if (type == 'f') { int idx = 0; p += 2; while (isdigit(*p)) { idx = idx * 10 + (*p - '0'); p++; } if (idx >= 0 && idx < MAX_FLOAT_VARS) { value = (uint32_t)_instance->_floatVars[idx]; return true; } }
-  else if (type == 's') { int idx = 0; p += 2; while (isdigit(*p)) { idx = idx * 10 + (*p - '0'); p++; } if (p[0] == '#' && idx >= 0 && idx < MAX_STRING_VARS) { value = _instance->_stringLen[idx]; return true; } }
+  else if (type == 's') {
+    int idx = 0; p += 2; while (isdigit(*p)) { idx = idx * 10 + (*p - '0'); p++; }
+    if (idx >= 0 && idx < MAX_STRING_VARS) {
+      if (p[0] == '#') { value = _instance->_stringLen[idx]; return true; }
+      if (p[0] == '{') {
+        p++; int byteIdx = 0; while (isdigit(*p)) { byteIdx = byteIdx * 10 + (*p - '0'); p++; }
+        if (p[0] == ':') {
+          p++; int endIdx = 0; while (isdigit(*p)) { endIdx = endIdx * 10 + (*p - '0'); p++; }
+          if (p[0] == '}') p++;
+          if (byteIdx >= 0 && endIdx < MAX_STRING_LEN && byteIdx <= endIdx) {
+            value = 0;
+            for (int i = byteIdx; i <= endIdx; i++) {
+              value = (value << 8) | _instance->_stringVars[idx][i];
+            }
+            return true;
+          }
+        } else if (p[0] == '}') {
+          p++;
+          if (byteIdx >= 0 && byteIdx < MAX_STRING_LEN && byteIdx < _instance->_stringLen[idx]) {
+            value = _instance->_stringVars[idx][byteIdx];
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
   else if (type == 'p') { int gpio = 0; p += 2; while (isdigit(*p)) { gpio = gpio * 10 + (*p - '0'); p++; } char id[16]; snprintf(id, 16, "$p%d", gpio); return _instance->getDataValue(id, value); }
   else if (type == 'a') { int pin = 0; p += 2; while (isdigit(*p)) { pin = pin * 10 + (*p - '0'); p++; } uint16_t val = 0; if (_instance->_portProvider && _instance->_portProvider(pin, PORT_READ, val)) { value = val; return true; } }
   else { const char* idStart = p - 1; const char* idEnd = p; while (*idEnd && *idEnd != ',' && *idEnd != ' ' && *idEnd != ')' && *idEnd != '&' && *idEnd != '|') idEnd++; size_t idLen = idEnd - idStart; char id[32]; if (idLen > 30) idLen = 30; strncpy(id, idStart, idLen); id[idLen] = '\0'; if (_instance->_dataProvider) { DataValue dv; if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { value = dv.uintVal; return true; } } }
@@ -239,7 +269,15 @@ bool ScriptRunner::handleVariable(const char* token, ScriptState& s, uint32_t no
     bool isFloat = (type == 'f');
     int idx = 0; while (isdigit(*p)) { idx = idx * 10 + (*p - '0'); p++; }
     int maxVars = isFloat ? MAX_FLOAT_VARS : MAX_UINT_VARS;
-    if (idx < 0 || idx >= maxVars || *p != '=') return true;
+    if (idx < 0 || idx >= maxVars) return true;
+
+    if (*p != '=') {
+      if (p[0] == '+') { if (isFloat) _instance->_floatVars[idx] += atof(p + 1); else _instance->_uintVars[idx] += atoi(p + 1); }
+      else if (p[0] == '-') { if (isFloat) _instance->_floatVars[idx] -= atof(p + 1); else _instance->_uintVars[idx] -= atoi(p + 1); }
+      else if (p[0] == '*') { if (isFloat) _instance->_floatVars[idx] *= atof(p + 1); else _instance->_uintVars[idx] *= atoi(p + 1); }
+      else if (p[0] == '/') { if (isFloat) { float d = atof(p + 1); if (d != 0) _instance->_floatVars[idx] /= d; } else { int d = atoi(p + 1); if (d != 0) _instance->_uintVars[idx] /= d; } }
+      return true;
+    }
     p++;
 
     if (p[0] == '&') { if (!isFloat) _instance->_uintVars[idx] &= atoi(p + 1); }
@@ -254,7 +292,21 @@ bool ScriptRunner::handleVariable(const char* token, ScriptState& s, uint32_t no
     else if (p[0] == '-') { if (isFloat) _instance->_floatVars[idx] -= atof(p + 1); else _instance->_uintVars[idx] -= atoi(p + 1); }
     else if (p[0] == '*') { if (isFloat) _instance->_floatVars[idx] *= atof(p + 1); else _instance->_uintVars[idx] *= atoi(p + 1); }
     else if (p[0] == '/') { if (isFloat) { float d = atof(p + 1); if (d != 0) _instance->_floatVars[idx] /= d; } else { int d = atoi(p + 1); if (d != 0) _instance->_uintVars[idx] /= d; } }
-    else if (p[0] == '$') { uint32_t val = 0; if (_instance->resolveValue(p, val)) { if (isFloat) _instance->_floatVars[idx] = (float)val; else _instance->_uintVars[idx] = val; } }
+    else if (p[0] == '$') {
+      if (p[1] == 'f') {
+        int srcIdx = 0; p += 2; while (isdigit(*p)) { srcIdx = srcIdx * 10 + (*p - '0'); p++; }
+        if (srcIdx >= 0 && srcIdx < MAX_FLOAT_VARS) {
+          if (isFloat) _instance->_floatVars[idx] = _instance->_floatVars[srcIdx];
+          else _instance->_uintVars[idx] = (uint32_t)_instance->_floatVars[srcIdx];
+        }
+      } else {
+        uint32_t val = 0;
+        if (_instance->resolveValue(p, val)) {
+          if (isFloat) _instance->_floatVars[idx] = (float)val;
+          else _instance->_uintVars[idx] = val;
+        }
+      }
+    }
     else { if (isFloat) _instance->_floatVars[idx] = atof(p); else _instance->_uintVars[idx] = atoi(p); }
     return true;
   }
@@ -269,16 +321,70 @@ bool ScriptRunner::handleVariable(const char* token, ScriptState& s, uint32_t no
   if (type == 's') {
     int idx = 0; while (isdigit(*p)) { idx = idx * 10 + (*p - '0'); p++; }
     if (idx < 0 || idx >= MAX_STRING_VARS) return true;
-    if (p[0] == '{') { p++; int byteIdx = 0; while (isdigit(*p)) { byteIdx = byteIdx * 10 + (*p - '0'); p++; } if (p[0] == ':') { p++; int endIdx = 0; while (isdigit(*p)) { endIdx = endIdx * 10 + (*p - '0'); p++; } if (p[0] == '}') p++; return true; } if (p[0] == '}') p++; if (p[0] == '=') { p++; uint8_t val = atoi(p); if (byteIdx >= 0 && byteIdx < MAX_STRING_LEN) { _instance->_stringVars[idx][byteIdx] = val; if (byteIdx >= _instance->_stringLen[idx]) _instance->_stringLen[idx] = byteIdx + 1; } } return true; }
+
+    if (p[0] == '{') {
+      p++; int byteIdx = 0; while (isdigit(*p)) { byteIdx = byteIdx * 10 + (*p - '0'); p++; }
+      if (p[0] == ':') { p++; int endIdx = 0; while (isdigit(*p)) { endIdx = endIdx * 10 + (*p - '0'); p++; } if (p[0] == '}') p++; return true; }
+      if (p[0] == '}') p++;
+      if (p[0] == '=') { p++; uint8_t val = atoi(p); if (byteIdx >= 0 && byteIdx < MAX_STRING_LEN) { _instance->_stringVars[idx][byteIdx] = val; if (byteIdx >= _instance->_stringLen[idx]) _instance->_stringLen[idx] = byteIdx + 1; } }
+      return true;
+    }
+    
     if (p[0] == '#') return true;
-    if (p[0] != '=' && p[0] != '+') return true;
-    bool append = (p[0] == '+'); p++;
-    if (!append && (*p == '\0' || *p == ',')) { _instance->_stringLen[idx] = 0; return true; }
-    if (!append && p[0] == '$' && p[1] == 's') { int srcIdx = 0; p += 2; while (isdigit(*p)) { srcIdx = srcIdx * 10 + (*p - '0'); p++; } if (srcIdx >= 0 && srcIdx < MAX_STRING_VARS) { uint8_t len = _instance->_stringLen[srcIdx]; if (len > MAX_STRING_LEN) len = MAX_STRING_LEN; memcpy(_instance->_stringVars[idx], _instance->_stringVars[srcIdx], len); _instance->_stringLen[idx] = len; } return true; }
-    if (!append && p[0] == '$' && p[1] == 'u') { int uartNum = 0; p += 2; while (isdigit(*p)) { uartNum = uartNum * 10 + (*p - '0'); p++; } char id[8]; snprintf(id, 8, "$u%d", uartNum); if (_instance->_dataProvider) { DataValue dv; dv.stringVal.data = _instance->_stringVars[idx]; dv.stringVal.len = MAX_STRING_LEN; if (_instance->_dataProvider(id, KIND_STRING, dv, false)) _instance->_stringLen[idx] = dv.stringVal.len; else _instance->_stringLen[idx] = 0; } return true; }
-    if (append) { if (p[0] == 'h') { p++; while (*p && *p != ',' && *p != ']') { if (isxdigit(p[0]) && isxdigit(p[1])) { uint8_t b = (hexCharToByte(p[0]) << 4) | hexCharToByte(p[1]); if (_instance->_stringLen[idx] < MAX_STRING_LEN) _instance->_stringVars[idx][_instance->_stringLen[idx]++] = b; p += 2; } else p++; } } else while (*p && *p != ',' && *p != ']') { if (_instance->_stringLen[idx] < MAX_STRING_LEN) _instance->_stringVars[idx][_instance->_stringLen[idx]++] = *p; p++; } return true; }
-    if (p[0] == 'h') { p++; _instance->_stringLen[idx] = 0; while (*p && *p != ',' && *p != ']') { if (isxdigit(p[0]) && isxdigit(p[1])) { uint8_t b = (hexCharToByte(p[0]) << 4) | hexCharToByte(p[1]); if (_instance->_stringLen[idx] < MAX_STRING_LEN) _instance->_stringVars[idx][_instance->_stringLen[idx]++] = b; p += 2; } else p++; } return true; }
-    _instance->_stringLen[idx] = 0; while (*p && *p != ',' && *p != ']') { if (_instance->_stringLen[idx] < MAX_STRING_LEN) _instance->_stringVars[idx][_instance->_stringLen[idx]++] = *p; p++; }
+
+    if (p[0] == '=' || p[0] == '+') {
+      bool append = (p[0] == '+');
+      p++;
+      
+      if (!append && *p == '\0') { _instance->_stringLen[idx] = 0; return true; }
+      
+      if (!append && p[0] == '$' && p[1] == 's') {
+        int srcIdx = 0; p += 2; while (isdigit(*p)) { srcIdx = srcIdx * 10 + (*p - '0'); p++; }
+        if (srcIdx >= 0 && srcIdx < MAX_STRING_VARS) {
+          uint8_t len = _instance->_stringLen[srcIdx]; if (len > MAX_STRING_LEN) len = MAX_STRING_LEN;
+          memcpy(_instance->_stringVars[idx], _instance->_stringVars[srcIdx], len); _instance->_stringLen[idx] = len;
+        }
+        return true;
+      }
+      
+      if (!append && p[0] == '$' && p[1] == 'u') {
+        int uartNum = 0; p += 2; while (isdigit(*p)) { uartNum = uartNum * 10 + (*p - '0'); p++; }
+        char id[8]; snprintf(id, 8, "$u%d", uartNum);
+        if (_instance->_dataProvider) {
+          DataValue dv; dv.stringVal.data = _instance->_stringVars[idx]; dv.stringVal.len = MAX_STRING_LEN;
+          if (_instance->_dataProvider(id, KIND_STRING, dv, false)) _instance->_stringLen[idx] = dv.stringVal.len;
+          else _instance->_stringLen[idx] = 0;
+        }
+        return true;
+      }
+      
+      if (p[0] == '"') {
+        p++;
+        if (!append) _instance->_stringLen[idx] = 0;
+        while (*p && *p != '"' && *p != ',' && *p != ']') {
+          if (_instance->_stringLen[idx] < MAX_STRING_LEN) _instance->_stringVars[idx][_instance->_stringLen[idx]++] = *p;
+          p++;
+        }
+        if (*p == '"') p++;
+        return true;
+      }
+      
+      if (p[0] == '0' && p[1] == 'x') {
+        p += 2;
+        if (!append) _instance->_stringLen[idx] = 0;
+        while (*p && *p != ',' && *p != ']') {
+          if (isxdigit(p[0]) && isxdigit(p[1])) {
+            uint8_t b = (hexCharToByte(p[0]) << 4) | hexCharToByte(p[1]);
+            if (_instance->_stringLen[idx] < MAX_STRING_LEN) _instance->_stringVars[idx][_instance->_stringLen[idx]++] = b;
+            p += 2;
+          } else p++;
+        }
+        return true;
+      }
+      
+      return true;
+    }
+    
     return true;
   }
 
@@ -300,20 +406,25 @@ bool ScriptRunner::handleVariable(const char* token, ScriptState& s, uint32_t no
     size_t idLen = p - idStart; char id[32]; if (idLen > 30) idLen = 30;
     strncpy(id, idStart, idLen); id[idLen] = '\0'; p++;
     if (_instance->_dataProvider) {
+      DataKind kind = (idStart[1] == 'f') ? KIND_FLOAT : KIND_UINT;
       DataValue dv;
-      if (p[0] == '&') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal &= atoi(p + 1); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '|') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal |= atoi(p + 1); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '^') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal ^= atoi(p + 1); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '~') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal = ~dv.uintVal; _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '<' && p[1] == '<') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal <<= atoi(p + 2); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '>' && p[1] == '>') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal >>= atoi(p + 2); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '%') { int d = atoi(p + 1); if (d != 0 && _instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal %= d; _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '@') { dv.uintVal = random(atoi(p + 1)); _instance->_dataProvider(id, KIND_UINT, dv, true); }
-      else if (p[0] == '+') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal += atoi(p + 1); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '-') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal -= atoi(p + 1); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '*') { if (_instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal *= atoi(p + 1); _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else if (p[0] == '/') { int d = atoi(p + 1); if (d != 0 && _instance->_dataProvider(id, KIND_UINT, dv, false)) { dv.uintVal /= d; _instance->_dataProvider(id, KIND_UINT, dv, true); } }
-      else { dv.uintVal = atoi(p); _instance->_dataProvider(id, KIND_UINT, dv, true); }
+      if (p[0] == '&') { if (_instance->_dataProvider(id, kind, dv, false)) { dv.uintVal &= atoi(p + 1); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '|') { if (_instance->_dataProvider(id, kind, dv, false)) { dv.uintVal |= atoi(p + 1); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '^') { if (_instance->_dataProvider(id, kind, dv, false)) { dv.uintVal ^= atoi(p + 1); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '~') { if (_instance->_dataProvider(id, kind, dv, false)) { dv.uintVal = ~dv.uintVal; _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '<' && p[1] == '<') { if (_instance->_dataProvider(id, kind, dv, false)) { dv.uintVal <<= atoi(p + 2); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '>' && p[1] == '>') { if (_instance->_dataProvider(id, kind, dv, false)) { dv.uintVal >>= atoi(p + 2); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '%') { int d = atoi(p + 1); if (d != 0 && _instance->_dataProvider(id, kind, dv, false)) { dv.uintVal %= d; _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '@') { dv.uintVal = random(atoi(p + 1)); _instance->_dataProvider(id, kind, dv, true); }
+      else if (p[0] == '+') { if (_instance->_dataProvider(id, kind, dv, false)) { if (kind == KIND_FLOAT) dv.floatVal += atof(p + 1); else dv.uintVal += atoi(p + 1); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '-') { if (_instance->_dataProvider(id, kind, dv, false)) { if (kind == KIND_FLOAT) dv.floatVal -= atof(p + 1); else dv.uintVal -= atoi(p + 1); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '*') { if (_instance->_dataProvider(id, kind, dv, false)) { if (kind == KIND_FLOAT) dv.floatVal *= atof(p + 1); else dv.uintVal *= atoi(p + 1); _instance->_dataProvider(id, kind, dv, true); } }
+      else if (p[0] == '/') { if (_instance->_dataProvider(id, kind, dv, false)) { if (kind == KIND_FLOAT) { float d = atof(p + 1); if (d != 0) dv.floatVal /= d; } else { int d = atoi(p + 1); if (d != 0) dv.uintVal /= d; } _instance->_dataProvider(id, kind, dv, true); } }
+      else {
+        if (kind == KIND_FLOAT) dv.floatVal = atof(p);
+        else dv.uintVal = atoi(p);
+        _instance->_dataProvider(id, kind, dv, true);
+      }
     }
     return true;
   }
@@ -328,6 +439,7 @@ static bool isFastCommand(const char* token) {
 
 bool ScriptRunner::checkScriptState(ScriptState& s, uint32_t now) {
   if (s.inEvent || s.inPause || s.inWait || s.inFade) {
+    if (s.inEvent) return false;
     if (s.inPause) { if (now >= s.pauseUntil) s.inPause = false; else return false; }
     if (s.inWait) { if (now >= s.waitUntil) s.inWait = false; else return false; }
     if (s.inFade) { updateFade(s, now); if (s.inFade) return false; }
@@ -419,7 +531,14 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
   const char* p = token + 3; bool finalResult = false, firstCondition = true; char pendingOp = '\0';
   while (*p && *p != ',') {
     const char* idStart = p, *opStart = nullptr, *opEnd = nullptr;
-    while (*p && *p != ',' && *p != '&' && *p != '|') { if (p[0] == '>' && p[1] == '=') { opStart = p; opEnd = p + 2; break; } else if (p[0] == '<' && p[1] == '=') { opStart = p; opEnd = p + 2; break; } else if (p[0] == '=' && p[1] == '=') { opStart = p; opEnd = p + 2; break; } else if (p[0] == '!' && p[1] == '=') { opStart = p; opEnd = p + 2; break; } else if (p[0] == '>' || p[0] == '<') { opStart = p; opEnd = p + 1; break; } p++; }
+    while (*p && *p != ',' && *p != '&' && *p != '|') {
+      if (p[0] == '>' && p[1] == '=') { opStart = p; opEnd = p + 2; break; }
+      else if (p[0] == '<' && p[1] == '=') { opStart = p; opEnd = p + 2; break; }
+      else if (p[0] == '=' && p[1] == '=') { opStart = p; opEnd = p + 2; break; }
+      else if (p[0] == '!' && p[1] == '=') { opStart = p; opEnd = p + 2; break; }
+      else if (p[0] == '>' || p[0] == '<') { opStart = p; opEnd = p + 1; break; }
+      p++;
+    }
     if (!opStart) { s.ifResult = false; return false; }
     char id[32]; size_t idLen = opStart - idStart; if (idLen >= 31) idLen = 30; strncpy(id, idStart, idLen); id[idLen] = '\0';
     char op1 = opStart[0], op2 = (opEnd - opStart == 2) ? opStart[1] : '\0';
@@ -429,13 +548,23 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
     bool condResult;
 
     if (isString) {
-      int idx = atoi(id + 2);
+      int idx = 0;
+      const char* numStart = id + 2;
+      while (isdigit(*numStart)) { idx = idx * 10 + (*numStart - '0'); numStart++; }
       if (idx >= 0 && idx < MAX_STRING_VARS) {
-        size_t cmpLen = strlen(opEnd);
-        bool match = (cmpLen == _stringLen[idx] && memcmp(_stringVars[idx], opEnd, cmpLen) == 0);
-        if (op1 == '=' && op2 == '=') condResult = match;
-        else if (op1 == '!' && op2 == '=') condResult = !match;
-        else condResult = false;
+        if (*numStart == '#') {
+          if (op1 == '>' && op2 == '=') condResult = _stringLen[idx] >= (uint32_t)atoi(opEnd);
+          else if (op1 == '<' && op2 == '=') condResult = _stringLen[idx] <= (uint32_t)atoi(opEnd);
+          else if (op1 == '>') condResult = _stringLen[idx] > (uint32_t)atoi(opEnd);
+          else if (op1 == '<') condResult = _stringLen[idx] < (uint32_t)atoi(opEnd);
+          else condResult = false;
+        } else {
+          size_t cmpLen = strlen(opEnd);
+          bool match = (cmpLen == _stringLen[idx] && memcmp(_stringVars[idx], opEnd, cmpLen) == 0);
+          if (op1 == '=' && op2 == '=') condResult = match;
+          else if (op1 == '!' && op2 == '=') condResult = !match;
+          else condResult = false;
+        }
       } else condResult = false;
     } else if (isFloat) {
       if (!getDataValue(id, currentValue)) { s.ifResult = false; return false; }
