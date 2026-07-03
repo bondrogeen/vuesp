@@ -39,9 +39,17 @@ jobs:
       - name: Build web
         run: npm run build-web
 
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: vue/dist
+          retention-days: 1
+
   backend:
     name: Backend - PlatformIO Check
     runs-on: ubuntu-latest
+    needs: frontend
 
     strategy:
       fail-fast: false
@@ -83,6 +91,15 @@ jobs:
 
       - name: Clean esptool cache
         run: rm -rf ~/.platformio/packages/tool-esptoolpy
+
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: data/www
+
+      - name: List data folder
+        run: ls -la data/www/ && ls -la data/www/assets/ || true
 
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
@@ -132,7 +149,7 @@ jobs:
   release:
     name: Release firmware
     runs-on: ubuntu-latest
-    needs: [backend, scriptrunner, frontend]
+    needs: [backend, scriptrunner]
     if: startsWith(github.ref, 'refs/tags/v')
     
     steps:
