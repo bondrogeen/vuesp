@@ -77,9 +77,6 @@ jobs:
       - name: Clean esptool cache
         run: rm -rf ~/.platformio/packages/tool-esptoolpy
 
-      - name: Install esptool dependencies
-        run: pip install rich_click
-
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
 
@@ -98,11 +95,11 @@ jobs:
         run: sudo apt-get install -y g++ clang
 
       - name: Build tests (${{ matrix.compiler }})
-        working-directory: vuesp/src/tests
+        working-directory: src/tests
         run: ${{ matrix.compiler }} -std=c++11 -I../src -o test_runner test_runner.cpp arduino_stub.cpp ../runner/runner.cpp
 
       - name: Run tests (${{ matrix.compiler }})
-        working-directory: vuesp/src/tests
+        working-directory: src/tests
         run: ./test_runner
 
   docs:
