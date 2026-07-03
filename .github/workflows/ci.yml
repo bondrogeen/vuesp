@@ -87,11 +87,18 @@ jobs:
       - name: Build firmware for ${{ matrix.platform }}
         run: pio run -e ${{ matrix.platform }}
 
+      - name: Rename firmware files
+        run: |
+          cp build/${{ matrix.platform }}/firmware.bin vuesp-${{ matrix.platform }}.bin
+          cp build/${{ matrix.platform }}/littlefs.bin vuesp-${{ matrix.platform }}-littlefs.bin
+
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.platform }}
-          path: build/${{ matrix.platform }}/firmware.bin
+          path: |
+            vuesp-${{ matrix.platform }}.bin
+            vuesp-${{ matrix.platform }}-littlefs.bin
           retention-days: 30
 
   scriptrunner:
@@ -123,6 +130,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download esp32 firmware
         uses: actions/download-artifact@v4
         with:
@@ -147,18 +157,46 @@ jobs:
           name: firmware-pico32
           path: release
 
-      - name: Rename firmware files
+      - name: Create firmware.json
         run: |
-          cp release/firmware.bin release/vuesp-esp32.bin
-          cp release/firmware.bin release/vuesp-esp32c3.bin
-          cp release/firmware.bin release/vuesp-esp8266.bin
-          cp release/firmware.bin release/vuesp-pico32.bin
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          DATE=$(date +%Y-%m-%d)
+          REPO="https://github.com/${GITHUB_REPOSITORY}"
+          TAG="${GITHUB_REF#refs/tags/}"
+          
+          cat > firmware.json << EOF
+          {
+            "latest": {
+              "version": "$VERSION",
+              "date": "$DATE"
+            },
+            "files": {
+              "esp32": {
+                "firmware": "$REPO/releases/download/$TAG/vuesp-esp32.bin",
+                "filesystem": "$REPO/releases/download/$TAG/vuesp-esp32-littlefs.bin"
+              },
+              "esp32c3": {
+                "firmware": "$REPO/releases/download/$TAG/vuesp-esp32-c3-devkitm-1.bin",
+                "filesystem": "$REPO/releases/download/$TAG/vuesp-esp32-c3-devkitm-1-littlefs.bin"
+              },
+              "esp8266": {
+                "firmware": "$REPO/releases/download/$TAG/vuesp-esp8266.bin",
+                "filesystem": "$REPO/releases/download/$TAG/vuesp-esp8266-littlefs.bin"
+              },
+              "pico32": {
+                "firmware": "$REPO/releases/download/$TAG/vuesp-pico32.bin",
+                "filesystem": "$REPO/releases/download/$TAG/vuesp-pico32-littlefs.bin"
+              }
+            }
+          }
+          EOF
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             release/vuesp-*.bin
+            firmware.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
