@@ -84,10 +84,11 @@ jobs:
       - name: Clean esptool cache
         run: rm -rf ~/.platformio/packages/tool-esptoolpy
 
-      - name: Build firmware and filesystem for ${{ matrix.platform }}
-        run: |
-          pio run -e ${{ matrix.platform }}
-          pio run -e ${{ matrix.platform }} -t buildfs
+      - name: Build firmware for ${{ matrix.platform }}
+        run: pio run -e ${{ matrix.platform }}
+
+      - name: Build filesystem for ${{ matrix.platform }}
+        run: pio run -e ${{ matrix.platform }} -t buildfs
 
       - name: Rename firmware files
         run: |
