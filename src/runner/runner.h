@@ -159,7 +159,7 @@ class ScriptRunner {
   uint32_t _lastStateChangeTime = 0;
 
   uint32_t _uintVars[MAX_UINT_VARS];
-  float _floatVars[MAX_FLOAT_VARS];
+  double _floatVars[MAX_FLOAT_VARS];
   uint8_t _stringVars[MAX_STRING_VARS][MAX_STRING_LEN];
   uint8_t _stringLen[MAX_STRING_VARS];
 
@@ -182,6 +182,7 @@ class ScriptRunner {
   void updateFade(ScriptState& s, uint32_t now);
 
   bool resolveValue(const char* p, uint32_t& value);
+  const char* parseValue(const char* p, uint32_t& value);
 
   uint32_t hashEvent(const char* str) const;
   uint8_t parseLoopCount(const char* token);
