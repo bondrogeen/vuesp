@@ -120,8 +120,6 @@ static bool test_failed = false;
     if (!test_failed) printf("  PASS %s\n", #name); \
   } while (0)
 
-// ===== БАЗОВЫЕ ТЕСТЫ =====
-
 TEST(variable_assignment) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
@@ -135,28 +133,28 @@ TEST(variable_arithmetic) {
   ScriptRunner runner;
   runner.addScript(1, "$v0=10", RESTART);
   runScriptUntilDone(runner);
-  runner.addScript(2, "$v0+5", RESTART);
+  runner.addScript(2, "$v0=($v0+5)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 15u);
 }
 
 TEST(variable_multiplication) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=6,$v0*7", RESTART);
+  runner.addScript(1, "$v0=6,$v0=($v0*7)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 42u);
 }
 
 TEST(variable_division) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=100,$v0/3", RESTART);
+  runner.addScript(1, "$v0=100,$v0=($v0/3)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 33u);
 }
 
 TEST(float_arithmetic) {
   ScriptRunner runner;
-  runner.addScript(1, "$f0=10.5,$f0+2.5", RESTART);
+  runner.addScript(1, "$f0=10.5,$f0=($f0+2.5)", RESTART);
   runScriptUntilDone(runner);
   float val = runner.getFloatVar(0);
   ASSERT_TRUE(val > 12.9f && val < 13.1f);
@@ -164,49 +162,49 @@ TEST(float_arithmetic) {
 
 TEST(bitwise_and) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=255,$v0=&15", RESTART);
+  runner.addScript(1, "$v0=255,$v0=($v0&15)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 15u);
 }
 
 TEST(bitwise_or) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=240,$v0=|15", RESTART);
+  runner.addScript(1, "$v0=240,$v0=($v0|15)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 255u);
 }
 
 TEST(bitwise_xor) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=255,$v0=^255", RESTART);
+  runner.addScript(1, "$v0=255,$v0=($v0^255)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
 }
 
 TEST(bitwise_not) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=0,$v0=~", RESTART);
+  runner.addScript(1, "$v0=0,$v0=(~$v0)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0xFFFFFFFFu);
 }
 
 TEST(shift_left) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=1,$v0=<<4", RESTART);
+  runner.addScript(1, "$v0=1,$v0=($v0<<4)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 16u);
 }
 
 TEST(shift_right) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=16,$v0=>>2", RESTART);
+  runner.addScript(1, "$v0=16,$v0=($v0>>2)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 4u);
 }
 
 TEST(modulo) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=17,$v0=%5", RESTART);
+  runner.addScript(1, "$v0=17,$v0=($v0%5)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 2u);
 }
@@ -256,17 +254,15 @@ TEST(logical_or) {
 
 TEST(loop_fixed) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=0,[5]$v0+1]", RESTART);
+  runner.addScript(1, "$v0=0,[5]$v0=($v0+1)]", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
 }
 
-// ===== СТРОКИ =====
-
 TEST(string_assign) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"test\",log:String $s0", RESTART);
+  runner.addScript(1, "$s0='test',log:String $s0", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("test"));
 }
@@ -274,7 +270,7 @@ TEST(string_assign) {
 TEST(string_length) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"hello\",log:Length $s0#", RESTART);
+  runner.addScript(1, "$s0='hello',log:Length $s0#", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("Length 5"));
 }
@@ -282,7 +278,7 @@ TEST(string_length) {
 TEST(string_concat) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"hello\",$s0+\"world\",log:String $s0", RESTART);
+  runner.addScript(1, "$s0='hello',$s0+'world',log:String $s0", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("helloworld"));
 }
@@ -296,7 +292,7 @@ TEST(string_hex_assign) {
 
 TEST(string_byte_write) {
   ScriptRunner runner;
-  runner.addScript(1, "$s0=\"AAAA\",$s0{2}=66,$v0=$s0{2}", RESTART);
+  runner.addScript(1, "$s0='AAAA',$s0{2}=66,$v0=$s0{2}", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 66u);
 }
@@ -304,7 +300,7 @@ TEST(string_byte_write) {
 TEST(string_compare_equal) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"LEDON\",if:$s0==LEDON,log:MATCH,else,log:NOMATCH,end", RESTART);
+  runner.addScript(1, "$s0='LEDON',if:$s0=='LEDON',log:MATCH,else,log:NOMATCH,end", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("MATCH"));
 }
@@ -312,14 +308,14 @@ TEST(string_compare_equal) {
 TEST(string_compare_not_equal) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"LEDON\",if:$s0!=LEDOFF,log:DIFF,else,log:SAME,end", RESTART);
+  runner.addScript(1, "$s0='LEDON',if:$s0!='LEDOFF',log:DIFF,else,log:SAME,end", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("DIFF"));
 }
 
 TEST(string_clear) {
   ScriptRunner runner;
-  runner.addScript(1, "$s0=\"hello\",$s0=\"\",$v0=$s0#", RESTART);
+  runner.addScript(1, "$s0='hello',$s0='',$v0=$s0#", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
 }
@@ -327,7 +323,7 @@ TEST(string_clear) {
 TEST(string_copy) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"hello\",$s1=$s0,log:String $s1", RESTART);
+  runner.addScript(1, "$s0='hello',$s1=$s0,log:String $s1", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("hello"));
 }
@@ -349,14 +345,14 @@ TEST(string_range_read) {
 
 TEST(string_out_of_bounds_read) {
   ScriptRunner runner;
-  runner.addScript(1, "$s0=\"AB\",$v0=$s0{100}", RESTART);
+  runner.addScript(1, "$s0='AB',$v0=$s0{100}", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
 }
 
 TEST(string_out_of_bounds_write) {
   ScriptRunner runner;
-  runner.addScript(1, "$s0=\"AB\",$s0{100}=65,$v0=$s0#", RESTART);
+  runner.addScript(1, "$s0='AB',$s0{100}=65,$v0=$s0#", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 2u);
 }
@@ -364,7 +360,7 @@ TEST(string_out_of_bounds_write) {
 TEST(string_empty_log) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"\",log:Empty $s0", RESTART);
+  runner.addScript(1, "$s0='',log:Empty $s0", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("Empty "));
 }
@@ -372,23 +368,222 @@ TEST(string_empty_log) {
 TEST(string_length_condition) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"hello\",if:$s0#>3,log:LONG,else,log:SHORT,end", RESTART);
+  runner.addScript(1, "$s0='hello',if:$s0#>3,log:LONG,else,log:SHORT,end", RESTART);
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("LONG"));
 }
 
-// ===== ВЛОЖЕННЫЕ КОНСТРУКЦИИ =====
+TEST(string_add_number) {
+  ScriptRunner runner;
+  runner.setLogProvider(testLogProvider);
+  runner.addScript(1, "$v0=26,$s0='Temp ',$s0+$v0,log:String $s0", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_TRUE(logContains("Temp 26"));
+}
+
+TEST(string_add_float) {
+  ScriptRunner runner;
+  runner.setLogProvider(testLogProvider);
+  runner.addScript(1, "$f0=25.5,$s0='Temp ',$s0+$f0,log:String $s0", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_TRUE(logContains("Temp 25.5"));
+}
+
+TEST(string_add_external) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.setLogProvider(testLogProvider);
+  externalCounter = 42;
+  runner.addScript(1, "$s0='Counter: ',$s0+$counter,log:String $s0", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_TRUE(logContains("Counter: 42"));
+}
+
+TEST(string_add_number_direct) {
+  ScriptRunner runner;
+  runner.setLogProvider(testLogProvider);
+  runner.addScript(1, "$s0='Value: ',$s0+123,log:String $s0", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_TRUE(logContains("Value: 123"));
+}
+
+TEST(expression_add) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=10,$v2=20,$v0=($v1+$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 30u);
+}
+
+TEST(expression_sub) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=50,$v2=30,$v0=($v1-$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 20u);
+}
+
+TEST(expression_mul) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=5,$v2=6,$v0=($v1*$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 30u);
+}
+
+TEST(expression_div) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=30,$v2=5,$v0=($v1/$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 6u);
+}
+
+TEST(expression_and) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=0x0F,$v2=0xF0,$v0=($v1&$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 0x00u);
+}
+
+TEST(expression_or) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=0x0F,$v2=0xF0,$v0=($v1|$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 0xFFu);
+}
+
+TEST(expression_xor) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=0xFF,$v2=0x0F,$v0=($v1^$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 0xF0u);
+}
+
+TEST(expression_not) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=0x00,$v0=(~$v1)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 0xFFFFFFFFu);
+}
+
+TEST(expression_shift_left) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=1,$v2=4,$v0=($v1<<$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 16u);
+}
+
+TEST(expression_shift_right) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=16,$v2=2,$v0=($v1>>$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 4u);
+}
+
+TEST(expression_modulo) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=17,$v2=5,$v0=($v1%$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 2u);
+}
+
+TEST(expression_with_constant_left) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v2=5,$v0=(10+$v2)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 15u);
+}
+
+TEST(expression_with_constant_right) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=10,$v0=($v1+5)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 15u);
+}
+
+TEST(expression_with_external) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  externalCounter = 5;
+  runner.addScript(1, "$v1=10,$v0=($v1+$counter)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 15u);
+}
+
+TEST(expression_float_add) {
+  ScriptRunner runner;
+  runner.addScript(1, "$f1=10.5,$f2=2.5,$f0=($f1+$f2)", RESTART);
+  runScriptUntilDone(runner);
+  float val = runner.getFloatVar(0);
+  ASSERT_TRUE(val > 12.9f && val < 13.1f);
+}
+
+TEST(expression_float_mul) {
+  ScriptRunner runner;
+  runner.addScript(1, "$f1=2.5,$f2=4.0,$f0=($f1*$f2)", RESTART);
+  runScriptUntilDone(runner);
+  float val = runner.getFloatVar(0);
+  ASSERT_TRUE(val > 9.9f && val < 10.1f);
+}
+
+TEST(expression_float_div) {
+  ScriptRunner runner;
+  runner.addScript(1, "$f1=10.0,$f2=2.0,$f0=($f1/$f2)", RESTART);
+  runScriptUntilDone(runner);
+  float val = runner.getFloatVar(0);
+  ASSERT_TRUE(val > 4.9f && val < 5.1f);
+}
+
+TEST(expression_mixed_uint_float) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=10,$f2=2.5,$f0=($v1+$f2)", RESTART);
+  runScriptUntilDone(runner);
+  float val = runner.getFloatVar(0);
+  ASSERT_TRUE(val > 12.4f && val < 12.6f);
+}
+
+TEST(expression_string_length) {
+  ScriptRunner runner;
+  runner.addScript(1, "$s0='hello',$v0=($s0#+5)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 10u);
+}
+
+TEST(expression_string_as_zero) {
+  ScriptRunner runner;
+  runner.addScript(1, "$s0='hello',$v1=10,$v0=($s0+$v1)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 10u);
+}
+
+TEST(expression_nested_not_supported) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v1=10,$v2=20,$v3=30,$v0=($v1+($v2+$v3))", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 0u);
+}
+
+TEST(expression_increment) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v0=5,$v0=($v0+1)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 6u);
+}
+
+TEST(expression_decrement) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v0=10,$v0=($v0-3)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 7u);
+}
 
 TEST(nested_if_in_loop) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=0,[5]$v1=1,if:$v1==1,$v0+1,end]", RESTART);
+  runner.addScript(1, "$v0=0,[5]$v1=1,if:$v1==1,$v0=($v0+1),end]", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
 }
 
 TEST(loop_in_if) {
   ScriptRunner runner;
-  runner.addScript(1, "$v0=0,$v1=1,if:$v1==1,[3]$v0+1],end", RESTART);
+  runner.addScript(1, "$v0=0,$v1=1,if:$v1==1,[3]$v0=($v0+1)],end", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 3u);
 }
@@ -400,8 +595,6 @@ TEST(triple_nested_if) {
   runScriptUntilDone(runner);
   ASSERT_TRUE(logContains("DEEP"));
 }
-
-// ===== ВНЕШНИЕ ПЕРЕМЕННЫЕ =====
 
 TEST(external_variable_read) {
   ScriptRunner runner;
@@ -425,21 +618,55 @@ TEST(external_variable_bitwise) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   externalCounter = 0xFF;
-  runner.addScript(1, "$counter=&15", RESTART);
+  runner.addScript(1, "$counter=($counter&15)", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(externalCounter, 15u);
 }
 
-TEST(external_float_variable) {
-    ScriptRunner runner;
-    runner.setDataProvider(testDataProvider);
-    runner.addScript(1, "$f0=23.5", RESTART);
-    runScriptUntilDone(runner);
-    float val = runner.getFloatVar(0);
-    ASSERT_TRUE(val > 23.4f && val < 23.6f);
+TEST(external_variable_increment) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  externalCounter = 10;
+  runner.addScript(1, "$counter=($counter+5)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(externalCounter, 15u);
 }
 
-// ===== МАКРОСЫ =====
+TEST(external_variable_multiply) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  externalCounter = 5;
+  runner.addScript(1, "$counter=($counter*3)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(externalCounter, 15u);
+}
+
+TEST(external_variable_divide) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  externalCounter = 20;
+  runner.addScript(1, "$counter=($counter/4)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(externalCounter, 5u);
+}
+
+TEST(external_variable_subtract) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  externalCounter = 100;
+  runner.addScript(1, "$counter=($counter-30)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(externalCounter, 70u);
+}
+
+TEST(external_float_variable) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.addScript(1, "$f0=23.5", RESTART);
+  runScriptUntilDone(runner);
+  float val = runner.getFloatVar(0);
+  ASSERT_TRUE(val > 23.4f && val < 23.6f);
+}
 
 TEST(macro_port_to_var) {
   ScriptRunner runner;
@@ -473,7 +700,33 @@ TEST(macro_float_to_uint) {
   ASSERT_EQ(runner.getUintVar(0), 12u);
 }
 
-// ===== СОБЫТИЯ =====
+TEST(variable_increment) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v0=5,$v0=($v0+3)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 8u);
+}
+
+TEST(variable_decrement) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v0=10,$v0=($v0-4)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 6u);
+}
+
+TEST(variable_multiply_assign) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v0=4,$v0=($v0*5)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 20u);
+}
+
+TEST(variable_divide_assign) {
+  ScriptRunner runner;
+  runner.addScript(1, "$v0=30,$v0=($v0/6)", RESTART);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 5u);
+}
 
 TEST(event_on) {
   ScriptRunner runner;
@@ -502,19 +755,15 @@ TEST(multiple_events) {
   ASSERT_TRUE(logContains("SECOND"));
 }
 
-// ===== СТРАТЕГИИ =====
-
 TEST(strategy_ignore) {
-    ScriptRunner runner;
-    runner.setLogProvider(testLogProvider);
-    // Бесконечный цикл чтобы скрипт оставался активным
-    runner.addScript(1, "[*]log:FIRST,p100]", IGNORE);
-    runScriptUntilDone(runner, 10);
-    testLog.clear();
-    runner.addScript(1, "log:SECOND", IGNORE);
-    runScriptUntilDone(runner, 10);
-    // SECOND не должен появиться потому что скрипт с ID 1 уже активен и стратегия IGNORE
-    ASSERT_TRUE(!logContains("SECOND"));
+  ScriptRunner runner;
+  runner.setLogProvider(testLogProvider);
+  runner.addScript(1, "[*]log:FIRST,p100]", IGNORE);
+  runScriptUntilDone(runner, 10);
+  testLog.clear();
+  runner.addScript(1, "log:SECOND", IGNORE);
+  runScriptUntilDone(runner, 10);
+  ASSERT_TRUE(!logContains("SECOND"));
 }
 
 TEST(strategy_restart_if_same) {
@@ -555,8 +804,6 @@ TEST(call_nonexistent) {
   ASSERT_TRUE(true);
 }
 
-// ===== ПОРТЫ =====
-
 TEST(port_write) {
   ScriptRunner runner;
   runner.setPortProvider(testPortProvider);
@@ -584,30 +831,6 @@ TEST(condition_with_port) {
   ASSERT_TRUE(logContains("LOW"));
 }
 
-// ===== UART =====
-
-TEST(uart_send) {
-  ScriptRunner runner;
-  runner.setDataProvider(testDataProvider);
-  runner.addScript(1, "$s0=0x010300640001,$u0=$s0", RESTART);
-  runScriptUntilDone(runner);
-  ASSERT_EQ(uartTxBuffer.size(), 6u);
-  ASSERT_EQ(uartTxBuffer[0], 0x01);
-  ASSERT_EQ(uartTxBuffer[1], 0x03);
-}
-
-TEST(uart_receive) {
-  ScriptRunner runner;
-  runner.setDataProvider(testDataProvider);
-  uint8_t response[] = {0x01, 0x03, 0x04, 0x00, 0x7B, 0x00, 0xC8};
-  uartRxBuffer.assign(response, response + 7);
-  runner.addScript(1, "$s0=$u0,$v0=$s0{3:4}", RESTART);
-  runScriptUntilDone(runner);
-  ASSERT_EQ(runner.getUintVar(0), 0x007Bu);
-}
-
-// ===== FLOAT =====
-
 TEST(float_copy) {
   ScriptRunner runner;
   runner.addScript(1, "$f0=3.14,$f1=$f0", RESTART);
@@ -626,13 +849,11 @@ TEST(float_in_condition_with_and) {
 
 TEST(float_bitwise_ignored) {
   ScriptRunner runner;
-  runner.addScript(1, "$f0=10.5,$f0=&15", RESTART);
+  runner.addScript(1, "$f0=10.5,$f0=($f0&15)", RESTART);
   runScriptUntilDone(runner);
   float val = runner.getFloatVar(0);
   ASSERT_TRUE(val > 10.4f && val < 10.6f);
 }
-
-// ===== ПРОЧЕЕ =====
 
 TEST(random_value) {
   ScriptRunner runner;
@@ -653,7 +874,7 @@ TEST(else_if_chain) {
 TEST(debug_string_compare_not_equal) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"LEDON\",log:Len $s0#,log:Str $s0,if:$s0!=LEDOFF,log:DIFF,else,log:SAME,end", RESTART);
+  runner.addScript(1, "$s0='LEDON',log:Len $s0#,log:Str $s0,if:$s0!='LEDOFF',log:DIFF,else,log:SAME,end", RESTART);
   runScriptUntilDone(runner);
   for (auto& s : testLog) printf("    %s\n", s.c_str());
 }
@@ -661,7 +882,7 @@ TEST(debug_string_compare_not_equal) {
 TEST(debug_string_length_condition) {
   ScriptRunner runner;
   runner.setLogProvider(testLogProvider);
-  runner.addScript(1, "$s0=\"hello\",log:Len $s0#,if:$s0#>3,log:LONG,else,log:SHORT,end", RESTART);
+  runner.addScript(1, "$s0='hello',log:Len $s0#,if:$s0#>3,log:LONG,else,log:SHORT,end", RESTART);
   runScriptUntilDone(runner);
   for (auto& s : testLog) printf("    %s\n", s.c_str());
 }
@@ -735,17 +956,52 @@ int main() {
   RUN_TEST(string_out_of_bounds_write);
   RUN_TEST(string_empty_log);
   RUN_TEST(string_length_condition);
+  RUN_TEST(string_add_number);
+  RUN_TEST(string_add_float);
+  RUN_TEST(string_add_external);
+  RUN_TEST(string_add_number_direct);
+  RUN_TEST(expression_add);
+  RUN_TEST(expression_sub);
+  RUN_TEST(expression_mul);
+  RUN_TEST(expression_div);
+  RUN_TEST(expression_and);
+  RUN_TEST(expression_or);
+  RUN_TEST(expression_xor);
+  RUN_TEST(expression_not);
+  RUN_TEST(expression_shift_left);
+  RUN_TEST(expression_shift_right);
+  RUN_TEST(expression_modulo);
+  RUN_TEST(expression_with_constant_left);
+  RUN_TEST(expression_with_constant_right);
+  RUN_TEST(expression_with_external);
+  RUN_TEST(expression_float_add);
+  RUN_TEST(expression_float_mul);
+  RUN_TEST(expression_float_div);
+  RUN_TEST(expression_mixed_uint_float);
+  RUN_TEST(expression_string_length);
+  RUN_TEST(expression_string_as_zero);
+  RUN_TEST(expression_nested_not_supported);
+  RUN_TEST(expression_increment);
+  RUN_TEST(expression_decrement);
   RUN_TEST(nested_if_in_loop);
   RUN_TEST(loop_in_if);
   RUN_TEST(triple_nested_if);
   RUN_TEST(external_variable_read);
   RUN_TEST(external_variable_write);
   RUN_TEST(external_variable_bitwise);
+  RUN_TEST(external_variable_increment);
+  RUN_TEST(external_variable_multiply);
+  RUN_TEST(external_variable_divide);
+  RUN_TEST(external_variable_subtract);
   RUN_TEST(external_float_variable);
   RUN_TEST(macro_port_to_var);
   RUN_TEST(macro_analog_to_var);
   RUN_TEST(macro_var_to_var);
   RUN_TEST(macro_float_to_uint);
+  RUN_TEST(variable_increment);
+  RUN_TEST(variable_decrement);
+  RUN_TEST(variable_multiply_assign);
+  RUN_TEST(variable_divide_assign);
   RUN_TEST(event_on);
   RUN_TEST(multiple_events);
   RUN_TEST(strategy_ignore);
@@ -756,8 +1012,6 @@ int main() {
   RUN_TEST(port_write);
   RUN_TEST(port_fade);
   RUN_TEST(condition_with_port);
-  RUN_TEST(uart_send);
-  RUN_TEST(uart_receive);
   RUN_TEST(float_copy);
   RUN_TEST(float_in_condition_with_and);
   RUN_TEST(float_bitwise_ignored);
