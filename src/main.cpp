@@ -12,8 +12,6 @@ uint32_t id = ESP.getChipId();
 uint32_t id = (uint32_t)(ESP.getEfuseMac() >> 24);
 #endif
 
-ScriptRunner scriptRunner(RESTART);
-
 uint32_t now;
 uint32_t lastTimeMain;
 
