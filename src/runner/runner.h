@@ -7,45 +7,25 @@
 #include "../tests/arduino_stub.h"
 #endif
 
-// ============================================
-// КОНСТАНТЫ
-// ============================================
-
-#define MAX_ACTIVE_SCRIPTS 10
-#define MAX_QUEUE_SIZE 10
+#define MAX_SCRIPTS 10
 #define MAX_TOKEN_LEN 80
 #define MAX_SCRIPT_LEN 255
 
-#define MAX_UINT_VARS 10   // $v0..$v9
-#define MAX_INT_VARS 10    // $i0..$i9
-#define MAX_FLOAT_VARS 5   // $f0..$f4
-#define MAX_STRING_VARS 2  // $s0..$s1
-#define MAX_ARRAY_VARS 5   // $a0..$a4
+#define MAX_UINT_VARS 10
+#define MAX_INT_VARS 10
+#define MAX_FLOAT_VARS 5
+#define MAX_STRING_VARS 2
+#define MAX_ARRAY_VARS 5
 #define MAX_ARRAY_SIZE 64
 #define MAX_STRING_LEN 64
 
-#define MAX_REGISTERED 20
 #define MAX_PWM_VALUE 255
 #define MAX_PARAMS 8
-
-// ============================================
-// КОНСТАНТЫ ДЛЯ СОБЫТИЙ
-// ============================================
-
 #define MAX_EVENT_HANDLERS 20
 #define MAX_EVENT_NAME_LEN 64
-#define MAX_HANDLER_BODIES 20
-#define MAX_HANDLER_BODY_LEN 256
-
-// ============================================
-// ТИПЫ
-// ============================================
 
 enum ScriptConflict : uint8_t {
-    RESTART = 0,
-    IGNORE = 1,
-    RESTART_IF_SAME = 2,
-    ADD_QUEUE = 3
+    RESTART = 0
 };
 
 enum PortAction : uint8_t {
@@ -70,25 +50,11 @@ union DataValue {
     } stringVal;
 };
 
-// ============================================
-// СТРУКТУРЫ СОБЫТИЙ
-// ============================================
-
 struct EventHandler {
     uint32_t hash;
-    uint8_t scriptId;
+    uint8_t slotId;
     bool active;
 };
-
-struct HandlerBody {
-    uint8_t scriptId;
-    char body[MAX_HANDLER_BODY_LEN];
-    bool used;
-};
-
-// ============================================
-// КОНТЕКСТ
-// ============================================
 
 struct ScriptContext {
     uint32_t uintVars[MAX_UINT_VARS];
@@ -99,23 +65,17 @@ struct ScriptContext {
     uint8_t arrayLen[MAX_ARRAY_VARS];
 };
 
-// ============================================
-// ПАРАМЕТРЫ
-// ============================================
-
 struct Params {
     char values[MAX_PARAMS][32];
     int count;
 };
 
-// ============================================
-// СОСТОЯНИЕ СКРИПТА
-// ============================================
-
 struct ScriptState {
     bool active;
+    bool registered;
+    bool inEventHandler;
     uint8_t id;
-    const char* script;
+    char script[MAX_SCRIPT_LEN];
     uint16_t pos;
     uint16_t scriptLen;
     uint32_t startTime;
@@ -138,65 +98,37 @@ struct ScriptState {
     bool hasTempResult;
     
     bool isWhile;
-    const char* whileCondition;
     char whileConditionBuffer[64];
 };
-
-struct ScriptEntry {
-    uint8_t id;
-    const char* script;
-};
-
-// ============================================
-// ПРОВАЙДЕРЫ
-// ============================================
 
 typedef bool (*DataProvider)(const char* id, DataKind kind, DataValue& value, bool write);
 typedef void (*LogProvider)(const char* message);
 typedef bool (*PortProvider)(uint8_t gpio, PortAction action, uint16_t& value);
 typedef void (*StateChangeProvider)(uint8_t gpio, uint16_t oldValue, uint16_t newValue);
 
-// ============================================
-// SCRIPTRUNNER
-// ============================================
-
 class ScriptRunner {
 public:
     ScriptRunner(ScriptConflict defaultStrategy = RESTART);
     ~ScriptRunner();
 
-    // ============================================
-    // ОСНОВНЫЕ МЕТОДЫ
-    // ============================================
-    
     bool registerScript(uint8_t id, const char* script);
-    bool addScript(uint8_t id, const char* script, ScriptConflict strategy = RESTART);
     bool runScript(uint8_t id);
+    bool runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len);
     void update();
     bool stopScript(uint8_t id);
     void stopAll();
     bool isRunning(uint8_t id) const;
     bool isBusy() const;
 
-    // ============================================
-    // СИСТЕМА СОБЫТИЙ
-    // ============================================
-    
     static uint32_t hash(const char* str);
     
-    bool onEvent(uint32_t hash, uint8_t scriptId);
-    bool onEvent(const char* eventName, uint8_t scriptId);
-    
+    bool onEvent(uint32_t hash, uint8_t slotId);
+    bool onEvent(const char* eventName, uint8_t slotId);
     void emitEvent(uint32_t hash);
     void emitEvent(const char* eventName);
-    
-    bool removeEventHandler(uint32_t hash, uint8_t scriptId);
+    bool removeEventHandler(uint32_t hash);
     void clearAllEventHandlers();
 
-    // ============================================
-    // РАБОТА С ПЕРЕМЕННЫМИ
-    // ============================================
-    
     uint32_t getUintVar(uint8_t idx) const;
     int32_t getIntVar(uint8_t idx) const;
     float getFloatVar(uint8_t idx) const;
@@ -208,47 +140,17 @@ public:
     void setArrayByte(uint8_t idx, uint8_t pos, uint8_t value);
     uint8_t getArrayLen(uint8_t idx) const;
 
-    // ============================================
-    // ПРОВАЙДЕРЫ
-    // ============================================
-    
     void setDataProvider(DataProvider provider);
     void setLogProvider(LogProvider provider);
     void setPortProvider(PortProvider provider);
     void setStateChangeProvider(StateChangeProvider provider);
 
 private:
-    // ============================================
-    // СОСТОЯНИЕ СКРИПТОВ
-    // ============================================
-    
-    ScriptState _active[MAX_ACTIVE_SCRIPTS];
-    uint8_t _activeList[MAX_ACTIVE_SCRIPTS];
-    uint8_t _activeCount;
-
-    const char* _queueScript[MAX_QUEUE_SIZE];
-    uint8_t _queueId[MAX_QUEUE_SIZE];
-    uint16_t _queueLen[MAX_QUEUE_SIZE];
-    uint8_t _queueHead, _queueTail, _queueCount;
-
-    ScriptEntry _registry[MAX_REGISTERED];
-    uint8_t _registryCount;
-
+    ScriptState _slots[MAX_SCRIPTS];
     ScriptContext _ctx;
-
-    // ============================================
-    // СИСТЕМА СОБЫТИЙ
-    // ============================================
-    
     EventHandler _eventHandlers[MAX_EVENT_HANDLERS];
     uint8_t _eventHandlerCount;
-    
-    HandlerBody _handlerBodies[MAX_HANDLER_BODIES];
 
-    // ============================================
-    // ПРОВАЙДЕРЫ
-    // ============================================
-    
     DataProvider _dataProvider;
     LogProvider _logProvider;
     PortProvider _portProvider;
@@ -258,26 +160,10 @@ private:
     ScriptConflict _defaultStrategy;
     static ScriptRunner* _instance;
 
-    // ============================================
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-    // ============================================
-    
     void resetScriptState(int idx);
-    void addToActiveList(uint8_t idx);
-    void removeFromActiveList(uint8_t idx);
-    int findById(uint8_t id) const;
-    int findInRegistry(uint8_t id) const;
-    void addToRegistry(uint8_t id, const char* script);
-    bool addToQueue(uint8_t id, const char* script, uint16_t len);
-    void activateSlot(int idx, uint8_t id, const char* script, uint16_t len);
-    
-    int findFreeHandlerBodySlot();
-    void freeHandlerBodySlot(int slot);
+    int findSlotById(uint8_t id) const;
+    int findFreeSlot() const;
 
-    // ============================================
-    // ПАРСИНГ
-    // ============================================
-    
     Params parseParams(const char* str);
     uint32_t parseTime(const char* str);
     uint32_t parseUint(const char** p);
@@ -290,10 +176,6 @@ private:
     bool processToken(const char* token, ScriptState& s, uint32_t now);
     bool processCommand(const char* token, ScriptState& s, uint32_t now);
 
-    // ============================================
-    // ОБРАБОТЧИКИ КОМАНД
-    // ============================================
-    
     bool handleCall(const Params& params, ScriptState& s);
     bool handleOn(const Params& params, ScriptState& s, uint32_t now);
     bool handleRemoveOn(const Params& params, ScriptState& s);
@@ -317,4 +199,4 @@ private:
 
 extern ScriptRunner scriptRunner;
 
-#endif // RUNNER_H
+#endif
