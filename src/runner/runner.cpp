@@ -221,11 +221,12 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     resetScriptState(slot);
     strcpy(_slots[slot].script, result);
     _slots[slot].registered = true;
-    _slots[slot].id = slot;
+    _slots[slot].id = EVENT_HANDLER_ID_BASE + slot;
     _slots[slot].scriptLen = strlen(result);
     _slots[slot].pos = 0;
     _slots[slot].active = false;
     _slots[slot].inEventHandler = false;
+    _slots[slot].isHandler = true;
     
     if (!onEvent(eventHash, (uint8_t)slot)) {
         resetScriptState(slot);
@@ -234,8 +235,8 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     
     if (_logProvider) {
         char buf[128];
-        snprintf(buf, 128, "[Runner] Event handler registered: '%s' -> slot %d (hash=%u)", 
-                 eventName, slot, eventHash);
+        snprintf(buf, 128, "[Runner] Event handler registered: '%s' -> slot %d (id=%d, hash=%u)", 
+                 eventName, slot, _slots[slot].id, eventHash);
         _logProvider(buf);
     }
     
@@ -393,6 +394,7 @@ void ScriptRunner::resetScriptState(int idx) {
     s.active = false;
     s.registered = false;
     s.inEventHandler = false;
+    s.isHandler = false;
     s.id = 0;
     s.script[0] = '\0';
     s.pos = 0;
@@ -433,7 +435,52 @@ int ScriptRunner::findFreeSlot() const {
     return -1;
 }
 
+bool ScriptRunner::removeScript(uint8_t id) {
+    int slot = findSlotById(id);
+    if (slot == -1) {
+        if (_logProvider) {
+            char buf[64];
+            snprintf(buf, 64, "[Runner] Script %d not found for removal", id);
+            _logProvider(buf);
+        }
+        return false;
+    }
+    
+    if (_slots[slot].active) {
+        _slots[slot].active = false;
+    }
+    
+    resetScriptState(slot);
+    
+    for (int i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].slotId == slot) {
+            _eventHandlers[i].active = false;
+            if (_logProvider) {
+                char buf[64];
+                snprintf(buf, 64, "[Runner] Event handler removed with script %d", id);
+                _logProvider(buf);
+            }
+        }
+    }
+    
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, 64, "[Runner] Script %d removed from slot %d", id, slot);
+        _logProvider(buf);
+    }
+    return true;
+}
+
 bool ScriptRunner::registerScript(uint8_t id, const char* script) {
+    if (id >= EVENT_HANDLER_ID_BASE) {
+        if (_logProvider) {
+            char buf[64];
+            snprintf(buf, 64, "[Runner] ERROR: ID %d is reserved for event handlers (>=%d)", id, EVENT_HANDLER_ID_BASE);
+            _logProvider(buf);
+        }
+        return false;
+    }
+    
     uint16_t len = strlen(script);
     if (len >= MAX_SCRIPT_LEN) {
         if (_logProvider) _logProvider("[Runner] ERROR: Script too long!");
@@ -442,11 +489,20 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script) {
     
     int existing = findSlotById(id);
     if (existing != -1) {
+        if (_slots[existing].isHandler) {
+            if (_logProvider) {
+                char buf[64];
+                snprintf(buf, 64, "[Runner] ERROR: ID %d is used by event handler in slot %d!", id, existing);
+                _logProvider(buf);
+            }
+            return false;
+        }
         strcpy(_slots[existing].script, script);
         _slots[existing].scriptLen = len;
         _slots[existing].pos = 0;
         _slots[existing].active = false;
         _slots[existing].inEventHandler = false;
+        _slots[existing].isHandler = false;
         if (_logProvider) {
             char buf[64];
             snprintf(buf, 64, "[Runner] Script %d updated in slot %d", id, existing);
@@ -464,6 +520,7 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script) {
     resetScriptState(slot);
     _slots[slot].registered = true;
     _slots[slot].id = id;
+    _slots[slot].isHandler = false;
     strcpy(_slots[slot].script, script);
     _slots[slot].scriptLen = len;
     _slots[slot].pos = 0;
@@ -479,11 +536,29 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script) {
 }
 
 bool ScriptRunner::runScript(uint8_t id) {
+    if (id >= EVENT_HANDLER_ID_BASE) {
+        if (_logProvider) {
+            char buf[64];
+            snprintf(buf, 64, "[Runner] ERROR: Cannot run event handler (id=%d)", id);
+            _logProvider(buf);
+        }
+        return false;
+    }
+    
     int slot = findSlotById(id);
     if (slot == -1) {
         if (_logProvider) {
             char buf[64];
             snprintf(buf, 64, "[Runner] ERROR: Script %d not found!", id);
+            _logProvider(buf);
+        }
+        return false;
+    }
+    
+    if (_slots[slot].isHandler) {
+        if (_logProvider) {
+            char buf[64];
+            snprintf(buf, 64, "[Runner] ERROR: Slot %d is an event handler, not a script!", slot);
             _logProvider(buf);
         }
         return false;
@@ -1568,7 +1643,21 @@ void ScriptRunner::update() {
                 }
                 s.inLoop = false;
             }
-            s.active = false;
+            if (!s.isHandler) {
+                if (_logProvider) {
+                    char buf[64];
+                    snprintf(buf, 64, "[Runner] Auto-removing script %d (slot %d)", s.id, i);
+                    _logProvider(buf);
+                }
+                resetScriptState(i);
+            } else {
+                s.active = false;
+                if (_logProvider) {
+                    char buf[64];
+                    snprintf(buf, 64, "[Runner] Handler %d completed (kept)", s.id);
+                    _logProvider(buf);
+                }
+            }
             continue;
         }
         const char* p = s.script + s.pos;

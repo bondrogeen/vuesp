@@ -112,6 +112,8 @@ void setupDevice() {
   scriptRunner.setLogProvider(myLogProvider);
   scriptRunner.registerScript(1, "$p13=255,wait(100u),$p13=0,on('button'),$display='Pressed',$p13=255,wait(1s),$p13=0,end,on('button3'),$display='Pressed',$p14=1,wait(2s),$p14=0,end");
   scriptRunner.runScript(1);
+  scriptRunner.registerScript(2, "$p14=1,wait(10s),$p14=0");
+  scriptRunner.runScript(2);
   // scriptRunner.addScript(2, "[*]14:1,wait:5s,14:0,wait:5s]", RESTART);
   // scriptRunner.addScript(3, "[*]$p14=1,p50,$p14=0,p50]", RESTART);
 }
