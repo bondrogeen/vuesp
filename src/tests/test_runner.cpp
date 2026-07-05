@@ -20,7 +20,6 @@ bool testPortProvider(uint8_t gpio, PortAction action, uint16_t& value) {
 }
 
 void testStateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
-  // state change handler
 }
 
 bool testDataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
@@ -102,10 +101,6 @@ static bool test_failed = false;
     test_##name();                                  \
     if (!test_failed) printf("  PASS %s\n", #name); \
   } while (0)
-
-// ============================================
-// ТЕСТЫ
-// ============================================
 
 TEST(variable_assignment_uint) {
   ScriptRunner runner;
@@ -311,10 +306,10 @@ TEST(condition_compare_string) {
   ASSERT_TRUE(logContains("MATCH"));
 }
 
-TEST(loop_fixed) {
+TEST(loop_while) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.addScript(1, "$v0=0,loop:5,$v0=$v0+1,end,$display=$v0", RESTART);
+  runner.addScript(1, "$v0=0,while:$v0<5,$v0=$v0+1,end,$display=$v0", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
   ASSERT_TRUE(logContains("5"));
@@ -431,7 +426,7 @@ TEST(nested_if) {
 TEST(loop_in_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.addScript(1, "$v0=0,$v1=1,if:$v1==1,loop:3,$v0=$v0+1,end,end,$display=$v0", RESTART);
+  runner.addScript(1, "$v0=0,$v1=1,if:$v1==1,while:$v0<3,$v0=$v0+1,end,end,$display=$v0", RESTART);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 3u);
   ASSERT_TRUE(logContains("3"));
@@ -480,7 +475,7 @@ TEST(strategy_restart_if_same) {
 TEST(strategy_add_queue) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.addScript(1, "loop:*,$display='FIRST',wait(100u),end", ADD_QUEUE);
+  runner.addScript(1, "while:1,$display='FIRST',wait(100u),end", ADD_QUEUE);
   runScriptUntilDone(runner, 10);
   runner.addScript(1, "$display='SECOND'", ADD_QUEUE);
   runScriptUntilDone(runner, 50);
@@ -582,7 +577,7 @@ TEST(array_len) {
   runner.setDataProvider(testDataProvider);
   runner.addScript(1, "$a0={10;20;30},$v2=len($a0),$display=$v2", RESTART);
   runScriptUntilDone(runner);
-  ASSERT_EQ(runner.getUintVar(2), 3u);  // ← $v2, НЕ $v0!
+  ASSERT_EQ(runner.getUintVar(2), 3u);
   ASSERT_TRUE(logContains("3"));
 }
 
@@ -595,10 +590,6 @@ TEST(chr_ord) {
   ASSERT_TRUE(logContains("65"));
 }
 
-// ============================================
-// MAIN
-// ============================================
-
 int main() {
   printf("=== ScriptRunner Tests ===\n\n");
 
@@ -606,7 +597,7 @@ int main() {
   RUN_TEST(variable_assignment_int);
   RUN_TEST(variable_assignment_float);
   RUN_TEST(variable_assignment_string);
-
+  
   RUN_TEST(arithmetic_add);
   RUN_TEST(arithmetic_sub);
   RUN_TEST(arithmetic_mul);
@@ -614,62 +605,62 @@ int main() {
   RUN_TEST(arithmetic_mod);
   RUN_TEST(arithmetic_int_negative);
   RUN_TEST(arithmetic_float);
-
+  
   RUN_TEST(bitwise_and);
   RUN_TEST(bitwise_or);
   RUN_TEST(bitwise_xor);
   RUN_TEST(bitwise_not);
   RUN_TEST(shift_left);
   RUN_TEST(shift_right);
-
+  
   RUN_TEST(condition_if_true);
   RUN_TEST(condition_if_false);
   RUN_TEST(condition_if_else_chain);
   RUN_TEST(condition_logical_and);
   RUN_TEST(condition_logical_or);
   RUN_TEST(condition_compare_string);
-
-  RUN_TEST(loop_fixed);
-
+  
+  RUN_TEST(loop_while);
+  
   RUN_TEST(string_concat);
   RUN_TEST(string_copy);
   RUN_TEST(string_concat_number);
   RUN_TEST(string_concat_float);
   RUN_TEST(string_concat_direct);
-
+  
   RUN_TEST(port_write);
   RUN_TEST(port_read);
   RUN_TEST(condition_with_port);
-
+  
   RUN_TEST(register_and_run);
   RUN_TEST(call_nonexistent);
-
+  
   RUN_TEST(wait_time);
-
+  
   RUN_TEST(nested_if);
   RUN_TEST(loop_in_if);
-
+  
   RUN_TEST(float_copy);
   RUN_TEST(float_in_condition);
-
+  
   RUN_TEST(strategy_restart);
   RUN_TEST(strategy_restart_if_same);
   RUN_TEST(strategy_add_queue);
-
+  
   RUN_TEST(macro_var_to_var);
   RUN_TEST(macro_float_to_uint);
-
+  
   RUN_TEST(variable_increment);
   RUN_TEST(variable_decrement);
   RUN_TEST(variable_multiply_assign);
   RUN_TEST(variable_divide_assign);
-
+  
   RUN_TEST(array_init);
   RUN_TEST(array_get);
   RUN_TEST(array_set);
   RUN_TEST(array_copy);
   RUN_TEST(array_len);
-
+  
   RUN_TEST(chr_ord);
 
   printf("\n=== All tests passed ===\n");

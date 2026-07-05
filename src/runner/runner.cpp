@@ -6,10 +6,6 @@
 
 ScriptRunner* ScriptRunner::_instance = nullptr;
 
-// ============================================
-// КОНСТРУКТОР / ДЕСТРУКТОР
-// ============================================
-
 ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     : _defaultStrategy(defaultStrategy)
     , _dataProvider(nullptr)
@@ -49,10 +45,6 @@ ScriptRunner::~ScriptRunner() {
     _instance = nullptr;
 }
 
-// ============================================
-// ПРОВАЙДЕРЫ
-// ============================================
-
 void ScriptRunner::setDataProvider(DataProvider provider) { 
     _dataProvider = provider; 
     if (_logProvider) _logProvider("[Runner] DataProvider set");
@@ -72,10 +64,6 @@ void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) {
     _stateChangeProvider = provider; 
     if (_logProvider) _logProvider("[Runner] StateChangeProvider set");
 }
-
-// ============================================
-// ПЕРЕМЕННЫЕ
-// ============================================
 
 uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
     if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
@@ -119,10 +107,6 @@ void ScriptRunner::setFloatVar(uint8_t idx, float value) {
     }
 }
 
-// ============================================
-// МАССИВЫ
-// ============================================
-
 uint8_t ScriptRunner::getArrayByte(uint8_t idx, uint8_t pos) const {
     if (idx < MAX_ARRAY_VARS && pos < _ctx.arrayLen[idx]) {
         return _ctx.arrayVars[idx][pos];
@@ -143,10 +127,6 @@ uint8_t ScriptRunner::getArrayLen(uint8_t idx) const {
     if (idx < MAX_ARRAY_VARS) return _ctx.arrayLen[idx];
     return 0;
 }
-
-// ============================================
-// УПРАВЛЕНИЕ СКРИПТАМИ
-// ============================================
 
 void ScriptRunner::resetScriptState(int idx) {
     ScriptState& s = _active[idx];
@@ -175,6 +155,9 @@ void ScriptRunner::resetScriptState(int idx) {
     s.eventTimeout = 0;
     s.tempResult = 0;
     s.hasTempResult = false;
+    s.isWhile = false;
+    s.whileCondition = nullptr;
+    s.whileConditionBuffer[0] = '\0';
 }
 
 void ScriptRunner::addToActiveList(uint8_t idx) {
@@ -380,10 +363,6 @@ void ScriptRunner::stopAll() {
 bool ScriptRunner::isRunning(uint8_t id) const { return findById(id) != -1; }
 bool ScriptRunner::isBusy() const { return _activeCount > 0 || _queueCount > 0; }
 
-// ============================================
-// ПАРСИНГ (ВСПОМОГАТЕЛЬНЫЙ)
-// ============================================
-
 static bool isDigit(char c) { return c >= '0' && c <= '9'; }
 static bool isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 static bool isAlphaNum(char c) { return isAlpha(c) || isDigit(c) || c == '_'; }
@@ -490,10 +469,6 @@ Params ScriptRunner::parseParams(const char* str) {
     return result;
 }
 
-// ============================================
-// parseValue (С ПОДДЕРЖКОЙ ПОРТОВ)
-// ============================================
-
 bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
     const char* pos = *p;
 
@@ -528,7 +503,6 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
                 result = 0;
                 *p = pos;
                 return true;
-            // ⭐ ПОДДЕРЖКА ПОРТОВ
             case 'p': {
                 uint16_t val = 0;
                 if (_portProvider && _portProvider(index, PORT_READ, val)) {
@@ -539,7 +513,6 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
                 return false;
             }
             default: {
-                // Внешняя переменная
                 if (_dataProvider) {
                     const char* start = pos - 2;
                     const char* end = start + 1;
@@ -626,10 +599,6 @@ uint32_t ScriptRunner::hashEvent(const char* str) const {
     return hash;
 }
 
-// ============================================
-// ОБРАБОТЧИКИ КОМАНД
-// ============================================
-
 bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
     if (params.count < 1) return false;
     uint8_t id = atoi(params.values[0]);
@@ -664,8 +633,8 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s) {
         s.eventTimeout = 0;
     }
     if (_logProvider) {
-        char buf[64];
-        snprintf(buf, 64, "[Runner] handleOn: event=%s", eventName);
+        char buf[128];
+        snprintf(buf, 128, "[Runner] handleOn: event=%s", eventName);
         _logProvider(buf);
     }
     return true;
@@ -690,33 +659,34 @@ bool ScriptRunner::handleWait(const Params& params, ScriptState& s, uint32_t now
     return true;
 }
 
-bool ScriptRunner::handleLoop(const char* params, ScriptState& s) {
+bool ScriptRunner::handleWhile(const char* params, ScriptState& s) {
     if (s.inLoop) {
         setError("Nested loops are not allowed");
         return false;
     }
-
-    if (strcmp(params, "*") == 0) {
-        s.loopStartPos = s.pos;
-        s.inLoop = true;
-        s.isInfinite = true;
-        s.repeatCount = 0;
-        if (_logProvider) _logProvider("[Runner] handleLoop: infinite");
+    
+    strncpy(s.whileConditionBuffer, params, 63);
+    s.whileConditionBuffer[63] = '\0';
+    s.whileCondition = s.whileConditionBuffer;
+    s.isWhile = true;
+    
+    bool condition = parseCondition(s.whileCondition, s);
+    
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, 64, "[Runner] while: condition=%d (%s)", condition, s.whileCondition);
+        _logProvider(buf);
+    }
+    
+    if (!condition) {
         return true;
     }
-
-    int count = atoi(params);
-    if (count <= 0) return false;
-
+    
     s.loopStartPos = s.pos;
     s.inLoop = true;
     s.isInfinite = false;
-    s.repeatCount = count;
-    if (_logProvider) {
-        char buf[64];
-        snprintf(buf, 64, "[Runner] handleLoop: count=%d", count);
-        _logProvider(buf);
-    }
+    s.repeatCount = 1;
+    
     return true;
 }
 
@@ -756,12 +726,19 @@ bool ScriptRunner::handleEnd(ScriptState& s) {
     }
 
     if (s.inLoop) {
-        if (s.isInfinite) {
+        if (s.isWhile && s.whileCondition) {
+            bool condition = parseCondition(s.whileCondition, s);
+            if (condition) {
+                s.pos = s.loopStartPos;
+                return true;
+            }
             s.inLoop = false;
-            s.isInfinite = false;
+            s.isWhile = false;
+            s.whileCondition = nullptr;
             s.repeatCount = 0;
             return true;
         }
+        
         if (s.repeatCount > 0) {
             s.repeatCount--;
             if (s.repeatCount > 0) {
@@ -839,10 +816,6 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
     s.ifResult = result;
     return result;
 }
-
-// ============================================
-// ОБРАБОТЧИКИ ДЛЯ МАССИВОВ И СТРОК
-// ============================================
 
 bool ScriptRunner::handleSet(const Params& params, ScriptState& s) {
     if (params.count < 3) return false;
@@ -1018,10 +991,6 @@ bool ScriptRunner::handleOrd(const Params& params, ScriptState& s) {
     return true;
 }
 
-// ============================================
-// ПРИСВОЕНИЕ
-// ============================================
-
 bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     const char* eq = strchr(token, '=');
     if (!eq) return false;
@@ -1030,9 +999,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     char type = left[1];
     const char* right = eq + 1;
     
-    // ============================================
-    // ПРОВЕРЯЕМ: ЭТО ВНУТРЕННЯЯ ПЕРЕМЕННАЯ?
-    // ============================================
     bool isInternal = false;
     int index = 0;
     const char* p = left + 2;
@@ -1051,11 +1017,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
         _logProvider(buf);
     }
     
-    // ============================================
-    // ВНУТРЕННИЕ ПЕРЕМЕННЫЕ
-    // ============================================
     if (isInternal) {
-        // ===== ПОРТ ($p) - ЗАПИСЬ =====
         if (type == 'p') {
             if (isDigit(*right) || *right == '-') {
                 const char* p2 = right;
@@ -1084,7 +1046,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             }
         }
         
-        // ===== МАССИВ ($a) =====
         if (type == 'a' && index < MAX_ARRAY_VARS) {
             if (*right == '{') {
                 return parseArray(&right, index);
@@ -1116,7 +1077,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             return false;
         }
         
-        // ===== СТРОКА ($s) =====
         if (type == 's' && index < MAX_STRING_VARS) {
             if (*right == '\'') {
                 char buf[MAX_STRING_LEN];
@@ -1131,12 +1091,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 }
             }
             else if (strchr(right, '+') != nullptr) {
-                if (_logProvider) {
-                    char logBuf[128];
-                    snprintf(logBuf, 128, "[Runner] String concat detected: %s", right);
-                    _logProvider(logBuf);
-                }
-                
                 const char* p2 = right;
                 char leftStr[MAX_STRING_LEN] = {0};
                 char rightStr[MAX_STRING_LEN] = {0};
@@ -1146,104 +1100,43 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     int leftIdx = parseUint(&p2);
                     if (leftIdx < MAX_STRING_VARS) {
                         strcpy(leftStr, _ctx.stringVars[leftIdx]);
-                        if (_logProvider) {
-                            char logBuf[128];
-                            snprintf(logBuf, 128, "[Runner] Left part: $s%d = %s", leftIdx, leftStr);
-                            _logProvider(logBuf);
-                        }
                     }
                 } else if (*p2 == '\'') {
                     parseString(&p2, leftStr);
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] Left part (string literal): %s", leftStr);
-                        _logProvider(logBuf);
-                    }
                 }
 
                 while (*p2 && *p2 != '+') p2++;
-                if (*p2 == '+') {
-                    p2++;
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] Found '+', parsing right part: %s", p2);
-                        _logProvider(logBuf);
-                    }
-                } else {
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] ERROR: '+' not found after left part");
-                        _logProvider(logBuf);
-                    }
-                    return false;
-                }
+                if (*p2 == '+') p2++;
 
                 if (*p2 == '\'') {
                     parseString(&p2, rightStr);
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] Right part (string literal): %s", rightStr);
-                        _logProvider(logBuf);
-                    }
                 } else if (*p2 == '$' && p2[1] == 'v') {
                     p2 += 2;
                     int rightIdx = parseUint(&p2);
                     if (rightIdx < MAX_UINT_VARS) {
                         snprintf(rightStr, MAX_STRING_LEN, "%u", _ctx.uintVars[rightIdx]);
-                        if (_logProvider) {
-                            char logBuf[128];
-                            snprintf(logBuf, 128, "[Runner] Right part ($v%d): %s", rightIdx, rightStr);
-                            _logProvider(logBuf);
-                        }
                     }
                 } else if (*p2 == '$' && p2[1] == 'i') {
                     p2 += 2;
                     int rightIdx = parseUint(&p2);
                     if (rightIdx < MAX_INT_VARS) {
                         snprintf(rightStr, MAX_STRING_LEN, "%d", _ctx.intVars[rightIdx]);
-                        if (_logProvider) {
-                            char logBuf[128];
-                            snprintf(logBuf, 128, "[Runner] Right part ($i%d): %s", rightIdx, rightStr);
-                            _logProvider(logBuf);
-                        }
                     }
                 } else if (*p2 == '$' && p2[1] == 'f') {
                     p2 += 2;
                     int rightIdx = parseUint(&p2);
                     if (rightIdx < MAX_FLOAT_VARS) {
                         snprintf(rightStr, MAX_STRING_LEN, "%.2f", _ctx.floatVars[rightIdx]);
-                        if (_logProvider) {
-                            char logBuf[128];
-                            snprintf(logBuf, 128, "[Runner] Right part ($f%d): %s", rightIdx, rightStr);
-                            _logProvider(logBuf);
-                        }
                     }
                 } else if (*p2 == '$' && p2[1] == 's') {
                     p2 += 2;
                     int rightIdx = parseUint(&p2);
                     if (rightIdx < MAX_STRING_VARS) {
                         strcpy(rightStr, _ctx.stringVars[rightIdx]);
-                        if (_logProvider) {
-                            char logBuf[128];
-                            snprintf(logBuf, 128, "[Runner] Right part ($s%d): %s", rightIdx, rightStr);
-                            _logProvider(logBuf);
-                        }
                     }
                 } else if (isDigit(*p2) || *p2 == '-') {
                     int32_t val = parseInt(&p2);
                     snprintf(rightStr, MAX_STRING_LEN, "%d", val);
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] Right part (number): %s", rightStr);
-                        _logProvider(logBuf);
-                    }
-                } else {
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] Right part unknown: %c", *p2);
-                        _logProvider(logBuf);
-                    }
-                    return false;
                 }
 
                 char result[MAX_STRING_LEN];
@@ -1262,11 +1155,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 int srcIdx = parseUint(&right);
                 if (srcIdx < MAX_STRING_VARS) {
                     strcpy(_ctx.stringVars[index], _ctx.stringVars[srcIdx]);
-                    if (_logProvider) {
-                        char logBuf[128];
-                        snprintf(logBuf, 128, "[Runner] String copied from $s%d: %s", srcIdx, _ctx.stringVars[srcIdx]);
-                        _logProvider(logBuf);
-                    }
                     return true;
                 }
             }
@@ -1275,17 +1163,11 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 snprintf(buf, MAX_STRING_LEN, "%d", s.tempResult);
                 strcpy(_ctx.stringVars[index], buf);
                 s.hasTempResult = false;
-                if (_logProvider) {
-                    char logBuf[128];
-                    snprintf(logBuf, 128, "[Runner] String from tempResult: %s", buf);
-                    _logProvider(logBuf);
-                }
                 return true;
             }
             return false;
         }
         
-        // ===== ЧИСЛО ($v, $i, $f) =====
         if (type == 'v' || type == 'i' || type == 'f') {
             const char* p2 = right;
             int32_t leftVal = 0;
@@ -1455,6 +1337,13 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 } else if (type == 'f') {
                     _ctx.floatVars[index] = resultIsFloat ? (double)resultFloat : (double)resultInt;
                 }
+                
+                if (_logProvider) {
+                    char logBuf[128];
+                    snprintf(logBuf, 128, "[Runner] Saved $%c%d = %d", type, index, resultIsFloat ? (int)resultFloat : resultInt);
+                    _logProvider(logBuf);
+                }
+                
                 return true;
             }
 
@@ -1466,6 +1355,13 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 } else if (type == 'f') {
                     _ctx.floatVars[index] = leftIsFloat ? (double)leftFloatVal : (double)leftVal;
                 }
+                
+                if (_logProvider) {
+                    char logBuf[128];
+                    snprintf(logBuf, 128, "[Runner] Saved $%c%d = %d", type, index, leftIsFloat ? (int)leftFloatVal : leftVal);
+                    _logProvider(logBuf);
+                }
+                
                 return true;
             }
         }
@@ -1473,9 +1369,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
         return false;
     }
 
-    // ============================================
-    // ВНЕШНЯЯ ПЕРЕМЕННАЯ
-    // ============================================
     if (_dataProvider) {
         char name[32];
         const char* leftStart = left;
@@ -1488,7 +1381,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
         strncpy(name, leftStart, nameLen);
         name[nameLen] = '\0';
         
-        // ===== СТРОКА (в кавычках) =====
         if (*right == '\'') {
             const char* p = right;
             char buf[MAX_STRING_LEN];
@@ -1508,7 +1400,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             return false;
         }
         
-        // ===== ВЫРАЖЕНИЕ С ОПЕРАТОРОМ =====
         else if (strchr(right, '+') != nullptr || 
                  strchr(right, '-') != nullptr || 
                  strchr(right, '*') != nullptr || 
@@ -1687,7 +1578,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             }
         }
         
-        // ===== ПЕРЕМЕННАЯ =====
         else if (*right == '$') {
             const char* p = right;
             char varType = p[1];
@@ -1736,7 +1626,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             return false;
         }
         
-        // ===== ЧИСЛО =====
         else if (isDigit(*right) || *right == '.') {
             const char* p = right;
             int32_t value = parseInt(&p);
@@ -1764,10 +1653,6 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 
     return false;
 }
-
-// ============================================
-// ПРОЦЕССОР ТОКЕНОВ
-// ============================================
 
 bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t now) {
     const char* open = strchr(token, '(');
@@ -1895,7 +1780,7 @@ bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now)
         cmd[len] = '\0';
         const char* params = colon + 1;
 
-        if (strcmp(cmd, "loop") == 0) return handleLoop(params, s);
+        if (strcmp(cmd, "while") == 0) return handleWhile(params, s);
         if (strcmp(cmd, "if") == 0) return handleIf(params, s);
     }
 
@@ -1913,10 +1798,6 @@ bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now)
 
     return false;
 }
-
-// ============================================
-// ОСНОВНОЙ ЦИКЛ UPDATE
-// ============================================
 
 void ScriptRunner::update() {
     if (_queueCount > 0) {
@@ -2085,9 +1966,5 @@ void ScriptRunner::setError(const char* msg) {
         _logProvider(buf);
     }
 }
-
-// ============================================
-// ГЛОБАЛЬНЫЙ ОБЪЕКТ
-// ============================================
 
 ScriptRunner scriptRunner;

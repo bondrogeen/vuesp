@@ -121,6 +121,11 @@ struct ScriptState {
   // Временная переменная для результатов функций
   int32_t tempResult;
   bool hasTempResult;
+  
+  // ⭐ ДЛЯ WHILE
+  bool isWhile;
+  const char* whileCondition;
+  char whileConditionBuffer[64];
 };
 
 struct ScriptEntry {
@@ -224,7 +229,7 @@ class ScriptRunner {
   bool handleCall(const Params& params, ScriptState& s);
   bool handleOn(const Params& params, ScriptState& s);
   bool handleWait(const Params& params, ScriptState& s, uint32_t now);
-  bool handleLoop(const char* params, ScriptState& s);
+  bool handleWhile(const char* params, ScriptState& s);
   bool handleIf(const char* params, ScriptState& s);
   bool handleElse(ScriptState& s);
   bool handleEnd(ScriptState& s);
