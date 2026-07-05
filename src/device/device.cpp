@@ -30,7 +30,7 @@ void deviceGPIO(Port* port) {
     // scriptRunner.addScript(1, "$v0=255,log:v0=$v0,$v0=&15,log:AND 15=$v0,$v0=|240,log:OR 240=$v0,$v0=^255,log:XOR 255=$v0,$v0=~,log:NOT=$v0,$v0=1,log:v0=$v0,$v0=<<3,log:SHL 3=$v0,$v0=>>1,log:SHR 1=$v0", RESTART);
 
     // scriptRunner.addScript(2, "$street='ON',$var=56,$fail=261.4,$iot=-26", RESTART);
-    scriptRunner.addScript(1, "$p13=200,if:$p13==0,$display='LOW',else,$display='HIGH',end", RESTART);
+    scriptRunner.addScript(1, "$v0=0,while:$v0<5,$v0=$v0+1,wait(500u),end,$display=$v0", RESTART);
 
     // scriptRunner.runScript(1);
     // scriptRunner.addScript(4, "$v0=($v0+2),$f4=($f4+2.4),log:Counter is $v0 $f4 $counter", RESTART);
