@@ -214,6 +214,7 @@ void onCmd(AsyncWebServerRequest* request) {
   String idStr = request->getParam("id")->value();
   String script = request->getParam("script")->value();
 
+  // Serial.print(script.c_str());
   uint8_t id = idStr.toInt();
 
   script.replace("%2C", ",");

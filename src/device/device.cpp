@@ -27,10 +27,12 @@ void deviceGPIO(Port* port) {
   // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
   // Serial.println(infoFS.uptime);
   if (port->value) {
-    uint32_t event = scriptRunner.hash("button");
-    scriptRunner.emitEvent(event);
-    uint32_t event2 = scriptRunner.hash("button3");
-    scriptRunner.emitEvent(event2);
+    // uint32_t event = scriptRunner.hash("button");
+    // scriptRunner.emitEvent(event);
+    // uint32_t event2 = scriptRunner.hash("button3");
+    // scriptRunner.emitEvent(event2);
+    scriptRunner.printSlotInfo();
+
     // scriptRunner.addScript(2, "$street='ON',$var=56,$fail=261.4,$iot=-26", RESTART);
     // scriptRunner.addScript(1, "$v0=0,while:$v0<10,$v0=$v0+1,$display=$v0,wait(20s),end", RESTART);
 
@@ -38,6 +40,9 @@ void deviceGPIO(Port* port) {
     // scriptRunner.addScript(4, "$v0=($v0+2),$f4=($f4+2.4),log:Counter is $v0 $f4 $counter", RESTART);
     // scriptRunner.addScript(9, "$counter+2,log:Counter is $counter,$s0='test',$s0+'tttt',$s0+25,$v1=153,$v1=@99,$s0+$v1,log:Length $s0#,log:String $s0 $v1", RESTART);
     // scriptRunner.addScript(5, "if:$v0>=5&&$f4>16.7,call:2,end", RESTART);
+
+    // scriptRunner.registerScript(2, "$v0=1,while:$v0<10,$v0=$v0+1,$display=$v0,wait(2s),end");
+    // scriptRunner.runScript(2);
   }
   // scriptRunner.addScript(4, "$v1=$p13,log:Port 13 is $v1", RESTART);
   if (port->value) {
