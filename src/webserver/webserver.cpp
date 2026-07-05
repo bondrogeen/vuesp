@@ -238,8 +238,8 @@ void onCmd(AsyncWebServerRequest* request) {
   strncpy(cmdScriptBuffer, script.c_str(), 255);
   cmdScriptBuffer[255] = '\0';
 
-  // bool result = scriptRunner.addScript(id, cmdScriptBuffer, RESTART);
-  // request->send(200, RES_TYPE_JSON, status(result));
+  bool result = scriptRunner.registerScript(id, cmdScriptBuffer) && scriptRunner.runScript(id);
+  request->send(200, RES_TYPE_JSON, status(result));
 }
 
 void onRoot(AsyncWebServerRequest* request) {

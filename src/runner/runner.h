@@ -24,6 +24,8 @@
 #define MAX_EVENT_HANDLERS 20
 #define MAX_EVENT_NAME_LEN 64
 
+#define EVENT_HANDLER_ID_BASE 100
+
 enum ScriptConflict : uint8_t {
     RESTART = 0
 };
@@ -74,6 +76,7 @@ struct ScriptState {
     bool active;
     bool registered;
     bool inEventHandler;
+    bool isHandler;
     uint8_t id;
     char script[MAX_SCRIPT_LEN];
     uint16_t pos;
@@ -119,6 +122,7 @@ public:
     void stopAll();
     bool isRunning(uint8_t id) const;
     bool isBusy() const;
+    bool removeScript(uint8_t id);
 
     static uint32_t hash(const char* str);
     
