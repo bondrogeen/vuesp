@@ -6,6 +6,471 @@
 
 ScriptRunner* ScriptRunner::_instance = nullptr;
 
+// ============================================
+// СТАТИЧЕСКАЯ ФУНКЦИЯ ХЭШИРОВАНИЯ
+// ============================================
+
+uint32_t ScriptRunner::hash(const char* str) {
+    if (!str) return 0;
+    
+    uint32_t hash = 5381;
+    while (*str) {
+        hash = ((hash << 5) + hash) + *str++;
+    }
+    return hash;
+}
+
+// ============================================
+// УПРАВЛЕНИЕ ХРАНИЛИЩЕМ ТЕЛ ОБРАБОТЧИКОВ
+// ============================================
+
+int ScriptRunner::findFreeHandlerBodySlot() {
+    for (int i = 0; i < MAX_HANDLER_BODIES; i++) {
+        if (!_handlerBodies[i].used) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void ScriptRunner::freeHandlerBodySlot(int slot) {
+    if (slot >= 0 && slot < MAX_HANDLER_BODIES) {
+        _handlerBodies[slot].used = false;
+        _handlerBodies[slot].scriptId = 0;
+        _handlerBodies[slot].body[0] = '\0';
+    }
+}
+
+// ============================================
+// СИСТЕМА СОБЫТИЙ
+// ============================================
+
+bool ScriptRunner::onEvent(uint32_t hash, uint8_t scriptId) {
+    if (_eventHandlerCount >= MAX_EVENT_HANDLERS) {
+        if (_logProvider) {
+            _logProvider("[Runner] ERROR: Too many event handlers!");
+        }
+        return false;
+    }
+    
+    for (int i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && 
+            _eventHandlers[i].hash == hash && 
+            _eventHandlers[i].scriptId == scriptId) {
+            return true;
+        }
+    }
+    
+    _eventHandlers[_eventHandlerCount].hash = hash;
+    _eventHandlers[_eventHandlerCount].scriptId = scriptId;
+    _eventHandlers[_eventHandlerCount].active = true;
+    _eventHandlerCount++;
+    
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, 64, "[Runner] Event handler registered: hash=%u, script=%d", 
+                 hash, scriptId);
+        _logProvider(buf);
+    }
+    
+    return true;
+}
+
+bool ScriptRunner::onEvent(const char* eventName, uint8_t scriptId) {
+    return onEvent(ScriptRunner::hash(eventName), scriptId);
+}
+
+void ScriptRunner::emitEvent(uint32_t hash) {
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, 64, "[Runner] Emitting event: hash=%u", hash);
+        _logProvider(buf);
+    }
+    
+    int calledCount = 0;
+    for (int i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].hash == hash) {
+            uint8_t scriptId = _eventHandlers[i].scriptId;
+            
+            if (_logProvider) {
+                char buf[64];
+                snprintf(buf, 64, "[Runner] Calling handler script %d for event", scriptId);
+                _logProvider(buf);
+            }
+            
+            if (runScript(scriptId)) {
+                calledCount++;
+            }
+        }
+    }
+    
+    if (_logProvider && calledCount == 0) {
+        char buf[64];
+        snprintf(buf, 64, "[Runner] No handlers found for event hash=%u", hash);
+        _logProvider(buf);
+    }
+}
+
+void ScriptRunner::emitEvent(const char* eventName) {
+    emitEvent(ScriptRunner::hash(eventName));
+}
+
+bool ScriptRunner::removeEventHandler(uint32_t hash, uint8_t scriptId) {
+    for (int i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].hash == hash && 
+            _eventHandlers[i].scriptId == scriptId) {
+            _eventHandlers[i].active = false;
+            
+            if (_logProvider) {
+                char buf[64];
+                snprintf(buf, 64, "[Runner] Event handler removed: hash=%u, script=%d", 
+                         hash, scriptId);
+                _logProvider(buf);
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void ScriptRunner::clearAllEventHandlers() {
+    _eventHandlerCount = 0;
+    if (_logProvider) {
+        _logProvider("[Runner] All event handlers cleared");
+    }
+}
+
+// ============================================
+// ОБРАБОТЧИК ON() - ДИНАМИЧЕСКАЯ РЕГИСТРАЦИЯ
+// ============================================
+
+bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) {
+    if (params.count < 1) return false;
+    
+    // ============================================
+    // 1. ПОЛУЧАЕМ И ОЧИЩАЕМ ИМЯ СОБЫТИЯ ОТ КАВЫЧЕК
+    // ============================================
+    
+    const char* rawEventName = params.values[0];
+    char cleanEventName[MAX_EVENT_NAME_LEN] = {0};
+    const char* eventName = rawEventName;
+    
+    int len = strlen(rawEventName);
+    if (len > 2) {
+        char first = rawEventName[0];
+        char last = rawEventName[len - 1];
+        
+        if ((first == '\'' || first == '"') && (last == '\'' || last == '"')) {
+            int cleanLen = len - 2;
+            if (cleanLen >= MAX_EVENT_NAME_LEN) cleanLen = MAX_EVENT_NAME_LEN - 1;
+            strncpy(cleanEventName, rawEventName + 1, cleanLen);
+            cleanEventName[cleanLen] = '\0';
+            eventName = cleanEventName;
+            
+            if (_logProvider) {
+                char buf[128];
+                snprintf(buf, 128, "[Runner] Cleaned event name: '%s' -> '%s'", 
+                         rawEventName, eventName);
+                _logProvider(buf);
+            }
+        }
+    }
+    
+    uint32_t eventHash = ScriptRunner::hash(eventName);
+    
+    if (_logProvider) {
+        char buf[128];
+        snprintf(buf, 128, "[Runner] handleOn: registering event '%s' (hash=%u)", 
+                 eventName, eventHash);
+        _logProvider(buf);
+    }
+    
+    // ============================================
+    // 2. ПРОВЕРКА ДУБЛИКАТОВ
+    // ============================================
+    
+    for (int i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].hash == eventHash) {
+            if (_logProvider) {
+                char buf[64];
+                snprintf(buf, 64, "[Runner] Event '%s' already registered", eventName);
+                _logProvider(buf);
+            }
+            return true;
+        }
+    }
+    
+    // ============================================
+    // 3. ИЗВЛЕКАЕМ ТЕЛО ОБРАБОТЧИКА (до end)
+    // ============================================
+    
+    const char* p = s.script + s.pos;
+    const char* bodyStart = p;
+    int depth = 0;
+    int bodyLen = 0;
+    
+    if (_logProvider) {
+        char buf[256];
+        snprintf(buf, 256, "[Runner] RAW body start at pos %d: '%s'", s.pos, p);
+        _logProvider(buf);
+    }
+    
+    while (*p && (p - s.script) < s.scriptLen) {
+        if (strncmp(p, "on(", 3) == 0) {
+            depth++;
+        }
+        if (strncmp(p, "end", 3) == 0) {
+            if (depth == 0) {
+                bodyLen = p - bodyStart;
+                if (_logProvider) {
+                    char buf[256];
+                    snprintf(buf, 256, "[Runner] Found 'end' at pos %d, bodyLen=%d", 
+                             (int)(p - s.script), bodyLen);
+                    _logProvider(buf);
+                }
+                break;
+            }
+            depth--;
+        }
+        p++;
+    }
+    
+    if (bodyLen == 0) {
+        if (_logProvider) _logProvider("[Runner] ERROR: Empty event handler body");
+        return false;
+    }
+    
+    // ============================================
+    // 4. КОПИРУЕМ ТЕЛО
+    // ============================================
+    
+    char body[MAX_SCRIPT_LEN];
+    strncpy(body, bodyStart, bodyLen);
+    body[bodyLen] = '\0';
+    
+    if (_logProvider) {
+        char buf[512];
+        snprintf(buf, 512, "[Runner] RAW body (%d bytes): '%s'", bodyLen, body);
+        _logProvider(buf);
+    }
+    
+    // ============================================
+    // 5. ПОЛНАЯ ОЧИСТКА ТЕЛА ОТ МУСОРА
+    // ============================================
+    
+    // 5.1. Заменяем все непечатные символы на пробелы
+    for (int i = 0; i < bodyLen; i++) {
+        unsigned char c = (unsigned char)body[i];
+        if (c < 32 && c != ' ') {
+            body[i] = ' ';
+        }
+    }
+    
+    // 5.2. Убираем множественные пробелы
+    char cleaned[MAX_SCRIPT_LEN];
+    int cleanPos = 0;
+    bool lastWasSpace = false;
+    for (int i = 0; body[i]; i++) {
+        if (body[i] == ' ') {
+            if (!lastWasSpace) {
+                cleaned[cleanPos++] = ' ';
+                lastWasSpace = true;
+            }
+        } else {
+            cleaned[cleanPos++] = body[i];
+            lastWasSpace = false;
+        }
+    }
+    cleaned[cleanPos] = '\0';
+    strcpy(body, cleaned);
+    
+    // 5.3. Убираем пробелы вокруг запятых
+    cleanPos = 0;
+    for (int i = 0; body[i]; i++) {
+        if (body[i] == ' ' && body[i+1] == ',') {
+            continue;
+        }
+        cleaned[cleanPos++] = body[i];
+    }
+    cleaned[cleanPos] = '\0';
+    strcpy(body, cleaned);
+    
+    cleanPos = 0;
+    for (int i = 0; body[i]; i++) {
+        if (body[i] == ',' && body[i+1] == ' ') {
+            cleaned[cleanPos++] = ',';
+            i++;
+        } else {
+            cleaned[cleanPos++] = body[i];
+        }
+    }
+    cleaned[cleanPos] = '\0';
+    strcpy(body, cleaned);
+    
+    // 5.4. Убираем запятые и пробелы в начале
+    char* trimmed = body;
+    while (*trimmed == ' ' || *trimmed == ',') trimmed++;
+    
+    // 5.5. Убираем запятые и пробелы в конце
+    int trimLen = strlen(trimmed);
+    while (trimLen > 0 && (trimmed[trimLen-1] == ' ' || trimmed[trimLen-1] == ',')) {
+        trimmed[trimLen-1] = '\0';
+        trimLen--;
+    }
+    
+    // 5.6. Убираем множественные запятые
+    char* write = trimmed;
+    bool lastWasComma = false;
+    for (char* read = trimmed; *read; read++) {
+        if (*read == ',') {
+            if (!lastWasComma) {
+                *write++ = ',';
+                lastWasComma = true;
+            }
+        } else {
+            *write++ = *read;
+            lastWasComma = false;
+        }
+    }
+    *write = '\0';
+    
+    if (_logProvider) {
+        char buf[256];
+        snprintf(buf, 256, "[Runner] FINAL cleaned body: '%s'", trimmed);
+        _logProvider(buf);
+    }
+    
+    if (strlen(trimmed) == 0) {
+        if (_logProvider) _logProvider("[Runner] ERROR: Empty body after cleaning");
+        return false;
+    }
+    
+    // ============================================
+    // 6. НАХОДИМ СВОБОДНЫЙ ID
+    // ============================================
+    
+    uint8_t handlerId = 100;
+    while (findInRegistry(handlerId) != -1 || findById(handlerId) != -1) {
+        handlerId++;
+        if (handlerId > 200) {
+            if (_logProvider) _logProvider("[Runner] ERROR: No free ID for event handler");
+            return false;
+        }
+    }
+    
+    // ============================================
+    // 7. СОХРАНЯЕМ ТЕЛО В ГЛОБАЛЬНОЕ ХРАНИЛИЩЕ
+    // ============================================
+    
+    int bodySlot = findFreeHandlerBodySlot();
+    if (bodySlot == -1) {
+        if (_logProvider) _logProvider("[Runner] ERROR: No free slot for handler body");
+        return false;
+    }
+    
+    _handlerBodies[bodySlot].scriptId = handlerId;
+    strncpy(_handlerBodies[bodySlot].body, trimmed, MAX_HANDLER_BODY_LEN - 1);
+    _handlerBodies[bodySlot].body[MAX_HANDLER_BODY_LEN - 1] = '\0';
+    _handlerBodies[bodySlot].used = true;
+    
+    if (_logProvider) {
+        char buf[256];
+        snprintf(buf, 256, "[Runner] Saved handler body in slot %d: '%s'", 
+                 bodySlot, _handlerBodies[bodySlot].body);
+        _logProvider(buf);
+    }
+    
+    // ============================================
+    // 8. РЕГИСТРИРУЕМ СКРИПТ-ОБРАБОТЧИК
+    // ============================================
+    
+    if (!registerScript(handlerId, _handlerBodies[bodySlot].body)) {
+        if (_logProvider) _logProvider("[Runner] ERROR: Failed to register handler script");
+        freeHandlerBodySlot(bodySlot);
+        return false;
+    }
+    
+    // ============================================
+    // 9. РЕГИСТРИРУЕМ ОБРАБОТЧИК СОБЫТИЯ
+    // ============================================
+    
+    if (!onEvent(eventHash, handlerId)) {
+        if (_logProvider) _logProvider("[Runner] ERROR: Failed to register event handler");
+        return false;
+    }
+    
+    if (_logProvider) {
+        char buf[256];
+        snprintf(buf, 256, "[Runner] Event handler registered: '%s' -> script %d (hash=%u)", 
+                 eventName, handlerId, eventHash);
+        _logProvider(buf);
+    }
+    
+    // ============================================
+    // 10. ПРОПУСКАЕМ ТЕЛО ОБРАБОТЧИКА В ИСХОДНОМ СКРИПТЕ
+    // ============================================
+    
+    s.pos += bodyLen;
+    
+    p = s.script + s.pos;
+    while (*p && (p - s.script) < s.scriptLen) {
+        if (strncmp(p, "end", 3) == 0) {
+            s.pos += 3;
+            if (_logProvider) {
+                char buf[128];
+                snprintf(buf, 128, "[Runner] Skipped 'end', new pos=%d", s.pos);
+                _logProvider(buf);
+            }
+            break;
+        }
+        p++;
+        s.pos++;
+    }
+    
+    return true;
+}
+
+// ============================================
+// ОБРАБОТЧИК REMOVE_ON()
+// ============================================
+
+bool ScriptRunner::handleRemoveOn(const Params& params, ScriptState& s) {
+    if (params.count < 1) return false;
+    
+    const char* eventName = params.values[0];
+    uint32_t eventHash = ScriptRunner::hash(eventName);
+    
+    for (int i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].hash == eventHash) {
+            _eventHandlers[i].active = false;
+            
+            if (_logProvider) {
+                char buf[64];
+                snprintf(buf, 64, "[Runner] Event handler removed: '%s'", eventName);
+                _logProvider(buf);
+            }
+            
+            s.tempResult = 1;
+            s.hasTempResult = true;
+            return true;
+        }
+    }
+    
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, 64, "[Runner] Event handler not found: '%s'", eventName);
+        _logProvider(buf);
+    }
+    
+    s.tempResult = 0;
+    s.hasTempResult = true;
+    return true;
+}
+
+// ============================================
+// КОНСТРУКТОР
+// ============================================
+
 ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     : _defaultStrategy(defaultStrategy)
     , _dataProvider(nullptr)
@@ -17,26 +482,39 @@ ScriptRunner::ScriptRunner(ScriptConflict defaultStrategy)
     , _registryCount(0)
     , _queueHead(0)
     , _queueTail(0)
-    , _queueCount(0) {
+    , _queueCount(0)
+    , _eventHandlerCount(0) {
     
     _instance = this;
-
+    
     if (_logProvider) _logProvider("[Runner] Constructor called");
-
+    
     for (int i = 0; i < MAX_ACTIVE_SCRIPTS; i++) resetScriptState(i);
-
+    
     for (int i = 0; i < MAX_UINT_VARS; i++) _ctx.uintVars[i] = 0;
     for (int i = 0; i < MAX_INT_VARS; i++) _ctx.intVars[i] = 0;
     for (int i = 0; i < MAX_FLOAT_VARS; i++) _ctx.floatVars[i] = 0.0;
     for (int i = 0; i < MAX_STRING_VARS; i++) _ctx.stringVars[i][0] = '\0';
-
+    
     for (int i = 0; i < MAX_ARRAY_VARS; i++) {
         _ctx.arrayLen[i] = 0;
         for (int j = 0; j < MAX_ARRAY_SIZE; j++) {
             _ctx.arrayVars[i][j] = 0;
         }
     }
-
+    
+    for (int i = 0; i < MAX_EVENT_HANDLERS; i++) {
+        _eventHandlers[i].hash = 0;
+        _eventHandlers[i].scriptId = 0;
+        _eventHandlers[i].active = false;
+    }
+    
+    for (int i = 0; i < MAX_HANDLER_BODIES; i++) {
+        _handlerBodies[i].used = false;
+        _handlerBodies[i].scriptId = 0;
+        _handlerBodies[i].body[0] = '\0';
+    }
+    
     if (_logProvider) _logProvider("[Runner] Constructor finished");
 }
 
@@ -44,6 +522,10 @@ ScriptRunner::~ScriptRunner() {
     if (_logProvider) _logProvider("[Runner] Destructor called");
     _instance = nullptr;
 }
+
+// ============================================
+// ПРОВАЙДЕРЫ
+// ============================================
 
 void ScriptRunner::setDataProvider(DataProvider provider) { 
     _dataProvider = provider; 
@@ -64,6 +546,10 @@ void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) {
     _stateChangeProvider = provider; 
     if (_logProvider) _logProvider("[Runner] StateChangeProvider set");
 }
+
+// ============================================
+// РАБОТА С ПЕРЕМЕННЫМИ
+// ============================================
 
 uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
     if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
@@ -128,6 +614,10 @@ uint8_t ScriptRunner::getArrayLen(uint8_t idx) const {
     return 0;
 }
 
+// ============================================
+// УПРАВЛЕНИЕ СКРИПТАМИ
+// ============================================
+
 void ScriptRunner::resetScriptState(int idx) {
     ScriptState& s = _active[idx];
     s.active = false;
@@ -147,12 +637,6 @@ void ScriptRunner::resetScriptState(int idx) {
     s.ifDepth = 0;
     s.inWait = false;
     s.waitUntil = 0;
-    s.waitEvent = nullptr;
-    s.waitEventHash = 0;
-    s.inEvent = false;
-    s.eventHash = 0;
-    s.eventStartTime = 0;
-    s.eventTimeout = 0;
     s.tempResult = 0;
     s.hasTempResult = false;
     s.isWhile = false;
@@ -360,12 +844,33 @@ void ScriptRunner::stopAll() {
     if (_logProvider) _logProvider("[Runner] All scripts stopped");
 }
 
-bool ScriptRunner::isRunning(uint8_t id) const { return findById(id) != -1; }
-bool ScriptRunner::isBusy() const { return _activeCount > 0 || _queueCount > 0; }
+bool ScriptRunner::isRunning(uint8_t id) const { 
+    return findById(id) != -1; 
+}
 
-static bool isDigit(char c) { return c >= '0' && c <= '9'; }
-static bool isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
-static bool isAlphaNum(char c) { return isAlpha(c) || isDigit(c) || c == '_'; }
+bool ScriptRunner::isBusy() const { 
+    return _activeCount > 0 || _queueCount > 0; 
+}
+
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================
+
+static bool isDigit(char c) { 
+    return c >= '0' && c <= '9'; 
+}
+
+static bool isAlpha(char c) { 
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); 
+}
+
+static bool isAlphaNum(char c) { 
+    return isAlpha(c) || isDigit(c) || c == '_'; 
+}
+
+// ============================================
+// ПАРСИНГ
+// ============================================
 
 uint32_t ScriptRunner::parseUint(const char** p) {
     uint32_t val = 0;
@@ -418,23 +923,18 @@ bool ScriptRunner::parseString(const char** p, char* buf) {
 
 uint32_t ScriptRunner::parseTime(const char* str) {
     const char* p = str;
-    while (isDigit(*p) || *p == '.') p++;
-    char numStr[16];
-    strncpy(numStr, str, p - str);
-    numStr[p - str] = '\0';
-    double value = atof(numStr);
+    uint32_t value = 0;
+    while (isDigit(*p)) {
+        value = value * 10 + (*p - '0');
+        p++;
+    }
     char unit = *p;
     switch (unit) {
-        case 'u':
-            return (uint32_t)value;
-        case 's':
-            return (uint32_t)(value * 1000);
-        case 'm':
-            return (uint32_t)(value * 60000);
-        case 'h':
-            return (uint32_t)(value * 3600000);
-        default:
-            return (uint32_t)(value * 1000);
+        case 'u': return value;
+        case 's': return value * 1000;
+        case 'm': return value * 60000;
+        case 'h': return value * 3600000;
+        default:  return value * 1000;
     }
 }
 
@@ -591,13 +1091,9 @@ bool ScriptRunner::parseArray(const char** p, uint8_t idx) {
     return true;
 }
 
-uint32_t ScriptRunner::hashEvent(const char* str) const {
-    uint32_t hash = 5381;
-    while (*str) {
-        hash = ((hash << 5) + hash) + *str++;
-    }
-    return hash;
-}
+// ============================================
+// ОБРАБОТЧИКИ КОМАНД
+// ============================================
 
 bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
     if (params.count < 1) return false;
@@ -615,46 +1111,12 @@ bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
     return false;
 }
 
-bool ScriptRunner::handleOn(const Params& params, ScriptState& s) {
-    if (params.count < 1) return false;
-    
-    char eventName[64] = {0};
-    for (int i = 0; i < params.count && i < 8; i++) {
-        if (i > 0) strcat(eventName, ",");
-        strcat(eventName, params.values[i]);
-    }
-    
-    s.eventHash = hashEvent(eventName);
-    s.inEvent = true;
-    s.eventStartTime = millis();
-    if (params.count > 1) {
-        s.eventTimeout = parseTime(params.values[1]);
-    } else {
-        s.eventTimeout = 0;
-    }
-    if (_logProvider) {
-        char buf[128];
-        snprintf(buf, 128, "[Runner] handleOn: event=%s", eventName);
-        _logProvider(buf);
-    }
-    return true;
-}
-
 bool ScriptRunner::handleWait(const Params& params, ScriptState& s, uint32_t now) {
     if (params.count < 1) return false;
     uint32_t duration = parseTime(params.values[0]);
     if (duration > 0) {
         s.inWait = true;
         s.waitUntil = now + duration;
-    }
-    if (params.count > 1) {
-        s.waitEvent = params.values[1];
-        s.waitEventHash = hashEvent(s.waitEvent);
-    }
-    if (_logProvider) {
-        char buf[64];
-        snprintf(buf, 64, "[Runner] handleWait: duration=%u", duration);
-        _logProvider(buf);
     }
     return true;
 }
@@ -1654,6 +2116,10 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     return false;
 }
 
+// ============================================
+// ОБРАБОТКА КОМАНД
+// ============================================
+
 bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t now) {
     const char* open = strchr(token, '(');
     if (!open) return false;
@@ -1702,7 +2168,8 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     
     bool result = false;
     if (strcmp(cmd, "call") == 0) result = handleCall(params, s);
-    else if (strcmp(cmd, "on") == 0) result = handleOn(params, s);
+    else if (strcmp(cmd, "on") == 0) result = handleOn(params, s, now);
+    else if (strcmp(cmd, "remove_on") == 0) result = handleRemoveOn(params, s);
     else if (strcmp(cmd, "wait") == 0) result = handleWait(params, s, now);
     else if (strcmp(cmd, "set") == 0) result = handleSet(params, s);
     else if (strcmp(cmd, "get") == 0) result = handleGet(params, s);
@@ -1795,9 +2262,14 @@ bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now)
         snprintf(buf, 64, "[Runner] Unknown token: %s", token);
         _logProvider(buf);
     }
-
+    
+    s.pos++;
     return false;
 }
+
+// ============================================
+// ОСНОВНОЙ ЦИКЛ UPDATE
+// ============================================
 
 void ScriptRunner::update() {
     if (_queueCount > 0) {
@@ -1825,26 +2297,9 @@ void ScriptRunner::update() {
             continue;
         }
 
-        if (!s.isInfinite) {
-            if (now - s.startTime > 60000) {
-                s.active = false;
-                removeFromActiveList(idx);
-                i--;
-                continue;
-            }
-        }
-
         if (s.inWait) {
             if (now >= s.waitUntil) {
                 s.inWait = false;
-            } else {
-                continue;
-            }
-        }
-
-        if (s.inEvent) {
-            if (s.eventTimeout > 0 && (now - s.eventStartTime) > s.eventTimeout) {
-                s.inEvent = false;
             } else {
                 continue;
             }
@@ -1877,14 +2332,17 @@ void ScriptRunner::update() {
         }
 
         const char* p = s.script + s.pos;
-
-        while (*p == ',' || *p == ' ') {
+        
+        while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
             p++;
             s.pos++;
             if (s.pos >= s.scriptLen) break;
         }
-
+        
         if (s.pos >= s.scriptLen) {
+            s.active = false;
+            removeFromActiveList(idx);
+            i--;
             continue;
         }
 
@@ -1905,6 +2363,14 @@ void ScriptRunner::update() {
         token[len] = '\0';
         s.pos = p - s.script;
 
+        if (len == 0 || token[0] == '\0') {
+            if (_logProvider) {
+                _logProvider("[Runner] WARNING: Empty token, skipping");
+            }
+            s.pos++;
+            continue;
+        }
+
         if (_logProvider) {
             char buf[128];
             snprintf(buf, 128, "[Runner] Token: %s", token);
@@ -1915,23 +2381,9 @@ void ScriptRunner::update() {
     }
 }
 
-void ScriptRunner::emitEvent(uint32_t hash) {
-    for (int i = 0; i < _activeCount; i++) {
-        ScriptState& s = _active[_activeList[i]];
-        if (s.inEvent && s.eventHash == hash) {
-            s.inEvent = false;
-            if (_logProvider) {
-                char buf[64];
-                snprintf(buf, 64, "[Runner] Event emitted: %u", hash);
-                _logProvider(buf);
-            }
-        }
-    }
-}
-
-void ScriptRunner::emitEvent(const char* eventName) {
-    emitEvent(hashEvent(eventName));
-}
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+// ============================================
 
 void ScriptRunner::setOutput(uint8_t gpio, uint16_t value) {
     if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
@@ -1966,5 +2418,9 @@ void ScriptRunner::setError(const char* msg) {
         _logProvider(buf);
     }
 }
+
+// ============================================
+// ГЛОБАЛЬНЫЙ ЭКЗЕМПЛЯР
+// ============================================
 
 ScriptRunner scriptRunner;
