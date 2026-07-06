@@ -29,8 +29,38 @@ void logProvider(const char* message) {
   Serial.println(message);
 }
 
+bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
+  File file = LittleFS.open("/www/scripts.txt", "r");
+  if (!file) {
+    Serial.print("[Load] id: ");
+    Serial.println(id);
+    return false;
+  }
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) continue;
+    int colon = line.indexOf(':');
+    if (colon == -1) continue;
+
+    int fileId = line.substring(0, colon).toInt();
+    String script = line.substring(colon + 1);
+
+    if (fileId == id) {
+      strcpy(buffer, script.c_str());
+      len = script.length();
+      file.close();
+      Serial.printf("[Load] Script %d loaded (%d bytes)\n", id, len);
+      return true;
+    }
+  }
+
+  file.close();
+  Serial.printf("[Load] Script %d not found\n", id);
+  return false;
+}
+
 void setupFirst() {
-  scriptRunner.setLogProvider(logProvider);
   setupFirstDevice();
   setupFirstGPIO();
 }
@@ -47,6 +77,10 @@ void setupDelay() {
   initWiFi();
   setupDevice();
   setupServer();
+
+  scriptRunner.setLoadProvider(loadScriptFromFS);
+  scriptRunner.setLogProvider(logProvider);
+  scriptRunner.runScript(1);
 
   // String script = String("local x = 10 local y = 25 local z = x + y print('Sum of x+y =',z)");
   // Serial.println(lua.Lua_dostring(&script));
