@@ -24,30 +24,12 @@ void onSendDevice() {
 void deviceGPIO(Port* port) {
   // Serial.print(port->gpio);
   // Serial.println(port->value);
-  // if (port->value) scriptRunner.addScript(10, "13:*200/30", RESTART);
-  // Serial.println(infoFS.uptime);
   if (port->value) {
-    // uint32_t event = scriptRunner.hash("button");
-    // scriptRunner.emitEvent(event);
-    // uint32_t event2 = scriptRunner.hash("button3");
-    // scriptRunner.emitEvent(event2);
+    uint32_t event = scriptRunner.hash("button");
+    scriptRunner.emitEvent(event);
+    uint32_t event2 = scriptRunner.hash("button3");
+    scriptRunner.emitEvent(event2);
     scriptRunner.printSlotInfo();
-
-    // scriptRunner.addScript(2, "$street='ON',$var=56,$fail=261.4,$iot=-26", RESTART);
-    // scriptRunner.addScript(1, "$v0=0,while:$v0<10,$v0=$v0+1,$display=$v0,wait(20s),end", RESTART);
-
-    // scriptRunner.runScript(1);
-    // scriptRunner.addScript(4, "$v0=($v0+2),$f4=($f4+2.4),log:Counter is $v0 $f4 $counter", RESTART);
-    // scriptRunner.addScript(9, "$counter+2,log:Counter is $counter,$s0='test',$s0+'tttt',$s0+25,$v1=153,$v1=@99,$s0+$v1,log:Length $s0#,log:String $s0 $v1", RESTART);
-    // scriptRunner.addScript(5, "if:$v0>=5&&$f4>16.7,call:2,end", RESTART);
-
-    // scriptRunner.registerScript(2, "$v0=1,while:$v0<10,$v0=$v0+1,$display=$v0,wait(2s),end");
-    // scriptRunner.runScript(2);
-  }
-  // scriptRunner.addScript(4, "$v1=$p13,log:Port 13 is $v1", RESTART);
-  if (port->value) {
-    // scriptRunner.addScript(10, "if:$p13==0,$p13=200/20,else,$p13=0/10,end", RESTART);
-    // scriptRunner.addScript(1, "$v0=0,if:$v0==1,log:SKIP_THIS,end,log:DONE", RESTART);
   }
 }
 
@@ -67,7 +49,7 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   Serial.print(" Write:");
   Serial.println(write ? "YES" : "NO");
 
-  if (strcmp(id, "$display") == 0) {
+  if (strcmp(id, "$serial") == 0) {
     if (write) {
       if (kind == KIND_STRING) {
         char buf[65];
@@ -86,7 +68,6 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
     return true;
   }
 
-  // ⭐ ДОБАВИТЬ ОБРАБОТЧИК ДЛЯ $counter
   if (strcmp(id, "$counter") == 0) {
     if (write) {
       if (kind == KIND_INT || kind == KIND_UINT) {
@@ -105,22 +86,10 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   return false;
 }
 
-void myLogProvider(const char* msg) {
-  Serial.println(msg);
-}
-
 void setupDevice() {
-  // scriptRunner.addScript(2, "[5]$p13=255,p5,$p13=0,p5]", RESTART);
-  // scriptRunner.registerScript(1, "$v0=0,loop:*,$v0=$v0+1,$display='Counter:'+$v0,wait(1s),end");
-
   scriptRunner.setDataProvider(dataProvider);
-  scriptRunner.setLogProvider(myLogProvider);
-  scriptRunner.registerScript(1, "$p13=255,wait(100u),$p13=0,on('button'),$display='Pressed',$p13=255,wait(1s),$p13=0,end,on('button3'),$display='Pressed',$p14=1,wait(2s),$p14=0,end");
+  // scriptRunner.registerScript(1, "$p13=255,wait(100u),$p13=0,on('button'),$serial='Pressed',$p13=255,wait(1s),$p13=0,end,on('button3'),$serial='Pressed',$p14=1,wait(2s),$p14=0,end");
   scriptRunner.runScript(1);
-  scriptRunner.registerScript(2, "$p14=1,wait(10s),$p14=0");
-  scriptRunner.runScript(2);
-  // scriptRunner.addScript(2, "[*]14:1,wait:5s,14:0,wait:5s]", RESTART);
-  // scriptRunner.addScript(3, "[*]$p14=1,p50,$p14=0,p50]", RESTART);
 }
 
 void setupFirstDevice() {
