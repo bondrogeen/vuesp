@@ -7,9 +7,11 @@
 #include "../tests/arduino_stub.h"
 #endif
 
-#define MAX_SCRIPTS 10
+#define MAX_SCRIPTS 5
+#define MAX_EVENT_SLOTS 15
 #define MAX_SCRIPT_LEN 256
-#define TOTAL_SLOTS MAX_SCRIPTS
+#define MAX_EVENT_LEN 128
+#define TOTAL_SLOTS (MAX_SCRIPTS + MAX_EVENT_SLOTS)
 
 #define MAX_TOKEN_LEN 48
 #define MAX_UINT_VARS 10
@@ -25,7 +27,8 @@
 #define MAX_EVENT_HANDLERS 20
 #define MAX_EVENT_NAME_LEN 16
 
-#define EVENT_HANDLER_ID_BASE 100
+#define EVENT_HANDLER_ID_BASE 200
+#define SCRIPT_ID_BASE 1
 
 enum ScriptConflict : uint8_t {
     RESTART = 0
@@ -41,6 +44,11 @@ enum DataKind : uint8_t {
     KIND_INT,
     KIND_FLOAT,
     KIND_STRING
+};
+
+enum SlotType : uint8_t {
+    SLOT_SCRIPT = 0,
+    SLOT_EVENT = 1
 };
 
 union DataValue {
@@ -107,6 +115,27 @@ struct ScriptState {
     char whileConditionBuffer[32];
 };
 
+struct EventSlot {
+    bool active;
+    bool registered;
+    bool inEventHandler;
+    bool isHandler;
+    bool isPersistent;
+    uint8_t id;
+    char script[MAX_EVENT_LEN];
+    uint16_t scriptLen;
+    uint16_t slotSize;
+    uint16_t pos;
+    uint32_t startTime;
+    uint32_t lastExecutionTime;
+
+    bool inWait;
+    uint32_t waitUntil;
+
+    int32_t tempResult;
+    bool hasTempResult;
+};
+
 typedef bool (*DataProvider)(const char* id, DataKind kind, DataValue& value, bool write);
 typedef void (*LogProvider)(const char* message);
 typedef bool (*PortProvider)(uint8_t gpio, PortAction action, uint16_t& value);
@@ -134,6 +163,7 @@ public:
     bool isSlotHandler(uint8_t slot) const;
     uint16_t getSlotLen(uint8_t slot) const;
     uint16_t getSlotSize(uint8_t slot) const;
+    SlotType getSlotType(uint8_t slot) const;
 
     uint8_t getTotalSlots() const;
     uint8_t getUsedSlotsCount() const;
@@ -141,7 +171,7 @@ public:
     uint32_t getTotalMemory() const;
     uint32_t getUsedMemory() const;
     uint32_t getFreeMemory() const;
-    void getSlotInfo(uint8_t slot, uint8_t& id, uint16_t& size, uint16_t& used, bool& active, bool& isHandler) const;
+    void getSlotInfo(uint8_t slot, uint8_t& id, uint16_t& size, uint16_t& used, bool& active, bool& isHandler, SlotType& type) const;
     void printSlotInfo() const;
 
     static uint32_t hash(const char* str);
@@ -171,7 +201,8 @@ public:
     void setLoadProvider(LoadProvider provider);
 
 private:
-    ScriptState _slots[TOTAL_SLOTS];
+    ScriptState _slots[MAX_SCRIPTS];
+    EventSlot _eventSlots[MAX_EVENT_SLOTS];
     ScriptContext _ctx;
     EventHandler _eventHandlers[MAX_EVENT_HANDLERS];
     uint8_t _eventHandlerCount;
@@ -185,9 +216,14 @@ private:
     static ScriptRunner* _instance;
 
     void resetScriptState(int idx);
+    void resetEventSlot(int idx);
     int findSlotById(uint8_t id) const;
-    int findFreeSlot() const;
+    int findFreeSlot(uint16_t scriptLen, bool isHandler);
     void initSlotPools();
+
+    bool isHandlerSlot(int idx) const;
+    ScriptState* getScriptSlot(int idx);
+    EventSlot* getEventSlot(int idx);
 
     Params parseParams(const char* str);
     uint32_t parseTime(const char* str);
