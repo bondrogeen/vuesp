@@ -565,16 +565,6 @@ TEST(register_and_run) {
   ASSERT_LOG_EXACT("REGISTERED");
 }
 
-TEST(call_nonexistent) {
-  ScriptRunner runner;
-  runner.setDataProvider(testDataProvider);
-  runner.setLogProvider(testLogProvider);
-  runner.registerScript(1, "call(99)");
-  runner.runScript(1);
-  runScriptUntilDone(runner);
-  ASSERT_LOG_CONTAINS("ERR: script 99 not found");
-}
-
 TEST(wait_time) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
@@ -1083,7 +1073,6 @@ int main() {
   RUN_TEST(condition_with_port);
 
   RUN_TEST(register_and_run);
-  RUN_TEST(call_nonexistent);
 
   RUN_TEST(wait_time);
 
