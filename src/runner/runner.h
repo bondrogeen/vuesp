@@ -7,6 +7,9 @@
 #include "../tests/arduino_stub.h"
 #endif
 
+#include <stdint.h>
+#include <cstring>
+
 #define MAX_SCRIPTS 5
 #define MAX_EVENT_SLOTS 15
 #define MAX_SCRIPT_LEN 256
@@ -20,7 +23,7 @@
 #define MAX_STRING_VARS 2
 #define MAX_ARRAY_VARS 5
 #define MAX_ARRAY_SIZE 64
-#define MAX_STRING_LEN 64
+#define MAX_STRING_LEN 32
 
 #define MAX_PWM_VALUE 255
 #define MAX_PARAMS 4
@@ -78,7 +81,7 @@ struct ScriptContext {
 
 struct Params {
     char values[MAX_PARAMS][32];
-    int count;
+    uint8_t count;
 };
 
 struct ScriptState {
@@ -172,7 +175,6 @@ public:
     uint32_t getUsedMemory() const;
     uint32_t getFreeMemory() const;
     void getSlotInfo(uint8_t slot, uint8_t& id, uint16_t& size, uint16_t& used, bool& active, bool& isHandler, SlotType& type) const;
-    void printSlotInfo() const;
 
     static uint32_t hash(const char* str);
     
@@ -215,6 +217,13 @@ private:
 
     static ScriptRunner* _instance;
 
+    char _tokenBuf[MAX_TOKEN_LEN];
+    char _logBuf[128];
+    char _tempBody[MAX_SCRIPT_LEN];
+    char _resultBuf[MAX_SCRIPT_LEN];
+    char _strBuf[MAX_STRING_LEN];
+    char _nameBuf[32];
+
     void resetScriptState(int idx);
     void resetEventSlot(int idx);
     int findSlotById(uint8_t id) const;
@@ -255,6 +264,21 @@ private:
     void setOutput(uint8_t gpio, uint16_t value);
     bool parseCondition(const char* token, ScriptState& s);
     void setError(const char* msg);
+
+    bool parseVarUint(uint8_t idx, int32_t& result, const char** p, const char* pos);
+    bool parseVarInt(uint8_t idx, int32_t& result, const char** p, const char* pos);
+    bool parseVarFloat(uint8_t idx, int32_t& result, const char** p, const char* pos);
+    bool parseVarString(uint8_t idx, int32_t& result, const char** p, const char* pos);
+    bool parseVarPort(uint8_t idx, int32_t& result, const char** p, const char* pos);
+    bool parseVarData(const char* start, int32_t& result, const char** p);
+
+    // Новые функции для update()
+    void processScript(uint8_t idx, uint32_t now);
+    void processEventSlot(uint8_t idx, uint32_t now);
+    bool getNextToken(ScriptState& s, char* token, uint16_t& tokenLen);
+    bool getNextEventToken(EventSlot& s, char* token, uint16_t& tokenLen);
+    void finishScript(ScriptState& s, uint8_t idx);
+    void finishEventSlot(EventSlot& s, uint8_t idx);
 };
 
 extern ScriptRunner scriptRunner;
