@@ -25,11 +25,14 @@ void deviceGPIO(Port* port) {
   // Serial.print(port->gpio);
   // Serial.println(port->value);
   if (port->value) {
-    uint32_t event = scriptRunner.hash("button");
-    scriptRunner.emitEvent(event);
-    uint32_t event2 = scriptRunner.hash("button3");
-    scriptRunner.emitEvent(event2);
-    scriptRunner.printSlotInfo();
+    // uint32_t event = scriptRunner.hash("EVT1");
+    // scriptRunner.emitEvent(event);
+    // uint32_t event2 = scriptRunner.hash("EVT2");
+    // scriptRunner.emitEvent(event2);
+    // scriptRunner.printSlotInfo();
+
+    scriptRunner.registerScript(1, "$s0='hello',$s1='hello',if:$s0==$s1,$display='EQUAL',else,$display='NOT',end");
+    scriptRunner.runScript(1);
   }
 }
 
@@ -49,7 +52,7 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   Serial.print(" Write:");
   Serial.println(write ? "YES" : "NO");
 
-  if (strcmp(id, "$serial") == 0) {
+  if (strcmp(id, "$display") == 0) {
     if (write) {
       if (kind == KIND_STRING) {
         char buf[65];
@@ -89,7 +92,10 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
   // scriptRunner.registerScript(1, "$p13=255,wait(100u),$p13=0,on('button'),$serial='Pressed',$p13=255,wait(1s),$p13=0,end,on('button3'),$serial='Pressed',$p14=1,wait(2s),$p14=0,end");
-  scriptRunner.runScript(1);
+  // scriptRunner.runScript(1);
+
+    //   scriptRunner.registerScript(2, "on('EVT1'),$display='H1',end,on('EVT2'),$display='H2',end");
+    // scriptRunner.runScript(2);
 }
 
 void setupFirstDevice() {
