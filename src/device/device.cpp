@@ -31,9 +31,9 @@ void deviceGPIO(Port* port) {
     // scriptRunner.emitEvent(event2);
     // scriptRunner.printSlotInfo();
 
-    scriptRunner.registerScript(2, "$s0='hello',$s1='hello',if:$s0==$s1,$display='EQUAL',else,$display='NOT',end");
+    scriptRunner.registerScript(2, "$a0={10;20;30},$v0=len($a0),$display=$v0");
     scriptRunner.runScript(2);
-    scriptRunner.runScript(1);
+    // scriptRunner.runScript(1);
   }
 }
 

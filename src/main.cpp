@@ -1,4 +1,5 @@
 #include "./device/device.h"
+#include "./discovery/discovery.h"
 #include "./files/files.h"
 #include "./gpio/gpio.h"
 #include "./init/init.h"
@@ -77,6 +78,7 @@ void setupDelay() {
   initWiFi();
   setupDevice();
   setupServer();
+  setupDiscovery();
 
   scriptRunner.setLoadProvider(loadScriptFromFS);
   scriptRunner.setLogProvider(logProvider);
@@ -100,6 +102,7 @@ void loop() {
 
   if (isSetup) {
     scriptRunner.update();
+    loopDiscovery(now);
     loopServer(now);
     loopTask(now);
     loopGPIO(now);
