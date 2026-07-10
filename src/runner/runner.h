@@ -11,7 +11,7 @@
 #include <cstring>
 
 #define MAX_SCRIPTS 5
-#define MAX_EVENT_SLOTS 15
+#define MAX_EVENT_SLOTS 10
 #define MAX_SCRIPT_LEN 256
 #define MAX_EVENT_LEN 128
 #define TOTAL_SLOTS (MAX_SCRIPTS + MAX_EVENT_SLOTS)
@@ -21,7 +21,7 @@
 #define MAX_INT_VARS 10
 #define MAX_FLOAT_VARS 5
 #define MAX_STRING_VARS 2
-#define MAX_ARRAY_VARS 5
+#define MAX_ARRAY_VARS 3
 #define MAX_ARRAY_SIZE 64
 #define MAX_STRING_LEN 32
 
@@ -32,6 +32,9 @@
 
 #define EVENT_HANDLER_ID_BASE 200
 #define SCRIPT_ID_BASE 1
+
+#define TOKEN_SEPARATOR ';'
+#define ARRAY_SEPARATOR ','
 
 enum ScriptConflict : uint8_t {
     RESTART = 0
@@ -218,7 +221,7 @@ private:
     static ScriptRunner* _instance;
 
     char _tokenBuf[MAX_TOKEN_LEN];
-    char _logBuf[128];
+    char _logBuf[64];
     char _tempBody[MAX_SCRIPT_LEN];
     char _resultBuf[MAX_SCRIPT_LEN];
     char _strBuf[MAX_STRING_LEN];
@@ -229,10 +232,6 @@ private:
     int findSlotById(uint8_t id) const;
     int findFreeSlot(uint16_t scriptLen, bool isHandler);
     void initSlotPools();
-
-    bool isHandlerSlot(int idx) const;
-    ScriptState* getScriptSlot(int idx);
-    EventSlot* getEventSlot(int idx);
 
     Params parseParams(const char* str);
     uint32_t parseTime(const char* str);
@@ -272,7 +271,6 @@ private:
     bool parseVarPort(uint8_t idx, int32_t& result, const char** p, const char* pos);
     bool parseVarData(const char* start, int32_t& result, const char** p);
 
-    // Новые функции для update()
     void processScript(uint8_t idx, uint32_t now);
     void processEventSlot(uint8_t idx, uint32_t now);
     bool getNextToken(ScriptState& s, char* token, uint16_t& tokenLen);

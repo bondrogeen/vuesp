@@ -243,7 +243,7 @@ void printLog() {
 TEST(variable_assignment_uint) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=42,$display=$v0");
+  runner.registerScript(1, "$v0=42;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 42u);
@@ -253,7 +253,7 @@ TEST(variable_assignment_uint) {
 TEST(variable_assignment_int) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$i0=-10,$display=$i0");
+  runner.registerScript(1, "$i0=-10;$display=$i0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getIntVar(0), -10);
@@ -263,7 +263,7 @@ TEST(variable_assignment_int) {
 TEST(variable_assignment_float) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=3.14,$display=$f0");
+  runner.registerScript(1, "$f0=3.14;$display=$f0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   float val = runner.getFloatVar(0);
@@ -274,7 +274,7 @@ TEST(variable_assignment_float) {
 TEST(variable_assignment_string) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='Hello',$display=$s0");
+  runner.registerScript(1, "$s0='Hello';$display=$s0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("Hello");
@@ -283,7 +283,7 @@ TEST(variable_assignment_string) {
 TEST(arithmetic_add) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=10,$v0=$v0+5,$display=$v0");
+  runner.registerScript(1, "$v0=10;$v0=$v0+5;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 15u);
@@ -293,7 +293,7 @@ TEST(arithmetic_add) {
 TEST(arithmetic_sub) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=20,$v0=$v0-8,$display=$v0");
+  runner.registerScript(1, "$v0=20;$v0=$v0-8;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 12u);
@@ -303,7 +303,7 @@ TEST(arithmetic_sub) {
 TEST(arithmetic_mul) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=6,$v0=$v0*7,$display=$v0");
+  runner.registerScript(1, "$v0=6;$v0=$v0*7;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 42u);
@@ -313,7 +313,7 @@ TEST(arithmetic_mul) {
 TEST(arithmetic_div) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=100,$v0=$v0/4,$display=$v0");
+  runner.registerScript(1, "$v0=100;$v0=$v0/4;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 25u);
@@ -323,7 +323,7 @@ TEST(arithmetic_div) {
 TEST(arithmetic_mod) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=17,$v0=$v0%5,$display=$v0");
+  runner.registerScript(1, "$v0=17;$v0=$v0%5;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 2u);
@@ -333,7 +333,7 @@ TEST(arithmetic_mod) {
 TEST(arithmetic_int_negative) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$i0=20,$i0=8-$i0,$display=$i0");
+  runner.registerScript(1, "$i0=20;$i0=8-$i0;$display=$i0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getIntVar(0), -12);
@@ -343,7 +343,7 @@ TEST(arithmetic_int_negative) {
 TEST(arithmetic_float) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=10.5,$f0=$f0+2.5,$display=$f0");
+  runner.registerScript(1, "$f0=10.5;$f0=$f0+2.5;$display=$f0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   float val = runner.getFloatVar(0);
@@ -354,7 +354,7 @@ TEST(arithmetic_float) {
 TEST(bitwise_and) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=255,$v0=$v0&15,$display=$v0");
+  runner.registerScript(1, "$v0=255;$v0=$v0&15;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 15u);
@@ -364,7 +364,7 @@ TEST(bitwise_and) {
 TEST(bitwise_or) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=240,$v0=$v0|15,$display=$v0");
+  runner.registerScript(1, "$v0=240;$v0=$v0|15;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 255u);
@@ -374,7 +374,7 @@ TEST(bitwise_or) {
 TEST(bitwise_xor) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=255,$v0=$v0^255,$display=$v0");
+  runner.registerScript(1, "$v0=255;$v0=$v0^255;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
@@ -384,7 +384,7 @@ TEST(bitwise_xor) {
 TEST(bitwise_not) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,$v0=~$v0,$display=$v0");
+  runner.registerScript(1, "$v0=0;$v0=~$v0;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ((int32_t)runner.getUintVar(0), -1);
@@ -394,7 +394,7 @@ TEST(bitwise_not) {
 TEST(shift_left) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1,$v0=$v0<<4,$display=$v0");
+  runner.registerScript(1, "$v0=1;$v0=$v0<<4;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 16u);
@@ -404,7 +404,7 @@ TEST(shift_left) {
 TEST(shift_right) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=16,$v0=$v0>>2,$display=$v0");
+  runner.registerScript(1, "$v0=16;$v0=$v0>>2;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 4u);
@@ -414,7 +414,7 @@ TEST(shift_right) {
 TEST(condition_if_true) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1,if:$v0==1,$display='TRUE',else,$display='FALSE',end");
+  runner.registerScript(1, "$v0=1;if:$v0==1;$display='TRUE';else;$display='FALSE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("TRUE");
@@ -424,7 +424,7 @@ TEST(condition_if_true) {
 TEST(condition_if_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,if:$v0==1,$display='TRUE',else,$display='FALSE',end");
+  runner.registerScript(1, "$v0=0;if:$v0==1;$display='TRUE';else;$display='FALSE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("FALSE");
@@ -434,7 +434,7 @@ TEST(condition_if_false) {
 TEST(condition_if_else_chain) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=2,if:$v0==1,$display='ONE',else,if:$v0==2,$display='TWO',else,$display='OTHER',end,end");
+  runner.registerScript(1, "$v0=2;if:$v0==1;$display='ONE';else;if:$v0==2;$display='TWO';else;$display='OTHER';end;end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("TWO");
@@ -443,7 +443,7 @@ TEST(condition_if_else_chain) {
 TEST(condition_logical_and) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1,$v1=1,if:$v0==1&&$v1==1,$display='BOTH',else,$display='NONE',end");
+  runner.registerScript(1, "$v0=1;$v1=1;if:$v0==1&&$v1==1;$display='BOTH';else;$display='NONE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("BOTH");
@@ -452,7 +452,7 @@ TEST(condition_logical_and) {
 TEST(condition_logical_or) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,$v1=1,if:$v0==1||$v1==1,$display='ANY',else,$display='NONE',end");
+  runner.registerScript(1, "$v0=0;$v1=1;if:$v0==1||$v1==1;$display='ANY';else;$display='NONE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("ANY");
@@ -461,7 +461,7 @@ TEST(condition_logical_or) {
 TEST(condition_compare_string) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='LEDON',if:$s0=='LEDON',$display='MATCH',else,$display='NOMATCH',end");
+  runner.registerScript(1, "$s0='LEDON';if:$s0=='LEDON';$display='MATCH';else;$display='NOMATCH';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("MATCH");
@@ -470,7 +470,7 @@ TEST(condition_compare_string) {
 TEST(loop_while) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,while:$v0<5,$v0=$v0+1,end,$display=$v0");
+  runner.registerScript(1, "$v0=0;while:$v0<5;$v0=$v0+1;end;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
@@ -480,7 +480,7 @@ TEST(loop_while) {
 TEST(string_concat) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='hello',$s0=$s0+'world',$display=$s0");
+  runner.registerScript(1, "$s0='hello';$s0=$s0+'world';$display=$s0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("helloworld");
@@ -489,7 +489,7 @@ TEST(string_concat) {
 TEST(string_copy) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='hello',$s1=$s0,$display=$s1");
+  runner.registerScript(1, "$s0='hello';$s1=$s0;$display=$s1");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("hello");
@@ -498,7 +498,7 @@ TEST(string_copy) {
 TEST(string_concat_number) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=42,$s0='Value: ',$s0=$s0+$v0,$display=$s0");
+  runner.registerScript(1, "$v0=42;$s0='Value: ';$s0=$s0+$v0;$display=$s0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("Value: 42");
@@ -507,7 +507,7 @@ TEST(string_concat_number) {
 TEST(string_concat_float) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=3.14,$s0='Pi: ',$s0=$s0+$f0,$display=$s0");
+  runner.registerScript(1, "$f0=3.14;$s0='Pi: ';$s0=$s0+$f0;$display=$s0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("Pi: 3.14");
@@ -516,7 +516,7 @@ TEST(string_concat_float) {
 TEST(string_concat_direct) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='Value: ',$s0=$s0+123,$display=$s0");
+  runner.registerScript(1, "$s0='Value: ';$s0=$s0+123;$display=$s0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("Value: 123");
@@ -538,7 +538,7 @@ TEST(port_read) {
   runner.setPortProvider(testPortProvider);
   runner.setStateChangeProvider(testStateChangeProvider);
   virtualPins[13] = 200;
-  runner.registerScript(1, "$v0=$p13,$display=$v0");
+  runner.registerScript(1, "$v0=$p13;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 200u);
@@ -550,7 +550,7 @@ TEST(condition_with_port) {
   runner.setDataProvider(testDataProvider);
   runner.setPortProvider(testPortProvider);
   virtualPins[13] = 0;
-  runner.registerScript(1, "if:$p13==0,$display='LOW',else,$display='HIGH',end");
+  runner.registerScript(1, "if:$p13==0;$display='LOW';else;$display='HIGH';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("LOW");
@@ -569,7 +569,7 @@ TEST(wait_time) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   uint32_t start = stub_millis;
-  runner.registerScript(1, "$display='START',wait(100u),$display='END'");
+  runner.registerScript(1, "$display='START';wait(100u);$display='END'");
   runner.runScript(1);
   runScriptUntilDone(runner, 50);
   uint32_t elapsed = stub_millis - start;
@@ -581,7 +581,7 @@ TEST(wait_time) {
 TEST(nested_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1,$v1=1,if:$v0==1,if:$v1==1,$display='DEEP',end,end");
+  runner.registerScript(1, "$v0=1;$v1=1;if:$v0==1;if:$v1==1;$display='DEEP';end;end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("DEEP");
@@ -590,7 +590,7 @@ TEST(nested_if) {
 TEST(loop_in_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,$v1=1,if:$v1==1,while:$v0<3,$v0=$v0+1,end,end,$display=$v0");
+  runner.registerScript(1, "$v0=0;$v1=1;if:$v1==1;while:$v0<3;$v0=$v0+1;end;end;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 3u);
@@ -600,7 +600,7 @@ TEST(loop_in_if) {
 TEST(float_copy) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=3.14,$f1=$f0,$display=$f1");
+  runner.registerScript(1, "$f0=3.14;$f1=$f0;$display=$f1");
   runner.runScript(1);
   runScriptUntilDone(runner);
   float val = runner.getFloatVar(1);
@@ -637,7 +637,7 @@ TEST(strategy_restart_if_same) {
 TEST(macro_var_to_var) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=99,$v1=$v0,$display=$v1");
+  runner.registerScript(1, "$v0=99;$v1=$v0;$display=$v1");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(1), 99u);
@@ -647,7 +647,7 @@ TEST(macro_var_to_var) {
 TEST(macro_float_to_uint) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=12.5,$v0=$f0,$display=$v0");
+  runner.registerScript(1, "$f0=12.5;$v0=$f0;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 12u);
@@ -657,7 +657,7 @@ TEST(macro_float_to_uint) {
 TEST(variable_increment) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=5,$v0=$v0+3,$display=$v0");
+  runner.registerScript(1, "$v0=5;$v0=$v0+3;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 8u);
@@ -667,7 +667,7 @@ TEST(variable_increment) {
 TEST(variable_decrement) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=10,$v0=$v0-4,$display=$v0");
+  runner.registerScript(1, "$v0=10;$v0=$v0-4;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 6u);
@@ -677,7 +677,7 @@ TEST(variable_decrement) {
 TEST(variable_multiply_assign) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=4,$v0=$v0*5,$display=$v0");
+  runner.registerScript(1, "$v0=4;$v0=$v0*5;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 20u);
@@ -687,7 +687,7 @@ TEST(variable_multiply_assign) {
 TEST(variable_divide_assign) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=30,$v0=$v0/6,$display=$v0");
+  runner.registerScript(1, "$v0=30;$v0=$v0/6;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
@@ -697,7 +697,7 @@ TEST(variable_divide_assign) {
 TEST(array_init) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10;20;30},$v2=len($a0),$display=$v2");
+  runner.registerScript(1, "$a0={10,20,30};$v2=len($a0);$display=$v2");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getArrayLen(0), 3u);
@@ -707,7 +707,7 @@ TEST(array_init) {
 TEST(array_get) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10;20;30},$v0=get($a0,1),$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30};$v0=get($a0,1);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 20u);
@@ -717,7 +717,7 @@ TEST(array_get) {
 TEST(array_set) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10;20;30},set($a0,1,99),$v0=get($a0,1),$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30};set($a0,1,99);$v0=get($a0,1);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 99u);
@@ -727,7 +727,7 @@ TEST(array_set) {
 TEST(array_copy) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10;20;30},$a1=$a0,$v0=get($a1,0),$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30};$a1=$a0;$v0=get($a1,0);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 10u);
@@ -737,7 +737,7 @@ TEST(array_copy) {
 TEST(array_len) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10;20;30},$v2=len($a0),$display=$v2");
+  runner.registerScript(1, "$a0={10,20,30};$v2=len($a0);$display=$v2");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(2), 3u);
@@ -747,7 +747,7 @@ TEST(array_len) {
 TEST(chr_ord) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0=chr(65),$v0=ord($s0),$display=$v0");
+  runner.registerScript(1, "$s0=chr(65);$v0=ord($s0);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 65u);
@@ -758,7 +758,7 @@ TEST(division_by_zero) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.setLogProvider(testLogProvider);
-  runner.registerScript(1, "$v0=10,$v0=$v0/0,$display=$v0");
+  runner.registerScript(1, "$v0=10;$v0=$v0/0;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_TRUE(true);
@@ -782,7 +782,7 @@ TEST(very_long_string) {
   memset(longStr, 'A', sizeof(longStr) - 1);
   longStr[sizeof(longStr) - 1] = '\0';
   char script[256];
-  snprintf(script, sizeof(script), "$s0='%s',$display=$s0", longStr);
+  snprintf(script, sizeof(script), "$s0='%s';$display=$s0", longStr);
   runner.registerScript(1, script);
   runner.runScript(1);
   runScriptUntilDone(runner);
@@ -812,7 +812,7 @@ TEST(recursive_call) {
 TEST(if_without_else) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1,if:$v0==1,$display='TRUE',end,$display='DONE'");
+  runner.registerScript(1, "$v0=1;if:$v0==1;$display='TRUE';end;$display='DONE'");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("TRUE");
@@ -822,7 +822,7 @@ TEST(if_without_else) {
 TEST(if_without_end) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1,if:$v0==1,$display='TRUE'");
+  runner.registerScript(1, "$v0=1;if:$v0==1;$display='TRUE'");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_TRUE(true);
@@ -831,7 +831,7 @@ TEST(if_without_end) {
 TEST(while_with_break) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,while:$v0<10,$v0=$v0+1,if:$v0==5,$v0=10,end,end,$display=$v0");
+  runner.registerScript(1, "$v0=0;while:$v0<10;$v0=$v0+1;if:$v0==5;$v0=10;end;end;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 10u);
@@ -840,7 +840,7 @@ TEST(while_with_break) {
 TEST(array_out_of_bounds) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={1;2;3},$v0=get($a0,10),$display=$v0");
+  runner.registerScript(1, "$a0={1,2,3};$v0=get($a0,10);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
@@ -849,7 +849,7 @@ TEST(array_out_of_bounds) {
 TEST(string_index_out_of_bounds) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='ABC',$v0=ord($s0,10),$display=$v0");
+  runner.registerScript(1, "$s0='ABC';$v0=ord($s0,10);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_TRUE(true);
@@ -858,7 +858,7 @@ TEST(string_index_out_of_bounds) {
 TEST(negative_array_index) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={1;2;3},$v0=get($a0,-1),$display=$v0");
+  runner.registerScript(1, "$a0={1,2,3};$v0=get($a0,-1);$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
@@ -867,7 +867,7 @@ TEST(negative_array_index) {
 TEST(float_compare_equal) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=3.14,$f1=3.14,if:$f0==$f1,$display='EQUAL',else,$display='NOT',end");
+  runner.registerScript(1, "$f0=3.14;$f1=3.14;if:$f0==$f1;$display='EQUAL';else;$display='NOT';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("EQUAL");
@@ -876,17 +876,16 @@ TEST(float_compare_equal) {
 TEST(float_compare_not_equal) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=3.14,$f1=3.15,if:$f0!=$f1,$display='NOT',else,$display='EQUAL',end");
+  runner.registerScript(1, "$f0=3.14;$f1=3.15;if:$f0!=$f1;$display='NOT';else;$display='EQUAL';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("NOT");
 }
 
-
 TEST(string_compare_not_equal) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='hello',$s1='world',if:$s0!=$s1,$display='NOT',else,$display='EQUAL',end");
+  runner.registerScript(1, "$s0='hello';$s1='world';if:$s0!=$s1;$display='NOT';else;$display='EQUAL';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("NOT");
@@ -976,7 +975,7 @@ TEST(invalid_slot_id) {
 TEST(stop_script) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "wait(1000u),$display='SHOULD_NOT_RUN'");
+  runner.registerScript(1, "wait(1000u);$display='SHOULD_NOT_RUN'");
   runner.runScript(1);
   runner.stopScript(1);
   runScriptUntilDone(runner);
@@ -986,8 +985,8 @@ TEST(stop_script) {
 TEST(stop_all) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "wait(1000u),$display='S1'");
-  runner.registerScript(2, "wait(1000u),$display='S2'");
+  runner.registerScript(1, "wait(1000u);$display='S1'");
+  runner.registerScript(2, "wait(1000u);$display='S2'");
   runner.runScript(1);
   runner.runScript(2);
   runner.stopAll();
@@ -1010,7 +1009,7 @@ TEST(wait_until) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   uint32_t start = stub_millis;
-  runner.registerScript(1, "$display='START',wait(50u),wait(50u),$display='END'");
+  runner.registerScript(1, "$display='START';wait(50u);wait(50u);$display='END'");
   runner.runScript(1);
   runScriptUntilDone(runner);
   uint32_t elapsed = stub_millis - start;
@@ -1022,7 +1021,7 @@ TEST(wait_until) {
 TEST(while_infinite_protection) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0,while:$v0<10,$v0=$v0+1,end,$display=$v0");
+  runner.registerScript(1, "$v0=0;while:$v0<10;$v0=$v0+1;end;$display=$v0");
   runner.runScript(1);
   runScriptUntilDone(runner, 50);
   ASSERT_EQ(runner.getUintVar(0), 10u);

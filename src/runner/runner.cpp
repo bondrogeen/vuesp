@@ -263,7 +263,7 @@ bool ScriptRunner::parseArray(const char** p, uint8_t idx) {
         int32_t val = parseInt(&pos);
         _ctx.arrayVars[idx][i] = (uint8_t)val;
         i++;
-        if (*pos == ';') pos++;
+        if (*pos == ARRAY_SEPARATOR) pos++;
     }
     if (*pos != '}') return false;
     pos++;
@@ -278,7 +278,7 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
     bool hasResult = false;
     char pendingOp = '\0';
 
-    while (*p && *p != ',') {
+    while (*p && *p != TOKEN_SEPARATOR) {
         int32_t leftVal;
         if (!parseValue(&p, s, leftVal)) {
             s.ifResult = false;
@@ -510,9 +510,9 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     _tempBody[bodyLen] = '\0';
 
     char* start = _tempBody;
-    while (*start == ',' || *start == ' ') start++;
+    while (*start == ',' || *start == ' ' || *start == TOKEN_SEPARATOR) start++;
     uint16_t end = strlen(start);
-    while (end > 0 && (start[end - 1] == ',' || start[end - 1] == ' ')) end--;
+    while (end > 0 && (start[end - 1] == ',' || start[end - 1] == ' ' || start[end - 1] == TOKEN_SEPARATOR)) end--;
     start[end] = '\0';
     if (start != _tempBody) memmove(_tempBody, start, end + 1);
 
@@ -525,7 +525,7 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
 
     _resultBuf[0] = '\0';
     bool first = true;
-    char* token = strtok(_tempBody, ",");
+    char* token = strtok(_tempBody, ";");
     while (token) {
         while (*token == ' ') token++;
         uint16_t tLen = strlen(token);
@@ -534,11 +534,11 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
             tLen--;
         }
         if (strlen(token) > 0) {
-            if (!first) strcat(_resultBuf, ",");
+            if (!first) strcat(_resultBuf, ";");
             strcat(_resultBuf, token);
             first = false;
         }
-        token = strtok(NULL, ",");
+        token = strtok(NULL, ";");
     }
 
     if (strlen(_resultBuf) == 0) {
@@ -1580,12 +1580,10 @@ bool ScriptRunner::removeScript(uint8_t id) {
     return true;
 }
 
-// ===== НОВЫЕ ФУНКЦИИ ДЛЯ UPDATE() =====
-
 bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen) {
     const char* p = s.script + s.pos;
     
-    while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
+    while (*p == ' ' || *p == TOKEN_SEPARATOR || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
         p++;
         s.pos++;
         if (s.pos >= s.scriptLen) break;
@@ -1603,7 +1601,7 @@ bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen)
     while (*p && (p - s.script) < s.scriptLen) {
         if (*p == '(') parenCount++;
         if (*p == ')') parenCount--;
-        if (*p == ',' && parenCount == 0) break;
+        if (*p == TOKEN_SEPARATOR && parenCount == 0) break;
         p++;
     }
     
@@ -1613,13 +1611,13 @@ bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen)
     token[tokenLen] = '\0';
     s.pos = p - s.script;
     
-    return tokenLen > 0 && token[0] != '\0' && token[0] != ' ' && token[0] != ',';
+    return tokenLen > 0 && token[0] != '\0' && token[0] != TOKEN_SEPARATOR;
 }
 
 bool ScriptRunner::getNextEventToken(EventSlot& s, char* token, uint16_t& tokenLen) {
     const char* p = s.script + s.pos;
     
-    while (*p == ' ' || *p == ',' || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
+    while (*p == ' ' || *p == TOKEN_SEPARATOR || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
         p++;
         s.pos++;
         if (s.pos >= s.scriptLen) break;
@@ -1637,7 +1635,7 @@ bool ScriptRunner::getNextEventToken(EventSlot& s, char* token, uint16_t& tokenL
     while (*p && (p - s.script) < s.scriptLen) {
         if (*p == '(') parenCount++;
         if (*p == ')') parenCount--;
-        if (*p == ',' && parenCount == 0) break;
+        if (*p == TOKEN_SEPARATOR && parenCount == 0) break;
         p++;
     }
     
@@ -1647,7 +1645,7 @@ bool ScriptRunner::getNextEventToken(EventSlot& s, char* token, uint16_t& tokenL
     token[tokenLen] = '\0';
     s.pos = p - s.script;
     
-    return tokenLen > 0 && token[0] != '\0' && token[0] != ' ' && token[0] != ',';
+    return tokenLen > 0 && token[0] != '\0' && token[0] != TOKEN_SEPARATOR;
 }
 
 void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
