@@ -31,9 +31,9 @@ void deviceGPIO(Port* port) {
     // scriptRunner.emitEvent(event2);
     // scriptRunner.printSlotInfo();
 
-    scriptRunner.registerScript(2, "$a0={10,20,30};$v0=len($a0);$display=$v0");
+    scriptRunner.registerScript(2, "$v2=$p13;$a0={10,20,30};$v0=len($a0);$display=$v0");
     scriptRunner.runScript(2);
-    // scriptRunner.runScript(1);
+    scriptRunner.runScript(1);
   }
 }
 
@@ -46,27 +46,14 @@ void getData() {
 }
 uint32_t counter = 0;
 bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
-  Serial.print("[DATA] ID:");
-  Serial.print(id);
-  Serial.print(" Kind:");
-  Serial.print(kind);
-  Serial.print(" Write:");
-  Serial.println(write ? "YES" : "NO");
-
   if (strcmp(id, "$display") == 0) {
     if (write) {
       if (kind == KIND_STRING) {
         char buf[65];
         strncpy(buf, (char*)value.stringVal.data, value.stringVal.len);
         buf[value.stringVal.len] = '\0';
-        Serial.print("[DISPLAY] ");
-        Serial.println(buf);
       } else if (kind == KIND_INT || kind == KIND_UINT) {
-        Serial.print("[DISPLAY] ");
-        Serial.println(value.intVal);
       } else if (kind == KIND_FLOAT) {
-        Serial.print("[DISPLAY] ");
-        Serial.println(value.floatVal);
       }
     }
     return true;
@@ -76,27 +63,17 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
     if (write) {
       if (kind == KIND_INT || kind == KIND_UINT) {
         counter = (uint32_t)value.intVal;
-        Serial.print("[COUNTER] SET TO ");
-        Serial.println(counter);
       }
     } else {
       value.uintVal = counter;
-      Serial.print("[COUNTER] READ = ");
-      Serial.println(counter);
     }
     return true;
   }
-
   return false;
 }
 
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
-  // scriptRunner.registerScript(1, "$p13=255,wait(100u),$p13=0,on('button'),$serial='Pressed',$p13=255,wait(1s),$p13=0,end,on('button3'),$serial='Pressed',$p14=1,wait(2s),$p14=0,end");
-  scriptRunner.runScript(1);
-
-    //   scriptRunner.registerScript(2, "on('EVT1'),$display='H1',end,on('EVT2'),$display='H2',end");
-    // scriptRunner.runScript(2);
 }
 
 void setupFirstDevice() {

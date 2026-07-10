@@ -10,8 +10,13 @@
 #include <stdint.h>
 #include <cstring>
 
+#define ENABLE_LOAD_CACHE 1
+#define LOAD_CACHE_SIZE 2
+
+#define ENABLE_PROVIDER_LOGGING 1
+
 #define MAX_SCRIPTS 5
-#define MAX_EVENT_SLOTS 10
+#define MAX_EVENT_SLOTS 15
 #define MAX_SCRIPT_LEN 256
 #define MAX_EVENT_LEN 128
 #define TOTAL_SLOTS (MAX_SCRIPTS + MAX_EVENT_SLOTS)
@@ -21,7 +26,7 @@
 #define MAX_INT_VARS 10
 #define MAX_FLOAT_VARS 5
 #define MAX_STRING_VARS 2
-#define MAX_ARRAY_VARS 3
+#define MAX_ARRAY_VARS 5
 #define MAX_ARRAY_SIZE 64
 #define MAX_STRING_LEN 32
 
@@ -277,6 +282,39 @@ private:
     bool getNextEventToken(EventSlot& s, char* token, uint16_t& tokenLen);
     void finishScript(ScriptState& s, uint8_t idx);
     void finishEventSlot(EventSlot& s, uint8_t idx);
+
+    #ifdef ENABLE_LOAD_CACHE
+    #define LOAD_CACHE_SIZE 3
+    
+    struct LoadCacheEntry {
+        uint8_t id;
+        char script[MAX_SCRIPT_LEN];
+        uint16_t len;
+        bool valid;
+        uint32_t lastAccess;
+        uint8_t accessCount;
+    };
+    
+    LoadCacheEntry _loadCache[LOAD_CACHE_SIZE];
+    uint32_t _loadCacheHits;
+    uint32_t _loadCacheMisses;
+    LoadProvider _originalLoadProvider;
+    
+    int findInLoadCache(uint8_t id, char* buffer, uint16_t& len);
+    void addToLoadCache(uint8_t id, const char* script, uint16_t len);
+    int findEmptyLoadSlot() const;
+    int findLeastUsedSlot() const;
+    
+    static bool cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len);
+    #endif
+
+    #ifdef ENABLE_PROVIDER_LOGGING
+    void logProviderSet(const char* name, bool enabled);
+    void logPortAction(uint8_t gpio, PortAction action, uint16_t value);
+    void logDataAction(const char* id, DataKind kind, bool write, const char* value);
+    void logLoadAction(uint8_t id, uint16_t len, bool cached);
+    void logCacheDebug(const char* msg);
+    #endif
 };
 
 extern ScriptRunner scriptRunner;

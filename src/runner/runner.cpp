@@ -158,6 +158,11 @@ bool ScriptRunner::parseVarString(uint8_t idx, int32_t& result, const char** p, 
 bool ScriptRunner::parseVarPort(uint8_t idx, int32_t& result, const char** p, const char* pos) {
     uint16_t val = 0;
     if (!_portProvider || !_portProvider(idx, PORT_READ, val)) return false;
+    
+    #ifdef ENABLE_PROVIDER_LOGGING
+    logPortAction(idx, PORT_READ, val);
+    #endif
+    
     result = (int32_t)val;
     *p = pos;
     return true;
@@ -176,16 +181,31 @@ bool ScriptRunner::parseVarData(const char* start, int32_t& result, const char**
     if (_dataProvider(_nameBuf, KIND_INT, dv, false)) {
         result = (int32_t)dv.intVal;
         *p = end;
+        #ifdef ENABLE_PROVIDER_LOGGING
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%d", dv.intVal);
+        logDataAction(_nameBuf, KIND_INT, false, buf);
+        #endif
         return true;
     }
     if (_dataProvider(_nameBuf, KIND_UINT, dv, false)) {
         result = (int32_t)dv.uintVal;
         *p = end;
+        #ifdef ENABLE_PROVIDER_LOGGING
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%u", dv.uintVal);
+        logDataAction(_nameBuf, KIND_UINT, false, buf);
+        #endif
         return true;
     }
     if (_dataProvider(_nameBuf, KIND_FLOAT, dv, false)) {
         result = (int32_t)(dv.floatVal * 1000.0f);
         *p = end;
+        #ifdef ENABLE_PROVIDER_LOGGING
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.2f", dv.floatVal);
+        logDataAction(_nameBuf, KIND_FLOAT, false, buf);
+        #endif
         return true;
     }
     return false;
@@ -618,6 +638,9 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             } else {
                 uint16_t val = 0;
                 if (_portProvider && _portProvider(index, PORT_READ, val)) {
+                    #ifdef ENABLE_PROVIDER_LOGGING
+                    logPortAction(index, PORT_READ, val);
+                    #endif
                     s.tempResult = val;
                     s.hasTempResult = true;
                     return true;
@@ -757,6 +780,9 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     uint8_t gpio = (uint8_t)parseUint(&temp);
                     uint16_t val = 0;
                     if (_portProvider && _portProvider(gpio, PORT_READ, val)) {
+                        #ifdef ENABLE_PROVIDER_LOGGING
+                        logPortAction(gpio, PORT_READ, val);
+                        #endif
                         leftVal = (int32_t)val;
                         hasLeft = true;
                         p2 = temp;
@@ -913,6 +939,9 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             dv.stringVal.data = (uint8_t*)_strBuf;
             dv.stringVal.len = strlen(_strBuf);
             if (_dataProvider(_nameBuf, KIND_STRING, dv, true)) {
+                #ifdef ENABLE_PROVIDER_LOGGING
+                logDataAction(_nameBuf, KIND_STRING, true, _strBuf);
+                #endif
                 return true;
             }
             return false;
@@ -944,6 +973,16 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             }
             if (success) {
                 if (_dataProvider(_nameBuf, kind, dv, true)) {
+                    #ifdef ENABLE_PROVIDER_LOGGING
+                    char buf[64];
+                    switch (kind) {
+                        case KIND_INT: snprintf(buf, sizeof(buf), "%d", dv.intVal); break;
+                        case KIND_UINT: snprintf(buf, sizeof(buf), "%u", dv.uintVal); break;
+                        case KIND_FLOAT: snprintf(buf, sizeof(buf), "%.2f", dv.floatVal); break;
+                        case KIND_STRING: snprintf(buf, sizeof(buf), "%s", (char*)dv.stringVal.data); break;
+                    }
+                    logDataAction(_nameBuf, kind, true, buf);
+                    #endif
                     return true;
                 }
             }
@@ -954,6 +993,11 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             DataValue dv;
             dv.intVal = value;
             if (_dataProvider(_nameBuf, KIND_INT, dv, true)) {
+                #ifdef ENABLE_PROVIDER_LOGGING
+                char buf[32];
+                snprintf(buf, sizeof(buf), "%d", value);
+                logDataAction(_nameBuf, KIND_INT, true, buf);
+                #endif
                 return true;
             }
             return false;
@@ -1457,6 +1501,10 @@ bool ScriptRunner::runScript(uint8_t id) {
             _slots[slot].inIf = false;
             _slots[slot].inWait = false;
             _slots[slot].inEventHandler = false;
+            
+            #ifdef ENABLE_PROVIDER_LOGGING
+            logLoadAction(id, _slots[slot].scriptLen, true);
+            #endif
             return true;
         } else {
             uint8_t eventIdx = slot - MAX_SCRIPTS;
@@ -1473,10 +1521,15 @@ bool ScriptRunner::runScript(uint8_t id) {
             _eventSlots[eventIdx].lastExecutionTime = 0;
             _eventSlots[eventIdx].inWait = false;
             _eventSlots[eventIdx].inEventHandler = false;
+            
+            #ifdef ENABLE_PROVIDER_LOGGING
+            logLoadAction(id, _eventSlots[eventIdx].scriptLen, true);
+            #endif
             return true;
         }
     }
 
+    #ifdef ENABLE_LOAD_CACHE
     if (_loadProvider) {
         char buffer[MAX_SCRIPT_LEN];
         uint16_t len = 0;
@@ -1489,6 +1542,20 @@ bool ScriptRunner::runScript(uint8_t id) {
             }
         }
     }
+    #else
+    if (_loadProvider) {
+        char buffer[MAX_SCRIPT_LEN];
+        uint16_t len = 0;
+        if (_loadProvider(id, buffer, len)) {
+            if (len > 0 && len < MAX_SCRIPT_LEN) {
+                buffer[len] = '\0';
+                if (registerScript(id, buffer, true)) {
+                    return runScript(id);
+                }
+            }
+        }
+    }
+    #endif
 
     return false;
 }
@@ -1958,26 +2025,61 @@ void ScriptRunner::getSlotInfo(uint8_t slot, uint8_t& id, uint16_t& size, uint16
 
 void ScriptRunner::setDataProvider(DataProvider provider) {
     _dataProvider = provider;
+    #ifdef ENABLE_PROVIDER_LOGGING
+    logProviderSet("DataProvider", provider != nullptr);
+    #endif
 }
 
 void ScriptRunner::setLogProvider(LogProvider provider) {
     _logProvider = provider;
+    #ifdef ENABLE_PROVIDER_LOGGING
+    // Не логируем установку логгера через сам логгер
+    #endif
 }
 
 void ScriptRunner::setPortProvider(PortProvider provider) {
     _portProvider = provider;
+    #ifdef ENABLE_PROVIDER_LOGGING
+    logProviderSet("PortProvider", provider != nullptr);
+    #endif
 }
 
 void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) {
     _stateChangeProvider = provider;
+    #ifdef ENABLE_PROVIDER_LOGGING
+    logProviderSet("StateChangeProvider", provider != nullptr);
+    #endif
 }
 
 void ScriptRunner::setLoadProvider(LoadProvider provider) {
+    #ifdef ENABLE_LOAD_CACHE
+    _originalLoadProvider = provider;
+    if (provider) {
+        _loadProvider = cachedLoadProviderWrapper;
+        #ifdef ENABLE_PROVIDER_LOGGING
+        if (_logProvider) _logProvider("[R] LoadProvider set to CACHED wrapper");
+        #endif
+    } else {
+        _loadProvider = nullptr;
+        #ifdef ENABLE_PROVIDER_LOGGING
+        if (_logProvider) _logProvider("[R] LoadProvider set to NULL");
+        #endif
+    }
+    #else
     _loadProvider = provider;
+    #ifdef ENABLE_PROVIDER_LOGGING
+    if (_logProvider) _logProvider("[R] LoadProvider set to ORIGINAL (no cache)");
+    #endif
+    #endif
 }
 
 void ScriptRunner::setOutput(uint8_t gpio, uint16_t value) {
     if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
+    
+    #ifdef ENABLE_PROVIDER_LOGGING
+    logPortAction(gpio, PORT_WRITE, value);
+    #endif
+    
     if (_portProvider) {
         _portProvider(gpio, PORT_WRITE, value);
         if (_stateChangeProvider) {
@@ -1993,12 +2095,157 @@ void ScriptRunner::setError(const char* msg) {
     }
 }
 
+#ifdef ENABLE_PROVIDER_LOGGING
+
+void ScriptRunner::logProviderSet(const char* name, bool enabled) {
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "[R] %s: %s", name, enabled ? "SET" : "CLEARED");
+        _logProvider(buf);
+    }
+}
+
+void ScriptRunner::logPortAction(uint8_t gpio, PortAction action, uint16_t value) {
+    if (_logProvider) {
+        char buf[64];
+        const char* actionStr = (action == PORT_READ) ? "READ" : "WRITE";
+        snprintf(buf, sizeof(buf), "[R] portProvider: gpio: %d %s value: %d", gpio, actionStr, value);
+        _logProvider(buf);
+    }
+}
+
+void ScriptRunner::logDataAction(const char* id, DataKind kind, bool write, const char* value) {
+    if (_logProvider) {
+        char buf[128];
+        const char* kindStr = "";
+        switch (kind) {
+            case KIND_UINT: kindStr = "UINT"; break;
+            case KIND_INT: kindStr = "INT"; break;
+            case KIND_FLOAT: kindStr = "FLOAT"; break;
+            case KIND_STRING: kindStr = "STRING"; break;
+        }
+        const char* actionStr = write ? "WRITE" : "READ";
+        snprintf(buf, sizeof(buf), "[R] dataProvider: %s %s %s: %s", id, kindStr, actionStr, value ? value : "");
+        _logProvider(buf);
+    }
+}
+
+void ScriptRunner::logLoadAction(uint8_t id, uint16_t len, bool cached) {
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "[R] loadProvider: id: %d len: %d %s", 
+                 id, len, cached ? "(CACHED)" : "(LOADED)");
+        _logProvider(buf);
+    }
+}
+
+#endif
+
+#ifdef ENABLE_LOAD_CACHE
+
+int ScriptRunner::findInLoadCache(uint8_t id, char* buffer, uint16_t& len) {
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        if (_loadCache[i].valid && _loadCache[i].id == id) {
+            _loadCache[i].lastAccess = millis();
+            _loadCache[i].accessCount++;
+            strcpy(buffer, _loadCache[i].script);
+            len = _loadCache[i].len;
+            _loadCacheHits++;
+            return i;
+        }
+    }
+    _loadCacheMisses++;
+    return -1;
+}
+
+void ScriptRunner::addToLoadCache(uint8_t id, const char* script, uint16_t len) {  
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        if (_loadCache[i].valid && _loadCache[i].id == id) {
+            _loadCache[i].lastAccess = millis();
+            _loadCache[i].accessCount++;
+            return;
+        }
+    }
+    
+    int slot = findEmptyLoadSlot();
+    if (slot == -1) {
+        slot = findLeastUsedSlot();
+    }
+    
+    if (slot != -1) {
+        _loadCache[slot].id = id;
+        strcpy(_loadCache[slot].script, script);
+        _loadCache[slot].len = len;
+        _loadCache[slot].valid = true;
+        _loadCache[slot].lastAccess = millis();
+        _loadCache[slot].accessCount = 1;
+    }
+}
+
+int ScriptRunner::findEmptyLoadSlot() const {
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        if (!_loadCache[i].valid) return i;
+    }
+    return -1;
+}
+
+int ScriptRunner::findLeastUsedSlot() const {
+    int least = 0;
+    for (uint8_t i = 1; i < LOAD_CACHE_SIZE; i++) {
+        if (_loadCache[i].accessCount < _loadCache[least].accessCount) {
+            least = i;
+        }
+    }
+    return least;
+}
+
+bool ScriptRunner::cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len) {
+    if (!_instance) return false;
+
+    int found = _instance->findInLoadCache(id, buffer, len);
+    if (found != -1) {
+        #ifdef ENABLE_PROVIDER_LOGGING
+        _instance->logLoadAction(id, len, true);
+        #endif
+        return true;
+    }
+    
+    if (_instance->_originalLoadProvider) {
+        bool result = _instance->_originalLoadProvider(id, buffer, len);
+        if (result && len > 0) {
+            #ifdef ENABLE_PROVIDER_LOGGING
+            _instance->logLoadAction(id, len, false);
+            #endif
+            _instance->addToLoadCache(id, buffer, len);
+        }
+        return result;
+    }
+    
+    return false;
+}
+
+#endif // ENABLE_LOAD_CACHE
+
 ScriptRunner::ScriptRunner()
     : _dataProvider(nullptr), _logProvider(nullptr), _portProvider(nullptr),
       _stateChangeProvider(nullptr), _loadProvider(nullptr), _eventHandlerCount(0) {
     _instance = this;
 
     initSlotPools();
+
+    #ifdef ENABLE_LOAD_CACHE
+    _loadCacheHits = 0;
+    _loadCacheMisses = 0;
+    _originalLoadProvider = nullptr;
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        _loadCache[i].valid = false;
+        _loadCache[i].id = 0;
+        _loadCache[i].len = 0;
+        _loadCache[i].script[0] = '\0';
+        _loadCache[i].lastAccess = 0;
+        _loadCache[i].accessCount = 0;
+    }
+    #endif
 
     for (uint8_t i = 0; i < MAX_UINT_VARS; i++) _ctx.uintVars[i] = 0;
     for (uint8_t i = 0; i < MAX_INT_VARS; i++) _ctx.intVars[i] = 0;

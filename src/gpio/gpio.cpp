@@ -163,20 +163,10 @@ void findDallas() {
 }
 
 void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
-  Serial.print("stateChangeProvider: ");
-  Serial.print(newValue);
-  Serial.print(" gpio: ");
-  Serial.println(gpio);
   updatePort(gpio, newValue);
 }
 
 bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
-  Serial.print("portProvider: ");
-  Serial.print(action);
-  Serial.print(" value: ");
-  Serial.print(value);
-  Serial.print(" gpio: ");
-  Serial.println(gpio);
   switch (action) {
     case PORT_READ:
       return getValue(gpio, value);
@@ -187,11 +177,14 @@ bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
   return false;
 }
 
+void setupGPIO() {
+  scriptRunner.setStateChangeProvider(stateChangeProvider);
+  scriptRunner.setPortProvider(portProvider);
+}
+
 void setupFirstGPIO() {
   // getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
   initGPIO();
-  scriptRunner.setStateChangeProvider(stateChangeProvider);
-  scriptRunner.setPortProvider(portProvider);
 }
 
 void loopGPIO(uint32_t now) {
