@@ -17,10 +17,9 @@ void udpReceive() {
   int packetSize = udp.parsePacket();
   while (packetSize > 0) {
     IPAddress senderIp = udp.remoteIP();
-    uint16_t senderPort = udp.remotePort();
-    uint8_t buffer[1500];
+    uint8_t buffer[TX_BUFFER_SIZE];
     int len = udp.read(buffer, packetSize);
-    Serial.printf("[RECV] %d bytes <- %s:%d\n", len, senderIp.toString().c_str(), senderPort);
+    Serial.printf("[RECV] %d bytes <- %s\n", len, senderIp.toString().c_str());
     protocol.handleIncomingData((uint32_t)senderIp, buffer, len);
     packetSize = udp.parsePacket();
   }
