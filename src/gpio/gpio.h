@@ -27,13 +27,8 @@
 
 #include "../init/init.h"
 #include "./webserver/webserver.h"
-// #include "./device/device.h"
-// #include "./files/files.h"
-// #include "./gpio/gpio.h"
-// #include "./init/init.h"
-// #include "./runner/runner.h"
-// #include "./tasks/tasks.h"
 
+void setupGPIO();
 void setupFirstGPIO();
 void loopGPIO(uint32_t now);
 uint16_t getValue(uint8_t gpio, uint16_t& value);

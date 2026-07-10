@@ -64,3 +64,30 @@ void getLoadDef(const char* path, uint8_t* buf, size_t size) {
     writeFile(path, buf, size);
   }
 }
+
+bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
+  File file = LittleFS.open("/scripts.txt", "r");
+  if (!file) {
+    return false;
+  }
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) continue;
+    int colon = line.indexOf(':');
+    if (colon == -1) continue;
+
+    int fileId = line.substring(0, colon).toInt();
+    String script = line.substring(colon + 1);
+
+    if (fileId == id) {
+      strcpy(buffer, script.c_str());
+      len = script.length();
+      file.close();
+      return true;
+    }
+  }
+
+  file.close();
+  return false;
+}

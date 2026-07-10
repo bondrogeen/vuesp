@@ -30,37 +30,6 @@ void logProvider(const char* message) {
   Serial.println(message);
 }
 
-bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
-  File file = LittleFS.open("/www/scripts.txt", "r");
-  if (!file) {
-    Serial.print("[Load] id: ");
-    Serial.println(id);
-    return false;
-  }
-  while (file.available()) {
-    String line = file.readStringUntil('\n');
-    line.trim();
-    if (line.length() == 0) continue;
-    int colon = line.indexOf(':');
-    if (colon == -1) continue;
-
-    int fileId = line.substring(0, colon).toInt();
-    String script = line.substring(colon + 1);
-
-    if (fileId == id) {
-      strcpy(buffer, script.c_str());
-      len = script.length();
-      file.close();
-      Serial.printf("[Load] Script %d loaded (%d bytes)\n", id, len);
-      return true;
-    }
-  }
-
-  file.close();
-  Serial.printf("[Load] Script %d not found\n", id);
-  return false;
-}
-
 void setupFirst() {
   setupFirstDevice();
   setupFirstGPIO();
@@ -76,6 +45,7 @@ void setupDelay() {
   getInfo(&infoFS);
   loadConfig(settings, id);
   initWiFi();
+  setupGPIO();
   setupDevice();
   setupServer();
   setupDiscovery();
