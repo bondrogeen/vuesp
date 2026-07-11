@@ -19,15 +19,14 @@ const app = createApp(App);
 
 (async () => {
   try {
-    const resStruct = await useFetch(`/struct.json`).get().json();
     const res = await useFetch(`/default.json`).get().json();
     
-    if (!resStruct.data.value || !res.data.value) {
+    if (!res.data.value) {
       throw new Error('Failed to load configuration from device');
     }
     
-    const { locales, ...resDefault } = res.data.value;
-    struct.init(resStruct.data.value);
+    const { struct: structData, locales, ...resDefault } = res.data.value;
+    struct.init(structData);
     pinia.use(({ store }) => {
       if (resDefault && store.$id === 'app') {
         store.$patch(resDefault);
