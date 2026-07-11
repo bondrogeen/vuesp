@@ -13,10 +13,10 @@
 #define ENABLE_LOAD_CACHE 1
 #define LOAD_CACHE_SIZE 2
 
-#define ENABLE_PROVIDER_LOGGING 1
+#define ENABLE_PROVIDER_LOGGING 0
 
 #define MAX_SCRIPTS 5
-#define MAX_EVENT_SLOTS 15
+#define MAX_EVENT_SLOTS 10
 #define MAX_SCRIPT_LEN 256
 #define MAX_EVENT_LEN 128
 #define TOTAL_SLOTS (MAX_SCRIPTS + MAX_EVENT_SLOTS)
@@ -284,7 +284,6 @@ private:
     void finishEventSlot(EventSlot& s, uint8_t idx);
 
     #ifdef ENABLE_LOAD_CACHE
-    #define LOAD_CACHE_SIZE 3
     
     struct LoadCacheEntry {
         uint8_t id;
