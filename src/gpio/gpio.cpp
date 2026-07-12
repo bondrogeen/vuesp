@@ -1,12 +1,13 @@
 #include "./gpio.h"
 
 #if defined(ESP8266)
-Port ports[5] = {
+Port ports[6] = {
     {KEY_PORT, 4, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
     {KEY_PORT, 5, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
     {KEY_PORT, 12, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
     {KEY_PORT, 13, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
     {KEY_PORT, 14, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_ON, GPIO_COMMAND_GET},
+    {KEY_PORT, 17, GPIO_MODE_ADC, GPIO_INTERRUPT_OFF, 0, GPIO_STATE_OFF, GPIO_COMMAND_GET},
 };
 #elif defined(ARDUINO_ESP32C3_DEV)
 Port ports[5] = {
@@ -35,7 +36,9 @@ int ports_len = sizeof(ports) / sizeof(ports[0]);
 volatile uint8_t btnStatus = 0;
 uint32_t debounce = 0;
 uint32_t lastTimeGPIO = 0;
+uint32_t lastTimeADC = 0;
 uint32_t isOneWire = 0;
+uint32_t isADC = 0;
 
 void ICACHE_RAM_ATTR btnIsr() {
   btnStatus = 1;
@@ -55,6 +58,10 @@ void initGPIO() {
     if (port.mode == GPIO_MODE_PWM) {
       pinMode(port.gpio, OUTPUT);
       analogWrite(port.gpio, port.value);
+    } else if (port.mode == GPIO_MODE_ADC) {
+      pinMode(port.gpio, INPUT);
+      port.value = analogRead(port.gpio);
+      isADC = 1;
     } else {
       pinMode(port.gpio, port.mode);
       if (port.mode == OUTPUT || port.mode == OUTPUT_OPEN_DRAIN) digitalWrite(port.gpio, port.value);
@@ -69,8 +76,22 @@ void initGPIO() {
 
 void getAll() {
   for (int i = 0; i < ports_len; i++) {
-    if (ports[i].mode != GPIO_MODE_PWM) ports[i].value = digitalRead(ports[i].gpio);
+    if (ports[i].mode == GPIO_MODE_PWM || ports[i].mode == GPIO_MODE_ONEWIRE) continue;
+    if (ports[i].mode == GPIO_MODE_ADC) {
+      ports[i].value = analogRead(ports[i].gpio);
+    } else {
+      ports[i].value = digitalRead(ports[i].gpio);
+    }
     wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
+  }
+}
+
+void getADC() {
+  for (int i = 0; i < ports_len; i++) {
+    if (ports[i].mode == GPIO_MODE_ADC) {
+      ports[i].value = analogRead(ports[i].gpio);
+      wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
+    }
   }
 }
 
@@ -135,6 +156,11 @@ void checkInterrupt() {
     if (port.interrupt == GPIO_INTERRUPT_CHANGE && ports[i].value != port.value) {
       ports[i].value = port.value;
       deviceGPIO(&port);
+      char buffer[16];
+      snprintf(buffer, sizeof(buffer), "btn_%d", port.gpio);
+      scriptRunner.emitEvent(buffer);
+      snprintf(buffer, sizeof(buffer), "btn_%d_%d", port.gpio, port.value);
+      scriptRunner.emitEvent(buffer);
     }
     wsSendAll((uint8_t*)&port, sizeof(port));
   }
@@ -202,6 +228,11 @@ void loopGPIO(uint32_t now) {
     if (isOneWire) {
       findDallas();
     }
+  }
+
+  if (now - lastTimeADC > 1000 && isADC) {
+    lastTimeADC = now;
+    getADC();
   }
 
   if (tasks[KEY_PORT]) {

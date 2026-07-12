@@ -67,6 +67,10 @@
   "ports": "I/O ports",
   "selectLang": "Select language",
   "lang": "Language",
+  "editor": "Editor",
+  "logs": "Logs",
+  "noScripts": "No scripts",
+  "noLogs": "No logs",
   "locale": {
     "ru": "Russian",
     "en": "English"
@@ -80,7 +84,8 @@
     "dashboard": "Dashboard",
     "settings": "Settings",
     "storage": "Storage",
-    "gpio": "GPIO"
+    "gpio": "GPIO",
+    "script": "Script"
   },
   "dialog": {
     "doRestart": "Do you want to restart your device?",
@@ -89,5 +94,61 @@
     "allDel": "All files will be deleted. Are you sure?",
     "wwwDir": "The file belongs to the 'www' directory. <br/> Are you sure you want to delete it?",
     "doUpdate": "Are you sure you want to update the {name}?"
+  },
+  "error": {
+    "syntax": "Syntax error",
+    "missingSeparator": "Missing ';' separator",
+    "missingEnd": "Missing 'end' for {block} block",
+    "missingArgument": "Missing argument for {function}",
+    "unclosedString": "Unclosed string",
+    "unclosedArray": "Unclosed array",
+    "unclosedParenthesis": "Unclosed parenthesis",
+    "unexpectedEnd": "Unexpected 'end'",
+    "elseWithoutIf": "'else' without 'if'",
+    "emptyBlock": "Empty {block} block",
+    "emptyElse": "Empty else block",
+    "unknownCommand": "Unknown command: {command}",
+    "nestedLoop": "Nested loops not allowed",
+
+    "invalidPort": "Invalid port number: {port} (max: {max})",
+    "invalidVariableIndex": "Invalid variable index: {var} (max: {max})",
+    "invalidVariableName": "Invalid variable name: {name}",
+    "invalidCallId": "Invalid call ID: {id} (max: {max})",
+    "invalidValue": "Invalid value: {value}",
+    "invalidArgument": "Invalid argument for {function}",
+    "invalidSuffix": "Invalid time suffix: {suffix} (allowed: s, ms, us)",
+
+    "arrayIndexOutOfBounds": "Array index out of bounds: {index} (max: {max})",
+    "stringIndexOutOfBounds": "String index out of bounds: {index} (max: {max})",
+    "chrValueOutOfRange": "chr() value out of range: {value} (0-255)",
+    "arrayTooLarge": "Array too large: {size} elements (max: {max})",
+    "stringTooLong": "String too long: {length} chars (max: {max})",
+
+    "divisionByZero": "Division by zero",
+    "extraParenthesis": "Extra parenthesis",
+    "nestedBlock": "{block} nesting too deep (max: {max})",
+    "multipleElse": "Multiple 'else' in if block",
+
+    "expectedExpression": "Expected expression",
+    "expectedVariable": "Expected variable",
+    "expectedAssignment": "Expected '='",
+    "expectedComparison": "Expected comparison operator",
+    "expectedString": "Expected string",
+    "expectedArray": "Expected array",
+    "expectedFunction": "Expected function",
+    "expectedValue": "Expected value",
+    "expectedNumber": "Expected number",
+    "expectedBoolean": "Expected boolean value",
+    "expectedStringOrNumber": "Expected string or number",
+
+    "timeNegative": "Time value cannot be negative",
+    "timeZero": "Time value must be greater than 0",
+    "timeInvalidSuffix": "Invalid time suffix: {suffix} (allowed: s, ms, us)",
+    "timeRequired": "wait() requires a time value (e.g., 100ms, 1s)",
+    "timeInArithmetic": "Cannot use time in arithmetic operations",
+
+    "scriptEmpty": "Empty script",
+    "scriptTooLong": "Script too long (max: {max} chars)",
+    "scriptUnknown": "Unknown script error"
   }
 }

@@ -6,6 +6,10 @@ import VueRouter from 'unplugin-vue-router/vite';
 import { compression } from 'vite-plugin-compression2';
 import pkg from '../vue/package.json';
 
+import Icons from 'unplugin-icons/vite';
+import IconsResolver from 'unplugin-icons/resolver';
+import Components from 'unplugin-vue-components/vite';
+
 const path = fileURLToPath(new URL('./src', import.meta.url));
 
 const { name, version, author, description, repository, license, homepage, bugs } = pkg;
@@ -40,6 +44,8 @@ export default defineConfig(({ mode }) => {
         include: /\.(js|css|svg|ttf|woff|eot|json)$/i,
         threshold: 0,
       }),
+      Icons({ autoInstall: true }),
+      Components({ resolvers: [IconsResolver({ prefix: 'icon', enabledCollections: ['ri'] })] }),
     ],
     resolve: {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],

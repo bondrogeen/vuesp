@@ -5,6 +5,7 @@ export const MODE_BOARD_1 = {
   OUTPUT_OPEN_DRAIN: 3,
   PWM: 128,
   ONEWIRE: 129,
+  ADC: 130,
 };
 export const MODE_BOARD_2 = {
   INPUT: 1,
@@ -13,6 +14,7 @@ export const MODE_BOARD_2 = {
   OUTPUT_OPEN_DRAIN: 13,
   PWM: 128,
   ONEWIRE: 129,
+  ADC: 130,
 };
 
 export const COMMAND = {

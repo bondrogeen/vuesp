@@ -6,7 +6,7 @@ Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 char safePass[32];
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
-Notification notification = {KEY_NOTIFICATION, 1, NOTIF_COLOR_TRANSPARENT, 0, 0, "Notification"};
+Message message = {KEY_MESSAGE, MESSAGE_TYPE_LOG, 0, 0, 0, "Message"};
 
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
@@ -25,8 +25,8 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
   if (task == KEY_PORT && info->len == sizeof(port)) {
     memcpy(&port, data, sizeof(port));
   }
-  if (task == KEY_NOTIFICATION && info->len == sizeof(notification)) {
-    memcpy(&notification, data, sizeof(notification));
+  if (task == KEY_MESSAGE && info->len == sizeof(message)) {
+    memcpy(&message, data, sizeof(message));
   }
 }
 
@@ -76,12 +76,12 @@ void scanWiFi() {
 }
 
 void sendNotification() {
-  wsSendAll((uint8_t*)&notification, sizeof(notification));
+  wsSendAll((uint8_t*)&message, sizeof(message));
 }
-void sendNotificationText(const char* message, uint8_t color) {
-  notification.color = color;
-  memset(notification.text, 0, sizeof(notification.text));
-  strcpy(notification.text, message);
+void sendNotificationLog(const char* text) {
+  message.type = MESSAGE_TYPE_LOG;
+  memset(message.text, 0, sizeof(message.text));
+  strcpy(message.text, text);
   sendNotification();
 }
 
@@ -111,8 +111,11 @@ void loopTask(uint32_t now) {
     scanWiFi();
     tasks[KEY_SCAN] = false;
   }
-  if (tasks[KEY_NOTIFICATION]) {
-    sendNotification();
-    tasks[KEY_NOTIFICATION] = false;
+  if (tasks[KEY_MESSAGE]) {
+    if (message.type == MESSAGE_TYPE_SCRIPT) {
+      scriptRunner.registerScript(message.id, message.text);
+      scriptRunner.runScript(message.id);
+    }
+    tasks[KEY_MESSAGE] = false;
   }
 }

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket';
 import { localGet, localSet } from 'vuesp-components/helpers';
 
-import type { IMessageNotification, IStoreWebSocketStore, IStateMain, IMessageSettings, IMessagePort, IMessageProgress, TypeMessage } from '@/types';
+import type { INotification, IStoreWebSocketStore, IStateMain, IMessageSettings, IMessagePort, IMessageProgress, TypeMessage, IMessageMessage } from '@/types';
 
 const initialState = (): IStoreWebSocketStore => ({
   main: {
@@ -14,6 +14,7 @@ const initialState = (): IStoreWebSocketStore => ({
   settings: { wifiDhcp: 1, wifiMode: 1, authMode: 1, version: 1, device: 0, wifiIp: [], wifiSubnet: [], wifiGateway: [], wifiDns: [], wifiSsid: '', wifiPass: '', authLogin: '', authPass: '' },
   progress: { status: 0, empty: 0, size: 0, length: 0 },
   notifications: localGet('notifications', true) || [],
+  message: { type: 0, isNew: 0, timeout: 0, date: 0, text: '' },
 });
 
 export const useWebSocketStore = defineStore('webSocketStore', {
@@ -41,12 +42,16 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main[name] = object;
       this.main = { ...this.main };
     },
-    SET_NOTIFICATION(notification: IMessageNotification) {
-      const date = notification?.date || Date.now();
-      this.notifications = [...this.notifications, { ...notification, date }];
-      localSet('notifications', this.notifications);
+    SET_MESSAGE(message: IMessageMessage) {
+      this.message = message;
+      const { key, type, isNew, timeout, text } = message;
+      if (type === 1) {
+        const date = message?.date || Date.now();
+        this.notifications = [...this.notifications, { key, color: 1, isNew, timeout, text, date }];
+        localSet('notifications', this.notifications);
+      }
     },
-    READ_NOTIFICATION(notification: IMessageNotification) {
+    READ_NOTIFICATION(notification: INotification) {
       this.notifications = this.notifications.map((i) => (notification.date === i.date ? { ...i, isNew: 0 } : i));
       localSet('notifications', this.notifications);
     },
@@ -54,7 +59,7 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.notifications = this.notifications.map((i) => ({ ...i, isNew: 0 }));
       localSet('notifications', this.notifications);
     },
-    REMOVE_NOTIFICATION(notification: IMessageNotification) {
+    REMOVE_NOTIFICATION(notification: INotification) {
       this.notifications = this.notifications.filter((i) => i.date !== notification.date);
       localSet('notifications', this.notifications);
     },
