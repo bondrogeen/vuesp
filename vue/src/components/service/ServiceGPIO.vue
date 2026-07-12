@@ -18,7 +18,7 @@
               </v-button>
 
               <v-text-field
-                v-if="isInput(port) || isPWM(port)"
+                v-if="isInput(port) || isPWM(port) || isADC(port)"
                 hideMessage
                 :modelValue="port.value"
                 :disabled="isInput(port) || !port.state"
@@ -80,6 +80,7 @@ const listMode: IListItem[] = [
   { name: 'OUTPUT_OPEN_DRAIN', value: MODE.value.OUTPUT_OPEN_DRAIN },
   { name: 'PWM', value: MODE.value.PWM },
   { name: 'ONEWIRE', value: MODE.value.ONEWIRE },
+  { name: 'ADC', value: MODE.value.ADC },
   // { name: 'INPUT_PULLDOWN_16', value: 12 }, // 0x04
   // { name: 'WAKEUP_PULLUP', value: 13 }, // 0x05
   // { name: 'WAKEUP_PULLDOWN', value: 15 }, // 0x07
@@ -95,6 +96,7 @@ const listInterrupt: IListItem[] = [
 const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.value.OUTPUT, MODE.value.OUTPUT_OPEN_DRAIN].includes(mode);
 const isInput = ({ mode = 0 }: IMessagePort) => [MODE.value.INPUT, MODE.value.INPUT_PULLUP].includes(mode);
 const isPWM = ({ mode = 0 }: IMessagePort) => [MODE.value.PWM].includes(mode);
+const isADC = ({ mode = 0 }: IMessagePort) => [MODE.value.ADC].includes(mode);
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
 const onInputValue = (port: IMessagePort, value: string) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value: +value });

@@ -149,7 +149,6 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 
   if (!index) {
     progress.size = 0;
-    sendNotificationText("Update", NOTIF_COLOR_BLUE);
     progress.length = request->contentLength();
 #if defined(ESP8266)
     Update.runAsync(true);

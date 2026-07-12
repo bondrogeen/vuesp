@@ -1176,6 +1176,11 @@ void ScriptRunner::emitEvent(uint32_t hash) {
 
 void ScriptRunner::emitEvent(const char* eventName) {
     emitEvent(ScriptRunner::hash(eventName));
+    if (_logProvider) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "[R] emitEvent: %s", eventName);
+        _logProvider(buf);
+    }
 }
 
 bool ScriptRunner::removeEventHandler(uint32_t hash) {

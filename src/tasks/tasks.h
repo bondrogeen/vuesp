@@ -2,19 +2,17 @@
 #define TASKS_H
 
 #include "./eeprom/eeprom.h"
-#include "./init/init.h"
 #include "./files/files.h"
+#include "./init/init.h"
 #include "./webserver/webserver.h"
 
-#define NOTIF_COLOR_TRANSPARENT 0
-#define NOTIF_COLOR_GREEN 1
-#define NOTIF_COLOR_RED 2
-#define NOTIF_COLOR_YELLOW 3
-#define NOTIF_COLOR_BLUE 4
+#define MESSAGE_TYPE_LOG 0
+#define MESSAGE_TYPE_NOTIFICATION 1
+#define MESSAGE_TYPE_SCRIPT 2
 
 void loopTask(uint32_t now);
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task);
-void sendNotificationText(const char* message, uint8_t color);
+void sendNotificationLog(const char* message);
 void sendNotification();
 extern uint8_t tasks[];
 extern Port port;

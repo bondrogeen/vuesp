@@ -3,5 +3,6 @@
   { "name": "menu.dashboard", "icon": "Dashboard", "path": "/dashboard/" },
   { "name": "menu.settings", "icon": "Setting", "path": "/device/settings/" },
   { "name": "menu.storage", "icon": "Store", "path": "/device/storage/" },
-  { "name": "menu.gpio", "icon": "Gpio", "path": "/device/gpio/" }
+  { "name": "menu.gpio", "icon": "Gpio", "path": "/device/gpio/" },
+  { "name": "menu.script", "icon": "Gpio", "path": "/script/" }
 ]

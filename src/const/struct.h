@@ -8,10 +8,10 @@ enum keys {
   KEY_FILES,
   KEY_REBOOT,
   KEY_PORT,
-  KEY_DEVICE,
+  KEY_MESSAGE,
   KEY_DALLAS,
-  KEY_NOTIFICATION,
   KEY_BUFFER,
+  KEY_DEVICE,
   KEY_END
 };
 
@@ -89,13 +89,13 @@ struct Port {
   uint8_t command;
 };
 
-struct Notification {
+struct Message {
   uint8_t key;
-  uint8_t isNew;
-  uint8_t color;
-  uint8_t timeout;
+  uint8_t type;
+  uint8_t id;
+  uint8_t empty;
   uint32_t date;
-  char text[128];
+  char text[256];
 };
 
 struct Dallas {

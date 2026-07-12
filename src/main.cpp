@@ -28,6 +28,7 @@ void setup() {
 
 void logProvider(const char* message) {
   Serial.println(message);
+  sendNotificationLog(message);
 }
 
 void setupFirst() {

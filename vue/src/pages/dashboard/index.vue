@@ -20,7 +20,7 @@
       </template>
     </VDragDrop>
 
-    <app-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : 'Add'" @close="dialogItem = false">
+    <app-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : $t('add')" @close="dialogItem = false">
       <item-edit class="min-h-[330px]" :item="item" :object="main" @button="onButton">
         <template #default="{ item }">
           <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)"></component>

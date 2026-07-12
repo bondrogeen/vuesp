@@ -24,26 +24,11 @@ void onSendDevice() {
 void deviceGPIO(Port* port) {
   // Serial.print(port->gpio);
   // Serial.println(port->value);
-  if (port->value) {
-    // uint32_t event = scriptRunner.hash("EVT1");
-    // scriptRunner.emitEvent(event);
-    // uint32_t event2 = scriptRunner.hash("EVT2");
-    // scriptRunner.emitEvent(event2);
-    // scriptRunner.printSlotInfo();
-
-    scriptRunner.registerScript(2, "$v2=$p13;$a0={10,20,30};$v0=len($a0);$display=$v0");
-    scriptRunner.runScript(2);
-    scriptRunner.runScript(1);
-  }
+  // if (port->value) {
+  //   Serial.print(port->gpio);
+  // }
 }
 
-void getADC() {
-  device.analog = analogRead(A0);
-}
-
-void getData() {
-  getADC();
-}
 uint32_t counter = 0;
 bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   if (strcmp(id, "$display") == 0) {
@@ -83,12 +68,7 @@ void setupFirstDevice() {
 void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
-    getData();
     onSendDevice();
-
-    // buffer.push(random(-55, 55));
-    // Serial.println("Test 1: [3]14:1,p10,14:0,p10]");
-    // scriptRunner.addScript(3, "[3]14:1,p10,14:0,p10]", RESTART);
   }
 
   if (tasks[KEY_BUFFER]) {
@@ -98,7 +78,7 @@ void loopDevice(uint32_t now) {
 
   if (tasks[KEY_DEVICE]) {
     if (device.command == DEVICE_COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
-    if (device.command == DEVICE_COMMAND_TEXT) sendNotification();
+    // if (device.command == DEVICE_COMMAND_TEXT) sendNotification();
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;

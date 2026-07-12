@@ -74,11 +74,13 @@ bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
     String line = file.readStringUntil('\n');
     line.trim();
     if (line.length() == 0) continue;
-    int colon = line.indexOf(':');
-    if (colon == -1) continue;
-
-    int fileId = line.substring(0, colon).toInt();
-    String script = line.substring(colon + 1);
+    int firstColon = line.indexOf(':');
+    if (firstColon == -1) continue;
+    int fileId = line.substring(0, firstColon).toInt();
+    String rest = line.substring(firstColon + 1);
+    int secondColon = rest.indexOf(':');
+    if (secondColon == -1) continue;
+    String script = rest.substring(secondColon + 1);
 
     if (fileId == id) {
       strcpy(buffer, script.c_str());

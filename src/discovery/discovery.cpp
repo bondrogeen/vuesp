@@ -44,8 +44,8 @@ void setupDiscovery() {
 
   protocol.onTextReceived([](uint32_t senderId, const String& text) {
     Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
-    scriptRunner.registerScript(2, text.c_str());
-    scriptRunner.runScript(2);
+    // scriptRunner.registerScript(2, text.c_str());
+    // scriptRunner.runScript(2);
   });
 
   protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {

@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, computed } from 'vue';
+import { computed } from 'vue';
 
 import type { IDashboardItem, IMessageBuffer } from '@/types/';
 
