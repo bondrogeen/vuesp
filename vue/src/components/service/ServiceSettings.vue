@@ -1,44 +1,54 @@
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-    <card-main :title="$t('wifi')">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <v-select class="mb-6" :value="settings.wifiMode" :label="$t('mode')" :list="listWiFi" @change="onSureOffWifi"></v-select>
+    <card-main class="xl:col-span-2 2xl:col-span-3">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <div class="flex justify-between mb-6 md:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $t('wifi') }}</h3>
+          </div>
 
-        <v-text-field v-model="wifiSsid" v-bind="wifiSsidAttrs" :label="$t('ssid')" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
-          <template #icon>
-            <v-icon name="Search"></v-icon>
-          </template>
-        </v-text-field>
+          <div class="mb-6">
+            <v-select :model-value="getValueListWiFi(settings.wifiMode)" :label="$t('mode')" :items="listWiFi" @change="onSureOffWifi" />
+          </div>
 
-        <v-text-field id="wifiPass" v-model="wifiPass" v-bind="wifiPassAttrs" :label="$t('pass')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
-          <template #icon>
-            <v-icon class="size-5" :name="showPass ? 'EyeOpen' : 'EyeClose'"></v-icon>
-          </template>
-        </v-text-field>
+          <v-text-field v-model="wifiSsid" v-bind="wifiSsidAttrs" :label="$t('ssid')" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
+            <template #icon>
+              <icon-ri-search-line></icon-ri-search-line>
+            </template>
+          </v-text-field>
 
-        <v-text-field v-model="rePassword" v-bind="rePasswordAttrs" :label="$t('passRe')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
-          <template #icon>
-            <v-icon class="size-5" :name="showPass ? 'EyeOpen' : 'EyeClose'"></v-icon>
-          </template>
-        </v-text-field>
-      </div>
-    </card-main>
+          <v-text-field id="wifiPass" v-model="wifiPass" v-bind="wifiPassAttrs" :label="$t('pass')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
+            <template #icon>
+              <icon-ri-eye-line v-if="showPass" class="size-5"></icon-ri-eye-line>
+              <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
+            </template>
+          </v-text-field>
 
-    <card-main :title="$t('ipSett')">
-      <template #header>
-        <div class="col-span-full">
-          <VCheckbox v-model="settings.wifiDhcp">{{ $t('dhcp') }}</VCheckbox>
+          <v-text-field v-model="rePassword" v-bind="rePasswordAttrs" :label="$t('passRe')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
+            <template #icon>
+              <icon-ri-eye-line v-if="showPass" class="size-5"></icon-ri-eye-line>
+              <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
+            </template>
+          </v-text-field>
         </div>
-      </template>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <v-text-field v-model="wifiIp" v-bind="wifiIpAttrs" :label="$t('ip')" :disabled="isWifiDHCP" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <div class="flex justify-between mb-6 md:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $t('ipSett') }}</h3>
 
-        <v-text-field v-model="wifiSubnet" v-bind="wifiSubnetAttrs" :label="$t('subnet')" :disabled="isWifiDHCP" />
+            <div>
+              <VCheckbox v-model="settings.wifiDhcp">{{ $t('dhcp') }}</VCheckbox>
+            </div>
+          </div>
 
-        <v-text-field v-model="wifiGateway" v-bind="wifiGatewayAttrs" :label="$t('gateway')" :disabled="isWifiDHCP" />
+          <v-text-field v-model="wifiIp" v-bind="wifiIpAttrs" :label="$t('ip')" :disabled="isWifiDHCP" />
 
-        <v-text-field v-model="wifiDns" v-bind="wifiDnsAttrs" :label="$t('dns')" :disabled="isWifiDHCP" />
+          <v-text-field v-model="wifiSubnet" v-bind="wifiSubnetAttrs" :label="$t('subnet')" :disabled="isWifiDHCP" />
+
+          <v-text-field v-model="wifiGateway" v-bind="wifiGatewayAttrs" :label="$t('gateway')" :disabled="isWifiDHCP" />
+
+          <v-text-field v-model="wifiDns" v-bind="wifiDnsAttrs" :label="$t('dns')" :disabled="isWifiDHCP" />
+        </div>
       </div>
     </card-main>
 
@@ -62,13 +72,15 @@
           @on-icon="showAuthPass = !showAuthPass"
         >
           <template #icon>
-            <v-icon class="size-5" :name="showAuthPass ? 'EyeOpen' : 'EyeClose'"></v-icon>
+            <icon-ri-eye-line v-if="showAuthPass" class="size-5"></icon-ri-eye-line>
+            <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
           </template>
         </v-text-field>
 
         <v-text-field v-model="reAuthPassword" v-bind="reAuthPasswordAttrs" :label="$t('pass')" :type="showAuthPass ? 'text' : 'password'" :disabled="isAuth" @on-icon="showAuthPass = !showAuthPass">
           <template #icon>
-            <v-icon class="size-5" :name="showAuthPass ? 'EyeOpen' : 'EyeClose'"></v-icon>
+            <icon-ri-eye-line v-if="showAuthPass" class="size-5"></icon-ri-eye-line>
+            <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
           </template>
         </v-text-field>
       </div>
@@ -81,7 +93,7 @@
     <card-main :title="$t('system')">
       <template #header>
         <button class="text-gray-400 cursor-pointer" @click="dialogInfo = true">
-          <v-icon name="Info" class="size-5" />
+          <icon-ri-information-line class="size-5" />
         </button>
       </template>
 
@@ -92,17 +104,17 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icon name="Dots" class="rotate-90"></v-icon>
+            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
 
-        <v-list :list="listMenu" @click="onMenu"></v-list>
+        <v-list :items="listMenu" @click="onMenu" />
       </v-dropdown>
     </teleport>
 
-    <app-dialog v-if="showDialog" :title="$t('scan')" size="sm" @close="onClose">
+    <v-dialog v-if="showDialog" :title="$t('scan')" @close="onClose">
       <BlockScan :items="scanList" @select="onSelectSsid" @scan="onScan" />
-    </app-dialog>
+    </v-dialog>
   </div>
 </template>
 
@@ -212,6 +224,8 @@ const listWiFi: IListItem[] = [
   { name: $t('ap'), value: 2 },
   // { name: 'STA + AP', value: 3 },
 ];
+
+const getValueListWiFi = (mode: number) => listWiFi.find((i) => i.value === mode)?.name;
 
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));

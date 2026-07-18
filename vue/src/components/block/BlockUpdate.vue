@@ -9,7 +9,7 @@
         </div>
       </VFile>
 
-      <v-button class="min-w-[100px]" color="blue" size="small" :disabled="Boolean(!file)" @click="onSureFlash(key)">{{ $t('btnUpdate') }}</v-button>
+      <v-button class="min-w-[100px]" color="blue" :disabled="Boolean(!file)" @click="onSureFlash(key)">{{ $t('btnUpdate') }}</v-button>
     </div>
   </div>
 </template>

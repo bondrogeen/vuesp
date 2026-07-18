@@ -82,11 +82,13 @@ struct Files {
 struct Port {
   uint8_t key;
   uint8_t gpio;
+  uint16_t value;
   uint8_t mode;
   uint8_t interrupt;
-  uint16_t value;
-  uint8_t state;
+  uint16_t list;
+  uint8_t disabled;
   uint8_t command;
+  uint16_t empty;
 };
 
 struct Message {

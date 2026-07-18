@@ -6,6 +6,7 @@ export const MODE_BOARD_1 = {
   PWM: 128,
   ONEWIRE: 129,
   ADC: 130,
+  DAC: 131,
 };
 export const MODE_BOARD_2 = {
   INPUT: 1,
@@ -15,6 +16,7 @@ export const MODE_BOARD_2 = {
   PWM: 128,
   ONEWIRE: 129,
   ADC: 130,
+  DAC: 131,
 };
 
 export const COMMAND = {
@@ -24,6 +26,17 @@ export const COMMAND = {
   GPIO_COMMAND_GET_ALL: 3,
   GPIO_COMMAND_CHANGE: 4,
   GPIO_COMMAND_RESTORE: 5,
+};
+
+export const LIST = {
+  GPIO_BIT_INPUT: 1 << 0,
+  GPIO_BIT_INPUT_PULLUP: 1 << 1,
+  GPIO_BIT_OUTPUT: 1 << 2,
+  GPIO_BIT_OUTPUT_OPEN_DRAIN: 1 << 3,
+  GPIO_BIT_PWM: 1 << 4,
+  GPIO_BIT_ONEWIRE: 1 << 5,
+  GPIO_BIT_ADC: 1 << 6,
+  GPIO_BIT_DAC: 1 << 7,
 };
 
 export const getBit = (byte: number, mask: number) => (byte & mask ? 1 : 0);

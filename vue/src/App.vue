@@ -14,7 +14,18 @@
           <span v-if="nameDevice" class="text-gray-400 text-nowrap">{{ nameDevice }}</span>
         </h3>
 
-        <app-nav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar" />
+        <app-nav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
+          <template #icon="{ item }">
+            <icon-ri-home-line v-if="item.icon === 'home'" />
+            <icon-ri-dashboard-line v-else-if="item.icon === 'dashboard'" />
+            <icon-ri-file-code-line v-else-if="item.icon === 'script'" />
+            <icon-ri-equalizer-line v-else-if="item.icon === 'settings'" />
+            <icon-ri-database-2-line v-else-if="item.icon === 'storage'" />
+            <icon-ri-cpu-line v-else-if="item.icon === 'gpio'" />
+
+            <icon-ri-home-line v-else />
+          </template>
+        </app-nav>
 
         <div class="flex-auto"></div>
 
@@ -47,7 +58,7 @@
             <div class="flex items-center justify-between py-4 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 px-2">
               <h5>{{ $t('noti') }}</h5>
 
-              <VButton size="small" color="gray" class="text-sm" :disabled="!isNew" @click="webSocketStore.READ_ALL_NOTIFICATION">{{ $t('mark') }}</VButton>
+              <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="webSocketStore.READ_ALL_NOTIFICATION">{{ $t('mark') }}</VButton>
             </div>
           </template>
           <template #empty>
@@ -57,9 +68,9 @@
       </div>
     </div>
 
-    <app-dialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
+    <v-dialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
 
-    <app-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
+    <v-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
       <BlockInfo v-bind="main.info" :pkg="pkg" class="w-full">
         <template #links="{ links }">
           {{ $t('links') }}:
@@ -68,7 +79,7 @@
           </div>
         </template>
       </BlockInfo>
-    </app-dialog>
+    </v-dialog>
   </div>
 </template>
 

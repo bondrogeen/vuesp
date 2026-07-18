@@ -6,11 +6,11 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icon name="Dots" class="rotate-90"></v-icon>
+            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
 
-        <v-list :list="listMenu" @click="onMenu"></v-list>
+        <v-list :items="listMenu" @click="onMenu" />
       </v-dropdown>
     </div>
 
@@ -20,13 +20,13 @@
       </template>
     </VDragDrop>
 
-    <app-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : $t('add')" @close="dialogItem = false">
+    <v-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : $t('add')" @close="dialogItem = false">
       <item-edit class="min-h-[330px]" :item="item" :object="main" @button="onButton">
         <template #default="{ item }">
           <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)"></component>
         </template>
       </item-edit>
-    </app-dialog>
+    </v-dialog>
   </div>
 </template>
 
