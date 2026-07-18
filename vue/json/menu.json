@@ -1,8 +1,8 @@
 [
-  { "name": "menu.home", "icon": "LogoMini", "path": "/" },
-  { "name": "menu.dashboard", "icon": "Dashboard", "path": "/dashboard/" },
-  { "name": "menu.settings", "icon": "Setting", "path": "/device/settings/" },
-  { "name": "menu.storage", "icon": "Store", "path": "/device/storage/" },
-  { "name": "menu.gpio", "icon": "Gpio", "path": "/device/gpio/" },
-  { "name": "menu.script", "icon": "Gpio", "path": "/script/" }
+  { "name": "menu.home", "icon": "home", "path": "/" },
+  { "name": "menu.dashboard", "icon": "dashboard", "path": "/dashboard/" },
+  { "name": "menu.script", "icon": "script", "path": "/script/" },
+  { "name": "menu.settings", "icon": "settings", "path": "/device/settings/" },
+  { "name": "menu.storage", "icon": "storage", "path": "/device/storage/" },
+  { "name": "menu.gpio", "icon": "gpio", "path": "/device/gpio/" }
 ]

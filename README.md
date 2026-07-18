@@ -17,7 +17,7 @@ Template for your arduino projects with a web interface.
 - ⚡ Binary WebSocket for efficient communication
 - 💾 LittleFS file system support
 - 📱 Responsive design with Tailwind CSS
-- 🔌 Support for multiple ESP platforms (ESP32, ESP8266, Pico32)
+- 🔌 Support for multiple ESP platforms (ESP32, ESP8266)
 - 🛠️ Development server with hot reload
 - 🏗️ Automated GitHub Actions CI/CD
 
@@ -26,7 +26,6 @@ Template for your arduino projects with a web interface.
 - ESP32
 - ESP32-C3-DevKitM-1
 - ESP8266
-- Raspberry Pi Pico W (RP2040)
 
 ## Quick Start
 

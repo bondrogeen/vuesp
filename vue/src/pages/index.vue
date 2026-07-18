@@ -6,11 +6,11 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icon name="Dots" class="rotate-90"></v-icon>
+            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
 
-        <v-list :list="listMenu" @click="onMenu"></v-list>
+        <v-list :items="listMenu" @click="onMenu" />
       </v-dropdown>
     </div>
 

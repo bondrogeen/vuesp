@@ -11,7 +11,7 @@
           >
             <div>{{ value }}</div>
 
-            <v-icon v-if="isLast(path, i)" name="Chevron" class="h-5 w-4 -rotate-90"></v-icon>
+            <icon-ri-arrow-right-s-line v-if="isLast(path, i)" class="h-5 w-4"></icon-ri-arrow-right-s-line>
           </div>
         </div>
 
@@ -21,11 +21,11 @@
       <div class="relative min-h-[260px]">
         <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
 
-        <v-list v-slot="{ item: { name, size, isDir, isFile } }" className="" :list="sortFiles">
+        <v-list v-slot="{ item: { name, size, isDir, isFile } }" className="" :items="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
-              <v-icon name="Folder" v-if="isDir"></v-icon>
-              <v-icon name="File" v-else></v-icon>
+              <icon-ri-folder-6-line v-if="isDir"></icon-ri-folder-6-line>
+              <icon-ri-file-line v-else></icon-ri-file-line>
             </div>
 
             <div>
@@ -38,11 +38,11 @@
           <v-dropdown right="0" left="unset" top="0">
             <template #activator="{ on }">
               <button @click="on.click">
-                <v-icon name="Dots" class="rotate-90"></v-icon>
+                <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
               </button>
             </template>
 
-            <v-list :list="getListMenu(isDir)" @click="onEventList(name, $event)" />
+            <v-list :items="getListMenu(isDir)" @click="onEventList(name, $event)" />
           </v-dropdown>
         </v-list>
       </div>
@@ -52,11 +52,11 @@
       <v-dropdown right="0" left="unset" top="0">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <v-icon name="Dots" class="rotate-90"></v-icon>
+            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
 
-        <v-list :list="mainMenu" @click="onEventService"></v-list>
+        <v-list :items="mainMenu" @click="onEventService" />
       </v-dropdown>
     </Teleport>
   </div>
