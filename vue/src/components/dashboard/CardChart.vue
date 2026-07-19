@@ -1,5 +1,9 @@
 <template>
   <card-base v-bind="props" @click="onClick" size="lg" @open="openDialog">
+    <template #icon="item">
+      <slot name="icon" v-bind="item"></slot>
+    </template>
+
     <template #value>{{ getValue }} °C</template>
     <template #dialog-value>Average {{ getValue }} °C</template>
 

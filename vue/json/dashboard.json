@@ -3,7 +3,7 @@
     "id": "ports.4",
     "name": "ports.4",
     "type": "button",
-    "icon": "Light",
+    "icon": "socket",
     "opts": { "disabled": 1 },
     "args": ["ports.4.value", "ports.4"],
     "set": "({ ...a, value: v, command: 2})",
@@ -13,7 +13,7 @@
     "id": "ports.5",
     "name": "ports.5",
     "type": "button",
-    "icon": "Light",
+    "icon": "plug",
     "opts": { "disabled": 1 },
     "args": ["ports.5.value", "ports.5"],
     "set": "({ ...a, value: v, command: 2})",
@@ -23,7 +23,7 @@
     "id": "ports.12",
     "name": "ports.12",
     "type": "button",
-    "icon": "Bulb",
+    "icon": "bulb",
     "args": ["ports.12.value", "ports.12"],
     "set": "({ ...a, value: v, command: 2})",
     "getTo": "v ? 'ON' : 'OFF'"
@@ -32,7 +32,7 @@
     "id": "ports.13",
     "name": "ports.13",
     "type": "button",
-    "icon": "Bulb",
+    "icon": "bulb",
     "args": ["ports.13.value", "ports.13"],
     "set": "({ ...a, value: v, command: 2})",
     "getTo": "v ? 'ON' : 'OFF'"
@@ -41,17 +41,17 @@
     "id": "ports.14",
     "name": "ports.14",
     "type": "dimmer",
-    "icon": "Vent",
+    "icon": "windy",
     "args": ["ports.14.value", "ports.14"],
     "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "getTo": "v"
   },
-  { "id": "device.analog", "name": "adc", "type": "info", "icon": "Air", "args": ["device.analog"], "getTo": "`${v} ℃`" },
+  { "id": "ports.17", "name": "ports.17", "type": "info", "icon": "snow", "args": ["ports.17.value"], "getTo": "`${v} ℃`" },
   {
     "id": "device.now",
     "name": "now",
     "type": "date",
-    "icon": "Noti",
+    "icon": "timer",
     "args": ["device.now", "device"],
     "set": "({ ...a, now: v, command: 1})",
     "getTo": "new Date(v * 1000).toLocaleDateString()"
@@ -60,9 +60,9 @@
     "id": "device.message",
     "name": "message",
     "type": "list",
-    "icon": "Store",
+    "icon": "store",
     "opts": {
-      "list": [
+      "items": [
         { "name": "Item1", "value": "1" },
         { "name": "Item2", "value": "2" },
         { "name": "Item3", "value": "3" }
@@ -75,7 +75,7 @@
     "id": "notification",
     "name": "Notification",
     "type": "input",
-    "icon": "Noti",
+    "icon": "noti",
     "args": ["device.notification"],
     "set": "({key:11,text:v,color:4,date:0,isNew:1})"
   },
@@ -83,7 +83,7 @@
     "id": "buffer.head",
     "name": "Chart",
     "type": "chart",
-    "icon": "TV",
+    "icon": "chart",
     "args": ["buffer.head", "buffer"],
     "get": "a"
   }

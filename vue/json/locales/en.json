@@ -1,4 +1,5 @@
 {
+  "script": "script | scripts",
   "home": "Home",
   "security": "Security",
   "ipSett": "IP Settings",
@@ -71,6 +72,10 @@
   "logs": "Logs",
   "noScripts": "No scripts",
   "noLogs": "No logs",
+  "length": "length",
+  "attention": "Attention",
+  "yes": "Yes",
+  "no": "No",
   "locale": {
     "ru": "Russian",
     "en": "English"

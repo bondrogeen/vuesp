@@ -101,15 +101,13 @@
     </card-main>
 
     <teleport to="[data-slot='device']">
-      <v-dropdown right="0" left="unset" top="0">
+      <v-select :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
             <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
-
-        <v-list :items="listMenu" @click="onMenu" />
-      </v-dropdown>
+      </v-select>
     </teleport>
 
     <v-dialog v-if="showDialog" :title="$t('scan')" @close="onClose">
@@ -248,7 +246,7 @@ const onReset = () => {
   });
 };
 
-const onSureReboot = () => onDialog({ value: true, title: $t('done'), message: $t('dialog.doRestart'), callback: onReboot });
+const onSureReboot = () => onDialog({ value: true, message: $t('dialog.doRestart'), callback: onReboot });
 const onSureReset = () => onDialog({ value: true, message: $t('dialog.doReset'), callback: onReset });
 
 const onMenu = () => {

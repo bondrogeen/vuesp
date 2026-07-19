@@ -68,7 +68,14 @@
       </div>
     </div>
 
-    <v-dialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
+    <v-dialog v-if="dialog.value" v-slot="{ close }" :title="dialog?.title || $t('attention')" @close="dialog = {}">
+      <div v-html="dialog.message" />
+
+      <div v-if="dialog.callback" class="flex gap-3 mt-4 justify-end">
+        <v-button class="min-w-[100px]" outline color="blue" @click="(dialog.callback(), close())">{{ $t('yes') }}</v-button>
+        <v-button class="min-w-[100px]" color="red" @click="close()">{{ $t('no') }}</v-button>
+      </div>
+    </v-dialog>
 
     <v-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
       <BlockInfo v-bind="main.info" :pkg="pkg" class="w-full">
