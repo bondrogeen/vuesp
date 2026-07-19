@@ -8,7 +8,21 @@ import App from '@/App.vue';
 import router from '@/router/index.ts';
 
 import vuesp from 'vuesp-components';
-import { i18n } from 'vuesp-components/plugins';
+import { i18nPlugin, i18nPluralizer } from 'vuesp-components/plugins';
+import type { I18nPluralRule } from 'vuesp-components/types';
+
+const customRules: Record<string, I18nPluralRule> = {
+  ru: (count, forms) => {
+    if (count === 1) return forms[0];
+    if (count >= 2 && count <= 4) return forms[1];
+    return forms[2];
+  },
+  en: (count, forms) => {
+    return count === 1 ? forms[0] : forms[1];
+  },
+};
+
+const pluralize = i18nPluralizer(customRules);
 
 import 'vuesp-components/dist/style.css';
 
@@ -20,11 +34,11 @@ const app = createApp(App);
 (async () => {
   try {
     const res = await useFetch(`/default.json`).get().json();
-    
+
     if (!res.data.value) {
       throw new Error('Failed to load configuration from device');
     }
-    
+
     const { struct: structData, locales, ...resDefault } = res.data.value;
     struct.init(structData);
     pinia.use(({ store }) => {
@@ -34,9 +48,9 @@ const app = createApp(App);
         store.$patch({ pkg: __APP__ });
       }
     });
-    app.use(i18n, { locales });
+    app.use(i18nPlugin as any, { locales, pluralize });
     app.use(pinia);
-    app.use(vuesp);
+    app.use(vuesp as any);
     app.use(router);
     app.mount('#appVuesp');
   } catch (error) {

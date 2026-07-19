@@ -41,15 +41,13 @@
     </card-main>
 
     <Teleport to="[data-slot='device']">
-      <v-dropdown right="0" left="unset" top="0">
+      <v-select :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
             <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
-
-        <v-list :items="listMenu" @click="onMenu" />
-      </v-dropdown>
+      </v-select>
     </Teleport>
   </div>
 </template>

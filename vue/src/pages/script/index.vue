@@ -4,15 +4,13 @@
       <div class="flex justify-between">
         <h1>{{ $t('menu.script') }}</h1>
 
-        <v-dropdown right="0" left="unset" top="0">
+        <v-select :items="listMenu" @change="onMenu">
           <template #activator="{ on }">
             <v-button color="" type="icon" @click="on.click">
               <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
             </v-button>
           </template>
-
-          <v-list :items="listMenu" @click="onMenu" />
-        </v-dropdown>
+        </v-select>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -41,7 +39,7 @@
             </ul>
 
             <div class="px-2 border-t border-gray-200 dark:border-gray-700 text-slate-400 flex justify-between mt-4 text-xs">
-              <span>{{ scripts.length }} скриптов</span>
+              <span>{{ scripts.length }} {{ $t('script', { count: `${scripts.length}` }) }}</span>
             </div>
 
             <ul>
@@ -67,7 +65,6 @@
               <textarea
                 v-model="content"
                 class="w-full h-full min-h-50 p-4 text-sm outline-0 relative rounded-md border border-gray-200 dark:border-gray-800 flex flex-col field-sizing-content"
-                placeholder="Выберите скрипт"
                 spellcheck="false"
               ></textarea>
             </div>
@@ -75,7 +72,7 @@
             <div class="text-sm border-t border-gray-200 dark:border-gray-700 text-slate-400 flex flex-wrap justify-between mt-4">
               <span>
                 <i class="far fa-file-alt mr-1"></i>
-                {{ selectedScript ? `длина: ${content?.length || 0} символов` : 'нет скрипта' }}
+                {{ selectedScript ? `${$t('length')}: ${content?.length || 0}` : '' }}
               </span>
 
               <!-- <ul>
@@ -124,9 +121,6 @@ import type { IScript, ILog } from './types';
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { timeUtcToString } from 'vuesp-components/helpers';
 // import { ScriptValidatorAPI } from '../../assets/js/ScriptValidator';
-
-// import { KEYS } from '@/types';
-// import { COMMAND } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection';
 import { required, maxLen, minVal, maxVal } from '@/utils/validate';

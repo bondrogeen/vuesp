@@ -35,29 +35,25 @@
             </div>
           </div>
 
-          <v-dropdown right="0" left="unset" top="0">
+          <v-select :items="getListMenu(isDir)" @change="onEventList(name, $event)">
             <template #activator="{ on }">
-              <button @click="on.click">
+              <v-button color="" type="icon" @click="on.click">
                 <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
-              </button>
+              </v-button>
             </template>
-
-            <v-list :items="getListMenu(isDir)" @click="onEventList(name, $event)" />
-          </v-dropdown>
+          </v-select>
         </v-list>
       </div>
     </card-main>
 
     <Teleport to="[data-slot='device']">
-      <v-dropdown right="0" left="unset" top="0">
+      <v-select :items="mainMenu" @change="onEventService">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
             <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
-
-        <v-list :items="mainMenu" @click="onEventService" />
-      </v-dropdown>
+      </v-select>
     </Teleport>
   </div>
 </template>
