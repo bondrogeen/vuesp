@@ -32,15 +32,12 @@
 #define MAX_EVENT_HANDLERS 20
 #define MAX_EVENT_NAME_LEN 16
 
-#define EVENT_HANDLER_ID_BASE 200
 #define SCRIPT_ID_BASE 1
 
 #define TOKEN_SEPARATOR ';'
 #define ARRAY_SEPARATOR ','
 
-enum ScriptConflict : uint8_t {
-    RESTART = 0
-};
+#define SCRIPT_EXEC_INTERVAL_MS 10
 
 enum PortAction : uint8_t {
     PORT_READ = 0,
@@ -195,22 +192,22 @@ private:
 
     char _tokenBuf[MAX_TOKEN_LEN];
     char _logBuf[64];
-    char _tempBody[MAX_SCRIPT_LEN];
-    char _resultBuf[MAX_SCRIPT_LEN];
+    char _handlerBody[MAX_SCRIPT_LEN];
+    char _cleanedBody[MAX_SCRIPT_LEN];
     char _strBuf[MAX_STRING_LEN];
     char _nameBuf[32];
 
     void resetScriptState(int idx);
     int findSlotById(uint8_t id) const;
-    int findFreeSlot(uint16_t scriptLen, bool isHandler);
+    int findFreeSlot(uint16_t scriptLen);
     void initSlotPools();
 
-    Params parseParams(const char* str);
-    uint32_t parseTime(const char* str);
-    uint32_t parseUint(const char** p);
-    int32_t parseInt(const char** p);
-    float parseFloat(const char** p);
-    bool parseString(const char** p, char* buf);
+    Params parseParams(const char* str) const;
+    uint32_t parseTime(const char* str) const;
+    uint32_t parseUint(const char** p) const;
+    int32_t parseInt(const char** p) const;
+    float parseFloat(const char** p) const;
+    bool parseString(const char** p, char* buf) const;
     bool parseValue(const char** p, ScriptState& s, int32_t& result);
     bool parseArray(const char** p, uint8_t idx);
 
@@ -275,7 +272,6 @@ private:
     void logPortAction(uint8_t gpio, PortAction action, uint16_t value);
     void logDataAction(const char* id, DataKind kind, bool write, const char* value);
     void logLoadAction(uint8_t id, uint16_t len, bool cached);
-    void logCacheDebug(const char* msg);
     #endif
 };
 
