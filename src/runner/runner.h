@@ -16,7 +16,7 @@
 
 #define ENABLE_PROVIDER_LOGGING 1
 
-#define MAX_SCRIPTS 10
+#define MAX_SCRIPTS 15
 #define MAX_SCRIPT_LEN 256
 #define MAX_TOKEN_LEN 48
 #define MAX_UINT_VARS 10
@@ -236,11 +236,11 @@ private:
     bool parseCondition(const char* token, ScriptState& s);
     void setError(const char* msg);
 
-    bool parseVarUint(uint8_t idx, int32_t& result, const char** p, const char* pos);
-    bool parseVarInt(uint8_t idx, int32_t& result, const char** p, const char* pos);
-    bool parseVarFloat(uint8_t idx, int32_t& result, const char** p, const char* pos);
-    bool parseVarString(uint8_t idx, int32_t& result, const char** p, const char* pos);
-    bool parseVarPort(uint8_t idx, int32_t& result, const char** p, const char* pos);
+    bool parseVarUint(uint8_t idx, int32_t& result);
+    bool parseVarInt(uint8_t idx, int32_t& result);
+    bool parseVarFloat(uint8_t idx, int32_t& result);
+    bool parseVarString(uint8_t idx, int32_t& result);
+    bool parseVarPort(uint8_t idx, int32_t& result);
     bool parseVarData(const char* start, int32_t& result, const char** p);
 
     void processScript(uint8_t idx, uint32_t now);

@@ -1001,6 +1001,130 @@ TEST(while_infinite_protection) {
   ASSERT_LOG_EXACT("10");
 }
 
+TEST(nested_on_inside_on) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+                        "on('EVENT1');"
+                        "  $display='OUTER';"
+                        "  on('EVENT2');"
+                        "    $display='INNER';"
+                        "  end;"
+                        "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+
+  runner.emitEvent("EVENT1");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("OUTER");
+
+  runner.emitEvent("EVENT2");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("INNER");
+}
+
+TEST(nested_if_inside_on) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+                        "on('EVENT');"
+                        "  $v0=1;"
+                        "  if:$v0==1;"
+                        "    $display='IF_TRUE';"
+                        "  else;"
+                        "    $display='IF_FALSE';"
+                        "  end;"
+                        "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  runner.emitEvent("EVENT");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("IF_TRUE");
+  ASSERT_LOG_NOT_CONTAINS("IF_FALSE");
+}
+
+TEST(nested_while_inside_on) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+                        "on('EVENT');"
+                        "  $v0=0;"
+                        "  while:$v0<3;"
+                        "    $v0=$v0+1;"
+                        "  end;"
+                        "  $display=$v0;"
+                        "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  runner.emitEvent("EVENT");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("3");
+}
+
+TEST(if_inside_while_inside_on) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+                        "on('EVENT');"
+                        "  $v0=0;"
+                        "  while:$v0<5;"
+                        "    $v0=$v0+1;"
+                        "    if:$v0==3;"
+                        "      $display='THREE';"
+                        "    end;"
+                        "  end;"
+                        "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  runner.emitEvent("EVENT");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("THREE");
+}
+
+TEST(on_inside_if) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+                        "$v0=1;"
+                        "if:$v0==1;"
+                        "  on('EVENT');"
+                        "    $display='INSIDE_IF';"
+                        "  end;"
+                        "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  runner.emitEvent("EVENT");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("INSIDE_IF");
+}
+
+TEST(deep_nesting) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+                        "if:$v0==0;"
+                        "  if:$v0==0;"
+                        "    if:$v0==0;"
+                        "      if:$v0==0;"
+                        "        on('EVENT');"
+                        "          if:$v0==0;"
+                        "            while:$v0<1;"
+                        "              $display='DEEP';"
+                        "              $v0=1;"
+                        "            end;"
+                        "          end;"
+                        "        end;"
+                        "      end;"
+                        "    end;"
+                        "  end;"
+                        "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  runner.emitEvent("EVENT");
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("DEEP");
+}
+
 int main() {
   printf("=== ScriptRunner Tests ===\n\n");
 
@@ -1109,6 +1233,14 @@ int main() {
   RUN_TEST(get_int_var_out_of_range);
   RUN_TEST(get_float_var_out_of_range);
   RUN_TEST(set_uint_var_out_of_range);
+
+  // Новые тесты на вложенность
+  RUN_TEST(nested_on_inside_on);
+  RUN_TEST(nested_if_inside_on);
+  RUN_TEST(nested_while_inside_on);
+  RUN_TEST(if_inside_while_inside_on);
+  RUN_TEST(on_inside_if);
+  RUN_TEST(deep_nesting);
 
   printf("\n=== All tests passed ===\n");
   return 0;

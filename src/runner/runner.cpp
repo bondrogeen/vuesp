@@ -110,48 +110,44 @@ Params ScriptRunner::parseParams(const char* str) {
     return result;
 }
 
-bool ScriptRunner::parseVarUint(uint8_t idx, int32_t& result, const char** p, const char* pos) {
+// ===== НОВЫЕ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ parseValue =====
+
+bool ScriptRunner::parseVarUint(uint8_t idx, int32_t& result) {
     if (idx >= MAX_UINT_VARS) return false;
     result = (int32_t)_ctx.uintVars[idx];
-    *p = pos;
     return true;
 }
 
-bool ScriptRunner::parseVarInt(uint8_t idx, int32_t& result, const char** p, const char* pos) {
+bool ScriptRunner::parseVarInt(uint8_t idx, int32_t& result) {
     if (idx >= MAX_INT_VARS) return false;
     result = _ctx.intVars[idx];
-    *p = pos;
     return true;
 }
 
-bool ScriptRunner::parseVarFloat(uint8_t idx, int32_t& result, const char** p, const char* pos) {
+bool ScriptRunner::parseVarFloat(uint8_t idx, int32_t& result) {
     if (idx >= MAX_FLOAT_VARS) return false;
     float fval = (float)_ctx.floatVars[idx];
     result = (int32_t)(fval * 1000.0f);
-    *p = pos;
     return true;
 }
 
-bool ScriptRunner::parseVarString(uint8_t idx, int32_t& result, const char** p, const char* pos) {
+bool ScriptRunner::parseVarString(uint8_t idx, int32_t& result) {
     if (idx >= MAX_STRING_VARS) return false;
     if (_ctx.stringVars[idx][0] == '\0') {
         result = 0;
-        *p = pos;
         return true;
     }
     result = (int32_t)hash(_ctx.stringVars[idx]);
-    *p = pos;
     return true;
 }
 
-bool ScriptRunner::parseVarPort(uint8_t idx, int32_t& result, const char** p, const char* pos) {
+bool ScriptRunner::parseVarPort(uint8_t idx, int32_t& result) {
     uint16_t val = 0;
     if (!_portProvider || !_portProvider(idx, PORT_READ, val)) return false;
     #ifdef ENABLE_PROVIDER_LOGGING
     logPortAction(idx, PORT_READ, val);
     #endif
     result = (int32_t)val;
-    *p = pos;
     return true;
 }
 
@@ -195,6 +191,8 @@ bool ScriptRunner::parseVarData(const char* start, int32_t& result, const char**
     return false;
 }
 
+// ===== ОПТИМИЗИРОВАННЫЙ parseValue =====
+
 bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
     const char* pos = *p;
     while (*pos == ' ') pos++;
@@ -209,28 +207,30 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
                 idx = idx * 10 + (*pos - '0');
                 pos++;
             }
+            *p = pos;
+            
             switch (type) {
-                case 'v': return parseVarUint(idx, result, p, pos);
-                case 'i': return parseVarInt(idx, result, p, pos);
-                case 'f': return parseVarFloat(idx, result, p, pos);
-                case 's': return parseVarString(idx, result, p, pos);
-                case 'p': return parseVarPort(idx, result, p, pos);
-                default: return parseVarData(pos - 2, result, p);
+                case 'v': return parseVarUint(idx, result);
+                case 'i': return parseVarInt(idx, result);
+                case 'f': return parseVarFloat(idx, result);
+                case 's': return parseVarString(idx, result);
+                case 'p': return parseVarPort(idx, result);
+                default: return false;
             }
         } else {
-            return parseVarData(pos - 2, result, p);
+            *p = pos;
+            return parseVarData(pos, result, p);
         }
     }
 
     if (*pos == '\'') {
         if (!parseString(&pos, _strBuf)) return false;
+        *p = pos;
         if (strlen(_strBuf) == 0) {
             result = 0;
-            *p = pos;
             return true;
         }
         result = (int32_t)hash(_strBuf);
-        *p = pos;
         return true;
     }
 
@@ -246,15 +246,15 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
         }
         if (hasDot) {
             float fval = parseFloat(&pos);
-            result = (int32_t)(fval * 1000.0f);
             *p = pos;
+            result = (int32_t)(fval * 1000.0f);
             return true;
         } else {
             char* end;
             long val = strtol(pos, &end, 10);
             if (end > pos) {
-                result = (int32_t)val;
                 *p = end;
+                result = (int32_t)val;
                 return true;
             }
             return false;
@@ -426,7 +426,10 @@ bool ScriptRunner::handleEnd(ScriptState& s) {
         s.repeatCount = 0;
         return true;
     }
-    if (s.inEventHandler) s.inEventHandler = false;
+    if (s.inEventHandler) {
+        s.inEventHandler = false;
+        return true;
+    }
     return true;
 }
 
@@ -463,14 +466,38 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     uint16_t bodyLen = 0;
 
     while (*p && (p - s.script) < s.scriptLen) {
-        if (strncmp(p, "on(", 3) == 0) depth++;
+        if (strncmp(p, "on(", 3) == 0) {
+            depth++;
+            p += 3;
+            continue;
+        }
+        if (strncmp(p, "if:", 3) == 0) {
+            depth++;
+            p += 3;
+            continue;
+        }
+        if (strncmp(p, "while:", 6) == 0) {
+            depth++;
+            p += 6;
+            continue;
+        }
         if (strncmp(p, "end", 3) == 0) {
-            if (depth == 0) { bodyLen = p - bodyStart; break; }
+            if (depth == 0) {
+                bodyLen = p - bodyStart;
+                p += 3;
+                break;
+            }
             depth--;
+            p += 3;
+            continue;
         }
         p++;
     }
-    if (bodyLen == 0) { setError("Empty handler body"); return false; }
+
+    if (bodyLen == 0) { 
+        setError("Empty handler body"); 
+        return false; 
+    }
 
     strncpy(_tempBody, bodyStart, bodyLen);
     _tempBody[bodyLen] = '\0';
@@ -506,11 +533,17 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
         }
         token = strtok(NULL, ";");
     }
-    if (strlen(_resultBuf) == 0) { setError("Empty body after cleaning"); return false; }
+    if (strlen(_resultBuf) == 0) { 
+        setError("Empty body after cleaning"); 
+        return false; 
+    }
 
     uint16_t scriptLen = strlen(_resultBuf);
     int slot = findFreeSlot(scriptLen, true);
-    if (slot == -1) { setError("No free slot"); return false; }
+    if (slot == -1) { 
+        setError("No free event slot"); 
+        return false; 
+    }
 
     resetScriptState(slot);
     ScriptState& es = _slots[slot];
@@ -529,19 +562,8 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
         return false;
     }
 
-    s.inEventHandler = true;
-    s.pos += bodyLen;
+    s.pos = p - s.script;
 
-    p = s.script + s.pos;
-    while (*p && (p - s.script) < s.scriptLen) {
-        if (strncmp(p, "end", 3) == 0) {
-            s.pos += 3;
-            s.inEventHandler = false;
-            break;
-        }
-        p++;
-        s.pos++;
-    }
     return true;
 }
 
