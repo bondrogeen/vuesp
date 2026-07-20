@@ -938,13 +938,6 @@ TEST(script_too_long) {
   ASSERT_FALSE(result);
 }
 
-TEST(invalid_slot_id) {
-  ScriptRunner runner;
-  runner.setDataProvider(testDataProvider);
-  bool result = runner.registerScript(EVENT_HANDLER_ID_BASE, "test");
-  ASSERT_FALSE(result);
-}
-
 TEST(stop_script) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
@@ -1037,6 +1030,7 @@ TEST(nested_if_inside_on) {
                         "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
+
   runner.emitEvent("EVENT");
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("IF_TRUE");
@@ -1056,6 +1050,7 @@ TEST(nested_while_inside_on) {
                         "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
+
   runner.emitEvent("EVENT");
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("3");
@@ -1076,6 +1071,7 @@ TEST(if_inside_while_inside_on) {
                         "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
+
   runner.emitEvent("EVENT");
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("THREE");
@@ -1093,6 +1089,7 @@ TEST(on_inside_if) {
                         "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
+
   runner.emitEvent("EVENT");
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("INSIDE_IF");
@@ -1102,6 +1099,7 @@ TEST(deep_nesting) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
+                        "$v0=0;"
                         "if:$v0==0;"
                         "  if:$v0==0;"
                         "    if:$v0==0;"
@@ -1120,6 +1118,7 @@ TEST(deep_nesting) {
                         "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
+
   runner.emitEvent("EVENT");
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("DEEP");
@@ -1197,7 +1196,6 @@ int main() {
 
   RUN_TEST(memory_slots);
   RUN_TEST(script_too_long);
-  RUN_TEST(invalid_slot_id);
   RUN_TEST(duplicate_script_id);
   RUN_TEST(script_exceeds_max_len);
 

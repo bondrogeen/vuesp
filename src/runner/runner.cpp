@@ -25,7 +25,7 @@ static bool isDigit(char c) { return c >= '0' && c <= '9'; }
 static bool isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 static bool isAlphaNum(char c) { return isAlpha(c) || isDigit(c) || c == '_'; }
 
-uint32_t ScriptRunner::parseUint(const char** p) {
+uint32_t ScriptRunner::parseUint(const char** p) const {
     uint32_t val = 0;
     while (isDigit(**p)) {
         val = val * 10 + (**p - '0');
@@ -34,7 +34,7 @@ uint32_t ScriptRunner::parseUint(const char** p) {
     return val;
 }
 
-int32_t ScriptRunner::parseInt(const char** p) {
+int32_t ScriptRunner::parseInt(const char** p) const {
     int32_t val = 0;
     bool negative = false;
     if (**p == '-') { negative = true; (*p)++; }
@@ -45,14 +45,14 @@ int32_t ScriptRunner::parseInt(const char** p) {
     return negative ? -val : val;
 }
 
-float ScriptRunner::parseFloat(const char** p) {
+float ScriptRunner::parseFloat(const char** p) const {
     char* end;
     float val = strtof(*p, &end);
     if (end > *p) { *p = end; return val; }
     return 0.0f;
 }
 
-bool ScriptRunner::parseString(const char** p, char* buf) {
+bool ScriptRunner::parseString(const char** p, char* buf) const {
     if (**p != '\'') return false;
     (*p)++;
     const char* start = *p;
@@ -65,7 +65,7 @@ bool ScriptRunner::parseString(const char** p, char* buf) {
     return true;
 }
 
-uint32_t ScriptRunner::parseTime(const char* str) {
+uint32_t ScriptRunner::parseTime(const char* str) const {
     const char* p = str;
     uint32_t value = 0;
     while (isDigit(*p)) {
@@ -82,7 +82,7 @@ uint32_t ScriptRunner::parseTime(const char* str) {
     }
 }
 
-Params ScriptRunner::parseParams(const char* str) {
+Params ScriptRunner::parseParams(const char* str) const {
     Params result;
     result.count = 0;
     const char* open = strchr(str, '(');
@@ -109,8 +109,6 @@ Params ScriptRunner::parseParams(const char* str) {
     }
     return result;
 }
-
-// ===== НОВЫЕ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ parseValue =====
 
 bool ScriptRunner::parseVarUint(uint8_t idx, int32_t& result) {
     if (idx >= MAX_UINT_VARS) return false;
@@ -190,8 +188,6 @@ bool ScriptRunner::parseVarData(const char* start, int32_t& result, const char**
     }
     return false;
 }
-
-// ===== ОПТИМИЗИРОВАННЫЙ parseValue =====
 
 bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result) {
     const char* pos = *p;
@@ -499,26 +495,26 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
         return false; 
     }
 
-    strncpy(_tempBody, bodyStart, bodyLen);
-    _tempBody[bodyLen] = '\0';
+    strncpy(_handlerBody, bodyStart, bodyLen);
+    _handlerBody[bodyLen] = '\0';
 
-    char* start = _tempBody;
+    char* start = _handlerBody;
     while (*start == ',' || *start == ' ' || *start == TOKEN_SEPARATOR) start++;
     uint16_t end = strlen(start);
     while (end > 0 && (start[end - 1] == ',' || start[end - 1] == ' ' || start[end - 1] == TOKEN_SEPARATOR)) end--;
     start[end] = '\0';
-    if (start != _tempBody) memmove(_tempBody, start, end + 1);
+    if (start != _handlerBody) memmove(_handlerBody, start, end + 1);
 
     uint16_t writePos = 0;
-    for (uint16_t i = 0; _tempBody[i]; i++) {
-        unsigned char c = (unsigned char)_tempBody[i];
-        if (c >= 32 && c <= 126) _tempBody[writePos++] = c;
+    for (uint16_t i = 0; _handlerBody[i]; i++) {
+        unsigned char c = (unsigned char)_handlerBody[i];
+        if (c >= 32 && c <= 126) _handlerBody[writePos++] = c;
     }
-    _tempBody[writePos] = '\0';
+    _handlerBody[writePos] = '\0';
 
-    _resultBuf[0] = '\0';
+    _cleanedBody[0] = '\0';
     bool first = true;
-    char* token = strtok(_tempBody, ";");
+    char* token = strtok(_handlerBody, ";");
     while (token) {
         while (*token == ' ') token++;
         uint16_t tLen = strlen(token);
@@ -527,19 +523,19 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
             tLen--;
         }
         if (strlen(token) > 0) {
-            if (!first) strcat(_resultBuf, ";");
-            strcat(_resultBuf, token);
+            if (!first) strcat(_cleanedBody, ";");
+            strcat(_cleanedBody, token);
             first = false;
         }
         token = strtok(NULL, ";");
     }
-    if (strlen(_resultBuf) == 0) { 
+    if (strlen(_cleanedBody) == 0) { 
         setError("Empty body after cleaning"); 
         return false; 
     }
 
-    uint16_t scriptLen = strlen(_resultBuf);
-    int slot = findFreeSlot(scriptLen, true);
+    uint16_t scriptLen = strlen(_cleanedBody);
+    int slot = findFreeSlot(scriptLen);
     if (slot == -1) { 
         setError("No free event slot"); 
         return false; 
@@ -548,10 +544,10 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     resetScriptState(slot);
     ScriptState& es = _slots[slot];
     es.registered = true;
-    es.id = EVENT_HANDLER_ID_BASE + slot;
+    es.id = slot;
     es.isHandler = true;
     es.isPersistent = true;
-    strcpy(es.script, _resultBuf);
+    strcpy(es.script, _cleanedBody);
     es.scriptLen = scriptLen;
     es.pos = 0;
     es.active = false;
@@ -1137,7 +1133,7 @@ int ScriptRunner::findSlotById(uint8_t id) const {
     return -1;
 }
 
-int ScriptRunner::findFreeSlot(uint16_t scriptLen, bool isHandler) {
+int ScriptRunner::findFreeSlot(uint16_t scriptLen) {
     for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
         if (!_slots[i].registered && _slots[i].slotSize >= scriptLen) return i;
     }
@@ -1218,7 +1214,6 @@ void ScriptRunner::clearAllEventHandlers() {
 }
 
 bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persistent) {
-    if (id >= EVENT_HANDLER_ID_BASE) return false;
     uint16_t len = strlen(script);
     if (len >= MAX_SCRIPT_LEN) return false;
 
@@ -1235,7 +1230,7 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persisten
         return true;
     }
 
-    int slot = findFreeSlot(len, false);
+    int slot = findFreeSlot(len);
     if (slot == -1) return false;
 
     resetScriptState(slot);
@@ -1253,7 +1248,6 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persisten
 }
 
 bool ScriptRunner::runScript(uint8_t id) {
-    if (id >= EVENT_HANDLER_ID_BASE) return false;
     int slot = findSlotById(id);
     if (slot == -1) return false;
 
@@ -1393,7 +1387,7 @@ void ScriptRunner::processScript(uint8_t idx, uint32_t now) {
         else return;
     }
 
-    if (now - s.lastExecutionTime < 10) return;
+    if (now - s.lastExecutionTime < SCRIPT_EXEC_INTERVAL_MS) return;
     s.lastExecutionTime = now;
 
     if (s.pos >= s.scriptLen) {
