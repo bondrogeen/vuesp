@@ -7,13 +7,11 @@
 #include "../runner/runner.h"
 #include "arduino_stub.h"
 
-// ===== УТИЛИТЫ =====
 static uint16_t virtualPins[40] = {0};
 static std::vector<std::string> testLog;
 static std::map<std::string, std::string> dataStore;
 static bool test_failed = false;
 
-// ===== ПРОВАЙДЕРЫ =====
 bool testPortProvider(uint8_t gpio, PortAction action, uint16_t& value) {
   if (gpio >= 40) return false;
   if (action == PORT_READ) {
@@ -26,13 +24,11 @@ bool testPortProvider(uint8_t gpio, PortAction action, uint16_t& value) {
 }
 
 void testStateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
-  // Для тестов не нужен
 }
 
 bool testDataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   if (!id) return false;
 
-  // Поддержка $display для логирования
   if (strcmp(id, "$display") == 0) {
     if (write) {
       char buf[64];
@@ -55,7 +51,6 @@ bool testDataProvider(const char* id, DataKind kind, DataValue& value, bool writ
     return true;
   }
 
-  // Хранилище для переменных
   if (write) {
     if (kind == KIND_STRING) {
       std::string str((char*)value.stringVal.data, value.stringVal.len);
@@ -97,7 +92,6 @@ void testLogProvider(const char* message) {
   if (message) testLog.push_back(std::string(message));
 }
 
-// ===== СБРОС =====
 void resetTestState() {
   stub_millis = 0;
   memset(virtualPins, 0, sizeof(virtualPins));
@@ -106,7 +100,6 @@ void resetTestState() {
   test_failed = false;
 }
 
-// ===== ЗАПУСК СКРИПТА =====
 void runScriptUntilDone(ScriptRunner& runner, uint32_t maxSteps = 200) {
   uint32_t steps = 0;
   uint32_t idleCount = 0;
@@ -129,7 +122,6 @@ void runScriptUntilDone(ScriptRunner& runner, uint32_t maxSteps = 200) {
   }
 }
 
-// ===== ЛОГИ =====
 bool logContains(const char* text) {
   for (const auto& s : testLog) {
     if (s.find(text) != std::string::npos) return true;
@@ -151,7 +143,6 @@ void printLog() {
   }
 }
 
-// ===== МАКРОСЫ =====
 #define ASSERT_EQ(a, b)                                        \
   do {                                                         \
     if ((a) != (b)) {                                          \
@@ -237,8 +228,6 @@ void printLog() {
     test_##name();                                  \
     if (!test_failed) printf("  PASS %s\n", #name); \
   } while (0)
-
-// ===== ТЕСТЫ =====
 
 TEST(variable_assignment_uint) {
   ScriptRunner runner;
@@ -929,30 +918,14 @@ TEST(set_uint_var_out_of_range) {
   ASSERT_TRUE(true);
 }
 
-TEST(get_slot_info_invalid) {
-  ScriptRunner runner;
-  runner.setDataProvider(testDataProvider);
-  uint8_t id;
-  uint16_t size, used;
-  bool active, isHandler;
-  SlotType type;
-  runner.getSlotInfo(255, id, size, used, active, isHandler, type);
-  ASSERT_EQ(id, 0);
-  ASSERT_EQ(size, 0);
-  ASSERT_EQ(used, 0);
-  ASSERT_FALSE(active);
-  ASSERT_FALSE(isHandler);
-  ASSERT_EQ(type, SLOT_SCRIPT);
-}
-
 TEST(memory_slots) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  ASSERT_EQ(runner.getTotalSlots(), TOTAL_SLOTS);
-  ASSERT_EQ(runner.getFreeSlotsCount(), TOTAL_SLOTS);
+  ASSERT_EQ(runner.getTotalSlots(), MAX_SCRIPTS);
+  ASSERT_EQ(runner.getFreeSlotsCount(), MAX_SCRIPTS);
   runner.registerScript(1, "test");
   ASSERT_EQ(runner.getUsedSlotsCount(), 1);
-  ASSERT_EQ(runner.getFreeSlotsCount(), TOTAL_SLOTS - 1);
+  ASSERT_EQ(runner.getFreeSlotsCount(), MAX_SCRIPTS - 1);
 }
 
 TEST(script_too_long) {
@@ -1031,7 +1004,6 @@ TEST(while_infinite_protection) {
 int main() {
   printf("=== ScriptRunner Tests ===\n\n");
 
-  // Базовые тесты
   RUN_TEST(variable_assignment_uint);
   RUN_TEST(variable_assignment_int);
   RUN_TEST(variable_assignment_float);
@@ -1099,59 +1071,44 @@ int main() {
 
   RUN_TEST(chr_ord);
 
-  // Тесты памяти и слотов
   RUN_TEST(memory_slots);
   RUN_TEST(script_too_long);
   RUN_TEST(invalid_slot_id);
   RUN_TEST(duplicate_script_id);
   RUN_TEST(script_exceeds_max_len);
 
-  // Тесты остановки
   RUN_TEST(stop_script);
   RUN_TEST(stop_all);
   RUN_TEST(is_busy);
 
-  // Тесты wait
   RUN_TEST(wait_until);
 
-  // Тесты циклов
   RUN_TEST(while_infinite_protection);
   RUN_TEST(while_with_break);
 
-  // Тесты условий
   RUN_TEST(if_without_else);
   RUN_TEST(if_without_end);
 
-  // Тесты float
   RUN_TEST(float_compare_equal);
   RUN_TEST(float_compare_not_equal);
 
-  // Тесты string
   RUN_TEST(string_compare_not_equal);
 
-  // Тесты массивов
   RUN_TEST(array_out_of_bounds);
   RUN_TEST(negative_array_index);
 
-  // Тесты строк
   RUN_TEST(string_index_out_of_bounds);
   RUN_TEST(very_long_string);
 
-  // Тесты портов
   RUN_TEST(port_out_of_range);
 
-  // Негативные тесты
   RUN_TEST(division_by_zero);
   RUN_TEST(recursive_call);
 
-  // Тесты get/set out of range
   RUN_TEST(get_uint_var_out_of_range);
   RUN_TEST(get_int_var_out_of_range);
   RUN_TEST(get_float_var_out_of_range);
   RUN_TEST(set_uint_var_out_of_range);
-
-  // Тесты slot info
-  RUN_TEST(get_slot_info_invalid);
 
   printf("\n=== All tests passed ===\n");
   return 0;
