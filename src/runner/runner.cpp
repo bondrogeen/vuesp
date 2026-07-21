@@ -342,13 +342,19 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
 }
 
 bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
-    if (params.count < 1) return false;
+    if (params.count < 1) {
+        setError("call requires 1 parameter", s.id, s.pos);
+        return false;
+    }
     uint8_t id = (uint8_t)atoi(params.values[0]);
     return runScript(id);
 }
 
 bool ScriptRunner::handleWait(const Params& params, ScriptState& s, uint32_t now) {
-    if (params.count < 1) return false;
+    if (params.count < 1) {
+        setError("wait requires 1 parameter", s.id, s.pos);
+        return false;
+    }
     uint32_t duration = parseTime(params.values[0]);
     if (duration > 0) {
         s.inWait = true;
@@ -359,7 +365,7 @@ bool ScriptRunner::handleWait(const Params& params, ScriptState& s, uint32_t now
 
 bool ScriptRunner::handleWhile(const char* params, ScriptState& s) {
     if (s.inLoop) {
-        setError("Nested loops not allowed");
+        setError("Nested loops not allowed", s.id, s.pos);
         return false;
     }
     strncpy(s.whileConditionBuffer, params, 31);
@@ -430,8 +436,14 @@ bool ScriptRunner::handleEnd(ScriptState& s) {
 }
 
 bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) {
-    if (params.count < 1) return false;
-    if (s.inEventHandler) { setError("Nested events not allowed"); return false; }
+    if (params.count < 1) {
+        setError("on requires 1 parameter", s.id, s.pos);
+        return false;
+    }
+    if (s.inEventHandler) { 
+        setError("Nested events not allowed", s.id, s.pos);
+        return false; 
+    }
 
     const char* rawEventName = params.values[0];
     char cleanEventName[MAX_EVENT_NAME_LEN] = {0};
@@ -491,7 +503,7 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     }
 
     if (bodyLen == 0) { 
-        setError("Empty handler body"); 
+        setError("Empty handler body", s.id, s.pos);
         return false; 
     }
 
@@ -530,14 +542,14 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
         token = strtok(NULL, ";");
     }
     if (strlen(_cleanedBody) == 0) { 
-        setError("Empty body after cleaning"); 
+        setError("Empty body after cleaning", s.id, s.pos);
         return false; 
     }
 
     uint16_t scriptLen = strlen(_cleanedBody);
     int slot = findFreeSlot(scriptLen);
     if (slot == -1) { 
-        setError("No free event slot"); 
+        setError("No free event slot", s.id, s.pos);
         return false; 
     }
 
@@ -565,7 +577,10 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
 
 bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     const char* eq = strchr(token, '=');
-    if (!eq) return false;
+    if (!eq) {
+        setError("Invalid assignment", token, s.id, s.pos);
+        return false;
+    }
 
     const char* left = token;
     char type = left[1];
@@ -600,6 +615,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     s.hasTempResult = true;
                     return true;
                 }
+                setError("Port read failed", s.id, s.pos);
                 return false;
             }
         }
@@ -630,12 +646,16 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     return true;
                 }
             }
+            setError("Invalid array operation", s.id, s.pos);
             return false;
         }
 
         if (type == 's' && index < MAX_STRING_VARS) {
             if (*right == '\'') {
-                if (!parseString(&right, _strBuf)) return false;
+                if (!parseString(&right, _strBuf)) {
+                    setError("Invalid string", s.id, s.pos);
+                    return false;
+                }
                 strcpy(_ctx.stringVars[index], _strBuf);
                 return true;
             } else if (strchr(right, '+') != nullptr) {
@@ -693,6 +713,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 s.hasTempResult = false;
                 return true;
             }
+            setError("Invalid string operation", s.id, s.pos);
             return false;
         }
 
@@ -727,7 +748,10 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                         leftVal = (int32_t)val;
                         hasLeft = true;
                         p2 = temp;
-                    } else return false;
+                    } else {
+                        setError("Port read failed", s.id, s.pos);
+                        return false;
+                    }
                 } else {
                     if (parseValue(&p2, s, leftVal)) hasLeft = true;
                 }
@@ -800,8 +824,8 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                         case '+': resultFloat = l + r; break;
                         case '-': resultFloat = l - r; break;
                         case '*': resultFloat = l * r; break;
-                        case '/': if (r == 0) return false; resultFloat = l / r; break;
-                        default: return false;
+                        case '/': if (r == 0) { setError("Division by zero", s.id, s.pos); return false; } resultFloat = l / r; break;
+                        default: setError("Unknown operator", s.id, s.pos); return false;
                     }
                     resultInt = (int32_t)resultFloat;
                 } else {
@@ -809,15 +833,15 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                         case '+': resultInt = leftVal + rightVal; break;
                         case '-': resultInt = leftVal - rightVal; break;
                         case '*': resultInt = leftVal * rightVal; break;
-                        case '/': if (rightVal == 0) return false; resultInt = leftVal / rightVal; break;
-                        case '%': if (rightVal == 0) return false; resultInt = leftVal % rightVal; break;
+                        case '/': if (rightVal == 0) { setError("Division by zero", s.id, s.pos); return false; } resultInt = leftVal / rightVal; break;
+                        case '%': if (rightVal == 0) { setError("Division by zero", s.id, s.pos); return false; } resultInt = leftVal % rightVal; break;
                         case '&': resultInt = leftVal & rightVal; break;
                         case '|': resultInt = leftVal | rightVal; break;
                         case '^': resultInt = leftVal ^ rightVal; break;
                         case '~': resultInt = (int32_t)(~(uint32_t)leftVal); break;
                         case '<': resultInt = leftVal << (rightVal & 31); break;
                         case '>': resultInt = leftVal >> (rightVal & 31); break;
-                        default: return false;
+                        default: setError("Unknown operator", s.id, s.pos); return false;
                     }
                     resultFloat = (float)resultInt;
                 }
@@ -849,7 +873,10 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 
         if (*right == '\'') {
             const char* p = right;
-            if (!parseString(&p, _strBuf)) return false;
+            if (!parseString(&p, _strBuf)) {
+                setError("Invalid string", s.id, s.pos);
+                return false;
+            }
             DataValue dv;
             dv.stringVal.data = (uint8_t*)_strBuf;
             dv.stringVal.len = strlen(_strBuf);
@@ -859,6 +886,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 #endif
                 return true;
             }
+            setError("DataProvider write failed", s.id, s.pos);
             return false;
         } else if (*right == '$') {
             const char* p = right;
@@ -901,6 +929,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     return true;
                 }
             }
+            setError("DataProvider write failed", s.id, s.pos);
             return false;
         } else if (isDigit(*right) || *right == '.') {
             const char* p = right;
@@ -914,17 +943,26 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 #endif
                 return true;
             }
+            setError("DataProvider write failed", s.id, s.pos);
             return false;
         }
+        setError("Invalid data provider operation", s.id, s.pos);
         return false;
     }
+    setError("Unknown variable type", s.id, s.pos);
     return false;
 }
 
 bool ScriptRunner::handleSet(const Params& params, ScriptState& s) {
-    if (params.count < 3) return false;
+    if (params.count < 3) {
+        setError("set requires 3 parameters", s.id, s.pos);
+        return false;
+    }
     const char* name = params.values[0];
-    if (name[0] != '$') return false;
+    if (name[0] != '$') {
+        setError("set: first param must be variable", s.id, s.pos);
+        return false;
+    }
     char type = name[1];
     uint8_t idx = (uint8_t)(name[2] - '0');
     int pos = atoi(params.values[1]);
@@ -935,39 +973,61 @@ bool ScriptRunner::handleSet(const Params& params, ScriptState& s) {
             if (pos >= _ctx.arrayLen[idx]) _ctx.arrayLen[idx] = pos + 1;
             return true;
         }
+        setError("Array index out of bounds", s.id, s.pos);
+        return false;
     } else if (type == 's' && idx < MAX_STRING_VARS) {
         if (pos >= 0 && pos < MAX_STRING_LEN) {
             _ctx.stringVars[idx][pos] = (char)val;
             if (pos >= (int)strlen(_ctx.stringVars[idx])) _ctx.stringVars[idx][pos + 1] = '\0';
             return true;
         }
+        setError("String index out of bounds", s.id, s.pos);
+        return false;
     }
+    setError("set: invalid variable type", s.id, s.pos);
     return false;
 }
 
 bool ScriptRunner::handleGet(const Params& params, ScriptState& s) {
-    if (params.count < 2) return false;
+    if (params.count < 2) {
+        setError("get requires 2 parameters", s.id, s.pos);
+        return false;
+    }
     const char* name = params.values[0];
-    if (name[0] != '$') return false;
+    if (name[0] != '$') {
+        setError("get: first param must be variable", s.id, s.pos);
+        return false;
+    }
     char type = name[1];
     uint8_t idx = (uint8_t)(name[2] - '0');
     int pos = atoi(params.values[1]);
     uint8_t val = 0;
     if (type == 'a' && idx < MAX_ARRAY_VARS) {
         if (pos >= 0 && pos < _ctx.arrayLen[idx]) val = _ctx.arrayVars[idx][pos];
+        else { setError("Array index out of bounds", s.id, s.pos); return false; }
     } else if (type == 's' && idx < MAX_STRING_VARS) {
         uint16_t len = strlen(_ctx.stringVars[idx]);
         if (pos >= 0 && pos < len) val = (uint8_t)_ctx.stringVars[idx][pos];
-    } else return false;
+        else { setError("String index out of bounds", s.id, s.pos); return false; }
+    } else {
+        setError("get: invalid variable type", s.id, s.pos);
+        return false;
+    }
     s.tempResult = val;
     s.hasTempResult = true;
     return true;
 }
 
 bool ScriptRunner::handleLen(const Params& params, ScriptState& s) {
-    if (params.count < 1) return false;
+    if (params.count < 1) {
+        setError("len requires 1 parameter", s.id, s.pos);
+        return false;
+    }
     const char* name = params.values[0];
-    if (name[0] != '$') return false;
+    if (name[0] != '$') {
+        setError("len: first param must be variable", s.id, s.pos);
+        return false;
+    }
     char type = name[1];
     uint8_t idx = (uint8_t)(name[2] - '0');
     int len = 0;
@@ -975,7 +1035,7 @@ bool ScriptRunner::handleLen(const Params& params, ScriptState& s) {
         case 'a': if (idx < MAX_ARRAY_VARS) len = _ctx.arrayLen[idx]; break;
         case 's': if (idx < MAX_STRING_VARS) len = strlen(_ctx.stringVars[idx]); break;
         case 'v': case 'i': case 'f': len = 1; break;
-        default: return false;
+        default: setError("len: invalid variable type", s.id, s.pos); return false;
     }
     s.tempResult = len;
     s.hasTempResult = true;
@@ -983,19 +1043,28 @@ bool ScriptRunner::handleLen(const Params& params, ScriptState& s) {
 }
 
 bool ScriptRunner::handleChr(const Params& params, ScriptState& s) {
-    if (params.count < 1) return false;
+    if (params.count < 1) {
+        setError("chr requires 1 parameter", s.id, s.pos);
+        return false;
+    }
     s.tempResult = atoi(params.values[0]);
     s.hasTempResult = true;
     return true;
 }
 
 bool ScriptRunner::handleOrd(const Params& params, ScriptState& s) {
-    if (params.count < 1) return false;
+    if (params.count < 1) {
+        setError("ord requires 1 parameter", s.id, s.pos);
+        return false;
+    }
     const char* arg = params.values[0];
     uint8_t val = 0;
     if (arg[0] == '\'') {
         const char* p = arg;
-        if (!parseString(&p, _strBuf)) return false;
+        if (!parseString(&p, _strBuf)) {
+            setError("Invalid string", s.id, s.pos);
+            return false;
+        }
         val = (uint8_t)_strBuf[0];
     } else if (arg[0] == '$' && arg[1] == 's') {
         uint8_t idx = (uint8_t)(arg[2] - '0');
@@ -1017,12 +1086,16 @@ bool ScriptRunner::handleOrd(const Params& params, ScriptState& s) {
 
 bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t now) {
     const char* open = strchr(token, '(');
-    if (!open) return false;
+    if (!open) {
+        setError("Expected '('", token, s.id, s.pos);
+        return false;
+    }
     const char* eq = strchr(token, '=');
     char varName[16] = {0};
     char varType = 0;
     uint8_t varIndex = 0;
     bool hasVar = false;
+    
     if (eq) {
         const char* varStart = token;
         const char* varEnd = eq;
@@ -1036,6 +1109,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (varName[2] >= '0' && varName[2] <= '9') varIndex = varName[2] - '0';
         }
     }
+    
     const char* cmdStart = token;
     if (eq && eq < open) cmdStart = eq + 1;
     char cmd[16];
@@ -1045,6 +1119,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     cmd[len] = '\0';
     Params params = parseParams(token);
     bool result = false;
+    
     if (strcmp(cmd, "call") == 0) result = handleCall(params, s);
     else if (strcmp(cmd, "on") == 0) result = handleOn(params, s, now);
     else if (strcmp(cmd, "wait") == 0) result = handleWait(params, s, now);
@@ -1053,6 +1128,197 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     else if (strcmp(cmd, "len") == 0) result = handleLen(params, s);
     else if (strcmp(cmd, "chr") == 0) result = handleChr(params, s);
     else if (strcmp(cmd, "ord") == 0) result = handleOrd(params, s);
+    else if (isExternalFunction(cmd)) {
+        const char* p = open + 1;
+        uint8_t paramCount = 0;
+        
+        while (*p && *p != ')' && paramCount < MAX_FUNCTION_PARAMS) {
+            while (*p == ' ') p++;
+            if (*p == ')' || *p == '\0') break;
+            
+            if (*p == '\'') {
+                const char* start = p + 1;
+                p++;
+                while (*p && *p != '\'') p++;
+                uint8_t strLen = p - start;
+                if (strLen >= MAX_STRING_LEN) strLen = MAX_STRING_LEN - 1;
+                strncpy(_funcStrBufs[paramCount], start, strLen);
+                _funcStrBufs[paramCount][strLen] = '\0';
+                
+                _funcParams[paramCount].type = VAL_STRING;
+                _funcParams[paramCount].stringVal.data = _funcStrBufs[paramCount];
+                _funcParams[paramCount].stringVal.len = strLen;
+                if (*p == '\'') p++;
+                paramCount++;
+            } else if (*p == '$') {
+                char type = p[1];
+                p += 2;
+                uint8_t idx = 0;
+                while (isDigit(*p)) {
+                    idx = idx * 10 + (*p - '0');
+                    p++;
+                }
+                
+                switch (type) {
+                    case 'v':
+                        if (idx < MAX_UINT_VARS) {
+                            _funcParams[paramCount].type = VAL_UINT;
+                            _funcParams[paramCount].uintVal = _ctx.uintVars[idx];
+                            paramCount++;
+                        }
+                        break;
+                    case 'i':
+                        if (idx < MAX_INT_VARS) {
+                            _funcParams[paramCount].type = VAL_INT;
+                            _funcParams[paramCount].intVal = _ctx.intVars[idx];
+                            paramCount++;
+                        }
+                        break;
+                    case 'f':
+                        if (idx < MAX_FLOAT_VARS) {
+                            _funcParams[paramCount].type = VAL_FLOAT;
+                            _funcParams[paramCount].floatVal = (float)_ctx.floatVars[idx];
+                            paramCount++;
+                        }
+                        break;
+                    case 's':
+                        if (idx < MAX_STRING_VARS) {
+                            _funcParams[paramCount].type = VAL_STRING;
+                            _funcParams[paramCount].stringVal.data = _ctx.stringVars[idx];
+                            _funcParams[paramCount].stringVal.len = strlen(_ctx.stringVars[idx]);
+                            paramCount++;
+                        }
+                        break;
+                    case 'a':
+                        if (idx < MAX_ARRAY_VARS) {
+                            _funcParams[paramCount].type = VAL_ARRAY;
+                            _funcParams[paramCount].arrayVal.data = _ctx.arrayVars[idx];
+                            _funcParams[paramCount].arrayVal.len = _ctx.arrayLen[idx];
+                            paramCount++;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                const char* numStart = p;
+                const char* temp = p;
+                bool hasDot = false;
+                while (*temp && *temp != ',' && *temp != ' ' && *temp != ')' && *temp != '(') {
+                    if (*temp == '.') { hasDot = true; break; }
+                    temp++;
+                }
+                
+                p = numStart;
+                
+                if (hasDot) {
+                    float fval = parseFloat(&p);
+                    _funcParams[paramCount].type = VAL_FLOAT;
+                    _funcParams[paramCount].floatVal = fval;
+                } else {
+                    int32_t val = parseInt(&p);
+                    _funcParams[paramCount].type = VAL_INT;
+                    _funcParams[paramCount].intVal = val;
+                }
+                paramCount++;
+            }
+            
+            while (*p == ' ' || *p == ',') p++;
+        }
+        
+        if (*p != ')') {
+            setError("Missing ')'", s.id, s.pos);
+            return false;
+        }
+        
+        Value resultVal;
+        resultVal.type = VAL_NONE;
+        
+        if (callExternalFunction(cmd, paramCount, _funcParams, resultVal)) {
+            result = true;
+            
+            if (hasVar) {
+                bool typeMatch = false;
+                
+                switch (resultVal.type) {
+                    case VAL_INT:
+                        if (varType == 'i') {
+                            _ctx.intVars[varIndex] = resultVal.intVal;
+                            typeMatch = true;
+                        } else if (varType == 'v') {
+                            _ctx.uintVars[varIndex] = (uint32_t)resultVal.intVal;
+                            typeMatch = true;
+                        } else if (varType == 'f') {
+                            _ctx.floatVars[varIndex] = (double)resultVal.intVal;
+                            typeMatch = true;
+                        }
+                        break;
+                        
+                    case VAL_UINT:
+                        if (varType == 'v') {
+                            _ctx.uintVars[varIndex] = resultVal.uintVal;
+                            typeMatch = true;
+                        } else if (varType == 'i') {
+                            _ctx.intVars[varIndex] = (int32_t)resultVal.uintVal;
+                            typeMatch = true;
+                        } else if (varType == 'f') {
+                            _ctx.floatVars[varIndex] = (double)resultVal.uintVal;
+                            typeMatch = true;
+                        }
+                        break;
+                        
+                    case VAL_FLOAT:
+                        if (varType == 'f') {
+                            _ctx.floatVars[varIndex] = (double)resultVal.floatVal;
+                            typeMatch = true;
+                        } else if (varType == 'v') {
+                            _ctx.uintVars[varIndex] = (uint32_t)resultVal.floatVal;
+                            typeMatch = true;
+                        } else if (varType == 'i') {
+                            _ctx.intVars[varIndex] = (int32_t)resultVal.floatVal;
+                            typeMatch = true;
+                        }
+                        break;
+                        
+                    case VAL_STRING:
+                        if (varType == 's') {
+                            strncpy(_ctx.stringVars[varIndex], resultVal.stringVal.data, MAX_STRING_LEN - 1);
+                            _ctx.stringVars[varIndex][MAX_STRING_LEN - 1] = '\0';
+                            typeMatch = true;
+                        }
+                        break;
+                        
+                    case VAL_ARRAY:
+                        if (varType == 'a') {
+                            uint8_t len = resultVal.arrayVal.len;
+                            if (len > MAX_ARRAY_SIZE) len = MAX_ARRAY_SIZE;
+                            for (uint8_t i = 0; i < len; i++) {
+                                _ctx.arrayVars[varIndex][i] = resultVal.arrayVal.data[i];
+                            }
+                            _ctx.arrayLen[varIndex] = len;
+                            typeMatch = true;
+                        }
+                        break;
+                        
+                    default:
+                        break;
+                }
+                
+                if (!typeMatch) {
+                    setError("Type mismatch", s.id, s.pos);
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            setError("External function failed", s.id, s.pos);
+            return false;
+        }
+    } else {
+        setError("Unknown command", cmd, s.id, s.pos);
+        return false;
+    }
+    
     if (result && s.hasTempResult && hasVar) {
         if (varType == 'v') {
             if (varIndex < MAX_UINT_VARS) _ctx.uintVars[varIndex] = (uint32_t)s.tempResult;
@@ -1215,11 +1481,17 @@ void ScriptRunner::clearAllEventHandlers() {
 
 bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persistent) {
     uint16_t len = strlen(script);
-    if (len >= MAX_SCRIPT_LEN) return false;
+    if (len >= MAX_SCRIPT_LEN) {
+        setError("Script too long");
+        return false;
+    }
 
     int existing = findSlotById(id);
     if (existing != -1) {
-        if (_slots[existing].isHandler) return false;
+        if (_slots[existing].isHandler) {
+            setError("Slot is handler", id, 0);
+            return false;
+        }
         strcpy(_slots[existing].script, script);
         _slots[existing].scriptLen = len;
         _slots[existing].pos = 0;
@@ -1231,7 +1503,10 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persisten
     }
 
     int slot = findFreeSlot(len);
-    if (slot == -1) return false;
+    if (slot == -1) {
+        setError("No free slots");
+        return false;
+    }
 
     resetScriptState(slot);
     _slots[slot].registered = true;
@@ -1249,9 +1524,15 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persisten
 
 bool ScriptRunner::runScript(uint8_t id) {
     int slot = findSlotById(id);
-    if (slot == -1) return false;
+    if (slot == -1) {
+        setError("Script not found", id, 0);
+        return false;
+    }
 
-    if (_slots[slot].isHandler) return false;
+    if (_slots[slot].isHandler) {
+        setError("Cannot run handler directly", id, 0);
+        return false;
+    }
     if (_slots[slot].active) _slots[slot].active = false;
 
     _slots[slot].pos = 0;
@@ -1271,8 +1552,14 @@ bool ScriptRunner::runScript(uint8_t id) {
 }
 
 bool ScriptRunner::runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len) {
-    if (slot >= MAX_SCRIPTS) return false;
-    if (!_slots[slot].registered) return false;
+    if (slot >= MAX_SCRIPTS) {
+        setError("Invalid slot");
+        return false;
+    }
+    if (!_slots[slot].registered) {
+        setError("Slot not registered");
+        return false;
+    }
 
     if (_slots[slot].active) _slots[slot].active = false;
 
@@ -1412,6 +1699,53 @@ void ScriptRunner::update() {
     }
 }
 
+bool ScriptRunner::registerFunction(const char* name, ExternalFunction func, void* userData) {
+    if (!name || !func) return false;
+    if (_extFuncCount >= MAX_EXTERNAL_FUNCTIONS) {
+        setError("Too many external functions");
+        return false;
+    }
+    
+    for (uint8_t i = 0; i < _extFuncCount; i++) {
+        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
+            _extFuncs[i].func = func;
+            _extFuncs[i].userData = userData;
+            return true;
+        }
+    }
+    
+    strncpy(_extFuncs[_extFuncCount].name, name, 15);
+    _extFuncs[_extFuncCount].name[15] = '\0';
+    _extFuncs[_extFuncCount].func = func;
+    _extFuncs[_extFuncCount].userData = userData;
+    _extFuncs[_extFuncCount].active = true;
+    _extFuncCount++;
+    
+    return true;
+}
+
+bool ScriptRunner::isExternalFunction(const char* name) const {
+    if (!name) return false;
+    
+    for (uint8_t i = 0; i < _extFuncCount; i++) {
+        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ScriptRunner::callExternalFunction(const char* name, uint8_t paramCount, const Value* params, Value& result) {
+    if (!name) return false;
+    
+    for (uint8_t i = 0; i < _extFuncCount; i++) {
+        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
+            return _extFuncs[i].func(paramCount, params, result, _extFuncs[i].userData);
+        }
+    }
+    return false;
+}
+
 uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
     if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
     return 0;
@@ -1494,11 +1828,6 @@ uint16_t ScriptRunner::getSlotLen(uint8_t slot) const {
     return _slots[slot].scriptLen;
 }
 
-uint16_t ScriptRunner::getSlotSize(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return 0;
-    return _slots[slot].slotSize;
-}
-
 uint8_t ScriptRunner::getTotalSlots() const {
     return MAX_SCRIPTS;
 }
@@ -1515,25 +1844,42 @@ uint8_t ScriptRunner::getFreeSlotsCount() const {
     return MAX_SCRIPTS - getUsedSlotsCount();
 }
 
-uint32_t ScriptRunner::getTotalMemory() const {
-    uint32_t total = 0;
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        total += _slots[i].slotSize;
+void ScriptRunner::setError(const char* msg) {
+    if (_logProvider) {
+        snprintf(_logBuf, sizeof(_logBuf), "[R] ERR: %s", msg);
+        _logProvider(_logBuf);
     }
-    return total;
 }
 
-uint32_t ScriptRunner::getUsedMemory() const {
-    uint32_t used = 0;
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        if (_slots[i].registered) used += _slots[i].slotSize;
+void ScriptRunner::setError(const char* msg, uint8_t slot, uint16_t pos) {
+    if (_logProvider) {
+        if (slot > 0 || pos > 0) {
+            snprintf(_logBuf, sizeof(_logBuf), "[R] ERR [%d:%d]: %s", slot, pos, msg);
+        } else {
+            snprintf(_logBuf, sizeof(_logBuf), "[R] ERR: %s", msg);
+        }
+        _logProvider(_logBuf);
     }
-    return used;
 }
 
-uint32_t ScriptRunner::getFreeMemory() const {
-    return getTotalMemory() - getUsedMemory();
+void ScriptRunner::setError(const char* msg, const char* token, uint8_t slot, uint16_t pos) {
+    if (_logProvider) {
+        if (slot > 0 || pos > 0) {
+            snprintf(_logBuf, sizeof(_logBuf), "[R] ERR [%d:%d]: %s near '%s'", slot, pos, msg, token ? token : "");
+        } else {
+            snprintf(_logBuf, sizeof(_logBuf), "[R] ERR: %s near '%s'", msg, token ? token : "");
+        }
+        _logProvider(_logBuf);
+    }
 }
+
+#ifdef ENABLE_PROVIDER_LOGGING
+void ScriptRunner::logDebug(const char* msg) {
+    if (_logProvider) {
+        _logProvider(msg);
+    }
+}
+#endif
 
 void ScriptRunner::setDataProvider(DataProvider provider) {
     _dataProvider = provider;
@@ -1581,13 +1927,6 @@ void ScriptRunner::setOutput(uint8_t gpio, uint16_t value) {
     if (_portProvider) {
         _portProvider(gpio, PORT_WRITE, value);
         if (_stateChangeProvider) _stateChangeProvider(gpio, 0, value);
-    }
-}
-
-void ScriptRunner::setError(const char* msg) {
-    if (_logProvider) {
-        snprintf(_logBuf, sizeof(_logBuf), "[R] ERR: %s", msg);
-        _logProvider(_logBuf);
     }
 }
 
@@ -1710,9 +2049,23 @@ bool ScriptRunner::cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t&
 
 ScriptRunner::ScriptRunner()
     : _dataProvider(nullptr), _logProvider(nullptr), _portProvider(nullptr),
-      _stateChangeProvider(nullptr), _loadProvider(nullptr), _eventHandlerCount(0) {
+      _stateChangeProvider(nullptr), _loadProvider(nullptr), _eventHandlerCount(0),
+      _extFuncCount(0) {
     _instance = this;
     initSlotPools();
+
+    for (uint8_t i = 0; i < MAX_EXTERNAL_FUNCTIONS; i++) {
+        _extFuncs[i].active = false;
+        _extFuncs[i].name[0] = '\0';
+        _extFuncs[i].func = nullptr;
+        _extFuncs[i].userData = nullptr;
+    }
+
+    for (uint8_t i = 0; i < MAX_FUNCTION_PARAMS; i++) {
+        _funcParams[i].type = VAL_NONE;
+        _funcParams[i].intVal = 0;
+        _funcStrBufs[i][0] = '\0';
+    }
 
     #ifdef ENABLE_LOAD_CACHE
     _loadCacheHits = 0;

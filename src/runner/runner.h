@@ -18,7 +18,7 @@
 
 #define MAX_SCRIPTS 15
 #define MAX_SCRIPT_LEN 256
-#define MAX_TOKEN_LEN 48
+#define MAX_TOKEN_LEN 64
 #define MAX_UINT_VARS 10
 #define MAX_INT_VARS 10
 #define MAX_FLOAT_VARS 5
@@ -31,6 +31,9 @@
 #define MAX_PARAMS 4
 #define MAX_EVENT_HANDLERS 20
 #define MAX_EVENT_NAME_LEN 16
+
+#define MAX_EXTERNAL_FUNCTIONS 5
+#define MAX_FUNCTION_PARAMS 5
 
 #define SCRIPT_ID_BASE 1
 
@@ -49,6 +52,15 @@ enum DataKind : uint8_t {
     KIND_INT,
     KIND_FLOAT,
     KIND_STRING
+};
+
+enum ValueType : uint8_t {
+    VAL_NONE = 0,
+    VAL_INT,
+    VAL_UINT,
+    VAL_FLOAT,
+    VAL_STRING,
+    VAL_ARRAY
 };
 
 union DataValue {
@@ -115,6 +127,30 @@ struct ScriptState {
     char whileConditionBuffer[32];
 };
 
+struct Value {
+    ValueType type;
+    union {
+        int32_t intVal;
+        uint32_t uintVal;
+        float floatVal;
+        struct {
+            const char* data;
+            uint8_t len;
+        } stringVal;
+        struct {
+            const uint8_t* data;
+            uint8_t len;
+        } arrayVal;
+    };
+};
+
+typedef bool (*ExternalFunction)(
+    uint8_t paramCount,
+    const Value* params,
+    Value& result,
+    void* userData
+);
+
 typedef bool (*DataProvider)(const char* id, DataKind kind, DataValue& value, bool write);
 typedef void (*LogProvider)(const char* message);
 typedef bool (*PortProvider)(uint8_t gpio, PortAction action, uint16_t& value);
@@ -141,14 +177,10 @@ public:
     bool isSlotActive(uint8_t slot) const;
     bool isSlotHandler(uint8_t slot) const;
     uint16_t getSlotLen(uint8_t slot) const;
-    uint16_t getSlotSize(uint8_t slot) const;
 
     uint8_t getTotalSlots() const;
     uint8_t getUsedSlotsCount() const;
     uint8_t getFreeSlotsCount() const;
-    uint32_t getTotalMemory() const;
-    uint32_t getUsedMemory() const;
-    uint32_t getFreeMemory() const;
 
     static uint32_t hash(const char* str);
     
@@ -169,6 +201,8 @@ public:
     uint8_t getArrayByte(uint8_t idx, uint8_t pos) const;
     void setArrayByte(uint8_t idx, uint8_t pos, uint8_t value);
     uint8_t getArrayLen(uint8_t idx) const;
+
+    bool registerFunction(const char* name, ExternalFunction func, void* userData = nullptr);
 
     void setDataProvider(DataProvider provider);
     void setLogProvider(LogProvider provider);
@@ -196,6 +230,18 @@ private:
     char _cleanedBody[MAX_SCRIPT_LEN];
     char _strBuf[MAX_STRING_LEN];
     char _nameBuf[32];
+
+    struct ExternalFunctionEntry {
+        char name[16];
+        ExternalFunction func;
+        void* userData;
+        bool active;
+    };
+    
+    ExternalFunctionEntry _extFuncs[MAX_EXTERNAL_FUNCTIONS];
+    uint8_t _extFuncCount;
+    Value _funcParams[MAX_FUNCTION_PARAMS];
+    char _funcStrBufs[MAX_FUNCTION_PARAMS][MAX_STRING_LEN];
 
     void resetScriptState(int idx);
     int findSlotById(uint8_t id) const;
@@ -231,7 +277,6 @@ private:
 
     void setOutput(uint8_t gpio, uint16_t value);
     bool parseCondition(const char* token, ScriptState& s);
-    void setError(const char* msg);
 
     bool parseVarUint(uint8_t idx, int32_t& result);
     bool parseVarInt(uint8_t idx, int32_t& result);
@@ -243,6 +288,13 @@ private:
     void processScript(uint8_t idx, uint32_t now);
     bool getNextToken(ScriptState& s, char* token, uint16_t& tokenLen);
     void finishScript(ScriptState& s, uint8_t idx);
+
+    bool isExternalFunction(const char* name) const;
+    bool callExternalFunction(const char* name, uint8_t paramCount, const Value* params, Value& result);
+
+    void setError(const char* msg);
+    void setError(const char* msg, uint8_t slot, uint16_t pos);
+    void setError(const char* msg, const char* token, uint8_t slot, uint16_t pos);
 
     #ifdef ENABLE_LOAD_CACHE
     struct LoadCacheEntry {
@@ -272,6 +324,7 @@ private:
     void logPortAction(uint8_t gpio, PortAction action, uint16_t value);
     void logDataAction(const char* id, DataKind kind, bool write, const char* value);
     void logLoadAction(uint8_t id, uint16_t len, bool cached);
+    void logDebug(const char* msg);
     #endif
 };
 
