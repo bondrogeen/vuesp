@@ -605,6 +605,13 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                 int32_t val = parseInt(&p2);
                 setOutput(index, (uint16_t)val);
                 return true;
+            } else if (*right == '$') {
+                int32_t val;
+                if (parseValue(&right, s, val)) {
+                    setOutput(index, (uint16_t)val);
+                    return true;
+                }
+                return false;
             } else {
                 uint16_t val = 0;
                 if (_portProvider && _portProvider(index, PORT_READ, val)) {

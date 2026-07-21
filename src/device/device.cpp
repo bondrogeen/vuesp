@@ -26,6 +26,7 @@ void deviceGPIO(Port* port) {
   // Serial.println(port->value);
   // if (port->value) {
   //   Serial.print(port->gpio);
+  // $v0=0;while:$v0<10;$p14=$v0;wait(1);$v0=$v0+1;$display=$v0;end
   // }
 }
 
