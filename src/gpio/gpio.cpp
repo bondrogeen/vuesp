@@ -5,8 +5,8 @@ Port ports[6] = {
     {KEY_PORT, 4, 0, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
     {KEY_PORT, 5, 0, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
     {KEY_PORT, 12, 0, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
-    {KEY_PORT, 13, 1, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
-    {KEY_PORT, 14, 150, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 13, 255, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 14, 0, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF},
     {KEY_PORT, 17, 0, GPIO_MODE_ADC, GPIO_INTERRUPT_OFF, GPIO_BIT_ADC, GPIO_DISABLED_ON},
 };
 #elif defined(ARDUINO_ESP32C3_DEV)
@@ -198,6 +198,12 @@ void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
 }
 
 bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
+  Serial.print("gpio: ");
+  Serial.print(gpio);
+  Serial.print("action: ");
+  Serial.print(action);
+  Serial.print(" value: ");
+  Serial.println(value);
   switch (action) {
     case PORT_READ:
       return getValue(gpio, value);
