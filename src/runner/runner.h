@@ -35,6 +35,8 @@
 #define MAX_EXTERNAL_FUNCTIONS 5
 #define MAX_FUNCTION_PARAMS 5
 
+#define MAX_FADE_PINS 5
+
 #define SCRIPT_ID_BASE 1
 
 #define TOKEN_SEPARATOR ';'
@@ -91,6 +93,17 @@ struct ScriptContext {
 struct Params {
     char values[MAX_PARAMS][32];
     uint8_t count;
+};
+
+struct FadeChannel {
+    bool active;
+    uint8_t pin;
+    uint8_t current;
+    uint8_t target;
+    int8_t step;
+    uint32_t lastStepTime;
+    uint16_t stepInterval;
+    uint8_t remainingSteps;
 };
 
 struct ScriptState {
@@ -231,6 +244,9 @@ private:
     char _strBuf[MAX_STRING_LEN];
     char _nameBuf[32];
 
+    FadeChannel _fadeChannels[MAX_FADE_PINS];
+    uint8_t _lastPortValues[40];
+
     struct ExternalFunctionEntry {
         char name[16];
         ExternalFunction func;
@@ -275,7 +291,6 @@ private:
     bool handleChr(const Params& params, ScriptState& s);
     bool handleOrd(const Params& params, ScriptState& s);
 
-    void setOutput(uint8_t gpio, uint16_t value);
     bool parseCondition(const char* token, ScriptState& s);
 
     bool parseVarUint(uint8_t idx, int32_t& result);
@@ -295,6 +310,13 @@ private:
     void setError(const char* msg);
     void setError(const char* msg, uint8_t slot, uint16_t pos);
     void setError(const char* msg, const char* token, uint8_t slot, uint16_t pos);
+
+    void initFade();
+    bool startFade(uint8_t pin, uint8_t target, uint8_t tenths);
+    void processFade();
+    uint8_t readPort(uint8_t pin);
+    void writePort(uint8_t pin, uint16_t value);
+    void writePortSilent(uint8_t pin, uint16_t value);
 
     #ifdef ENABLE_LOAD_CACHE
     struct LoadCacheEntry {

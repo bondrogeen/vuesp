@@ -600,24 +600,32 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 
     if (isInternal) {
         if (type == 'p') {
+            const char* slash = strchr(right, '/');
+            if (slash) {
+                const char* p2 = right;
+                uint8_t target = (uint8_t)parseInt(&p2);
+                const char* p3 = slash + 1;
+                uint8_t tenths = (uint8_t)parseInt(&p3);
+                if (tenths == 0) tenths = 1;
+                startFade(index, target, tenths);
+                return true;
+            }
+            
             if (isDigit(*right) || *right == '-') {
                 const char* p2 = right;
                 int32_t val = parseInt(&p2);
-                setOutput(index, (uint16_t)val);
+                writePort(index, (uint16_t)val);
                 return true;
             } else if (*right == '$') {
                 int32_t val;
                 if (parseValue(&right, s, val)) {
-                    setOutput(index, (uint16_t)val);
+                    writePort(index, (uint16_t)val);
                     return true;
                 }
                 return false;
             } else {
                 uint16_t val = 0;
                 if (_portProvider && _portProvider(index, PORT_READ, val)) {
-                    #ifdef ENABLE_PROVIDER_LOGGING
-                    logPortAction(index, PORT_READ, val);
-                    #endif
                     s.tempResult = val;
                     s.hasTempResult = true;
                     return true;
@@ -1420,6 +1428,124 @@ void ScriptRunner::initSlotPools() {
     }
 }
 
+void ScriptRunner::initFade() {
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        _fadeChannels[i].active = false;
+        _fadeChannels[i].pin = 0;
+        _fadeChannels[i].current = 0;
+        _fadeChannels[i].target = 0;
+        _fadeChannels[i].step = 0;
+        _fadeChannels[i].lastStepTime = 0;
+        _fadeChannels[i].stepInterval = 0;
+        _fadeChannels[i].remainingSteps = 0;
+    }
+    for (uint8_t i = 0; i < 40; i++) {
+        _lastPortValues[i] = 0;
+    }
+}
+
+bool ScriptRunner::startFade(uint8_t pin, uint8_t target, uint8_t tenths) {
+    if (tenths == 0) tenths = 1;
+    
+    uint8_t current = readPort(pin);
+    int16_t diff = target - current;
+    uint8_t steps = diff < 0 ? -diff : diff;
+    if (steps == 0) steps = 1;
+    
+    uint32_t totalTime = tenths * 100;
+    uint16_t stepInterval = totalTime / steps;
+    if (stepInterval < 1) stepInterval = 1;
+    
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        if (_fadeChannels[i].pin == pin) {
+            _fadeChannels[i].active = true;
+            _fadeChannels[i].current = current;
+            _fadeChannels[i].target = target;
+            _fadeChannels[i].step = (current < target) ? 1 : -1;
+            _fadeChannels[i].lastStepTime = millis();
+            _fadeChannels[i].stepInterval = stepInterval;
+            _fadeChannels[i].remainingSteps = steps;
+            return true;
+        }
+    }
+    
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        if (!_fadeChannels[i].active) {
+            _fadeChannels[i].active = true;
+            _fadeChannels[i].pin = pin;
+            _fadeChannels[i].current = current;
+            _fadeChannels[i].target = target;
+            _fadeChannels[i].step = (current < target) ? 1 : -1;
+            _fadeChannels[i].lastStepTime = millis();
+            _fadeChannels[i].stepInterval = stepInterval;
+            _fadeChannels[i].remainingSteps = steps;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void ScriptRunner::processFade() {
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        FadeChannel& ch = _fadeChannels[i];
+        if (!ch.active) continue;
+        
+        uint32_t now = millis();
+        if (now - ch.lastStepTime < ch.stepInterval) continue;
+        ch.lastStepTime = now;
+        
+        if (ch.remainingSteps == 0) {
+            ch.active = false;
+            writePortSilent(ch.pin, ch.target);
+            if (_stateChangeProvider) _stateChangeProvider(ch.pin, 0, ch.target);
+            continue;
+        }
+        
+        ch.remainingSteps--;
+        ch.current += ch.step;
+        writePortSilent(ch.pin, ch.current);
+    }
+}
+
+uint8_t ScriptRunner::readPort(uint8_t pin) {
+    uint16_t val = 0;
+    if (_portProvider && _portProvider(pin, PORT_READ, val)) {
+        if (pin < 40) _lastPortValues[pin] = (uint8_t)val;
+        return (uint8_t)val;
+    }
+    if (pin < 40) return _lastPortValues[pin];
+    return 0;
+}
+
+void ScriptRunner::writePort(uint8_t pin, uint16_t value) {
+    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
+    
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        if (_fadeChannels[i].active && _fadeChannels[i].pin == pin) {
+            _fadeChannels[i].active = false;
+            break;
+        }
+    }
+    if (pin < 40) _lastPortValues[pin] = (uint8_t)value;
+    
+    #ifdef ENABLE_PROVIDER_LOGGING
+    logPortAction(pin, PORT_WRITE, value);
+    #endif
+    if (_portProvider) {
+        _portProvider(pin, PORT_WRITE, value);
+        if (_stateChangeProvider) _stateChangeProvider(pin, 0, value);
+    }
+}
+
+void ScriptRunner::writePortSilent(uint8_t pin, uint16_t value) {
+    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
+    if (pin < 40) _lastPortValues[pin] = (uint8_t)value;
+    if (_portProvider) {
+        _portProvider(pin, PORT_WRITE, value);
+    }
+}
+
 bool ScriptRunner::onEvent(uint32_t hash, uint8_t slotId) {
     if (slotId >= MAX_SCRIPTS) return false;
     if (!_slots[slotId].registered) return false;
@@ -1700,7 +1826,9 @@ void ScriptRunner::processScript(uint8_t idx, uint32_t now) {
 
 void ScriptRunner::update() {
     uint32_t now = millis();
-
+    
+    processFade();
+    
     for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
         processScript(i, now);
     }
@@ -1926,17 +2054,6 @@ void ScriptRunner::setLoadProvider(LoadProvider provider) {
     #endif
 }
 
-void ScriptRunner::setOutput(uint8_t gpio, uint16_t value) {
-    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
-    #ifdef ENABLE_PROVIDER_LOGGING
-    logPortAction(gpio, PORT_WRITE, value);
-    #endif
-    if (_portProvider) {
-        _portProvider(gpio, PORT_WRITE, value);
-        if (_stateChangeProvider) _stateChangeProvider(gpio, 0, value);
-    }
-}
-
 #ifdef ENABLE_PROVIDER_LOGGING
 void ScriptRunner::logProviderSet(const char* name, bool enabled) {
     if (_logProvider) {
@@ -2060,6 +2177,7 @@ ScriptRunner::ScriptRunner()
       _extFuncCount(0) {
     _instance = this;
     initSlotPools();
+    initFade();
 
     for (uint8_t i = 0; i < MAX_EXTERNAL_FUNCTIONS; i++) {
         _extFuncs[i].active = false;
