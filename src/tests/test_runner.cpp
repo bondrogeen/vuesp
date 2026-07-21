@@ -229,6 +229,162 @@ void printLog() {
     if (!test_failed) printf("  PASS %s\n", #name); \
   } while (0)
 
+bool testAddHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 2) return false;
+  if (params[0].type != VAL_INT && params[0].type != VAL_UINT) return false;
+  if (params[1].type != VAL_INT && params[1].type != VAL_UINT) return false;
+
+  int32_t a = (params[0].type == VAL_INT) ? params[0].intVal : (int32_t)params[0].uintVal;
+  int32_t b = (params[1].type == VAL_INT) ? params[1].intVal : (int32_t)params[1].uintVal;
+
+  result.type = VAL_INT;
+  result.intVal = a + b;
+  return true;
+}
+
+bool testMulHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 2) return false;
+  if (params[0].type != VAL_INT && params[0].type != VAL_UINT) return false;
+  if (params[1].type != VAL_INT && params[1].type != VAL_UINT) return false;
+
+  int32_t a = (params[0].type == VAL_INT) ? params[0].intVal : (int32_t)params[0].uintVal;
+  int32_t b = (params[1].type == VAL_INT) ? params[1].intVal : (int32_t)params[1].uintVal;
+
+  result.type = VAL_INT;
+  result.intVal = a * b;
+  return true;
+}
+
+bool testHelloHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  static const char* msg = "Hello from C++";
+  result.type = VAL_STRING;
+  result.stringVal.data = msg;
+  result.stringVal.len = strlen(msg);
+  return true;
+}
+
+bool testEchoHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 1) return false;
+  if (params[0].type != VAL_STRING) return false;
+
+  result.type = VAL_STRING;
+  result.stringVal.data = params[0].stringVal.data;
+  result.stringVal.len = params[0].stringVal.len;
+  return true;
+}
+
+bool testSum3Handler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 3) return false;
+
+  int32_t sum = 0;
+  for (uint8_t i = 0; i < paramCount && i < 3; i++) {
+    if (params[i].type == VAL_INT)
+      sum += params[i].intVal;
+    else if (params[i].type == VAL_UINT)
+      sum += (int32_t)params[i].uintVal;
+    else
+      return false;
+  }
+
+  result.type = VAL_INT;
+  result.intVal = sum;
+  return true;
+}
+
+bool testFloatAddHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 2) return false;
+  if (params[0].type != VAL_FLOAT || params[1].type != VAL_FLOAT) return false;
+
+  result.type = VAL_FLOAT;
+  result.floatVal = params[0].floatVal + params[1].floatVal;
+  return true;
+}
+
+bool testMultiParamHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 4) return false;
+
+  if (params[0].type != VAL_STRING) return false;
+  if (params[1].type != VAL_STRING) return false;
+  if (params[2].type != VAL_INT && params[2].type != VAL_UINT) return false;
+  if (params[3].type != VAL_INT && params[3].type != VAL_UINT) return false;
+
+  int32_t a = (params[2].type == VAL_INT) ? params[2].intVal : (int32_t)params[2].uintVal;
+  int32_t b = (params[3].type == VAL_INT) ? params[3].intVal : (int32_t)params[3].uintVal;
+
+  result.type = VAL_INT;
+  result.intVal = a + b;
+  return true;
+}
+
+bool testMultiParamNoSpacesHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 4) return false;
+
+  if (params[0].type != VAL_STRING) return false;
+  if (params[1].type != VAL_STRING) return false;
+  if (params[2].type != VAL_INT && params[2].type != VAL_UINT) return false;
+  if (params[3].type != VAL_INT && params[3].type != VAL_UINT) return false;
+
+  int32_t a = (params[2].type == VAL_INT) ? params[2].intVal : (int32_t)params[2].uintVal;
+  int32_t b = (params[3].type == VAL_INT) ? params[3].intVal : (int32_t)params[3].uintVal;
+
+  result.type = VAL_INT;
+  result.intVal = a + b;
+  return true;
+}
+
+bool testNegativeNumberHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 3) return false;
+  if (params[0].type != VAL_STRING) return false;
+  if (params[1].type != VAL_STRING) return false;
+  if (params[2].type != VAL_INT) return false;
+
+  result.type = VAL_INT;
+  result.intVal = params[2].intVal;
+  return true;
+}
+
+bool test4ParamsNegativeHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 4) return false;
+
+  if (params[0].type != VAL_STRING) return false;
+  if (params[1].type != VAL_STRING) return false;
+  if (params[2].type != VAL_INT && params[2].type != VAL_UINT) return false;
+  if (params[3].type != VAL_INT && params[3].type != VAL_UINT) return false;
+
+  int32_t a = (params[2].type == VAL_INT) ? params[2].intVal : (int32_t)params[2].uintVal;
+  int32_t b = (params[3].type == VAL_INT) ? params[3].intVal : (int32_t)params[3].uintVal;
+
+  result.type = VAL_INT;
+  result.intVal = a + b;
+  return true;
+}
+
+bool testArraySumHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 1 || params[0].type != VAL_ARRAY) return false;
+
+  int32_t sum = 0;
+  for (uint8_t i = 0; i < params[0].arrayVal.len; i++) {
+    sum += params[0].arrayVal.data[i];
+  }
+
+  result.type = VAL_INT;
+  result.intVal = sum;
+  return true;
+}
+
+bool testArrayMulHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 1 || params[0].type != VAL_ARRAY) return false;
+
+  int32_t mul = 1;
+  for (uint8_t i = 0; i < params[0].arrayVal.len; i++) {
+    mul *= params[0].arrayVal.data[i];
+  }
+
+  result.type = VAL_INT;
+  result.intVal = mul;
+  return true;
+}
+
 TEST(variable_assignment_uint) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
@@ -1124,6 +1280,297 @@ TEST(deep_nesting) {
   ASSERT_LOG_CONTAINS("DEEP");
 }
 
+TEST(external_function_add) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  bool registered = runner.registerFunction("add", testAddHandler);
+  ASSERT_TRUE(registered);
+
+  runner.registerScript(1, "$v0=add(10,20);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 30u);
+  ASSERT_LOG_EXACT("30");
+}
+
+TEST(external_function_add_with_vars) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("add", testAddHandler);
+
+  runner.registerScript(1, "$v0=5;$v1=7;$v2=add($v0,$v1);$display=$v2");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(2), 12u);
+  ASSERT_LOG_EXACT("12");
+}
+
+TEST(external_function_mul) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("mul", testMulHandler);
+
+  runner.registerScript(1, "$v0=mul(6,7);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 42u);
+  ASSERT_LOG_EXACT("42");
+}
+
+TEST(external_function_string) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("hello", testHelloHandler);
+
+  runner.registerScript(1, "$s0=hello();$display=$s0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("Hello from C++");
+}
+
+TEST(external_function_echo) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("echo", testEchoHandler);
+
+  runner.registerScript(1, "$s0=echo('Test message');$display=$s0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("Test message");
+}
+
+TEST(external_function_echo_with_var) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("echo", testEchoHandler);
+
+  runner.registerScript(1, "$s0='Hello world';$s1=echo($s0);$display=$s1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("Hello world");
+}
+
+TEST(external_function_3_params) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("sum3", testSum3Handler);
+
+  runner.registerScript(1, "$v0=sum3(1,2,3);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 6u);
+  ASSERT_LOG_EXACT("6");
+}
+
+TEST(external_function_3_params_with_vars) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("sum3", testSum3Handler);
+
+  runner.registerScript(1, "$v0=1;$v1=2;$v2=3;$v3=sum3($v0,$v1,$v2);$display=$v3");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(3), 6u);
+  ASSERT_LOG_EXACT("6");
+}
+
+TEST(external_function_int_to_uint) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("add", testAddHandler);
+
+  runner.registerScript(1, "$i0=add(10,20);$display=$i0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getIntVar(0), 30);
+  ASSERT_LOG_EXACT("30");
+}
+
+TEST(external_function_float_result) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("fadd", testFloatAddHandler);
+
+  runner.registerScript(1, "$f0=1.5;$f1=2.5;$f2=fadd($f0,$f1);$display=$f2");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  float val = runner.getFloatVar(2);
+  ASSERT_FLOAT_EQ(val, 4.0f, 0.1f);
+  ASSERT_LOG_CONTAINS("4.00");
+}
+
+TEST(external_function_4_params) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("multi", testMultiParamHandler);
+
+  runner.registerScript(1, "$v0=multi('POST','http://test.com',154,21);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 175u);
+  ASSERT_LOG_EXACT("175");
+}
+
+TEST(external_function_4_params_no_spaces) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("multi", testMultiParamNoSpacesHandler);
+
+  runner.registerScript(1, "$v0=multi('POST','http://test.com',154,21);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 175u);
+  ASSERT_LOG_EXACT("175");
+}
+
+TEST(external_function_negative_number) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("neg", testNegativeNumberHandler);
+
+  runner.registerScript(1, "$i0=neg('POST','http://test.com',-16000);$display=$i0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getIntVar(0), -16000);
+  ASSERT_LOG_EXACT("-16000");
+}
+
+TEST(external_function_4_params_negative) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("multi", test4ParamsNegativeHandler);
+
+  runner.registerScript(1, "$i0=multi('POST','http://test.com',-16000,4121556);$display=$i0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getIntVar(0), 4105556);
+  ASSERT_LOG_EXACT("4105556");
+}
+
+TEST(external_function_array_sum) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("sum", testArraySumHandler);
+
+  runner.registerScript(1, "$a0={10,20,30,40,50};$v0=sum($a0);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 150u);
+  ASSERT_LOG_EXACT("150");
+}
+
+TEST(external_function_array_mul) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  runner.registerFunction("mul", testArrayMulHandler);
+
+  runner.registerScript(1, "$a0={1,2,3,4,5};$v0=mul($a0);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 120u);
+  ASSERT_LOG_EXACT("120");
+}
+
+TEST(external_function_array_return_array) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  auto doubleArrayHandler = [](uint8_t paramCount, const Value* params, Value& result, void* userData) -> bool {
+    if (paramCount < 1 || params[0].type != VAL_ARRAY) return false;
+
+    static uint8_t resultArray[MAX_ARRAY_SIZE];
+    uint8_t len = params[0].arrayVal.len;
+    if (len > MAX_ARRAY_SIZE) len = MAX_ARRAY_SIZE;
+
+    for (uint8_t i = 0; i < len; i++) {
+      resultArray[i] = params[0].arrayVal.data[i] * 2;
+    }
+
+    result.type = VAL_ARRAY;
+    result.arrayVal.data = resultArray;
+    result.arrayVal.len = len;
+    return true;
+  };
+
+  runner.registerFunction("double", doubleArrayHandler);
+
+  runner.registerScript(1, "$a0={1,2,3,4};$a1=double($a0);$v0=get($a1,2);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 6u);
+  ASSERT_LOG_EXACT("6");
+}
+
+TEST(external_function_array_and_int) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  auto arrayAndIntHandler = [](uint8_t paramCount, const Value* params, Value& result, void* userData) -> bool {
+    if (paramCount < 2 || params[0].type != VAL_ARRAY || params[1].type != VAL_INT) return false;
+
+    int32_t sum = 0;
+    for (uint8_t i = 0; i < params[0].arrayVal.len; i++) {
+      sum += params[0].arrayVal.data[i];
+    }
+    sum += params[1].intVal;
+
+    result.type = VAL_INT;
+    result.intVal = sum;
+    return true;
+  };
+
+  runner.registerFunction("addToArray", arrayAndIntHandler);
+
+  runner.registerScript(1, "$a0={10,20,30,40};$v0=addToArray($a0,100);$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(runner.getUintVar(0), 200u);
+  ASSERT_LOG_EXACT("200");
+}
+
+TEST(external_function_overflow) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+
+  for (int i = 0; i < 5; i++) {
+    char name[16];
+    snprintf(name, sizeof(name), "func%d", i);
+    runner.registerFunction(name, testAddHandler);
+  }
+
+  bool result = runner.registerFunction("func5", testAddHandler);
+  ASSERT_FALSE(result);
+}
+
+TEST(external_function_type_mismatch) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.setLogProvider(testLogProvider);
+
+  runner.registerFunction("hello", testHelloHandler);
+
+  runner.registerScript(1, "$v0=hello();$display=$v0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("Type mismatch");
+}
+
 int main() {
   printf("=== ScriptRunner Tests ===\n\n");
 
@@ -1232,13 +1679,33 @@ int main() {
   RUN_TEST(get_float_var_out_of_range);
   RUN_TEST(set_uint_var_out_of_range);
 
-  // Новые тесты на вложенность
   RUN_TEST(nested_on_inside_on);
   RUN_TEST(nested_if_inside_on);
   RUN_TEST(nested_while_inside_on);
   RUN_TEST(if_inside_while_inside_on);
   RUN_TEST(on_inside_if);
   RUN_TEST(deep_nesting);
+
+  RUN_TEST(external_function_add);
+  RUN_TEST(external_function_add_with_vars);
+  RUN_TEST(external_function_mul);
+  RUN_TEST(external_function_string);
+  RUN_TEST(external_function_echo);
+  RUN_TEST(external_function_echo_with_var);
+  RUN_TEST(external_function_3_params);
+  RUN_TEST(external_function_3_params_with_vars);
+  RUN_TEST(external_function_int_to_uint);
+  RUN_TEST(external_function_float_result);
+  RUN_TEST(external_function_4_params);
+  RUN_TEST(external_function_4_params_no_spaces);
+  RUN_TEST(external_function_negative_number);
+  RUN_TEST(external_function_4_params_negative);
+  RUN_TEST(external_function_array_sum);
+  RUN_TEST(external_function_array_mul);
+  RUN_TEST(external_function_array_return_array);
+  RUN_TEST(external_function_array_and_int);
+  RUN_TEST(external_function_overflow);
+  RUN_TEST(external_function_type_mismatch);
 
   printf("\n=== All tests passed ===\n");
   return 0;
