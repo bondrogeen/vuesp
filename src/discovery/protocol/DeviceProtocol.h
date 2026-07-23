@@ -5,7 +5,6 @@
 #include <functional>
 #include <map>
 
-// ==================== КОНСТАНТЫ ====================
 
 const uint32_t BROADCAST_ADDRESS = 0xFFFFFFFF;
 
@@ -16,7 +15,6 @@ const unsigned long DEFAULT_ANNOUNCE_JITTER = 500;
 const size_t PACKET_HEADER_SIZE = 5;
 const size_t TX_BUFFER_SIZE = 1500;
 
-// ==================== ТИПЫ ====================
 
 enum class PacketType : uint8_t {
     TEXT = 0x00,
@@ -38,8 +36,6 @@ struct OutgoingPacket {
     uint32_t targetAddress;
     PacketType type;
 };
-
-// ==================== КЛАСС ====================
 
 class DeviceProtocol {
 public:

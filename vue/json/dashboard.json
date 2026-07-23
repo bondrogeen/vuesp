@@ -57,8 +57,8 @@
     "getTo": "new Date(v * 1000).toLocaleDateString()"
   },
   {
-    "id": "device.message",
-    "name": "message",
+    "id": "device.list",
+    "name": "List",
     "type": "list",
     "icon": "store",
     "opts": {
@@ -68,16 +68,16 @@
         { "name": "Item3", "value": "3" }
       ]
     },
-    "args": ["device.message", "device"],
-    "set": "({ ...a, message: v, command: 1})"
+    "args": ["device.list", "device"],
+    "set": "({ ...a, list: v, command: 1})"
   },
   {
-    "id": "notification",
-    "name": "Notification",
+    "id": "device.message",
+    "name": "Message",
     "type": "input",
     "icon": "noti",
-    "args": ["device.notification"],
-    "set": "({key:11,text:v,color:4,date:0,isNew:1})"
+    "args": ["device.message", "device"],
+    "set": "({ ...a, message: `${v}`, command: 1})"
   },
   {
     "id": "buffer.head",

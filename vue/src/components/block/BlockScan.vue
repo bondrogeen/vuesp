@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-list v-slot="{ item }" :items="items" className="">
+    <v-list v-slot="{ item }" :items="items" class="bg-transparent! ring-0!">
       <div class="flex items-center w-full" @click="onSelect(item)">
         <div class="mr-2">
           <v-wifi-icon v-bind="item" />

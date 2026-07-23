@@ -21,7 +21,7 @@
       <div class="relative min-h-[260px]">
         <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
 
-        <v-list v-slot="{ item: { name, size, isDir, isFile } }" className="" :items="sortFiles">
+        <v-list v-slot="{ item: { name, size, isDir, isFile } }" :items="sortFiles" class="">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-400">
               <icon-ri-folder-6-line v-if="isDir"></icon-ri-folder-6-line>
@@ -37,7 +37,7 @@
 
           <v-select :items="getListMenu(isDir)" @change="onEventList(name, $event)">
             <template #activator="{ on }">
-              <v-button color="" type="icon" @click="on.click">
+              <v-button @click="on.click">
                 <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
               </v-button>
             </template>
@@ -49,7 +49,7 @@
     <Teleport to="[data-slot='device']">
       <v-select :items="mainMenu" @change="onEventService">
         <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
+          <v-button type="icon" @click="on.click">
             <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>

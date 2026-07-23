@@ -26,7 +26,7 @@
           <icon-ri-settings-2-line class="size-4" />
         </div>
 
-        <v-button color="blue" class="" href="https://remixicon.com/" target="_blank">https://remixicon.com/</v-button>
+        <v-button color="blue" href="https://remixicon.com/" target="_blank">https://remixicon.com/</v-button>
       </card-main>
 
       <div>

@@ -4,7 +4,7 @@
 
 Buffer myBuffer = {KEY_BUFFER};
 
-Device device = {KEY_DEVICE, 0, 100, 1760640900, "1"};
+Device device = {KEY_DEVICE, 0, 100, 1760640900, 2, "text"};
 uint32_t lastTimeDevice = 0;
 
 // CircularBuffer<int8_t, 256> buffer(myBuffer);
