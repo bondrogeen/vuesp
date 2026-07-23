@@ -1657,6 +1657,19 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persisten
 
 bool ScriptRunner::runScript(uint8_t id) {
     int slot = findSlotById(id);
+    
+    // Если скрипт не найден - пытаемся загрузить через LoadProvider
+    if (slot == -1 && _loadProvider) {
+        char buffer[MAX_SCRIPT_LEN];
+        uint16_t len = 0;
+        
+        if (_loadProvider(id, buffer, len)) {
+            if (registerScript(id, buffer, true)) {
+                slot = findSlotById(id);
+            }
+        }
+    }
+    
     if (slot == -1) {
         setError("Script not found", id, 0);
         return false;
@@ -1666,7 +1679,15 @@ bool ScriptRunner::runScript(uint8_t id) {
         setError("Cannot run handler directly", id, 0);
         return false;
     }
-    if (_slots[slot].active) _slots[slot].active = false;
+    
+    if (_slots[slot].active) {
+        #ifdef ENABLE_PROVIDER_LOGGING
+        char buf[64];
+        snprintf(buf, sizeof(buf), "[R] runScript: id=%d already running, ignoring recursive call", id);
+        logDebug(buf);
+        #endif
+        return true;
+    }
 
     _slots[slot].pos = 0;
     _slots[slot].scriptLen = strlen(_slots[slot].script);

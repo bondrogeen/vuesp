@@ -16,12 +16,12 @@
 
         <app-nav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
           <template #icon="{ item }">
-            <icon-ri-home-line v-if="item.icon === 'home'" />
-            <icon-ri-dashboard-line v-else-if="item.icon === 'dashboard'" />
-            <icon-ri-file-code-line v-else-if="item.icon === 'script'" />
-            <icon-ri-equalizer-line v-else-if="item.icon === 'settings'" />
-            <icon-ri-database-2-line v-else-if="item.icon === 'storage'" />
-            <icon-ri-cpu-line v-else-if="item.icon === 'gpio'" />
+            <icon-ri-home-line v-if="item.icon === 'home'" class="size-6" />
+            <icon-ri-dashboard-line v-else-if="item.icon === 'dashboard'" class="size-6" />
+            <icon-ri-file-code-line v-else-if="item.icon === 'script'" class="size-6" />
+            <icon-ri-equalizer-line v-else-if="item.icon === 'settings'" class="size-6" />
+            <icon-ri-database-2-line v-else-if="item.icon === 'storage'" class="size-6" />
+            <icon-ri-cpu-line v-else-if="item.icon === 'gpio'" class="size-6" />
 
             <icon-ri-home-line v-else />
           </template>
@@ -31,9 +31,9 @@
 
         <BlockStatus v-slot="{ repo, home }" v-bind="info" :pkg="pkg" class="mb-4 w-full rounded-2xl bg-gray-100 px-4 py-4 text-center dark:bg-white/[0.03]" :class="isSidebar ? 'lg:hidden' : ''">
           <div class="flex gap-2 mt-4">
-            <v-button :href="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
+            <v-button :to="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
 
-            <v-button v-if="home" :href="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
+            <v-button v-if="home" :to="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
           </div>
         </BlockStatus>
       </app-aside>
@@ -62,7 +62,7 @@
             </div>
           </template>
           <template #empty>
-            <p class="text-center text-gray-200/50 py-10">{{ $t('empty') }}</p>
+            <p class="text-center py-10">{{ $t('empty') }}</p>
           </template>
         </app-notification>
       </div>

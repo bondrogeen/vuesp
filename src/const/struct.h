@@ -113,6 +113,7 @@ struct Device {
   uint8_t command;
   uint16_t analog;
   uint32_t now;
+  uint32_t list;
   char message[32];
 };
 

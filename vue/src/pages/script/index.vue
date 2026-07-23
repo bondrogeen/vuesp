@@ -91,7 +91,7 @@
             <ul ref="container" class="overflow-y-auto flex flex-col rounded-md border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-4 max-h-50 min-h-32 scrollbar">
               <li v-for="(log, idx) in logs" :key="idx" class="py-0.5 flex items-start gap-2 border-b border-slate-100/50 last:border-0 text-sm">
                 <span class="text-slate-400 whitespace-nowrap">{{ log.time }}</span>
-                <span :class="'text-emerald-600'">
+                <span>
                   {{ log.text }}
                 </span>
               </li>
