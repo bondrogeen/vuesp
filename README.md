@@ -6,8 +6,15 @@ Template for your arduino projects with a web interface.
 
 [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) - Async HTTP and WebSocket Server for ESP Arduino  
 [Vue3](https://vuejs.org/) - The Progressive JavaScript Framework
+[Tailwindcss](https://tailwindcss.com/) - css
+[Vue components](https://github.com/bondrogeen/vuesp-components) - vuesp-components
 
-![Vuesp Screenshots](./github/images/screen/home.webp)
+![Vuesp home](./github/images/screen/home.png)
+![Vuesp dashboard](./github/images/screen/dashboard.png)
+![Vuesp script](./github/images/screen/script.png)
+![Vuesp settings](./github/images/screen/settings.png)
+![Vuesp storage](./github/images/screen/storage.png)
+![Vuesp gpio](./github/images/screen/gpio.png)
 
 ## Features
 
@@ -160,7 +167,6 @@ For production deployment, please read [SECURITY.md](./SECURITY.md) for:
 - **HTTP Server** - ESPAsyncWebServer
 - **WebSocket** - Binary protocol for efficiency
 - **File System** - LittleFS support
-- **Tasks** - FreeRTOS task scheduling
 - **Configuration** - EEPROM storage
 
 ### Communication Protocol
@@ -172,6 +178,11 @@ Binary WebSocket messages at `/esp` endpoint:
 - All platform-specific
 
 ## Version History
+
+### 3.4.0 (2026-07-24)
+
+- Update Web
+- Add example components
 
 ### 3.2.0 (2025-07-03)
 
