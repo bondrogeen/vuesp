@@ -58,7 +58,19 @@ export interface IStateDevice {
   analog: number;
 }
 
+export interface IDiscovery {
+  key?: number;
+  status: number;
+  empty: number;
+  id: number;
+  ip: number;
+  lastSeen: number;
+}
+
 export interface IMyMessageSettings extends IMessageSettings {
+  discovery: number;
+  discoveryInterval: number;
+  discoveryPort: number;
   EthIp?: [];
   EthSubnet?: [];
   EthGateway?: [];
@@ -68,6 +80,7 @@ export interface IMyMessageSettings extends IMessageSettings {
 export interface IMyIStateMain extends IStateMain {
   device: IStateDevice;
   dallas: any;
+  discovery: Record<string, IDiscovery>;
 }
 
 export interface IStoreApp extends IStateApp {

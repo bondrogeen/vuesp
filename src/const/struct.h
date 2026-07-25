@@ -12,6 +12,7 @@ enum keys {
   KEY_DALLAS,
   KEY_BUFFER,
   KEY_DEVICE,
+  KEY_DISCOVERY,
   KEY_END
 };
 
@@ -25,6 +26,10 @@ struct Settings {
   uint8_t authMode;
   uint16_t version;
   uint16_t device;
+
+  uint8_t discovery;
+  uint8_t discoveryInterval;
+  uint16_t discoveryPort;
 
   uint8_t wifiIp[4];
   uint8_t wifiSubnet[4];
@@ -108,15 +113,6 @@ struct Dallas {
   float temp;
 };
 
-struct Device {
-  uint8_t key;
-  uint8_t command;
-  uint16_t analog;
-  uint32_t now;
-  uint32_t list;
-  char message[32];
-};
-
 struct Buffer {
   uint8_t key;
   uint8_t empty;
@@ -124,4 +120,21 @@ struct Buffer {
   uint16_t tail;
   uint16_t count;
   int8_t data[256];
+};
+struct Discovery {
+  uint8_t key;
+  uint8_t status;
+  uint16_t empty;
+  uint32_t id;
+  uint32_t ip;
+  uint32_t lastSeen;
+};
+
+struct Device {
+  uint8_t key;
+  uint8_t command;
+  uint16_t analog;
+  uint32_t now;
+  uint32_t list;
+  char message[32];
 };

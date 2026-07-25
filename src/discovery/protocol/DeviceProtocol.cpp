@@ -108,8 +108,8 @@ void DeviceProtocol::update() {
   for (auto it = _peers.begin(); it != _peers.end();) {
     if (now - it->second.lastSeen > _peerTimeout) {
       uint32_t id = it->first;
+      if (_peerLostCallback) _peerLostCallback(_peers[id]);
       it = _peers.erase(it);
-      if (_peerLostCallback) _peerLostCallback(id);
     } else {
       ++it;
     }

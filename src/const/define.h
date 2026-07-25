@@ -1,7 +1,7 @@
 #define CONFIG_START 0
 
 // Default struct settings
-#define CONFIG_VERSION 5
+#define CONFIG_VERSION 0
 
 #define DEF_WIFI_DHCP 1
 #define DEF_WIFI_IP \
@@ -20,6 +20,10 @@
 #define DEF_AUTH_MODE 1
 #define DEF_AUTH_LOGIN "admin"
 #define DEF_AUTH_PASS "admin"
+
+#define DEF_DISCOVERY 1
+#define DEF_DISCOVERY_INTERVAL 5
+#define DEF_DISCOVERY_PORT 12345
 
 #define DEF_HIDE_PASS "********"
 
