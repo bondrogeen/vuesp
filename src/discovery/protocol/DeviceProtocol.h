@@ -24,7 +24,7 @@ enum class PacketType : uint8_t {
 struct PeerInfo {
     uint32_t id;
     uint32_t address;
-    unsigned long lastSeen;
+    uint32_t lastSeen;
 
     PeerInfo() : id(0), address(0), lastSeen(0) {}
     PeerInfo(uint32_t i, uint32_t a) : id(i), address(a), lastSeen(millis()) {}
@@ -41,7 +41,7 @@ class DeviceProtocol {
 public:
     using SendCallback = std::function<bool(const OutgoingPacket& packet)>;
     using PeerDiscoveredCallback = std::function<void(const PeerInfo& peer)>;
-    using PeerLostCallback = std::function<void(uint32_t id)>;
+    using PeerLostCallback = std::function<void(const PeerInfo& peer)>;
     using TextReceivedCallback = std::function<void(uint32_t senderId, const String& text)>;
     using BinaryReceivedCallback = std::function<void(uint32_t senderId, const uint8_t* data, size_t length)>;
 

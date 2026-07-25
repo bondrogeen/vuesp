@@ -74,6 +74,9 @@
   "noLogs": "Нет логов",
   "length": "длина",
   "attention": "Внимание",
+  "discovery": "Discovery",
+  "port": "Порт",
+  "interval": "Интервал (сек)",
   "yes": "Да",
   "no": "Нет",
   "locale": {

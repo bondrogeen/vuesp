@@ -127,8 +127,8 @@
 
           <div class="flex flex-col gap-3">
             <div class="flex items-center gap-3">
-              <h3 class="self-start">main.ports:</h3>
-              <p>{{ main.ports }}</p>
+              <h3 class="self-start">main:</h3>
+              <pre>{{ main }}</pre>
             </div>
             <div class="flex items-center gap-3">
               <h3 class="self-start">main.device:</h3>

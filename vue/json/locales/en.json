@@ -74,6 +74,9 @@
   "noLogs": "No logs",
   "length": "length",
   "attention": "Attention",
+  "discovery": "Discovery",
+  "port": "Port",
+  "interval": "Interval (sec)",
   "yes": "Yes",
   "no": "No",
   "locale": {

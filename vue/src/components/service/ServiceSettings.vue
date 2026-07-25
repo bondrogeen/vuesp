@@ -11,20 +11,20 @@
             <v-select :model-value="getValueListWiFi(settings.wifiMode)" :label="$t('mode')" :items="listWiFi" @change="onSureOffWifi" />
           </div>
 
-          <v-text-field v-model="wifiSsid" v-bind="wifiSsidAttrs" :label="$t('ssid')" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
+          <v-text-field v-model="wifiSsid" v-bind="wifiSsidProps" :label="$t('ssid')" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
             <template #icon>
               <icon-ri-search-line></icon-ri-search-line>
             </template>
           </v-text-field>
 
-          <v-text-field id="wifiPass" v-model="wifiPass" v-bind="wifiPassAttrs" :label="$t('pass')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
+          <v-text-field id="wifiPass" v-model="wifiPass" v-bind="wifiPassProps" :label="$t('pass')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
             <template #icon>
               <icon-ri-eye-line v-if="showPass" class="size-5"></icon-ri-eye-line>
               <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
             </template>
           </v-text-field>
 
-          <v-text-field v-model="rePassword" v-bind="rePasswordAttrs" :label="$t('passRe')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
+          <v-text-field v-model="rePassword" v-bind="rePasswordProps" :label="$t('passRe')" :disabled="isWifi" :type="showPass ? 'text' : 'password'" @on-icon="showPass = !showPass">
             <template #icon>
               <icon-ri-eye-line v-if="showPass" class="size-5"></icon-ri-eye-line>
               <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
@@ -41,13 +41,13 @@
             </div>
           </div>
 
-          <v-text-field v-model="wifiIp" v-bind="wifiIpAttrs" :label="$t('ip')" :disabled="isWifiDHCP" />
+          <v-text-field v-model="wifiIp" v-bind="wifiIpProps" :label="$t('ip')" :disabled="isWifiDHCP" />
 
-          <v-text-field v-model="wifiSubnet" v-bind="wifiSubnetAttrs" :label="$t('subnet')" :disabled="isWifiDHCP" />
+          <v-text-field v-model="wifiSubnet" v-bind="wifiSubnetProps" :label="$t('subnet')" :disabled="isWifiDHCP" />
 
-          <v-text-field v-model="wifiGateway" v-bind="wifiGatewayAttrs" :label="$t('gateway')" :disabled="isWifiDHCP" />
+          <v-text-field v-model="wifiGateway" v-bind="wifiGatewayProps" :label="$t('gateway')" :disabled="isWifiDHCP" />
 
-          <v-text-field v-model="wifiDns" v-bind="wifiDnsAttrs" :label="$t('dns')" :disabled="isWifiDHCP" />
+          <v-text-field v-model="wifiDns" v-bind="wifiDnsProps" :label="$t('dns')" :disabled="isWifiDHCP" />
         </div>
       </div>
     </card-main>
@@ -60,11 +60,11 @@
       </template>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-        <v-text-field v-model="authLogin" v-bind="authLoginAttrs" :label="$t('login')" :disabled="isAuth" />
+        <v-text-field v-model="authLogin" v-bind="authLoginProps" :label="$t('login')" :disabled="isAuth" />
 
         <v-text-field
           v-model="authPass"
-          v-bind="authPassAttrs"
+          v-bind="authPassProps"
           :label="$t('pass')"
           class="col-end-2"
           :type="showAuthPass ? 'text' : 'password'"
@@ -77,7 +77,7 @@
           </template>
         </v-text-field>
 
-        <v-text-field v-model="reAuthPassword" v-bind="reAuthPasswordAttrs" :label="$t('pass')" :type="showAuthPass ? 'text' : 'password'" :disabled="isAuth" @on-icon="showAuthPass = !showAuthPass">
+        <v-text-field v-model="reAuthPassword" v-bind="reAuthPasswordProps" :label="$t('pass')" :type="showAuthPass ? 'text' : 'password'" :disabled="isAuth" @on-icon="showAuthPass = !showAuthPass">
           <template #icon>
             <icon-ri-eye-line v-if="showAuthPass" class="size-5"></icon-ri-eye-line>
             <icon-ri-eye-off-line v-else class="size-5"></icon-ri-eye-off-line>
@@ -98,6 +98,18 @@
       </template>
 
       <BlockService :locale="getLocale()" :locales="listLocale" @locale="onLocale" @reset="onSureReset" @reboot="onSureReboot" />
+    </card-main>
+
+    <card-main :title="`${$t('discovery')} (UDP)`">
+      <template #header>
+        <div class="col-span-full">
+          <VCheckbox v-model="settings.discovery">{{ $t('discovery') }}</VCheckbox>
+        </div>
+      </template>
+
+      <v-text-field v-model="discoveryPort" v-bind="discoveryPortProps" :label="$t('port')" :disabled="!settings.discovery" />
+
+      <v-text-field v-model="discoveryInterval" v-bind="discoveryIntervalProps" :label="$t('interval')" :disabled="!settings.discovery" />
     </card-main>
 
     <teleport to="[data-slot='device']">
@@ -121,7 +133,7 @@ import type { Ref } from 'vue';
 import type { TypeMessage, IMessageScan, IListItem, TypeSend } from '@/types';
 
 import { computed, ref, nextTick, watch } from 'vue';
-import { required, maxLen, minLen, sameAs, ip } from '@/utils/validate';
+import { required, maxLen, minLen, sameAs, ip, minVal, maxVal } from '@/utils/validate';
 
 import { KEYS } from '@/types';
 
@@ -174,19 +186,23 @@ const { defineField, handleSubmit } = useForm({
       authLogin: settings.value.authMode ? [required, maxLen(12)] : [],
       authPass: settings.value.authMode ? [required, maxLen(12)] : [],
       reAuthPassword: settings.value.authMode ? [required, maxLen(12), sameAs('authPass')] : [],
+      discoveryInterval: settings.value.discovery ? [required, minVal(5), maxVal(255)] : [],
+      discoveryPort: settings.value.discovery ? [required, minVal(1000), maxVal(65535)] : [],
     }) as ValidationSchema,
 });
 
-const [wifiSsid, wifiSsidAttrs] = defineField<string>('wifiSsid');
-const [wifiPass, wifiPassAttrs] = defineField<string>('wifiPass');
-const [rePassword, rePasswordAttrs] = defineField<string>('rePassword');
-const [wifiIp, wifiIpAttrs] = defineField<string>('wifiIp');
-const [wifiSubnet, wifiSubnetAttrs] = defineField<string>('wifiSubnet');
-const [wifiGateway, wifiGatewayAttrs] = defineField<string>('wifiGateway');
-const [wifiDns, wifiDnsAttrs] = defineField<string>('wifiDns');
-const [authLogin, authLoginAttrs] = defineField<string>('authLogin');
-const [authPass, authPassAttrs] = defineField<string>('authPass');
-const [reAuthPassword, reAuthPasswordAttrs] = defineField<string>('reAuthPassword');
+const [wifiSsid, wifiSsidProps] = defineField<string>('wifiSsid');
+const [wifiPass, wifiPassProps] = defineField<string>('wifiPass');
+const [rePassword, rePasswordProps] = defineField<string>('rePassword');
+const [wifiIp, wifiIpProps] = defineField<string>('wifiIp');
+const [wifiSubnet, wifiSubnetProps] = defineField<string>('wifiSubnet');
+const [wifiGateway, wifiGatewayProps] = defineField<string>('wifiGateway');
+const [wifiDns, wifiDnsProps] = defineField<string>('wifiDns');
+const [authLogin, authLoginProps] = defineField<string>('authLogin');
+const [authPass, authPassProps] = defineField<string>('authPass');
+const [reAuthPassword, reAuthPasswordProps] = defineField<string>('reAuthPassword');
+const [discoveryInterval, discoveryIntervalProps] = defineField<string>('discoveryInterval');
+const [discoveryPort, discoveryPortProps] = defineField<string>('discoveryPort');
 
 watch(
   () => settings.value,
@@ -201,6 +217,8 @@ watch(
     authLogin.value = settings.value.authLogin;
     authPass.value = settings.value.authPass;
     reAuthPassword.value = settings.value.authPass;
+    discoveryPort.value = `${settings.value.discoveryPort}`;
+    discoveryInterval.value = `${settings.value.discoveryInterval}`;
   }
 );
 
@@ -213,6 +231,8 @@ const onSubmit = handleSubmit((values) => {
   settings.value.wifiDns = strToArr(values.wifiDns as string);
   settings.value.authLogin = values.authLogin as string;
   settings.value.authPass = values.authPass as string;
+  settings.value.discoveryPort = values.discoveryPort as number;
+  settings.value.discoveryInterval = values.discoveryInterval as number;
   onSave();
 });
 

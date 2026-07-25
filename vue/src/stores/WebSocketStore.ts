@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket';
 import { localGet, localSet } from 'vuesp-components/helpers';
 
-import type { INotification, IStoreWebSocketStore, IStateMain, IMessageSettings, IMessagePort, IMessageProgress, TypeMessage, IMessageMessage } from '@/types';
+import type { INotification, IStoreWebSocketStore, IStateMain, IMessagePort, IMessageProgress, TypeMessage, IMessageMessage, IDiscovery, IMyMessageSettings } from '@/types';
 
 const initialState = (): IStoreWebSocketStore => ({
   main: {
@@ -10,8 +10,26 @@ const initialState = (): IStoreWebSocketStore => ({
     info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '', board: 0 },
     device: { now: 0, pwm: 0, analog: 0 },
     dallas: {},
+    discovery: {},
   },
-  settings: { wifiDhcp: 1, wifiMode: 1, authMode: 1, version: 1, device: 0, wifiIp: [], wifiSubnet: [], wifiGateway: [], wifiDns: [], wifiSsid: '', wifiPass: '', authLogin: '', authPass: '' },
+  settings: {
+    wifiDhcp: 1,
+    wifiMode: 1,
+    authMode: 1,
+    version: 1,
+    device: 0,
+    wifiIp: [],
+    wifiSubnet: [],
+    wifiGateway: [],
+    wifiDns: [],
+    wifiSsid: '',
+    wifiPass: '',
+    authLogin: '',
+    authPass: '',
+    discovery: 0,
+    discoveryInterval: 5,
+    discoveryPort: 0,
+  },
   progress: { status: 0, empty: 0, size: 0, length: 0 },
   notifications: localGet('notifications', true) || [],
   message: { type: 0, isNew: 0, timeout: 0, date: 0, text: '' },
@@ -20,7 +38,7 @@ const initialState = (): IStoreWebSocketStore => ({
 export const useWebSocketStore = defineStore('webSocketStore', {
   state: initialState,
   actions: {
-    SET_SETTINGS(value: IMessageSettings) {
+    SET_SETTINGS(value: IMyMessageSettings) {
       this.settings = value;
     },
     SET_PROGRESS(value: IMessageProgress) {
@@ -34,6 +52,11 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     SET_DALLAS(data: { address: number[] }) {
       const name = (data.address || []).map((i) => (i < 16 ? `0${i.toString(16)}` : i.toString(16))).join('');
       this.main.dallas[name] = data;
+      this.main = { ...this.main };
+    },
+    SET_DISCOVERY(data: IDiscovery) {
+      const id = data.id.toString(16);
+      this.main.discovery[id] = data;
       this.main = { ...this.main };
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
