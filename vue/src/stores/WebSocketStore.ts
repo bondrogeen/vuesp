@@ -11,6 +11,7 @@ const initialState = (): IStoreWebSocketStore => ({
     device: { now: 0, pwm: 0, analog: 0 },
     dallas: {},
     discovery: {},
+    slots: {},
   },
   settings: {
     wifiDhcp: 1,
@@ -32,7 +33,7 @@ const initialState = (): IStoreWebSocketStore => ({
   },
   progress: { status: 0, empty: 0, size: 0, length: 0 },
   notifications: localGet('notifications', true) || [],
-  message: { type: 0, isNew: 0, timeout: 0, date: 0, text: '' },
+  message: { type: 0, active: 0, handler: 0, date: 0, index: 0, id: 0, len: 0, text: '' },
 });
 
 export const useWebSocketStore = defineStore('webSocketStore', {
@@ -47,31 +48,36 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     SET_PORT(port: IMessagePort) {
       const gpio = port.gpio.toString();
       this.main.ports[gpio] = port;
-      this.main = { ...this.main };
+      // this.main = { ...this.main };
     },
     SET_DALLAS(data: { address: number[] }) {
       const name = (data.address || []).map((i) => (i < 16 ? `0${i.toString(16)}` : i.toString(16))).join('');
       this.main.dallas[name] = data;
-      this.main = { ...this.main };
+      // this.main = { ...this.main };
     },
     SET_DISCOVERY(data: IDiscovery) {
       const id = data.id.toString(16);
       this.main.discovery[id] = data;
-      this.main = { ...this.main };
+      // this.main = { ...this.main };
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
       const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
       if (['ping', 'files', 'progress', 'scan'].includes(name)) return;
       this.main[name] = object;
-      this.main = { ...this.main };
+      // this.main = { ...this.main };
     },
     SET_MESSAGE(message: IMessageMessage) {
       this.message = message;
-      const { key, type, isNew, timeout, text } = message;
-      if (type === 1) {
-        const date = message?.date || Date.now();
-        this.notifications = [...this.notifications, { key, color: 1, isNew, timeout, text, date }];
-        localSet('notifications', this.notifications);
+      const { type } = message;
+      // if (type === 1) {
+      //   const date = message?.date || Date.now();
+      //   this.notifications = [...this.notifications, { key, color: 1, isNew, timeout, text, date }];
+      //   localSet('notifications', this.notifications);
+      // }
+      if (type === 2) {
+        const index = message.index;
+        this.main.slots[index || 0] = message;
+        // this.main = { ...this.main };
       }
     },
     READ_NOTIFICATION(notification: INotification) {

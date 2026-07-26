@@ -30,8 +30,8 @@
           <span class="hidden sm:block md:hidden text-white">sm</span>
           <span class="hidden md:block lg:hidden text-white">md</span>
           <span class="hidden lg:block xl:hidden text-white">lg</span>
-          <span class="hidden xl:block xl2:hidden text-black">xl</span>
-          <span class="hidden xl2:block text-white">xl2</span>
+          <span class="hidden xl:block 2xl:hidden text-black">xl</span>
+          <span class="hidden 2xl:block text-white">2xl</span>
         </div>
       </div>
 
@@ -74,7 +74,7 @@
             <v-button outline color="red" size="md" @click="dialog = true">Dialog</v-button>
             <v-button outline color="green" size="lg" :loading="loading" @click="onLoading">Loading</v-button>
             <v-button outline color="gray" size="xl" :loading="loading" @click="onLoading">Loading</v-button>
-            <v-button outline color="transparent" size="xl" class="text-white bg-yellow-400 dark:bg-yellow-800" :loading="loading" @click="onLoading">Custom color</v-button>
+            <v-button outline color="transparent" class="text-white bg-yellow-400 dark:bg-yellow-800 h-8 rounded-2xl" :loading="loading" @click="onLoading">Custom color</v-button>
           </div>
 
           <div class="flex flex-wrap gap-3 mb-6">
@@ -120,7 +120,13 @@
       <div class="">
         <h3 class="mb-5">Card</h3>
 
-        <card-main :title="$t('Form')" :loading="loading">
+        <card-main :title="$t('Data')" :loading="loading">
+          <template #header>
+            <div class="col-span-full">
+              <VCheckbox v-model="isFormatting">Formatting</VCheckbox>
+            </div>
+          </template>
+
           <div v-if="loading" class="absolute top-0 left-0 flex items-center justify-center h-full w-full bg-black/40 rounded">
             <VLoader />
           </div>
@@ -128,18 +134,29 @@
           <div class="flex flex-col gap-3">
             <div class="flex items-center gap-3">
               <h3 class="self-start">main:</h3>
-              <pre>{{ main }}</pre>
+              <component :is="isFormatting ? 'pre' : 'p'">{{ main }}</component>
             </div>
             <div class="flex items-center gap-3">
               <h3 class="self-start">main.device:</h3>
-              <p>{{ main.device }}</p>
+              <component :is="isFormatting ? 'pre' : 'p'">{{ main.device }}</component>
             </div>
             <div class="flex items-center gap-3">
               <h3 class="self-start">main.info:</h3>
-              <p>{{ main.info }}</p>
+              <component :is="isFormatting ? 'pre' : 'p'">{{ main.info }}</component>
             </div>
           </div>
         </card-main>
+      </div>
+
+      <div class="">
+        <h3 class="mb-5">Tabs</h3>
+        <VTabs class="flex-auto min-h-75" :value="0" :items="tabs">
+          <template #tab-0>Item 0</template>
+
+          <template #tab-1>Item 1</template>
+
+          <template #tab-2>Item 2</template>
+        </VTabs>
       </div>
 
       <div class="">
@@ -174,20 +191,11 @@
       <div class="">
         <h3 class="mb-5">Expansion</h3>
 
-        <VExpansion label="Item 1" value>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut, illum repudiandae debitis laboriosam voluptatum amet nemo optio est! Recusandae sapiente quos tempore nostrum sunt repudiandae
-          cupiditate consequuntur perferendis temporibus dolorem?
-        </VExpansion>
+        <VExpansion label="Item 1" value>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut,</VExpansion>
 
-        <VExpansion label="Item 1">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut, illum repudiandae debitis laboriosam voluptatum amet nemo optio est! Recusandae sapiente quos tempore nostrum sunt repudiandae
-          cupiditate consequuntur perferendis temporibus dolorem?
-        </VExpansion>
+        <VExpansion label="Item 1">Lorem ipsum dolor sit amet consectetur adipisicing elit.</VExpansion>
 
-        <VExpansion label="Item 1">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut, illum repudiandae debitis laboriosam voluptatum amet nemo optio est! Recusandae sapiente quos tempore nostrum sunt repudiandae
-          cupiditate consequuntur perferendis temporibus dolorem?
-        </VExpansion>
+        <VExpansion label="Item 1">Lorem ipsum dolor sit amet consectetur adipisicing elit.</VExpansion>
       </div>
     </section>
 
@@ -216,7 +224,7 @@ import { KEYS } from '@/types';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 
-import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog } from 'vuesp-components';
+import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs } from 'vuesp-components';
 import { computed, ref } from 'vue';
 import { dateUtcToString, timeUtcToString } from 'vuesp-components/helpers';
 
@@ -231,6 +239,10 @@ interface IItemTable {
   date: string;
   action: boolean;
 }
+
+const tabs = [{ title: 'Item 0' }, { title: 'Item 1' }, { title: 'Item 2' }];
+
+const isFormatting = ref(false);
 
 const dialogTable = ref(false);
 const tabletItem = ref<IItemTable | null>(null);

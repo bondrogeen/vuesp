@@ -26,11 +26,6 @@ void setup() {
   initEEprom();
 }
 
-void logProvider(const char* message) {
-  Serial.println(message);
-  sendNotificationLog(message);
-}
-
 void setupFirst() {
   setupFirstDevice();
   setupFirstGPIO();
@@ -50,10 +45,7 @@ void setupDelay() {
   setupDevice();
   setupServer();
   setupDiscovery();
-
-  scriptRunner.setLoadProvider(loadScriptFromFS);
-  scriptRunner.setLogProvider(logProvider);
-  scriptRunner.runScript(0);
+  setupRunner();
 
   // String script = String("local x = 10 local y = 25 local z = x + y print('Sum of x+y =',z)");
   // Serial.println(lua.Lua_dostring(&script));
@@ -72,13 +64,13 @@ void loop() {
   }
 
   if (isSetup) {
-    scriptRunner.update();
     loopDiscovery(now);
     loopServer(now);
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
     loopWiFi(now);
+    loopRunner(now);
   }
 
   if (now - lastTimeMain > 1000) {

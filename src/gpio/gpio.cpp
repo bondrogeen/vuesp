@@ -198,12 +198,6 @@ void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
 }
 
 bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
-  Serial.print("gpio: ");
-  Serial.print(gpio);
-  Serial.print("action: ");
-  Serial.print(action);
-  Serial.print(" value: ");
-  Serial.println(value);
   switch (action) {
     case PORT_READ:
       return getValue(gpio, value);

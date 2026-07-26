@@ -1,7 +1,5 @@
 #include "./device.h"
 
-// extern ScriptRunner scriptRunner;
-
 Buffer myBuffer = {KEY_BUFFER};
 
 Device device = {KEY_DEVICE, 0, 100, 1760640900, 2, "text"};
@@ -30,30 +28,53 @@ void deviceGPIO(Port* port) {
   // }
 }
 
-uint32_t counter = 0;
+static char displayBuffer[64] = "5";
+
 bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
+  Serial.print(id);
+  Serial.print(write ? "WRITE" : "READ");
+  Serial.print(" kind=");
+  Serial.println(kind);
+
   if (strcmp(id, "$display") == 0) {
     if (write) {
       if (kind == KIND_STRING) {
         char buf[65];
-        strncpy(buf, (char*)value.stringVal.data, value.stringVal.len);
-        buf[value.stringVal.len] = '\0';
-      } else if (kind == KIND_INT || kind == KIND_UINT) {
+        uint8_t len = value.stringVal.len;
+        if (len > 64) len = 64;
+        strncpy(buf, (char*)value.stringVal.data, len);
+        buf[len] = '\0';
+        strcpy(displayBuffer, buf);
+        Serial.print("DISPLAY: ");
+        Serial.println(buf);
+      } else if (kind == KIND_INT) {
+        snprintf(displayBuffer, sizeof(displayBuffer), "%d", value.intVal);
+        Serial.print("DISPLAY: ");
+        Serial.println(value.intVal);
+      } else if (kind == KIND_UINT) {
+        snprintf(displayBuffer, sizeof(displayBuffer), "%u", value.uintVal);
+        Serial.print("DISPLAY: ");
+        Serial.println(value.uintVal);
       } else if (kind == KIND_FLOAT) {
+        snprintf(displayBuffer, sizeof(displayBuffer), "%.2f", value.floatVal);
+        Serial.print("DISPLAY: ");
+        Serial.println(value.floatVal);
       }
-    }
-    return true;
-  }
-
-  if (strcmp(id, "$counter") == 0) {
-    if (write) {
-      if (kind == KIND_INT || kind == KIND_UINT) {
-        counter = (uint32_t)value.intVal;
-      }
+      return true;
     } else {
-      value.uintVal = counter;
+      // ЧТЕНИЕ
+      if (kind == KIND_STRING) {
+        value.stringVal.data = (uint8_t*)displayBuffer;
+        value.stringVal.len = strlen(displayBuffer);
+      } else if (kind == KIND_INT) {
+        value.intVal = atoi(displayBuffer);
+      } else if (kind == KIND_UINT) {
+        value.uintVal = (uint32_t)atoi(displayBuffer);
+      } else if (kind == KIND_FLOAT) {
+        value.floatVal = atof(displayBuffer);
+      }
+      return true;
     }
-    return true;
   }
   return false;
 }
@@ -106,7 +127,6 @@ void loopDevice(uint32_t now) {
 
   if (tasks[KEY_DEVICE]) {
     if (device.command == DEVICE_COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
-    // if (device.command == DEVICE_COMMAND_TEXT) sendNotification();
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;

@@ -6,7 +6,7 @@ Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 char safePass[32];
 Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
-Message message = {KEY_MESSAGE, MESSAGE_TYPE_LOG, 0, 0, 0, "Message"};
+Message message = {KEY_MESSAGE, MESSAGE_TYPE_LOG};
 
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
@@ -75,14 +75,11 @@ void scanWiFi() {
   };
 }
 
-void sendNotification() {
-  wsSendAll((uint8_t*)&message, sizeof(message));
-}
-void sendNotificationLog(const char* text) {
+void sendLog(const char* text) {
   message.type = MESSAGE_TYPE_LOG;
   memset(message.text, 0, sizeof(message.text));
   strcpy(message.text, text);
-  sendNotification();
+  wsSendAll((uint8_t*)&message, sizeof(message));
 }
 
 void loopTask(uint32_t now) {
@@ -102,20 +99,17 @@ void loopTask(uint32_t now) {
     tasks[KEY_INFO] = false;
   }
   if (tasks[KEY_FILES]) {
-    getFile(files.name);
     tasks[KEY_FILES] = false;
+    getFile(files.name);
   }
   if (tasks[KEY_REBOOT]) reboot();
 
   if (tasks[KEY_SCAN]) {
-    scanWiFi();
     tasks[KEY_SCAN] = false;
+    scanWiFi();
   }
   if (tasks[KEY_MESSAGE]) {
-    if (message.type == MESSAGE_TYPE_SCRIPT) {
-      scriptRunner.registerScript(message.id, message.text);
-      scriptRunner.runScript(message.id);
-    }
     tasks[KEY_MESSAGE] = false;
+    eventRunner();
   }
 }
