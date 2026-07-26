@@ -81,6 +81,7 @@ export interface IMyIStateMain extends IStateMain {
   device: IStateDevice;
   dallas: any;
   discovery: Record<string, IDiscovery>;
+  slots: Record<number, IMessageMessage>;
 }
 
 export interface IStoreApp extends IStateApp {

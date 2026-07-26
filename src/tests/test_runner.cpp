@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../runner/runner.h"
+#include "../runner/ScriptRunner.h"
 #include "arduino_stub.h"
 
 static uint16_t virtualPins[40] = {0};
@@ -529,10 +529,10 @@ TEST(bitwise_xor) {
 TEST(bitwise_not) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;$v0=~$v0;$display=$v0");
+  runner.registerScript(1, "$i0=0;$i0=~$i0;$display=$i0");
   runner.runScript(1);
   runScriptUntilDone(runner);
-  ASSERT_EQ((int32_t)runner.getUintVar(0), -1);
+  ASSERT_EQ((int32_t)runner.getIntVar(0), -1);
   ASSERT_LOG_EXACT("-1");
 }
 

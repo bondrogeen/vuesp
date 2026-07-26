@@ -100,7 +100,10 @@ struct Message {
   uint8_t key;
   uint8_t type;
   uint8_t id;
-  uint8_t empty;
+  uint8_t active;
+  uint8_t handler;
+  uint8_t index;
+  uint16_t len;
   uint32_t date;
   char text[256];
 };
