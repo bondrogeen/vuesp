@@ -80,7 +80,7 @@
   "yes": "Yes",
   "no": "No",
   "examples": "Examples",
-  "slot": "Slot",
+  "slots": "Slots",
   "locale": {
     "ru": "Russian",
     "en": "English"

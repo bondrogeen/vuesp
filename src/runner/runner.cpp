@@ -23,19 +23,18 @@ void printSlotsInfo() {
 void eventRunner() {
   if (message.type == MESSAGE_TYPE_SCRIPT_START) {
     scriptRunner.registerScript(message.id, message.text);
-    scriptRunner.runScript(message.id);
-    indexSlot = message.index;
+    indexSlot = scriptRunner.runScript(message.id);
     printSlotsInfo();
   }
   if (message.type == MESSAGE_TYPE_SCRIPT_STOP) {
-    scriptRunner.stopScript(message.id);
+    indexSlot = scriptRunner.stopScript(message.id);
+    printSlotsInfo();
   }
   if (message.type == MESSAGE_TYPE_SCRIPT_STOP_ALL) {
     scriptRunner.stopAll();
   }
   if (message.type == MESSAGE_TYPE_SCRIPT_REMOVE) {
-    scriptRunner.removeScript(message.id);
-    indexSlot = message.index;
+    indexSlot = scriptRunner.removeScript(message.id);
     printSlotsInfo();
   }
   if (message.type == MESSAGE_TYPE_SCRIPT_GET_ALL_SLOT) {
@@ -44,9 +43,17 @@ void eventRunner() {
   indexSlot = 0;
 }
 
+void onScriptComplete(uint8_t slot, uint8_t id) {
+    Serial.print("Script ");
+    Serial.print(id);
+    Serial.print(" completed in slot ");
+    Serial.println(slot);
+}
+
 void setupRunner() {
   scriptRunner.setLoadProvider(loadScriptFromFS);
   scriptRunner.setLogProvider(sendLog);
+  scriptRunner.setScriptCompleteCallback(onScriptComplete);
   scriptRunner.runScript(0);
   totalSlots = scriptRunner.getTotalSlots();
 }
