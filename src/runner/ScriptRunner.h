@@ -42,6 +42,7 @@
 #define MAX_FADE_PINS 5
 
 #define SCRIPT_ID_BASE 1
+#define EVENT_ID_OFFSET (255 - MAX_SCRIPTS)  // 240
 
 #define TOKEN_SEPARATOR ';'
 #define ARRAY_SEPARATOR ','
@@ -173,6 +174,7 @@ typedef void (*LogProvider)(const char* message);
 typedef bool (*PortProvider)(uint8_t gpio, PortAction action, uint16_t& value);
 typedef void (*StateChangeProvider)(uint8_t gpio, uint16_t oldValue, uint16_t newValue);
 typedef bool (*LoadProvider)(uint8_t id, char* buffer, uint16_t& len);
+typedef void (*ScriptCompleteCallback)(uint8_t slot, uint8_t id);
 
 class ScriptRunner {
 public:
@@ -180,7 +182,7 @@ public:
     ~ScriptRunner();
 
     bool registerScript(uint8_t id, const char* script, bool persistent = false);
-    bool runScript(uint8_t id);
+    int8_t runScript(uint8_t id);
     bool runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len);
     void update();
     bool stopScript(uint8_t id);
@@ -188,9 +190,10 @@ public:
     bool isRunning(uint8_t id) const;
     bool isBusy() const;
     bool removeScript(uint8_t id);
+    bool isEventId(uint8_t id) const;
 
     bool isSlotUsed(uint8_t slot) const;
-    int getSlotId(uint8_t slot) const;
+    int8_t getSlotId(uint8_t slot) const;
     bool isSlotActive(uint8_t slot) const;
     bool isSlotHandler(uint8_t slot) const;
     uint16_t getSlotLen(uint8_t slot) const;
@@ -227,6 +230,7 @@ public:
     void setPortProvider(PortProvider provider);
     void setStateChangeProvider(StateChangeProvider provider);
     void setLoadProvider(LoadProvider provider);
+    void setScriptCompleteCallback(ScriptCompleteCallback callback);
 
 private:
     ScriptState _slots[MAX_SCRIPTS];
@@ -239,6 +243,7 @@ private:
     PortProvider _portProvider;
     StateChangeProvider _stateChangeProvider;
     LoadProvider _loadProvider;
+    ScriptCompleteCallback _completeCallback;
 
     static ScriptRunner* _instance;
 
@@ -264,9 +269,9 @@ private:
     Value _funcParams[MAX_FUNCTION_PARAMS];
     char _funcStrBufs[MAX_FUNCTION_PARAMS][MAX_STRING_LEN];
 
-    void resetScriptState(int idx);
-    int findSlotById(uint8_t id) const;
-    int findFreeSlot(uint16_t scriptLen);
+    void resetScriptState(uint8_t idx);
+    int8_t findSlotById(uint8_t id) const;
+    int8_t findFreeSlot(uint16_t scriptLen);
     void initSlotPools();
 
     Params parseParams(const char* str) const;
@@ -303,7 +308,7 @@ private:
     bool parseVarInt(uint8_t idx, int32_t& result);
     bool parseVarFloat(uint8_t idx, int32_t& result);
     bool parseVarString(uint8_t idx, int32_t& result);
-    bool parseVarPort(uint8_t idx, int32_t& result);
+    bool parseVarPort(uint8_t idx, int32_t& result, uint8_t slot);
     bool parseVarData(const char* start, int32_t& result, const char** p, DataKind expectedKind);
 
     void processScript(uint8_t idx, uint32_t now);
@@ -321,7 +326,7 @@ private:
     bool startFade(uint8_t pin, uint8_t target, uint8_t tenths);
     void processFade();
     uint8_t readPort(uint8_t pin);
-    void writePort(uint8_t pin, uint16_t value);
+    void writePort(uint8_t pin, uint16_t value, uint8_t slot = 0);
     void writePortSilent(uint8_t pin, uint16_t value);
 
     #if ENABLE_LOGGING
@@ -353,12 +358,13 @@ private:
     uint32_t _loadCacheMisses;
     LoadProvider _originalLoadProvider;
     
-    int findInLoadCache(uint8_t id, char* buffer, uint16_t& len);
+    int8_t findInLoadCache(uint8_t id, char* buffer, uint16_t& len);
     void addToLoadCache(uint8_t id, const char* script, uint16_t len);
-    int findEmptyLoadSlot() const;
-    int findLeastUsedSlot() const;
+    int8_t findEmptyLoadSlot() const;
+    int8_t findLeastUsedSlot() const;
     
     static bool cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len);
     #endif
 };
+
 #endif

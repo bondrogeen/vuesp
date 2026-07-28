@@ -3,7 +3,7 @@
     <card-main class="xl:col-span-2 2xl:col-span-3">
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-          <div class="flex justify-between mb-6 md:col-span-2">
+          <div class="flex justify-between mb-4 md:col-span-2">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $t('wifi') }}</h3>
           </div>
 
@@ -33,7 +33,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-          <div class="flex justify-between mb-6 md:col-span-2">
+          <div class="flex justify-between mb-4 md:col-span-2">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $t('ipSett') }}</h3>
 
             <div>
