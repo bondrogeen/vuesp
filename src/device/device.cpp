@@ -62,7 +62,6 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
       }
       return true;
     } else {
-      // ЧТЕНИЕ
       if (kind == KIND_STRING) {
         value.stringVal.data = (uint8_t*)displayBuffer;
         value.stringVal.len = strlen(displayBuffer);
