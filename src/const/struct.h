@@ -8,10 +8,11 @@ enum keys {
   KEY_FILES,
   KEY_REBOOT,
   KEY_PORT,
-  KEY_DEVICE,
+  KEY_MESSAGE,
   KEY_DALLAS,
-  KEY_NOTIFICATION,
   KEY_BUFFER,
+  KEY_DEVICE,
+  KEY_DISCOVERY,
   KEY_END
 };
 
@@ -25,6 +26,10 @@ struct Settings {
   uint8_t authMode;
   uint16_t version;
   uint16_t device;
+
+  uint8_t discovery;
+  uint8_t discoveryInterval;
+  uint16_t discoveryPort;
 
   uint8_t wifiIp[4];
   uint8_t wifiSubnet[4];
@@ -45,6 +50,7 @@ struct Info {
   uint32_t id;
   uint32_t uptime;
   char name[20];
+  uint32_t board;
 };
 
 struct Ping {
@@ -81,20 +87,25 @@ struct Files {
 struct Port {
   uint8_t key;
   uint8_t gpio;
+  uint16_t value;
   uint8_t mode;
   uint8_t interrupt;
-  uint16_t value;
-  uint8_t state;
+  uint16_t list;
+  uint8_t disabled;
   uint8_t command;
+  uint16_t empty;
 };
 
-struct Notification {
+struct Message {
   uint8_t key;
-  uint8_t isNew;
-  uint8_t color;
-  uint8_t timeout;
+  uint8_t type;
+  uint8_t id;
+  uint8_t active;
+  uint8_t handler;
+  uint8_t index;
+  uint16_t len;
   uint32_t date;
-  char text[128];
+  char text[256];
 };
 
 struct Dallas {
@@ -103,6 +114,23 @@ struct Dallas {
   uint16_t comm2;
   uint8_t address[8];
   float temp;
+};
+
+struct Buffer {
+  uint8_t key;
+  uint8_t empty;
+  uint16_t head;
+  uint16_t tail;
+  uint16_t count;
+  int8_t data[256];
+};
+struct Discovery {
+  uint8_t key;
+  uint8_t status;
+  uint16_t empty;
+  uint32_t id;
+  uint32_t ip;
+  uint32_t lastSeen;
 };
 
 struct Device {

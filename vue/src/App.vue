@@ -14,15 +14,26 @@
           <span v-if="nameDevice" class="text-gray-400 text-nowrap">{{ nameDevice }}</span>
         </h3>
 
-        <app-nav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar" />
+        <app-nav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
+          <template #icon="{ item }">
+            <icon-ri-home-line v-if="item.icon === 'home'" class="size-6" />
+            <icon-ri-dashboard-line v-else-if="item.icon === 'dashboard'" class="size-6" />
+            <icon-ri-file-code-line v-else-if="item.icon === 'script'" class="size-6" />
+            <icon-ri-equalizer-line v-else-if="item.icon === 'settings'" class="size-6" />
+            <icon-ri-database-2-line v-else-if="item.icon === 'storage'" class="size-6" />
+            <icon-ri-cpu-line v-else-if="item.icon === 'gpio'" class="size-6" />
+
+            <icon-ri-home-line v-else />
+          </template>
+        </app-nav>
 
         <div class="flex-auto"></div>
 
         <BlockStatus v-slot="{ repo, home }" v-bind="info" :pkg="pkg" class="mb-4 w-full rounded-2xl bg-gray-100 px-4 py-4 text-center dark:bg-white/[0.03]" :class="isSidebar ? 'lg:hidden' : ''">
           <div class="flex gap-2 mt-4">
-            <v-button :href="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
+            <v-button :to="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
 
-            <v-button v-if="home" :href="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
+            <v-button v-if="home" :to="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
           </div>
         </BlockStatus>
       </app-aside>
@@ -47,19 +58,26 @@
             <div class="flex items-center justify-between py-4 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 px-2">
               <h5>{{ $t('noti') }}</h5>
 
-              <VButton size="small" color="gray" class="text-sm" :disabled="!isNew" @click="webSocketStore.READ_ALL_NOTIFICATION">{{ $t('mark') }}</VButton>
+              <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="webSocketStore.READ_ALL_NOTIFICATION">{{ $t('mark') }}</VButton>
             </div>
           </template>
           <template #empty>
-            <p class="text-center text-gray-200/50 py-10">{{ $t('empty') }}</p>
+            <p class="text-center py-10">{{ $t('empty') }}</p>
           </template>
         </app-notification>
       </div>
     </div>
 
-    <app-dialog v-if="dialog.value" v-bind="dialog" @close="dialog = {}" />
+    <v-dialog v-if="dialog.value" v-slot="{ close }" :title="dialog?.title || $t('attention')" @close="dialog = {}">
+      <div v-html="dialog.message" />
 
-    <app-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
+      <div v-if="dialog.callback" class="flex gap-3 mt-4 justify-end">
+        <v-button class="min-w-[100px]" outline color="blue" @click="(dialog.callback(), close())">{{ $t('yes') }}</v-button>
+        <v-button class="min-w-[100px]" color="red" @click="close()">{{ $t('no') }}</v-button>
+      </div>
+    </v-dialog>
+
+    <v-dialog v-if="dialogInfo" size="md" title="Information" @close="dialogInfo = false">
       <BlockInfo v-bind="main.info" :pkg="pkg" class="w-full">
         <template #links="{ links }">
           {{ $t('links') }}:
@@ -68,7 +86,7 @@
           </div>
         </template>
       </BlockInfo>
-    </app-dialog>
+    </v-dialog>
   </div>
 </template>
 

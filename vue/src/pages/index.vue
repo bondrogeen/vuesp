@@ -2,16 +2,6 @@
   <div>
     <div class="mb-6 flex items-center justify-between">
       <h1>{{ $t('home') }}</h1>
-
-      <v-dropdown right="0" left="unset" top="0">
-        <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
-            <v-icon name="Dots" class="rotate-90"></v-icon>
-          </v-button>
-        </template>
-
-        <v-list :list="listMenu" @click="onMenu"></v-list>
-      </v-dropdown>
     </div>
 
     <div class="w-full grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -257,32 +247,19 @@
 </template>
 
 <script setup lang="ts">
-import type { IListItem } from '@/types';
-
 import { KEYS } from '@/types';
 
 import { useConnection } from '@/composables/useConnection';
-
 import { useLocale } from '@/composables/useLocale';
 import { computed } from 'vue';
 
 const { $t } = useLocale();
 
-const { main, onSend } = useConnection((send) => {
+const { main } = useConnection((send) => {
   send(KEYS.DEVICE);
 });
 
 const device = computed(() => main.value.device);
-
-const listMenu: IListItem[] = [{ name: $t('btnUpdate'), value: 2 }];
-
-const onUpdate = () => {
-  onSend('INFO');
-};
-
-const onMenu = ({ value }: IListItem) => {
-  if (value === 2) onUpdate();
-};
 
 const toFixed = (num: number, i = 2) => num.toFixed(i);
 const getColorCell = (v: number) => {
