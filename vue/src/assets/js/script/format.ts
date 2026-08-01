@@ -1,4 +1,33 @@
-export const removeLBScript = (s: string) => s.replace(/(\r\n|\n|\r)/g, '');
+export const removeLBScript = (code: string) => {
+  let result = '';
+  let inString = false;
+  let quote = '';
+  for (let i = 0; i < code.length; i++) {
+    const ch = code[i];
+    if ((ch === '"' || ch === "'") && (i === 0 || code[i - 1] !== '\\')) {
+      if (!inString) {
+        inString = true;
+        quote = ch;
+        result += ch;
+      } else if (ch === quote) {
+        inString = false;
+        result += ch;
+      } else {
+        result += ch;
+      }
+      continue;
+    }
+    if (inString) {
+      result += ch;
+      continue;
+    }
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      continue;
+    }
+    result += ch;
+  }
+  return result;
+};
 
 export const formatScript = (s: string) => {
   let result = s;

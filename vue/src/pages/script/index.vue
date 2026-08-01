@@ -3,14 +3,6 @@
     <div class="flex flex-col gap-3 sm:gap-4 mx-auto">
       <div class="flex justify-between">
         <h1>{{ $t('menu.script') }}</h1>
-
-        <v-select :items="listMenu" @change="onMenu">
-          <template #activator="{ on }">
-            <v-button color="" type="icon" @click="on.click">
-              <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
-            </v-button>
-          </template>
-        </v-select>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[400px_1fr] 2xl:grid-cols-3 gap-3 sm:gap-4">
@@ -202,16 +194,6 @@ const { message, main, onSend } = useConnection((send) => {
 const dialogAdd = ref(false);
 const logs = ref<ILog[]>([]);
 
-const listMenu: IListItem[] = [
-  { name: $t('save'), value: 1 },
-  { name: $t('restore'), value: 2 },
-];
-
-const onMenu = (item: IListItem) => {
-  if (item.value === 1) onSave();
-  if (item.value === 2) onLoad();
-};
-
 const { defineField, handleSubmit } = useForm({
   validationSchema: () =>
     ({
@@ -244,7 +226,8 @@ const onRemove = ({ id }: IScript) => {
 const onSaveScript = () => {
   if (!selectedScript.value) return;
   const { id } = selectedScript.value;
-  scripts.value = scripts.value.map((i) => (i.id === id ? { ...i, content: content.value } : i));
+  scripts.value = scripts.value.map((i) => (i.id === id ? { ...i, content: removeLBScript(content.value) } : i));
+  onSave();
 };
 
 const isHover = ref(false);
@@ -346,13 +329,14 @@ const onLoad = async () => {
   if (!data.value) return;
   const lines = data.value.split('\n');
   scripts.value = lines.map((script): IScript => {
-    const [id, name, content] = script.split(':', 3);
-    return { id: +id, name, content };
+    const parts = script.split(':');
+    const [id, name] = parts;
+    return { id: +id, name, content: parts.slice(2).join(':') };
   });
 };
 
 const onSave = async () => {
-  const text = scripts.value.map(({ id, name, content }) => `${id}:${name}:${removeLBScript(content)}`).join('\n');
+  const text = scripts.value.map(({ id, name, content }) => `${id}:${name}:${content}`).join('\n');
   const body = new FormData();
   body.append('file[0]', new Blob([text], { type: 'text/plain' }), PATH);
   return await useFetch('/fs', { body }).post();
