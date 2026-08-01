@@ -1,10 +1,10 @@
 <template>
   <div class="grid grid-cols-1 gap-4 lg:max-w-[360px] min-w-[250px]">
     <div class="flex flex-col w-full items-center gap-2">
-      <div class="relative block h-4 w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 select-none" :title="`${percent}%`">
+      <div class="relative block h-4 w-full rounded overflow-hidden bg-gray-200 dark:bg-gray-800 select-none" :title="`${percent}%`">
         <div class="absolute left-[110px] top-1/2 -translate-1/2 text-sm font-bold text-black dark:text-white text-center leading-none">{{ percent }}%</div>
 
-        <div class="bg-blue-600 rounded-full h-4 overflow-hidden relative transition-all duration-500" :style="`width: ${percent}%`">
+        <div class="bg-blue-600 rounded h-4 overflow-hidden relative transition-all duration-500" :style="`width: ${percent}%`">
           <div class="absolute left-[110px] top-1/2 -translate-1/2 text-sm font-bold text-white text-center leading-none">{{ percent }}%</div>
         </div>
       </div>
