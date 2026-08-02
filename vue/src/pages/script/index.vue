@@ -3,6 +3,12 @@
     <div class="flex flex-col gap-3 sm:gap-4 mx-auto">
       <div class="flex justify-between">
         <h1>{{ $t('menu.script') }}</h1>
+
+        <div>
+          <v-button icon @click="dialogViewDocs = true">
+            <icon-ri-file-info-line />
+          </v-button>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[400px_1fr] 2xl:grid-cols-3 gap-3 sm:gap-4">
@@ -166,6 +172,10 @@
         </v-button>
       </div>
     </v-dialog>
+
+    <v-dialog v-if="dialogViewDocs" size="lg" title="ScriptRunner Documentation" @close="dialogViewDocs = false">
+      <BlockViewDocs />
+    </v-dialog>
   </div>
 </template>
 
@@ -185,6 +195,8 @@ import type { IListItem, IMessageMessage, ValidationSchema } from 'vuesp-compone
 import { useLocale } from '@/composables/useLocale';
 import { useFetch } from '@vueuse/core';
 
+import BlockViewDocs from '@/components/block/BlockViewDocs.vue';
+
 const { $t } = useLocale();
 
 const { message, main, onSend } = useConnection((send) => {
@@ -192,6 +204,7 @@ const { message, main, onSend } = useConnection((send) => {
 });
 
 const dialogAdd = ref(false);
+const dialogViewDocs = ref(false);
 const logs = ref<ILog[]>([]);
 
 const { defineField, handleSubmit } = useForm({
