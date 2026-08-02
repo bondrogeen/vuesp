@@ -152,7 +152,10 @@ void setValueUpdate() {
   } else if (port.mode == GPIO_MODE_ADC) {
     port.value = analogRead(port.gpio);
   } else if (port.mode == GPIO_MODE_DAC) {
+#if defined(ARDUINO_ESP32C3_DEV)
+#elif defined(ESP32)
     dacWrite(port.gpio, port.value);
+#endif
   } else {
     port.value = digitalRead(port.gpio);
   }
