@@ -1,4 +1,4 @@
-import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage, IPackage } from 'vuesp-components/types';
+import type { IMessageSettings, IStateApp, IStateWebSocket, IStateWebSocketStore, IStateMain, TypeConstMessage, IPackage, IMessageMessage } from 'vuesp-components/types';
 
 export type * from 'vuesp-components/types';
 
@@ -11,13 +11,12 @@ export enum KEYS {
   PROGRESS = 'PROGRESS',
   FILES = 'FILES',
   REBOOT = 'REBOOT',
-  PINS = 'PINS',
   PORT = 'PORT',
-  DEVICE = 'DEVICE',
+  MESSAGE = 'MESSAGE',
   DALLAS = 'DALLAS',
   BUFFER = 'BUFFER',
+  DEVICE = 'DEVICE',
 }
-
 export interface IMessageDevice {
   key?: number;
   command: number;
@@ -59,7 +58,19 @@ export interface IStateDevice {
   analog: number;
 }
 
+export interface IDiscovery {
+  key?: number;
+  status: number;
+  empty: number;
+  id: number;
+  ip: number;
+  lastSeen: number;
+}
+
 export interface IMyMessageSettings extends IMessageSettings {
+  discovery: number;
+  discoveryInterval: number;
+  discoveryPort: number;
   EthIp?: [];
   EthSubnet?: [];
   EthGateway?: [];
@@ -69,6 +80,8 @@ export interface IMyMessageSettings extends IMessageSettings {
 export interface IMyIStateMain extends IStateMain {
   device: IStateDevice;
   dallas: any;
+  discovery: Record<string, IDiscovery>;
+  slots: Record<number, IMessageMessage>;
 }
 
 export interface IStoreApp extends IStateApp {
@@ -80,4 +93,5 @@ export interface IStoreWebSocket extends IStateWebSocket {}
 export interface IStoreWebSocketStore extends IStateWebSocketStore {
   settings: IMyMessageSettings;
   main: IMyIStateMain;
+  message: IMessageMessage;
 }
