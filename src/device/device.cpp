@@ -29,7 +29,7 @@ void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, ui
   // }
 }
 
-void onSend() {
+void onSendDevice() {
   wsSendAll((uint8_t*)&device, sizeof(device));
 }
 // void onSendModbus() {
@@ -101,7 +101,7 @@ uint32_t getDate() {
 
 void getGPIO() {
   getInput();
-  onSend();
+  onSendDevice();
 }
 
 void scan() {
@@ -140,17 +140,13 @@ void getData() {
   getDate();
 }
 
-void onSendDevice() {
-  wsSendAll((uint8_t*)&device, sizeof(device));
-}
-
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port) {
   if (port->gpio == 13) {
     getGPIO();
   }
-  Serial.print(port->gpio);
-  Serial.println(port->value);
+  // Serial.print(port->gpio);
+  // Serial.println(port->value);
 }
 
 static char displayBuffer[64] = "5";
@@ -251,7 +247,7 @@ void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     getData();
-    onSend();
+    onSendDevice();
   }
 
   if (tasks[KEY_DEVICE]) {
@@ -269,6 +265,6 @@ void loopDevice(uint32_t now) {
     }
 
     device.command = 0;
-    onSend();
+    onSendDevice();
   };
 }
