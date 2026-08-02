@@ -123,31 +123,35 @@
     "id": "ports.34",
     "name": "adc.1",
     "type": "info",
+    "icon": "therm",
     "args": ["ports.34.value"]
   },
   {
     "id": "ports.35",
     "name": "adc.2",
     "type": "info",
+    "icon": "therm",
     "args": ["ports.35.value"]
   },
   {
     "id": "ports.36",
     "name": "adc.3",
     "type": "info",
+    "icon": "therm",
     "args": ["ports.36.value"]
   },
   {
     "id": "ports.39",
     "name": "adc.4",
     "type": "info",
+    "icon": "therm",
     "args": ["ports.39.value"]
   },
   {
     "id": "ports.25",
     "name": "dac.1",
     "type": "dimmer",
-    "icon": "vent",
+    "icon": "plug",
     "args": ["ports.25.value", "ports.25"],
     "set": "({ ...a, value: v, command: 2})",
     "getTo": "`${(((100 * v) / 255) / 10).toFixed(1)} V`"
@@ -156,7 +160,7 @@
     "id": "ports.26",
     "name": "dac.2",
     "type": "dimmer",
-    "icon": "vent",
+    "icon": "plug",
     "args": ["ports.26.value", "ports.26"],
     "set": "({ ...a, value: v, command: 2})",
     "getTo": "`${(((100 * v) / 255) / 10).toFixed(1)} V`"
@@ -165,9 +169,9 @@
     "id": "device.now",
     "name": "now",
     "type": "date",
-    "args": ["device"],
+    "icon": "timer",
+    "args": ["device.now", "device"],
     "set": "({...a, now: v,command: 1 })",
-    "get": "v.now",
     "getTo": "new Date(v * 1000).toLocaleDateString()"
   }
 ]

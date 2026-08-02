@@ -157,7 +157,7 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   Serial.print(" kind=");
   Serial.println(kind);
 
-  if (strcmp(id, "$display") == 0) {
+  if (strcmp(id, "$device") == 0) {
     if (write) {
       if (kind == KIND_STRING) {
         char buf[65];
@@ -199,35 +199,43 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   return false;
 }
 
-bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
-  if (paramCount < 2) return false;
-
-  const char* method = params[0].stringVal.data;
-  const char* url = params[1].stringVal.data;
-  const int32_t count = params[2].intVal;
-  const uint32_t num = params[3].uintVal;
-
-  const uint8_t* data = params[4].arrayVal.data;
-  uint8_t len = params[4].arrayVal.len;
-
-  for (uint8_t i = 0; i < len; i++) {
-    Serial.print(data[i]);
+bool inputHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount != 1) return false;
+  const uint32_t pin = params[0].uintVal;
+  if (pin >= 1 && pin < 7) {
+    result.type = VAL_UINT;
+    result.intVal = bitRead(device.input, pin - 1);
+    return true;
   }
+  return false;
+}
 
-  Serial.println("method");
-  Serial.println(method);
-  Serial.println(url);
-  Serial.println(count);
-  Serial.println(num);
-
-  result.type = VAL_INT;
-  result.intVal = 200;
-  return true;
+bool outputHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 1) return false;
+  const uint32_t pin = params[0].uintVal;
+  const uint32_t value = params[1].uintVal;
+  Serial.println(pin);
+  Serial.println(value);
+  if (pin >= 1 && pin < 7) {
+    if (paramCount == 2) {
+      if (value) {
+        bitSet(device.output, pin - 1);
+      } else {
+        bitClear(device.output, pin - 1);
+      }
+      setOutput();
+    }
+    result.type = VAL_UINT;
+    result.intVal = bitRead(device.output, pin);
+    return true;
+  }
+  return false;
 }
 
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
-  scriptRunner.registerFunction("http", httpHandler);
+  scriptRunner.registerFunction("input", inputHandler);
+  scriptRunner.registerFunction("output", outputHandler);
 
   Wire.begin(GPIO_SDA, GPIO_SCL);
 

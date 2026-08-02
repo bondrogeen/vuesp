@@ -60,14 +60,11 @@ uint32_t ScriptRunner::parseTime(const char* str) const {
     const char* p = str;
     uint32_t value = 0;
     while (isDigit(*p)) { value = value * 10 + (*p - '0'); p++; }
-    char unit = *p;
-    switch (unit) {
-        case 'u': return value;
-        case 's': return value * 1000;
-        case 'm': return value * 60000;
-        case 'h': return value * 3600000;
-        default: return value * 1000;
-    }
+    if (*p == 'm' && *(p+1) == 's') return value;
+    if (*p == 's') return value * 1000;
+    if (*p == 'm') return value * 60000;
+    if (*p == 'h') return value * 3600000;
+    return value * 1000;
 }
 
 Params ScriptRunner::parseParams(const char* str) const {
