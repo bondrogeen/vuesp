@@ -1,13 +1,11 @@
-#include "./include/device.h"
-#include "./include/eeprom.h"
-#include "./include/files.h"
-#include "./include/gpio.h"
-#include "./include/init.h"
-#include "./include/tasks.h"
-#include "./include/webserver.h"
-// #include "./luas/LuaWrapper.h"
-
-// LuaWrapper lua;
+#include "./device/device.h"
+#include "./discovery/discovery.h"
+#include "./files/files.h"
+#include "./gpio/gpio.h"
+#include "./init/init.h"
+#include "./runner/runner.h"
+#include "./tasks/tasks.h"
+#include "./webserver/webserver.h"
 
 #if defined(ESP8266)
 uint32_t id = ESP.getChipId();
@@ -35,6 +33,7 @@ void setupFirst() {
 
 void setupDelay() {
   infoFS.id = id;
+  infoFS.board = DEF_BOARD;
   char nameDevice[20];
   sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
   strcpy(infoFS.name, nameDevice);
@@ -42,8 +41,11 @@ void setupDelay() {
   getInfo(&infoFS);
   loadConfig(settings, id);
   initWiFi();
+  setupGPIO();
   setupDevice();
   setupServer();
+  setupDiscovery();
+  setupRunner();
 
   // String script = String("local x = 10 local y = 25 local z = x + y print('Sum of x+y =',z)");
   // Serial.println(lua.Lua_dostring(&script));
@@ -62,11 +64,13 @@ void loop() {
   }
 
   if (isSetup) {
+    loopDiscovery(now);
     loopServer(now);
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
     loopWiFi(now);
+    loopRunner(now);
   }
 
   if (now - lastTimeMain > 1000) {
