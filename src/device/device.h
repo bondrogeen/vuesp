@@ -19,8 +19,10 @@
 #define GPIO_ADC4 35
 
 #define GPIO_HT1 32
+#define GPIO_HT2 33
 
-#define GPIO_INT 13
+#define GPIO_IO13 13
+#define GPIO_IO12 12
 
 #define ADDRESS_RTC 0x68
 #define ADDRESS_OUTPUT 0x24
