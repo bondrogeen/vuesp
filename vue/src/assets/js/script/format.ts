@@ -47,12 +47,12 @@ function lineBreak(s: string) {
 
 function addIndent(s: string) {
   let r = '';
-  let lines = s.split('\n');
+  const lines = s.split('\n');
   let indentLevel = 0;
   const spaces = '    ';
 
   for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
+    const line = lines[i];
 
     if (line.match(/^(if|while|else|on).*;/)) {
       if (line.match(/^else;/)) {

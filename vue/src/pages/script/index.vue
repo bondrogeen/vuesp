@@ -302,6 +302,12 @@ const scripts = ref<IScript[]>([]);
 const selectedScript = ref<IScript | null>(null);
 const content = ref('');
 
+// const isScriptNotSave = computed(() => {
+//   if (!selectedScript.value?.content) return false;
+//   if (formatScript(selectedScript.value?.content) === content.value) return false;
+//   return true;
+// });
+
 function onSelect(script: IScript) {
   // if (isScriptNotSave.value) return;
   selectedScript.value = script;
