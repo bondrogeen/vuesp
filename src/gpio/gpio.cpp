@@ -18,12 +18,17 @@ Port ports[5] = {
     {KEY_PORT, 5, 0, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
 };
 #elif defined(ESP32)
-Port ports[5] = {
-    {KEY_PORT, 4, 0, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
-    {KEY_PORT, 5, 0, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
-    {KEY_PORT, 12, 0, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
-    {KEY_PORT, 13, 0, GPIO_MODE_OUTPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
-    {KEY_PORT, 14, 0, GPIO_MODE_PWM, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
+Port ports[10] = {
+    {KEY_PORT, 13, 0, GPIO_MODE_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, GPIO_BIT_INPUT_PULLUP, GPIO_DISABLED_ON},
+    {KEY_PORT, 12, 0, GPIO_MODE_INPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 25, 0, GPIO_MODE_DAC, GPIO_INTERRUPT_OFF, GPIO_BIT_DAC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 26, 0, GPIO_MODE_DAC, GPIO_INTERRUPT_OFF, GPIO_BIT_DAC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 32, 0, GPIO_MODE_ONEWIRE, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 33, 0, GPIO_MODE_INPUT, GPIO_INTERRUPT_OFF, GPIO_BIT_ALL_NOT_DAC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 34, 0, GPIO_MODE_ADC, GPIO_INTERRUPT_OFF, GPIO_BIT_ADC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 35, 0, GPIO_MODE_ADC, GPIO_INTERRUPT_OFF, GPIO_BIT_ADC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 36, 0, GPIO_MODE_ADC, GPIO_INTERRUPT_OFF, GPIO_BIT_ADC, GPIO_DISABLED_OFF},
+    {KEY_PORT, 39, 0, GPIO_MODE_ADC, GPIO_INTERRUPT_OFF, GPIO_BIT_ADC, GPIO_DISABLED_OFF},
 };
 #endif
 
@@ -76,7 +81,7 @@ void initGPIO() {
 
 void getAll() {
   for (int i = 0; i < ports_len; i++) {
-    if (ports[i].mode == GPIO_MODE_PWM || ports[i].mode == GPIO_MODE_ONEWIRE) {
+    if (ports[i].mode == GPIO_MODE_PWM || ports[i].mode == GPIO_MODE_ONEWIRE || ports[i].mode == GPIO_MODE_DAC) {
     } else if (ports[i].mode == GPIO_MODE_ADC) {
       ports[i].value = analogRead(ports[i].gpio);
     } else {
@@ -146,6 +151,8 @@ void setValueUpdate() {
   if (port.mode == GPIO_MODE_PWM || port.mode == GPIO_MODE_ONEWIRE) {
   } else if (port.mode == GPIO_MODE_ADC) {
     port.value = analogRead(port.gpio);
+  } else if (port.mode == GPIO_MODE_DAC) {
+    dacWrite(port.gpio, port.value);
   } else {
     port.value = digitalRead(port.gpio);
   }
@@ -235,7 +242,7 @@ void loopGPIO(uint32_t now) {
     }
   }
 
-  if (isADC && now - lastTimeADC > 1000) {
+  if (isADC && now - lastTimeADC > 5000) {
     lastTimeADC = now;
     getADC();
   }

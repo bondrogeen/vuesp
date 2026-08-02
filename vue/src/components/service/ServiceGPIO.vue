@@ -26,7 +26,7 @@
               </v-button>
 
               <v-text-field
-                v-if="isInput(port) || isPWM(port) || isADC(port)"
+                v-if="isInput(port) || isPWM(port) || isADC(port) || isDAC(port)"
                 hideMessage
                 :modelValue="port.value"
                 :disabled="isInput(port) || Boolean(port.disabled)"
@@ -114,6 +114,7 @@ const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.value.OUTPUT, MODE.value.
 const isInput = ({ mode = 0 }: IMessagePort) => [MODE.value.INPUT, MODE.value.INPUT_PULLUP].includes(mode);
 const isPWM = ({ mode = 0 }: IMessagePort) => [MODE.value.PWM].includes(mode);
 const isADC = ({ mode = 0 }: IMessagePort) => [MODE.value.ADC].includes(mode);
+const isDAC = ({ mode = 0 }: IMessagePort) => [MODE.value.DAC].includes(mode);
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
 const onInputValue = useDebounceFn((port: IMessagePort, value: string) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value: +value }), 500);
