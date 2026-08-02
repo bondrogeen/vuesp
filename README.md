@@ -86,12 +86,12 @@ vuesp/
 ├── vue/              # Vue 3 web frontend
 │   ├── src/          # Vue components and pages
 │   └── public/       # Static assets
+│   └── vite.config.ts    # Vite build configuration
 ├── data/             # LittleFS data
 │   └── www/          # Built web UI
 ├── firmware/         # Compiled firmware binaries
 ├── scripts/          # Build and utility scripts
 ├── platformio.ini    # PlatformIO configuration
-└── vite.config.ts    # Vite build configuration
 ```
 
 ## Development
@@ -111,7 +111,7 @@ VITE_PROXY=192.168.1.100  # Change to your ESP device IP
 npm run dev
 ```
 
-Open http://localhost:5173/ in your browser.
+Open http://localhost:3000/ in your browser.
 
 ### Available npm Scripts
 
@@ -176,6 +176,14 @@ Binary WebSocket messages at `/esp` endpoint:
 - First byte: Command ID (1-255)
 - Remaining bytes: Struct data
 - All platform-specific
+
+## Документация / Documentation ScriptRunner
+
+| Язык / Language | Ссылка / Link |
+|-----------------|---------------|
+| 🇷🇺 Русский | [Документация на русском для  ScriptRunner](./github/docs/scriptrunner/ru.md) |
+| 🇬🇧 English | [Documentation in English from ScriptRunner](./github/docs/scriptrunner/en.md) |
+
 
 ## Version History
 
