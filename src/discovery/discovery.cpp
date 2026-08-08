@@ -31,54 +31,54 @@ void setupDiscovery() {
   if (!settings.discovery) return;
   udp.begin(settings.discoveryPort);
 
-  protocol.setup(infoFS.id);
+  // protocol.setup(infoFS.id);
 
-  protocol.onSend([](const OutgoingPacket& p) {
-    return udpSendPacket(p.data, p.length, p.targetAddress);
-  });
+  // protocol.onSend([](const OutgoingPacket& p) {
+  //   return udpSendPacket(p.data, p.length, p.targetAddress);
+  // });
 
-  protocol.onPeerDiscovered([](const PeerInfo& peer) {
-    discovery.id = peer.id;
-    discovery.ip = peer.address;
-    discovery.lastSeen = peer.lastSeen;
-    discovery.status = 1;
-    wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    Serial.printf("+ PEER: 0x%08X @ %s\n", peer.id, IPAddress(peer.address).toString().c_str());
-  });
+  // protocol.onPeerDiscovered([](const PeerInfo& peer) {
+  //   discovery.id = peer.id;
+  //   discovery.ip = peer.address;
+  //   discovery.lastSeen = peer.lastSeen;
+  //   discovery.status = 1;
+  //   wsSendAll((uint8_t*)&discovery, sizeof(discovery));
+  //   Serial.printf("+ PEER: 0x%08X @ %s\n", peer.id, IPAddress(peer.address).toString().c_str());
+  // });
 
-  protocol.onPeerLost([](const PeerInfo& peer) {
-    discovery.id = peer.id;
-    discovery.ip = peer.address;
-    discovery.lastSeen = peer.lastSeen;
-    discovery.status = 0;
-    wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    Serial.printf("- PEER LOST: 0x%08X\n", peer.id);
-  });
+  // protocol.onPeerLost([](const PeerInfo& peer) {
+  //   discovery.id = peer.id;
+  //   discovery.ip = peer.address;
+  //   discovery.lastSeen = peer.lastSeen;
+  //   discovery.status = 0;
+  //   wsSendAll((uint8_t*)&discovery, sizeof(discovery));
+  //   Serial.printf("- PEER LOST: 0x%08X\n", peer.id);
+  // });
 
-  protocol.onTextReceived([](uint32_t senderId, const String& text) {
-    Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
-    // scriptRunner.registerScript(2, text.c_str());
-    // scriptRunner.runScript(2);
-  });
+  // protocol.onTextReceived([](uint32_t senderId, const String& text) {
+  //   Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
+  //   // scriptRunner.registerScript(2, text.c_str());
+  //   // scriptRunner.runScript(2);
+  // });
 
-  protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {
-    Serial.printf("BINARY from 0x%08X, %d bytes: ", senderId, len);
-    for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
-    Serial.println();
-  });
+  // protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {
+  //   Serial.printf("BINARY from 0x%08X, %d bytes: ", senderId, len);
+  //   for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
+  //   Serial.println();
+  // });
 }
 
 uint8_t v = 0;
 void loopDiscovery(uint32_t now) {
   if (!settings.discovery) return;
   if (!isConnected) return;
-  udpReceive();
-  protocol.update();
+  // udpReceive();
+  // protocol.update();
 
-  if (now - lastTimeDiscovery > settings.discoveryInterval * 1000) {
-    lastTimeDiscovery = now;
-    protocol.sendAnnounce();
-  }
+  // if (now - lastTimeDiscovery > settings.discoveryInterval * 1000) {
+  //   lastTimeDiscovery = now;
+  //   protocol.sendAnnounce();
+  // }
 
   // static unsigned long lastText = 0;
   // if (now - lastText > 10000) {
