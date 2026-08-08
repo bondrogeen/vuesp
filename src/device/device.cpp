@@ -21,9 +21,6 @@ void deviceGPIO(Port* port) {
   Serial.println(port->value);
 }
 
-void deviceGPIOInterrupt() {
-}
-
 void setupDevice() {
   Serial1.begin(9600, SERIAL_8N1, 5, 6);
 }
@@ -36,70 +33,91 @@ uint16_t combineBytes(uint8_t high_byte, uint8_t low_byte) {
   return (uint16_t)((high_byte << 8) | low_byte);
 }
 
-void readBmsData() {
-  uint8_t reqMessage[] = {0xDD, 0xA5, 0x03, 0x00, 0xFF, 0xFD, 0x77};
-  Serial1.write(reqMessage, 7);
+
+void sendCommand11() {
+  // ~120146110000FDB0
+  byte cmd[] = {0x7E, 0x31, 0x32, 0x30, 0x31, 0x34, 0x36, 0x31, 0x31, 0x30, 0x30, 0x30, 0x30, 0x46, 0x44, 0x42, 0x30, 0x0D};
+  Serial1.write(cmd, sizeof(cmd));
 }
 
-void readPackData() {
-  uint8_t reqMessage[] = {0xDD, 0xA5, 0x04, 0x00, 0xFF, 0xFC, 0x77};
-  Serial1.write(reqMessage, 7);
+void sendCommandB0() {
+  // ~120146B00000FDA0
+  byte cmd[] = {0x7E, 0x31, 0x32, 0x30, 0x31, 0x34, 0x36, 0x42, 0x30, 0x30, 0x30, 0x30, 0x30, 0x46, 0x44, 0x41, 0x30, 0x0D};
+  Serial1.write(cmd, sizeof(cmd));
 }
 
-void parsDate(uint16_t code) {
-  device.dateDay = code & 0x1F;
-  device.dateMonth = (code >> 5) & 0x0F;
-  device.dateYear = 2000 + (code >> 9);
+void sendCommandB1() {
+  // ~120146B10000FD9F
+  byte cmd[] = {0x7E, 0x31, 0x32, 0x30, 0x31, 0x34, 0x36, 0x42, 0x31, 0x30, 0x30, 0x30, 0x30, 0x46, 0x44, 0x39, 0x46, 0x0D};
+  Serial1.write(cmd, sizeof(cmd));
 }
 
-void parseReqBasicMessage(uint8_t* message) {
-  device.voltage = combineBytes(message[4], message[5]);
-  device.current = combineBytes(message[6], message[7]);
-  device.balanceCapacity = combineBytes(message[8], message[9]);
-  device.rateCapacity = combineBytes(message[10], message[11]);
-  device.cycle = combineBytes(message[12], message[13]);
-  parsDate(combineBytes(message[14], message[15]));
-  device.balanceStatus = combineBytes(message[16], message[17]);
-  device.balanceStatusHigh = combineBytes(message[18], message[19]);
-  device.protectionStatus = combineBytes(message[20], message[21]);
-  device.version = message[22];
-  device.rsoc = message[23];
-  device.fet = message[24];
-  device.series = message[25];
-  device.ntc = message[26];
-  device.ntc1 = (combineBytes(message[27], message[28]) - 2731) * 10;
-  if (device.ntc > 1) {
-    device.ntc2 = (combineBytes(message[29], message[30]) - 2731) * 10;
-  }
-  if (device.ntc > 2) {
-    device.ntc3 = (combineBytes(message[31], message[32]) - 2731) * 10;
-  }
+void sendCommand31E0() {
+  // ~12014631E00201FD36
+  byte cmd[] = {0x7E, 0x31, 0x32, 0x30, 0x31, 0x34, 0x36, 0x33, 0x31, 0x45, 0x30, 0x30, 0x32, 0x30, 0x31, 0x46, 0x44, 0x33, 0x36, 0x0D};
+  Serial1.write(cmd, sizeof(cmd));
 }
 
-void parseReqPackMessage(uint8_t* message) {
-  uint8_t numOfCells = message[3] / 2;
-  uint16_t _cellSum = 0;
-  uint16_t _cellLow = 5000;  // 5v
-  uint16_t _cellHigh = 0;
-
-  byte offset = 4;
-  for (byte i = 0; i < numOfCells; i++) {
-    device.cellVoltage[i] = ((uint16_t)combineBytes(message[i * 2 + offset], message[i * 2 + 1 + offset]));
-    _cellSum += device.cellVoltage[i];
-
-    if (device.cellVoltage[i] > _cellHigh) {
-      _cellHigh = device.cellVoltage[i];
-    }
-    if (device.cellVoltage[i] < _cellLow) {
-      _cellLow = device.cellVoltage[i];
-    }
-
-    device.cellLow = _cellLow;
-    device.cellHigh = _cellHigh;
-    device.cellDiff = _cellHigh - _cellLow;
-    device.cellAvg = _cellSum / numOfCells;
-  }
+void sendCommand33E0() {
+  // ~12014633E00201FD34
+  byte cmd[] = {0x7E, 0x31, 0x32, 0x30, 0x31, 0x34, 0x36, 0x33, 0x33, 0x45, 0x30, 0x30, 0x32, 0x30, 0x31, 0x46, 0x44, 0x33, 0x34, 0x0D};
+  Serial1.write(cmd, sizeof(cmd));
 }
+
+// void parsDate(uint16_t code) {
+//   device.dateDay = code & 0x1F;
+//   device.dateMonth = (code >> 5) & 0x0F;
+//   device.dateYear = 2000 + (code >> 9);
+// }
+
+// void parseReqBasicMessage(uint8_t* message) {
+//   device.voltage = combineBytes(message[4], message[5]);
+//   device.current = combineBytes(message[6], message[7]);
+//   device.balanceCapacity = combineBytes(message[8], message[9]);
+//   device.rateCapacity = combineBytes(message[10], message[11]);
+//   device.cycle = combineBytes(message[12], message[13]);
+//   parsDate(combineBytes(message[14], message[15]));
+//   device.balanceStatus = combineBytes(message[16], message[17]);
+//   device.balanceStatusHigh = combineBytes(message[18], message[19]);
+//   device.protectionStatus = combineBytes(message[20], message[21]);
+//   device.version = message[22];
+//   device.rsoc = message[23];
+//   device.fet = message[24];
+//   device.series = message[25];
+//   device.ntc = message[26];
+//   device.ntc1 = (combineBytes(message[27], message[28]) - 2731) * 10;
+//   if (device.ntc > 1) {
+//     device.ntc2 = (combineBytes(message[29], message[30]) - 2731) * 10;
+//   }
+//   if (device.ntc > 2) {
+//     device.ntc3 = (combineBytes(message[31], message[32]) - 2731) * 10;
+//   }
+// }
+
+// void parseReqPackMessage(uint8_t* message) {
+//   uint8_t numOfCells = message[3] / 2;
+//   uint16_t _cellSum = 0;
+//   uint16_t _cellLow = 5000;  // 5v
+//   uint16_t _cellHigh = 0;
+
+//   byte offset = 4;
+//   for (byte i = 0; i < numOfCells; i++) {
+//     device.cellVoltage[i] = ((uint16_t)combineBytes(message[i * 2 + offset], message[i * 2 + 1 + offset]));
+//     _cellSum += device.cellVoltage[i];
+
+//     if (device.cellVoltage[i] > _cellHigh) {
+//       _cellHigh = device.cellVoltage[i];
+//     }
+//     if (device.cellVoltage[i] < _cellLow) {
+//       _cellLow = device.cellVoltage[i];
+//     }
+
+//     device.cellLow = _cellLow;
+//     device.cellHigh = _cellHigh;
+//     device.cellDiff = _cellHigh - _cellLow;
+//     device.cellAvg = _cellSum / numOfCells;
+//   }
+// }
 
 bool verifyJBDPacket(const uint8_t* packet, uint8_t len) {
   if (len < 7 || packet[0] != 0xDD || packet[len - 1] != 0x77) return false;
@@ -124,7 +142,7 @@ bool readResponse(uint8_t* message) {
       // if (b < 0x10) {
       //   Serial.print("0");
       // }
-      // Serial.print(b, HEX);
+      Serial.print(b);
       // Serial.print(" ");
       if (b == 0xDD) found = true;
       if (found) {
@@ -144,35 +162,33 @@ uint8_t receive = 1;
 
 void loopDevice(uint32_t now) {
   if (readResponse(response)) {
-    // Serial.println(response[1]);
-    if (response[1] == 3) {
-      parseReqBasicMessage(response);
-    }
-    if (response[1] == 4) {
-      parseReqPackMessage(response);
-    }
-    onSendDevice();
+    Serial.println(response[1]);
+    // if (response[1] == 3) {
+    //   parseReqBasicMessage(response);
+    // }
+    // if (response[1] == 4) {
+    //   parseReqPackMessage(response);
+    // }
+    // onSendDevice();
   }
 
-  if (now - lastTimeDevice > 2000) {
+
+  if (now - lastTimeDevice > 5000) {
     lastTimeDevice = now;
-    if (receive == 1) {
-      readBmsData();
-      receive = 0;
-    } else {
-      receive = 1;
-      readPackData();
-    }
-    Serial.println(settings.wifiMode);
-    Serial.println(settings.wifiSsid);
-    Serial.println(settings.wifiPass);
-    Serial.println(device.dateYear);
-    // Serial.println(device.cellHigh, DEC);
-    // Serial.println(device.cellVoltage[0], DEC);
-    // Serial.println(device.cellVoltage[1], DEC);
-    // Serial.println(device.cellVoltage[2], DEC);
-    // Serial.println(device.cellVoltage[3], DEC);
-    // Serial.println(device.cellVoltage[4], DEC);
+    Serial.println("test");
+    // sendCommand11();
+    // sendCommandB0();
+    // sendCommandB1();
+    sendCommand31E0();
+    // sendCommand33E0();
+
+    // if (receive == 1) {
+    //   readBmsData();
+    //   receive = 0;
+    // } else {
+    //   receive = 1;
+    //   readPackData();
+    // }
   }
 
   if (tasks[KEY_DEVICE]) {
