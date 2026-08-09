@@ -141,7 +141,7 @@ struct Device {
   uint16_t capacity;
   uint16_t fccRaw;
   uint16_t cycle;
-  uint16_t empty;
+  uint32_t lastTime;
   uint16_t dccRaw;
   uint16_t SOC;
   uint16_t protectionStatus;
@@ -175,6 +175,5 @@ struct Device {
   uint8_t status8;
   uint8_t status9;
   uint8_t tempCount;
-  uint8_t empty1;
-  uint8_t empty2;
+  char version[32];
 };

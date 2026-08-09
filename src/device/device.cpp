@@ -17,8 +17,8 @@ void onSendDevice() {
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port) {
-  Serial.print(port->gpio);
-  Serial.println(port->value);
+  // Serial.print(port->gpio);
+  // Serial.println(port->value);
 }
 
 void setupDevice() {
@@ -35,7 +35,7 @@ void sendCommand11() {
   Serial1.write(cmd, sizeof(cmd));
 }
 
-void sendCommandB0() {
+void sendCommandVersion() {
   // ~120146B00000FDA0
   byte cmd[] = {0x7E, 0x31, 0x32, 0x30, 0x31, 0x34, 0x36, 0x42, 0x30, 0x30, 0x30, 0x30, 0x30, 0x46, 0x44, 0x41, 0x30, 0x0D};
   Serial1.write(cmd, sizeof(cmd));
@@ -97,7 +97,7 @@ int32_t parseHexValue(char* data, uint16_t start, uint8_t len) {
 // 3B - SOC (99-100) = 59%
 // EB3F - CRC (101-104)
 
-void parseMainMessage(char* message) {
+void parseMessageMain(char* message) {
   device.cell1 = parseHexValue(message, 19, 4);
   device.cell2 = parseHexValue(message, 23, 4);
   device.cell3 = parseHexValue(message, 27, 4);
@@ -140,32 +140,42 @@ void parseMainMessage(char* message) {
 // 00 - status9 (59-60)
 // F48B - CRC
 
-void parseAlarmMessage(char* message) {
-  device.cellCount = parseHexValue(message, 17, 2);    // 0x04 = 4
-  device.cellStatus1 = parseHexValue(message, 19, 2);  // 0x00
-  device.cellStatus2 = parseHexValue(message, 21, 2);  // 0x00
-  device.cellStatus3 = parseHexValue(message, 23, 2);  // 0x00
-  device.cellStatus4 = parseHexValue(message, 25, 2);  // 0x00
+void parseMessageAlarm(char* message) {
+  device.cellCount = parseHexValue(message, 17, 2);
+  device.cellStatus1 = parseHexValue(message, 19, 2);
+  device.cellStatus2 = parseHexValue(message, 21, 2);
+  device.cellStatus3 = parseHexValue(message, 23, 2);
+  device.cellStatus4 = parseHexValue(message, 25, 2);
 
-  device.tempCount = parseHexValue(message, 27, 2);    // 0x04 = 4
-  device.tempStatus1 = parseHexValue(message, 29, 2);  // 0x00
-  device.tempStatus2 = parseHexValue(message, 31, 2);  // 0x00
-  device.tempStatus3 = parseHexValue(message, 33, 2);  // 0x00
-  device.tempStatus4 = parseHexValue(message, 35, 2);  // 0x00
+  device.tempCount = parseHexValue(message, 27, 2);
+  device.tempStatus1 = parseHexValue(message, 29, 2);
+  device.tempStatus2 = parseHexValue(message, 31, 2);
+  device.tempStatus3 = parseHexValue(message, 33, 2);
+  device.tempStatus4 = parseHexValue(message, 35, 2);
 
-  device.chgCurrStatus = parseHexValue(message, 37, 2);    // 0x00
-  device.totalVoltStatus = parseHexValue(message, 39, 2);  // 0x00
-  device.dsgCurrStatus = parseHexValue(message, 41, 2);    // 0x00
+  device.chgCurrStatus = parseHexValue(message, 37, 2);
+  device.totalVoltStatus = parseHexValue(message, 39, 2);
+  device.dsgCurrStatus = parseHexValue(message, 41, 2);
 
-  device.status1 = parseHexValue(message, 43, 2);  // 0x00
-  device.status2 = parseHexValue(message, 45, 2);  // 0x00
-  device.status3 = parseHexValue(message, 47, 2);  // 0x00
-  device.status4 = parseHexValue(message, 49, 2);  // 0x26
-  device.status5 = parseHexValue(message, 51, 2);  // 0x00
-  device.status6 = parseHexValue(message, 53, 2);  // 0x00
-  device.status7 = parseHexValue(message, 55, 2);  // 0x00
-  device.status8 = parseHexValue(message, 57, 2);  // 0x00
-  device.status9 = parseHexValue(message, 59, 2);  // 0x00
+  device.status1 = parseHexValue(message, 43, 2);
+  device.status2 = parseHexValue(message, 45, 2);
+  device.status3 = parseHexValue(message, 47, 2);
+  device.status4 = parseHexValue(message, 49, 2);
+  device.status5 = parseHexValue(message, 51, 2);
+  device.status6 = parseHexValue(message, 53, 2);
+  device.status7 = parseHexValue(message, 55, 2);
+  device.status8 = parseHexValue(message, 57, 2);
+  device.status9 = parseHexValue(message, 59, 2);
+}
+// ~12004600D0300001 (0-16)
+// ~12004600103C303937332D30303356312E30302D303030302D4630343130300000000000F199
+
+void parseMessageVersion(char* message) {
+  int j = 0;
+  for (int i = 0; i < 60; i += 2) {
+    char hex[3] = {message[13 + i], message[13 + i + 1], 0};
+    device.version[j++] = (char)strtol(hex, NULL, 16);
+  }
 }
 
 uint8_t hexToByte(char c) {
@@ -226,22 +236,27 @@ bool readResponse(char* message) {
   return true;
 }
 
-uint8_t receive = 1;
+uint8_t receive = 0;
 
 void loopDevice(uint32_t now) {
   if (readResponse(response)) {
-    Serial.println(response[9], DEC);
+    // Serial.println(response[9], DEC);
+    device.lastTime = 0;
     if (response[9] == 51) {
-      parseMainMessage(response);
+      parseMessageMain(response);
     }
     if (response[9] == 68) {
-      parseAlarmMessage(response);
+      parseMessageAlarm(response);
+    }
+    if (response[9] == 49) {
+      parseMessageVersion(response);
     }
     onSendDevice();
   }
 
-  if (now - lastTimeDevice > 10000) {
+  if (now - lastTimeDevice > 2000) {
     lastTimeDevice = now;
+    device.lastTime = now;
     // Serial.println("test");
     // sendCommand11();
     // sendCommandB0();
@@ -249,13 +264,18 @@ void loopDevice(uint32_t now) {
     // sendCommandMain();
     // sendCommandAlarm();
 
+    if (receive == 0) {
+      sendCommandVersion();
+    }
     if (receive == 1) {
       sendCommandMain();
-      receive = 0;
-    } else {
-      receive = 1;
-      sendCommandAlarm();
     }
+    if (receive == 2) {
+      sendCommandAlarm();
+      device.status3 = 0;
+      receive = 0;
+    }
+    receive++;
   }
 
   if (tasks[KEY_DEVICE]) {
