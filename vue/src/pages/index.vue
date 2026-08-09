@@ -7,7 +7,7 @@
     <div class="w-full grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
       <card-main class="p-4">
         <div class="flex justify-between items-center mb-4 text-xs">
-          <span class="text-2xl font-bold">Shinwa BMS (12v)</span>
+          <span class="text-2xl font-bold">Saihang BMS (12v)</span>
 
           <div class="flex flex-col">
             <span class="font-semibold">
