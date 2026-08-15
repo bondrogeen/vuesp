@@ -17,5 +17,6 @@ void reboot();
 extern Settings settings;
 extern Info infoFS;
 extern uint8_t isConnected;
+extern Event event;
 
 #endif

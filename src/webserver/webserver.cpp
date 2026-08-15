@@ -31,6 +31,14 @@ void wsSendAll(uint8_t* message, size_t len) {
   ws.binaryAll(message, len);
 }
 
+void emitEvent(char* message) {
+  if (message == nullptr) return;
+  memset(event.name, 0, sizeof(event.name));
+  strcpy(event.name, message);
+  wsSendAll((uint8_t*)&event, sizeof(event));
+  scriptRunner.emitEvent(message);
+}
+
 void sendProgress() {
   if (progress.status == 1 || progress.status == 0 || hold > 15) {
     if (ws.count() > 0) {
