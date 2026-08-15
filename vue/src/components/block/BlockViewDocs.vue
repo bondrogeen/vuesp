@@ -4,12 +4,12 @@
       <span v-if="isLoading" class="text-gray-500">⏳ Загрузка...</span>
       <span v-if="error" class="text-red-600">❌ {{ error }}</span>
     </div>
-    
+
     <div class="docs-content" v-html="renderedHtml"></div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
 import { useLocale } from '@/composables/useLocale';
@@ -18,14 +18,30 @@ const { getLocale } = useLocale();
 const BASE_URL = 'https://raw.githubusercontent.com/bondrogeen/vuesp/refs/heads/master/github/docs/scriptrunner/';
 const MARKED_CDN = 'https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js';
 
-const rawMarkdown = ref('');
-const renderedHtml = ref('');
-const meta = ref(null);
-const isLoading = ref(false);
-const error = ref(null);
-let markedLib = null;
+interface MetaData {
+  version?: string;
+  updated?: string;
+}
 
-const loadMarked = () => {
+interface MarkedLib {
+  parse: (markdown: string) => string;
+  setOptions: (options: Record<string, any>) => void;
+}
+
+declare global {
+  interface Window {
+    marked?: MarkedLib;
+  }
+}
+
+const rawMarkdown = ref<string>('');
+const renderedHtml = ref<string>('');
+const meta = ref<MetaData | null>(null);
+const isLoading = ref<boolean>(false);
+const error = ref<string | null>(null);
+let markedLib: MarkedLib | null = null;
+
+const loadMarked = (): Promise<MarkedLib> => {
   return new Promise((resolve, reject) => {
     if (window.marked) {
       window.marked.setOptions({
@@ -62,9 +78,9 @@ const loadMarked = () => {
   });
 };
 
-const parseMeta = (text) => {
+const parseMeta = (text: string): MetaData => {
   const lines = text.split('\n');
-  const metaData = {};
+  const metaData: MetaData = {};
   let inMeta = true;
 
   for (const line of lines) {
@@ -85,7 +101,7 @@ const parseMeta = (text) => {
   return metaData;
 };
 
-const loadDocs = async (langCode) => {
+const loadDocs = async (langCode: string): Promise<void> => {
   if (!markedLib) {
     error.value = 'Библиотека Marked не загружена';
     return;
@@ -107,8 +123,9 @@ const loadDocs = async (langCode) => {
     rawMarkdown.value = text;
     meta.value = parseMeta(text);
     renderedHtml.value = markedLib.parse(text);
-  } catch (err) {
-    error.value = err.message;
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+    error.value = errorMessage;
     console.error('Error loading docs:', err);
   } finally {
     isLoading.value = false;
@@ -118,11 +135,11 @@ const loadDocs = async (langCode) => {
 onMounted(async () => {
   try {
     markedLib = await loadMarked();
-    const browserLang = navigator.language || navigator.language;
     const detectedLang = getLocale().startsWith('ru') ? 'ru' : 'en';
     await loadDocs(detectedLang);
-  } catch (err) {
-    error.value = err.message;
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+    error.value = errorMessage;
     console.error('Initialization error:', err);
   }
 });
