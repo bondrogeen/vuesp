@@ -1,5 +1,10 @@
 #include "./device.h"
 
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 Buffer myBuffer = {KEY_BUFFER};
 
 Device device = {KEY_DEVICE, 0, 100, 1760640900, 2, "text"};
@@ -107,6 +112,30 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
   scriptRunner.registerFunction("http", httpHandler);
+
+  Wire.begin(14, 12);
+
+  // Инициализация дисплея с адресом 0x3C
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;);  // Ошибка инициализации
+  }
+
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.print("HW-364");
+  display.setCursor(0, 16);
+  display.print("Ready!");
+  display.display();
+  display.startscrollright(0, 0x5F);  // прокручиваем сообщение вправо
+  // delay(3000);                           // в течении 3-х секунд
+  // display.stopscroll();                  // останавливаем прокрутку
+  // delay(1000);                           // ждём 1 секунду
+  // display.startscrollleft(0x00, 0x0F);   // прокручиваем сообщение влево
+  // delay(3000);                           // в течение 3-х секунд
+  // display.stopscroll();                  // останавливаем прокрутку
+  // delay(1000);                           // ждём 1 секунду
 }
 
 void setupFirstDevice() {
