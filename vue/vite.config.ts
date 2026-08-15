@@ -18,7 +18,11 @@ const info = { name, version, author, description, repository, license, homepage
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const authLogin = env.VITE_AUTH_LOGIN;
+  const authPassword = env.VITE_AUTH_PASSWORD;
 
+  console.log(`ws://${authLogin}:${authPassword}@${env.VITE_PROXY}`);
+  
   return {
     build: {
       outDir: env.VITE_OUTPUT_DIR,
@@ -59,20 +63,20 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/esp': {
-          target: `ws://${env.VITE_PROXY}`,
+          target: `ws://${authLogin}:${authPassword}@${env.VITE_PROXY}`,
           ws: true,
         },
         '/get': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${authLogin}:${authPassword}@${env.VITE_PROXY}`,
         },
         '/fs': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${authLogin}:${authPassword}@${env.VITE_PROXY}`,
         },
         '/upload': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${authLogin}:${authPassword}@${env.VITE_PROXY}`,
         },
         '/update': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${authLogin}:${authPassword}@${env.VITE_PROXY}`,
         },
       },
     },
