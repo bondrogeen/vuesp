@@ -2,6 +2,8 @@
 #define DEVICE_H
 
 #include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #include "../libs/UnixTime.h"
 #include "./gpio/gpio.h"
