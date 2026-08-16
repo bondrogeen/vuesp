@@ -43,7 +43,12 @@
 #define LONG_PRESS_TIME 1000
 #define REPEAT_START_TIME 3000
 #define REPEAT_INTERVAL 200
-#define CLICK_WINDOW 500
+#define CLICK_WINDOW 200
+
+#define EVENT_NONE 0
+#define EVENT_LONG_PRESS 1
+#define EVENT_REPEAT 2
+#define EVENT_CLICK 3
 
 #include <OneWire.h>
 

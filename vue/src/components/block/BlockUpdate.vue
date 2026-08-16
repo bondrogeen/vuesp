@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IDialog } from '@/types/';
+import type { IBlockUpdateProps } from './types';
 
 import { nextTick, reactive } from 'vue';
 import { toByte } from 'vuesp-components/helpers';
@@ -25,16 +25,12 @@ import { VFile } from 'vuesp-components';
 import { useLocale } from '@/composables/useLocale';
 import { useFetch } from '@vueuse/core';
 
-interface Props {
-  onDialog: (data: IDialog) => void;
-}
-
 interface IFiles {
   firmware: FileList | null;
   littleFS: FileList | null;
 }
 
-const { onDialog } = defineProps<Props>();
+const { onDialog } = defineProps<IBlockUpdateProps>();
 
 const { $t } = useLocale();
 

@@ -3,9 +3,9 @@ import { changeTheme, localGet, isNewVersion } from 'vuesp-components/helpers';
 import { useFetch } from '@vueuse/core';
 import { pathList } from '@/utils/const';
 
-import type { IStoreApp, IDialog } from '@/types';
+import type { IDialog, IAppStore } from '@/types';
 
-const initialState = (): IStoreApp => ({
+const initialState = (): IAppStore => ({
   theme: localGet('theme') || 'dark',
   dialog: { value: false },
   menu: [],

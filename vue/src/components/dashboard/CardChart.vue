@@ -21,21 +21,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import type { IDashboardItem, IMessageBuffer } from '@/types/';
+import type { ICardChartProps, ICardChartEmit } from './types';
 
 import { loadScript, timeUtcToString } from 'vuesp-components/helpers';
 
-const emit = defineEmits<{
-  (e: 'click', event: Event): void;
-  (e: 'setState', item: any): void;
-  (e: 'update', event: Event): void;
-}>();
+const props = defineProps<ICardChartProps>();
 
-interface Props extends Omit<IDashboardItem, 'value'> {
-  value?: IMessageBuffer;
-}
-
-const props = defineProps<Props>();
+const emit = defineEmits<ICardChartEmit>();
 
 declare global {
   interface Window {
@@ -43,7 +35,7 @@ declare global {
   }
 }
 
-const getID = ({ id }: Props): string => `chart-` + id.replace('.', '_');
+const getID = ({ id }: ICardChartProps): string => `chart-` + id.replace('.', '_');
 
 const onClick = (event: Event) => emit('click', event);
 

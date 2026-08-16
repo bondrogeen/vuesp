@@ -180,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 import type { IScript, ILog } from './types';
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { timeUtcToString } from 'vuesp-components/helpers';

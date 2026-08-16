@@ -87,7 +87,8 @@
   },
   "message": {
     "pageNotFound": "Page Not Found",
-    "pathExist": "The path {path} does not exist."
+    "pathExist": "The path {path} does not exist.",
+    "shortPress": "Supports short press, long press, and hold event handling"
   },
   "menu": {
     "home": "Home",

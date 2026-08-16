@@ -22,18 +22,11 @@
 
 <script setup lang="ts">
 import type { IListItem } from 'vuesp-components/types';
+import type { IBlockServiceProps, IBlockServiceEmit } from './types';
 
-interface Props {
-  locale: string;
-  locales: IListItem[];
-}
+const { locales } = defineProps<IBlockServiceProps>();
 
-const { locales } = defineProps<Props>();
-
-const emit = defineEmits<{
-  (e: 'reboot' | 'reset', event: Event): void;
-  (e: 'locale', item: IListItem): void;
-}>();
+const emit = defineEmits<IBlockServiceEmit>();
 
 const onLocale = (item: IListItem) => emit('locale', item);
 

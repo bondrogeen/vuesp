@@ -2,13 +2,13 @@ import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket';
 import { localGet, localSet } from 'vuesp-components/helpers';
 
-import type { INotification, IStoreWebSocketStore, IStateMain, IMessagePort, IMessageProgress, TypeMessage, IMessageMessage, IDiscovery, IMyMessageSettings } from '@/types';
+import type { TypeMessage, IStateMain, INotification, IWebSocketStore, IMessagePort, IMessageDallas, IMessageProgress, IMessageMessage, IMessageDiscovery, IMyMessageSettings } from '@/types';
 
-const initialState = (): IStoreWebSocketStore => ({
+const initialState = (): IWebSocketStore => ({
   main: {
     ports: {},
     info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '', board: 0 },
-    device: { now: 0, pwm: 0, analog: 0 },
+    device: { command: 0, analog: 0, pwm: 0, now: 0, list: 0, message: '' },
     dallas: {},
     discovery: {},
     slots: {},
@@ -50,12 +50,12 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       this.main.ports[gpio] = port;
       // this.main = { ...this.main };
     },
-    SET_DALLAS(data: { address: number[] }) {
+    SET_DALLAS(data: IMessageDallas) {
       const name = (data.address || []).map((i) => (i < 16 ? `0${i.toString(16)}` : i.toString(16))).join('');
       this.main.dallas[name] = data;
       // this.main = { ...this.main };
     },
-    SET_DISCOVERY(data: IDiscovery) {
+    SET_DISCOVERY(data: IMessageDiscovery) {
       const id = data.id.toString(16);
       this.main.discovery[id] = data;
       // this.main = { ...this.main };
