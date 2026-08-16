@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IStateInfo } from '@/types/';
+import type { IBlockStatusProps } from './types';
 
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { toByte, secToTime } from 'vuesp-components/helpers';
@@ -42,7 +42,7 @@ import { useLocale } from '@/composables/useLocale';
 
 const { $t } = useLocale();
 
-const { id = 0, firmware = [], totalBytes = 0, usedBytes = 0, uptime = 0, pkg } = defineProps<IStateInfo>();
+const { id = 0, firmware = [], totalBytes = 0, usedBytes = 0, uptime = 0, pkg } = defineProps<IBlockStatusProps>();
 
 const time = ref(uptime);
 let idTime = null as ReturnType<typeof setTimeout> | null;

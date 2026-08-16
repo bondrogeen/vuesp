@@ -49,6 +49,17 @@
             <icon-ri-chat-1-line class="text-blue-500" />
             <icon-ri-settings-2-line class="size-4" />
             <v-button color="blue" href="https://remixicon.com/" target="_blank">https://remixicon.com/</v-button>
+
+            <VTooltip>
+              <template #activator>
+                <icon-ri-information-line class="size-5 text-gray-500" />
+              </template>
+              <template #default="{ show }">
+                <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-800">
+                  <p>{{ $t('message.shortPress') }}</p>
+                </div>
+              </template>
+            </VTooltip>
           </div>
         </div>
       </div>
@@ -219,12 +230,12 @@
 <script setup lang="ts">
 import type { IListItem } from '@/types';
 
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 
-import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs } from 'vuesp-components';
+import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs, VTooltip } from 'vuesp-components';
 import { computed, ref } from 'vue';
 import { dateUtcToString, timeUtcToString } from 'vuesp-components/helpers';
 

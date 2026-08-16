@@ -1,12 +1,14 @@
 <template>
   <div>
     <card-main :title="$t('ports')">
-      <div class="relative grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+      <div class="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         <div v-for="port in main.ports" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md border border-gray-200 dark:border-gray-700/40">
-          <h5 class="text-sm mb-2">{{ `GPIO: ${port.gpio} ${port.disabled ? `(${$t('dis')})` : ''}` }}</h5>
+          <div class="mb-2">
+            <h5 class="text-sm">{{ `GPIO: ${port.gpio} ${port.disabled ? `(${$t('dis')})` : ''}` }}</h5>
+          </div>
 
-          <div class="flex flex-col gap-4 md:flex-row">
-            <div class="grid gap-4 flex-auto" :class="isInput(port) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'">
+          <div class="flex flex-col gap-4">
+            <div class="grid gap-4 flex-auto grid-cols-1">
               <v-select :model-value="getNameList(port)" :label="$t('mode')" :disabled="Boolean(port.disabled)" hideMessage :items="getListMode(port)" @change="onMode(port, $event)" />
 
               <v-select
@@ -18,9 +20,24 @@
                 :items="listInterrupt"
                 @change="onInterrupt(port, $event)"
               />
+
+              <div v-if="isInput(port) && getNameListInterrupt(port) === 'CHANGE'" class="flex items-center justify-between">
+                <VCheckbox v-model="port.isButton" @update:model-value="onIsButton(port, $event)">{{ $t('isButton') }}</VCheckbox>
+
+                <VTooltip>
+                  <template #activator>
+                    <icon-ri-information-line class="size-4 text-gray-500" />
+                  </template>
+                  <template #default="{ show }">
+                    <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-800">
+                      <p>{{ $t('message.shortPress') }}</p>
+                    </div>
+                  </template>
+                </VTooltip>
+              </div>
             </div>
 
-            <div class="md:flex-[0_0_80px]">
+            <div class="grid grid-cols-2 gap-4">
               <v-button v-if="isOutput(port)" color="blue" class="w-full" :disabled="!port.mode || Boolean(port.disabled)" @click="onSetPort(port, port.value ? 0 : 1)">
                 {{ port.value ? $t('on') : $t('off') }}
               </v-button>
@@ -31,7 +48,6 @@
                 :modelValue="port.value"
                 :disabled="isInput(port) || Boolean(port.disabled)"
                 :label="$t('value')"
-                class="md:max-w-20"
                 @update:modelValue="onInputValue(port, $event)"
               ></v-text-field>
             </div>
@@ -54,7 +70,7 @@
 
 <script setup lang="ts">
 import type { IListItem, IMessagePort } from '@/types';
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 
 import { MODE_BOARD_1, MODE_BOARD_2, COMMAND, LIST } from '@/utils/gpio';
 
@@ -65,6 +81,7 @@ import { useFetch } from '@vueuse/core';
 import { PATH_FS, pathGPIO } from '@/utils/const';
 import { useLocale } from '@/composables/useLocale';
 import { computed } from 'vue';
+import { VCheckbox, VTooltip } from 'vuesp-components';
 
 const { $t } = useLocale();
 const { main, onSend, onDialog } = useConnection((send) => {
@@ -126,6 +143,11 @@ const onMode = ({ gpio }: IMessagePort, { value }: IListItem) => {
 
 const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem) => {
   main.value.ports[gpio].interrupt = value as number;
+  onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
+};
+
+const onIsButton = ({ gpio }: IMessagePort, value: boolean) => {
+  main.value.ports[gpio].isButton = value ? 1 : 0;
   onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 

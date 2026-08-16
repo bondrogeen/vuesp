@@ -102,11 +102,11 @@ struct Port {
   uint8_t interrupt;
   uint16_t list;
   uint8_t disabled;
-  uint8_t isEvent;
+  uint8_t isButton;
   uint8_t command;
   uint8_t isPressed;
   uint8_t count;
-  uint8_t empty1;
+  uint8_t empty;
   uint16_t valueOld;
   uint32_t pressStart;
 };

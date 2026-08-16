@@ -19,13 +19,18 @@ void onSendDevice() {
 }
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
-void deviceGPIO(Port* port) {
-  // Serial.print(port->gpio);
-  // Serial.println(port->value);
-  // if (port->value) {
-  //   Serial.print(port->gpio);
-  // $v0=0;while:$v0<10;$p14=$v0;wait(1);$v0=$v0+1;$display=$v0;end
-  // }
+void deviceGPIO(Port* port, uint8_t type) {
+  Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
+  if (type == EVENT_LONG_PRESS) {
+    Serial.print(", type:long");
+  } else if (type == EVENT_REPEAT) {
+    Serial.print(", type:repeat");
+  } else if (type == EVENT_CLICK) {
+    Serial.printf(", type:click, count:%d", port->count);
+  } else {
+    // Serial.print(port->gpio);
+  }
+  Serial.println("");
 }
 
 static char displayBuffer[64] = "5";

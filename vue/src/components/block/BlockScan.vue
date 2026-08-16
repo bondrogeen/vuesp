@@ -26,12 +26,9 @@
 
 <script setup lang="ts">
 import type { IMessageScan } from '@/types';
+import type { IBlockScanProps } from './types';
 
-interface Props {
-  items: Partial<IMessageScan>[];
-}
-
-const { items = [] } = defineProps<Props>();
+const { items = [] } = defineProps<IBlockScanProps>();
 
 const emit = defineEmits<{
   (e: 'scan', event: Event): void;

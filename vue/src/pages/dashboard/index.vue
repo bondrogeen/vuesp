@@ -56,7 +56,7 @@ import { ref } from 'vue';
 import { setStateItem, getStateItem, dashboardCards } from 'vuesp-components/dashboard';
 import { useFetch } from '@vueuse/core';
 
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 import { COMMAND } from '@/utils/gpio';
 
 import { useConnection } from '@/composables/useConnection';

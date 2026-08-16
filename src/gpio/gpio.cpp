@@ -178,7 +178,8 @@ void loopInterrupt(uint32_t now) {
     uint32_t time = now - ports[i].pressStart;
     if (time > REPEAT_START_TIME) {
       if (ports[i].isPressed && ports[i].count == 1) {
-        if (ports[i].isEvent) {
+        if (ports[i].isButton) {
+          deviceGPIO(&ports[i], EVENT_REPEAT);
           emitButtonEvent("btn_%d_repeat", ports[i].gpio);
         }
       } else {
@@ -187,7 +188,8 @@ void loopInterrupt(uint32_t now) {
     }
     if (time > LONG_PRESS_TIME && time < REPEAT_START_TIME) {
       if (!ports[i].isPressed && ports[i].count == 1) {
-        if (ports[i].isEvent) {
+        if (ports[i].isButton) {
+          deviceGPIO(&ports[i], EVENT_LONG_PRESS);
           emitButtonEvent("btn_%d_long", ports[i].gpio);
         }
         ports[i].count = 0;
@@ -195,8 +197,9 @@ void loopInterrupt(uint32_t now) {
     }
     if (time > CLICK_WINDOW) {
       if (!ports[i].isPressed && ports[i].count) {
-        if (ports[i].isEvent) {
-          emitButtonEvent("btn_%d_press_%d", ports[i].gpio, ports[i].count);
+        if (ports[i].isButton) {
+          deviceGPIO(&ports[i], EVENT_CLICK);
+          emitButtonEvent("btn_%d_click_%d", ports[i].gpio, ports[i].count);
         }
         ports[i].count = 0;
       }
@@ -210,7 +213,7 @@ void checkInterrupt(uint32_t now) {
 
     port = ports[i];
     port.value = digitalRead(port.gpio);
-    if (port.interrupt == GPIO_INTERRUPT_CHANGE && ports[i].value != port.value) {
+    if (ports[i].interrupt == GPIO_INTERRUPT_CHANGE && ports[i].value != port.value) {
       ports[i].isPressed = ports[i].valueOld != port.value;
       if (ports[i].isPressed) {
         ports[i].count++;
@@ -219,9 +222,9 @@ void checkInterrupt(uint32_t now) {
       ports[i].value = port.value;
       emitButtonEvent("btn_%d", ports[i].gpio);
       emitButtonEvent("btn_%d_%d", ports[i].gpio, ports[i].value);
-      deviceGPIO(&port);
+      deviceGPIO(&ports[i], EVENT_NONE);
     }
-    wsSendAll((uint8_t*)&port, sizeof(port));
+    wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
   }
 }
 
@@ -268,7 +271,7 @@ void setupGPIO() {
 }
 
 void setupFirstGPIO() {
-  // getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+  getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
   initGPIO();
 }
 

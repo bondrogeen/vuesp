@@ -34,7 +34,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
           <div class="flex justify-between mb-4 md:col-span-2">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $t('ipSett') }}</h3>
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90 mb-0">{{ $t('ipSett') }}</h3>
 
             <div>
               <VCheckbox v-model="settings.wifiDhcp">{{ $t('dhcp') }}</VCheckbox>
@@ -135,7 +135,7 @@ import type { TypeMessage, IMessageScan, IListItem, TypeSend } from '@/types';
 import { computed, ref, nextTick, watch } from 'vue';
 import { required, maxLen, minLen, sameAs, ip, minVal, maxVal } from '@/utils/validate';
 
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 
 import { useForm } from 'vuesp-components/composables';
 import type { ValidationSchema } from 'vuesp-components/types';

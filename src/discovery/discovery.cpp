@@ -11,7 +11,7 @@ bool udpSendPacket(const uint8_t* data, size_t length, uint32_t targetAddress) {
   udp.beginPacket(targetIp, settings.discoveryPort);
   udp.write(data, length);
   bool ok = udp.endPacket();
-  Serial.printf("[SEND] %d bytes -> %s:%d\n", length, targetIp.toString().c_str(), settings.discoveryPort);
+  // Serial.printf("[SEND] %d bytes -> %s:%d\n", length, targetIp.toString().c_str(), settings.discoveryPort);
   return ok;
 }
 
@@ -21,7 +21,7 @@ void udpReceive() {
     IPAddress senderIp = udp.remoteIP();
     uint8_t buffer[TX_BUFFER_SIZE];
     int len = udp.read(buffer, packetSize);
-    Serial.printf("[RECV] %d bytes <- %s\n", len, senderIp.toString().c_str());
+    // Serial.printf("[RECV] %d bytes <- %s\n", len, senderIp.toString().c_str());
     protocol.handleIncomingData((uint32_t)senderIp, buffer, len);
     packetSize = udp.parsePacket();
   }
@@ -43,7 +43,7 @@ void setupDiscovery() {
     discovery.lastSeen = peer.lastSeen;
     discovery.status = 1;
     wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    Serial.printf("+ PEER: 0x%08X @ %s\n", peer.id, IPAddress(peer.address).toString().c_str());
+    // Serial.printf("+ PEER: 0x%08X @ %s\n", peer.id, IPAddress(peer.address).toString().c_str());
   });
 
   protocol.onPeerLost([](const PeerInfo& peer) {
@@ -52,19 +52,19 @@ void setupDiscovery() {
     discovery.lastSeen = peer.lastSeen;
     discovery.status = 0;
     wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    Serial.printf("- PEER LOST: 0x%08X\n", peer.id);
+    // Serial.printf("- PEER LOST: 0x%08X\n", peer.id);
   });
 
   protocol.onTextReceived([](uint32_t senderId, const String& text) {
-    Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
+    // Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
     // scriptRunner.registerScript(2, text.c_str());
     // scriptRunner.runScript(2);
   });
 
   protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {
-    Serial.printf("BINARY from 0x%08X, %d bytes: ", senderId, len);
-    for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
-    Serial.println();
+    // Serial.printf("BINARY from 0x%08X, %d bytes: ", senderId, len);
+    // for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
+    // Serial.println();
   });
 }
 

@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import type { Ref } from 'vue';
 import type { IListItem, IMessageFile, TypeMessage } from '@/types';
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 
 import { watchEffect, ref, computed, nextTick } from 'vue';
 
