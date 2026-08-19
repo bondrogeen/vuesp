@@ -109,6 +109,13 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
   return true;
 }
 
+// void sendNotification(const char* text) {
+//   message.type = MESSAGE_TYPE_NOTIFICATION;
+//   memset(message.text, 0, sizeof(message.text));
+//   strcpy(message.text, text);
+//   wsSendAll((uint8_t*)&message, sizeof(message));
+// }
+
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
   scriptRunner.registerFunction("http", httpHandler);
@@ -122,6 +129,7 @@ void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     onSendDevice();
+    // sendNotification("Test");
   }
 
   if (tasks[KEY_BUFFER]) {
@@ -130,7 +138,7 @@ void loopDevice(uint32_t now) {
   };
 
   if (tasks[KEY_DEVICE]) {
-    if (device.command == DEVICE_COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+    if (device.command == COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;

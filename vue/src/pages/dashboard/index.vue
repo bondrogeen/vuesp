@@ -20,7 +20,7 @@
               <icon-ri-shut-down-line v-if="icon === 'shut'" class="size-full" />
 
               <icon-ri-plant-line v-if="icon === 'plant'" class="size-full" />
-              
+
               <VIcons :name="icon" />
             </div>
           </template>
@@ -30,7 +30,7 @@
 
     <v-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : $t('add')" @close="dialogItem = false">
       <item-edit class="min-h-[330px]" :item="item" :object="main" :listDashboard="listDashboard" :listIcons="listIcons" @button="onButton">
-        <template #icon="{icon}">
+        <template #icon="{ icon }">
           <div class="size-full">
             <icon-ri-shut-down-line v-if="icon === 'shut'" class="size-full" />
 
@@ -75,6 +75,7 @@ const { dashboard, main, onSend } = useConnection((send) => {
   send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
   send(KEYS.DEVICE);
   send(KEYS.BUFFER);
+  send(KEYS.DISCOVERY, { comm: 1 });
 });
 
 const dialogItem = ref(false);

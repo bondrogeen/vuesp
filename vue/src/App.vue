@@ -53,12 +53,12 @@
           <span v-if="isDone" class="text-green-600">{{ $t('done') }}</span>
         </app-progress>
 
-        <app-notification :value="isSidebarRight" :notifications="notifications" @close="isSidebarRight = false" @remove="webSocketStore.REMOVE_NOTIFICATION" @read="webSocketStore.READ_NOTIFICATION">
+        <app-notification :value="isSidebarRight" :notifications="notifications" @close="isSidebarRight = false" @remove="appStore.removeNotification" @read="appStore.readNotification">
           <template #header="{ isNew }">
             <div class="flex items-center justify-between py-4 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 px-2">
               <h5>{{ $t('noti') }}</h5>
 
-              <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="webSocketStore.READ_ALL_NOTIFICATION">{{ $t('mark') }}</VButton>
+              <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="appStore.readAllNotification">{{ $t('mark') }}</VButton>
             </div>
           </template>
           <template #empty>
@@ -97,6 +97,7 @@ import { useRoute } from 'vue-router';
 import { localGet } from 'vuesp-components/helpers';
 
 import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { useAppStore } from '@/stores/AppStore';
 
 import { useFrame } from '@/composables/useFrame';
 import { useSocket } from '@/composables/useSocket';
@@ -115,6 +116,7 @@ const { isConnect } = useSocket();
 const { pkg, menu, dialog, dialogInfo, main, notifications, progress, changeTheme } = useStore();
 
 const webSocketStore = useWebSocketStore();
+const appStore = useAppStore();
 
 const isSidebar = ref(false);
 const isSidebarRight = ref(false);

@@ -119,17 +119,21 @@
           </template>
 
           <div class="flex-auto bg-gray-50 dark:bg-gray-900 dark:border-gray-700 left-0 w-full sticky top-0">
-            <textarea
-              v-model="content"
-              class="w-full h-full min-h-60 p-4 text-sm outline-0 relative rounded-md border border-gray-200 dark:border-gray-800 flex flex-col field-sizing-content"
-              spellcheck="false"
-            ></textarea>
+            <div
+              ref="editorRef"
+              contenteditable="true"
+              class="h-[200px] overflow-auto focus:outline-none prose prose-sm max-w-none p-4 rounded-md border border-gray-200 dark:border-gray-800 scrollbar"
+              @input="updateStats"
+              @mouseup="updateSelectionInfo"
+              @keyup="updateSelectionInfo"
+              v-html="content"
+            ></div>
           </div>
 
           <div class="text-sm border-t border-gray-200 dark:border-gray-700 text-slate-400 flex flex-wrap justify-between mt-4">
             <span>
               <i class="far fa-file-alt mr-1"></i>
-              {{ content ? `${$t('length')}: ${content?.length || 0}` : '' }}
+              {{ `${$t('length')}: ${charCount || 0}` }}
             </span>
 
             <!-- <ul>
@@ -191,11 +195,14 @@ import { required, maxLen } from '@/utils/validate';
 
 import { useForm } from 'vuesp-components/composables';
 import type { IListItem, IMessageMessage, ValidationSchema } from 'vuesp-components/types';
-
+import { useEditor } from '@/composables/useEditor';
 import { useLocale } from '@/composables/useLocale';
 import { useFetch } from '@vueuse/core';
 
 import BlockViewDocs from '@/components/block/BlockViewDocs.vue';
+const { content, charCount, updateStats, updateSelectionInfo } = useEditor({
+  initialContent: ``,
+});
 
 const { $t } = useLocale();
 
@@ -313,7 +320,6 @@ const onUpdateScript = () => {
 
 const scripts = ref<IScript[]>([]);
 const selectedScript = ref<IScript | null>(null);
-const content = ref('');
 
 // const isScriptNotSave = computed(() => {
 //   if (!selectedScript.value?.content) return false;
