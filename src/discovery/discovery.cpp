@@ -1,9 +1,13 @@
 #include "./discovery.h"
 
+DeviceProtocol protocol;
+
 Discovery discovery = {
     KEY_DISCOVERY,
 };
+uint8_t total = 0;
 uint32_t lastTimeDiscovery = 0;
+uint32_t lastTimeProtocol = 0;
 WiFiUDP udp;
 
 bool udpSendPacket(const uint8_t* data, size_t length, uint32_t targetAddress) {
@@ -27,6 +31,14 @@ void udpReceive() {
   }
 }
 
+void sendPeer(const PeerInfo& peer) {
+  discovery.id = peer.id;
+  discovery.ip = peer.address;
+  discovery.lastSeen = peer.lastSeen;
+  discovery.status = peer.status;
+  wsSendAll((uint8_t*)&discovery, sizeof(discovery));
+}
+
 void setupDiscovery() {
   if (!settings.discovery) return;
   udp.begin(settings.discoveryPort);
@@ -38,21 +50,11 @@ void setupDiscovery() {
   });
 
   protocol.onPeerDiscovered([](const PeerInfo& peer) {
-    discovery.id = peer.id;
-    discovery.ip = peer.address;
-    discovery.lastSeen = peer.lastSeen;
-    discovery.status = 1;
-    wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    // Serial.printf("+ PEER: 0x%08X @ %s\n", peer.id, IPAddress(peer.address).toString().c_str());
+    sendPeer(peer);
   });
 
   protocol.onPeerLost([](const PeerInfo& peer) {
-    discovery.id = peer.id;
-    discovery.ip = peer.address;
-    discovery.lastSeen = peer.lastSeen;
-    discovery.status = 0;
-    wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    // Serial.printf("- PEER LOST: 0x%08X\n", peer.id);
+    sendPeer(peer);
   });
 
   protocol.onTextReceived([](uint32_t senderId, const String& text) {
@@ -68,7 +70,12 @@ void setupDiscovery() {
   });
 }
 
-uint8_t v = 0;
+void commDiscovery() {
+  if (discovery.comm == COMMAND_GET) {
+    total = protocol.getPeerCount();
+  }
+}
+
 void loopDiscovery(uint32_t now) {
   if (!settings.discovery) return;
   if (!isConnected) return;
@@ -80,17 +87,12 @@ void loopDiscovery(uint32_t now) {
     protocol.sendAnnounce();
   }
 
-  // static unsigned long lastText = 0;
-  // if (now - lastText > 10000) {
-  //   lastText = now;
-  //   v = v == 0 ? 1 : 0;
-  //   protocol.sendText(0, v ? "$p13=255" : "$p13=0");
-  // }
-
-  // static unsigned long lastBin = 0;
-  // if (now - lastBin > 15000) {
-  //   lastBin = now;
-  //   uint8_t cmd[] = {0x01, 0x02, 0x03};
-  //   protocol.sendBinary(14291611, cmd, 3);
-  // }
+  if (total && now - lastTimeProtocol > 100) {
+    lastTimeProtocol = now;
+    const PeerInfo* peer = protocol.getPeerByIndex(total - 1);
+    if (peer) {
+      sendPeer(*peer);
+      total--;
+    }
+  }
 }

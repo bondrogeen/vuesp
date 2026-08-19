@@ -29,6 +29,7 @@ export interface IAppStore {
   dialog: IDialog;
   dialogInfo: boolean;
   pkg: IPackage;
+  notifications: INotification[];
 }
 
 // ======== IWebSocket ===========
@@ -46,7 +47,6 @@ export interface IWebSocketStore {
   settings: IMyMessageSettings;
   main: IStateMain;
   progress: IMessageProgress;
-  notifications: INotification[];
   message: IMessageMessage;
 }
 

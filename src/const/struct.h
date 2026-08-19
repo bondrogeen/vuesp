@@ -141,8 +141,9 @@ struct Buffer {
 };
 struct Discovery {
   uint8_t key;
+  uint8_t comm;
   uint8_t status;
-  uint16_t empty;
+  uint8_t empty;
   uint32_t id;
   uint32_t ip;
   uint32_t lastSeen;
