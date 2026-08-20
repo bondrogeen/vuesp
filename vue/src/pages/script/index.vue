@@ -15,7 +15,7 @@
         <card-main :title="$t('list')" class="order-2 md:order-1">
           <template #header>
             <div class="flex gap-3">
-              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('add')" :disabled="selectedScript?.content === content" @click="onAddScriptDialog()">
+              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('add')" :disabled="false" @click="onAddScriptDialog()">
                 <icon-ri-sticky-note-add-line class="rotate-90"></icon-ri-sticky-note-add-line>
               </v-button>
             </div>
@@ -119,21 +119,13 @@
           </template>
 
           <div class="flex-auto bg-gray-50 dark:bg-gray-900 dark:border-gray-700 left-0 w-full sticky top-0">
-            <div
-              ref="editorRef"
-              contenteditable="true"
-              class="h-[200px] overflow-auto focus:outline-none prose prose-sm max-w-none p-4 rounded-md border border-gray-200 dark:border-gray-800 scrollbar"
-              @input="updateStats"
-              @mouseup="updateSelectionInfo"
-              @keyup="updateSelectionInfo"
-              v-html="content"
-            ></div>
+            <BlockEditor :value="content" @update="content = $event"></BlockEditor>
           </div>
 
           <div class="text-sm border-t border-gray-200 dark:border-gray-700 text-slate-400 flex flex-wrap justify-between mt-4">
             <span>
               <i class="far fa-file-alt mr-1"></i>
-              {{ `${$t('length')}: ${charCount || 0}` }}
+              {{ `${$t('length')}: ${content?.length || 0}` }}
             </span>
 
             <!-- <ul>
@@ -188,21 +180,19 @@ import { KEYS } from '@/utils/const';
 import type { IScript, ILog } from './types';
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { timeUtcToString } from 'vuesp-components/helpers';
-import { ScriptType, examples, formatScript, removeLBScript } from '@/assets/js/script';
+import { ScriptType, examples } from '@/assets/js/script';
 
 import { useConnection } from '@/composables/useConnection';
 import { required, maxLen } from '@/utils/validate';
 
 import { useForm } from 'vuesp-components/composables';
 import type { IListItem, IMessageMessage, ValidationSchema } from 'vuesp-components/types';
-import { useEditor } from '@/composables/useEditor';
+
 import { useLocale } from '@/composables/useLocale';
 import { useFetch } from '@vueuse/core';
 
 import BlockViewDocs from '@/components/block/BlockViewDocs.vue';
-const { content, charCount, updateStats, updateSelectionInfo } = useEditor({
-  initialContent: ``,
-});
+import BlockEditor from '@/components/block/editor/BlockEditor.vue';
 
 const { $t } = useLocale();
 
@@ -213,6 +203,8 @@ const { message, main, onSend } = useConnection((send) => {
 const dialogAdd = ref(false);
 const dialogViewDocs = ref(false);
 const logs = ref<ILog[]>([]);
+
+const content = ref('');
 
 const { defineField, handleSubmit } = useForm({
   validationSchema: () =>
@@ -246,7 +238,7 @@ const onRemove = ({ id }: IScript) => {
 const onSaveScript = () => {
   if (!selectedScript.value) return;
   const { id } = selectedScript.value;
-  scripts.value = scripts.value.map((i) => (i.id === id ? { ...i, content: removeLBScript(content.value) } : i));
+  scripts.value = scripts.value.map((i) => (i.id === id ? { ...i, content: content.value } : i));
   onSave();
 };
 
@@ -300,20 +292,24 @@ const getColorSlot = (slot: IMessageMessage) => {
 
 const onRunScript = () => {
   const id = selectedScript.value?.id || 0;
-  onSend(KEYS.MESSAGE, { ...message.value, id, type: ScriptType.SCRIPT_START, text: removeLBScript(content.value) });
+  onSend(KEYS.MESSAGE, { ...message.value, id, type: ScriptType.SCRIPT_START, text: content.value });
 };
+
 const onStopScript = () => {
   onSend(KEYS.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_STOP, text: '' });
 };
+
 const onStopScriptAll = () => {
   onSend(KEYS.MESSAGE, { ...message.value, type: ScriptType.SCRIPT_STOP_ALL, text: '' });
   setTimeout(() => {
     onUpdateScript();
   }, 500);
 };
+
 const onRemoveScript = () => {
   onSend(KEYS.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_REMOVE, text: '' });
 };
+
 const onUpdateScript = () => {
   onSend(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT });
 };
@@ -327,15 +323,15 @@ const selectedScript = ref<IScript | null>(null);
 //   return true;
 // });
 
-function onSelect(script: IScript) {
-  // if (isScriptNotSave.value) return;
+const onSelect = (script: IScript) => {
   selectedScript.value = script;
-  content.value = formatScript(script.content);
-}
-function isScriptSave(script: IScript) {
-  if (selectedScript.value?.id === script.id && formatScript(selectedScript.value?.content) !== content.value) return false;
+  content.value = script.content;
+};
+
+const isScriptSave = (script: IScript) => {
+  if (selectedScript.value?.id === script.id && selectedScript.value?.content !== content.value) return false;
   return true;
-}
+};
 
 // const validate = computed(() => ScriptValidatorAPI.validate(selectedScriptContent.value || ''));
 // const isValid = computed(() => validate.value.valid);
@@ -366,6 +362,6 @@ onMounted(() => {
 });
 
 const onExample = (item: IListItem) => {
-  content.value = formatScript(item.value as string);
+  content.value = item.value as string;
 };
 </script>

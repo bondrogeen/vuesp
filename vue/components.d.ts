@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    BlockEditor: typeof import('./src/components/block/editor/BlockEditor.vue')['default']
     BlockScan: typeof import('./src/components/block/BlockScan.vue')['default']
     BlockService: typeof import('./src/components/block/BlockService.vue')['default']
     BlockStatus: typeof import('./src/components/block/BlockStatus.vue')['default']
