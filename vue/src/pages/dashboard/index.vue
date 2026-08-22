@@ -5,7 +5,7 @@
 
       <v-select :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
+          <v-button type="icon" @click="on.click">
             <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
           </v-button>
         </template>
@@ -14,13 +14,9 @@
 
     <VDragDrop :items="dashboard" class="grid grid-cols-[repeat(auto-fill,_minmax(130px,_1fr))] gap-4" @update:items="dashboard = $event">
       <template #default="{ item }">
-        <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)" @edit="onDialog(getState(item))" @update="onUpdate">
+        <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)" @edit="onDialog(getState(item))" @clone="onClone(item)" @update="onUpdate">
           <template #icon="{ icon, value }">
             <div class="size-full" :class="value ? 'animate-shake' : ''">
-              <icon-ri-shut-down-line v-if="icon === 'shut'" class="size-full" />
-
-              <icon-ri-plant-line v-if="icon === 'plant'" class="size-full" />
-
               <VIcons :name="icon" />
             </div>
           </template>
@@ -29,21 +25,23 @@
     </VDragDrop>
 
     <v-dialog v-if="dialogItem" size="md" :title="item?.id ? 'Edit' : $t('add')" @close="dialogItem = false">
-      <item-edit class="min-h-[330px]" :item="item" :object="main" :listDashboard="listDashboard" :listIcons="listIcons" @button="onButton">
+      <ItemEdit class="min-h-[330px]" :items="dashboard" :item="item" :object="main" :listDashboard="listDashboard" :listIcons="listIcons" @button="onButton">
         <template #icon="{ icon }">
           <div class="size-full">
-            <icon-ri-shut-down-line v-if="icon === 'shut'" class="size-full" />
-
-            <icon-ri-plant-line v-if="icon === 'plant'" class="size-full" />
-
             <VIcons :name="icon" />
           </div>
         </template>
 
         <template #default="{ item }">
-          <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)"></component>
+          <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)">
+            <template #icon="{ icon, value }">
+              <div class="size-full" :class="value ? 'animate-shake' : ''">
+                <VIcons :name="icon" />
+              </div>
+            </template>
+          </component>
         </template>
-      </item-edit>
+      </ItemEdit>
     </v-dialog>
   </div>
 </template>
@@ -54,6 +52,7 @@ import type { Ref } from 'vue';
 
 import { ref } from 'vue';
 import { setStateItem, getStateItem, dashboardCards } from 'vuesp-components/dashboard';
+import { randomString } from 'vuesp-components/helpers';
 import { useFetch } from '@vueuse/core';
 
 import { KEYS } from '@/utils/const';
@@ -62,7 +61,7 @@ import { COMMAND } from '@/utils/gpio';
 import { useConnection } from '@/composables/useConnection';
 import { pathListDef } from '@/utils/const';
 
-import { VDragDrop } from 'vuesp-components';
+import { CardButton, CardDate, CardDimmer, CardInfo, CardInput, CardList, ItemEdit, VDragDrop } from 'vuesp-components';
 
 import { useLocale } from '@/composables/useLocale';
 
@@ -82,10 +81,14 @@ const dialogItem = ref(false);
 const item: Ref<IDashboardItem | null> = ref(null);
 
 const getComponent = ({ type = 'info' }) => {
-  if (type === 'chart') {
-    return CardChart;
-  }
-  return `card-${type}`;
+  if (type === 'date') return CardDate;
+  if (type === 'button') return CardButton;
+  if (type === 'dimmer') return CardDimmer;
+  if (type === 'input') return CardInput;
+  if (type === 'info') return CardInfo;
+  if (type === 'list') return CardList;
+  if (type === 'chart') return CardChart;
+  return ``;
 };
 
 const onUpdate = () => {
@@ -99,7 +102,13 @@ const onButton = (key: string, item: IDashboardItem) => {
   dialogItem.value = false;
 };
 
-const listMenu: IListItem[] = [
+const onClone = (item: IDashboardItem) => {
+  item.id = `${item.id}.${randomString()}`;
+  dashboard.value.push(item);
+  dialogItem.value = false;
+};
+
+const listMenu: IListItem<number>[] = [
   { name: $t('add'), value: 1 },
   { name: $t('save'), value: 2 },
   { name: $t('restore'), value: 3 },
@@ -126,7 +135,7 @@ const onDefault = () => {
   onSend(KEYS.DEVICE, { command: 254 });
 };
 
-const onMenu = ({ value }: IListItem) => {
+const onMenu = ({ value }: IListItem<number>) => {
   if (value === 1) onCreate();
   if (value === 2) onSave();
   if (value === 3) onRestore();
@@ -181,6 +190,6 @@ const icons = [
 
 const cards = [...(dashboardCards || []), 'chart'];
 
-const listIcons: IListItem[] = icons.map((item, i) => ({ id: ++i, name: item, value: item }));
-const listDashboard: IListItem[] = cards.map((item, i) => ({ id: ++i, name: item, value: item }));
+const listIcons: IListItem<string>[] = icons.map((item, i) => ({ id: ++i, name: item, value: item }));
+const listDashboard: IListItem<string>[] = cards.map((item, i) => ({ id: ++i, name: item, value: item }));
 </script>

@@ -1,29 +1,10 @@
-<template>
-  <card-base v-bind="props" @click="onClick" size="lg" @open="openDialog">
-    <template #icon="item">
-      <slot name="icon" v-bind="item"></slot>
-    </template>
-
-    <template #value>{{ getValue }} °C</template>
-    <template #dialog-value>Average {{ getValue }} °C</template>
-
-    <template #dialog>
-      <div class="w-full overflow-x-auto scrollbar">
-        <div class="h-[300px] min-w-10" :style="{ width: dataLength * 30 + 'px' }">
-          <canvas :id="getID(props)" height="300" width="0"></canvas>
-        </div>
-      </div>
-      <v-button class="mt-4" @click="onUpdate">{{ $t('btnUpdate') }}</v-button>
-    </template>
-  </card-base>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue';
 
 import type { ICardChartProps, ICardChartEmit } from './types';
 
 import { loadScript, timeUtcToString } from 'vuesp-components/helpers';
+import { CardBase } from 'vuesp-components';
 
 const props = defineProps<ICardChartProps>();
 
@@ -36,8 +17,6 @@ declare global {
 }
 
 const getID = ({ id }: ICardChartProps): string => `chart-` + id.replace('.', '_');
-
-const onClick = (event: Event) => emit('click', event);
 
 const data = computed(() => {
   const { data = [], head = 0, count = 0, tail = 0 } = props.value || {};
@@ -100,3 +79,23 @@ const openDialog = async () => {
   createChart();
 };
 </script>
+
+<template>
+  <CardBase v-bind="{ ...props, value: getValue }" size="lg" @click="emit('click', $event)" @edit="emit('edit', $event)" @clone="emit('clone', $event)" @open="openDialog">
+    <template #icon="item">
+      <slot name="icon" v-bind="item"></slot>
+    </template>
+
+    <template #value>{{ getValue }} °C</template>
+    <template #dialog-value>Average {{ getValue }} °C</template>
+
+    <template #dialog>
+      <div class="w-full overflow-x-auto scrollbar">
+        <div class="h-[300px] min-w-10" :style="{ width: dataLength * 30 + 'px' }">
+          <canvas :id="getID(props)" height="300" width="0"></canvas>
+        </div>
+      </div>
+      <v-button class="mt-4" @click="onUpdate">{{ $t('btnUpdate') }}</v-button>
+    </template>
+  </CardBase>
+</template>

@@ -1,21 +1,3 @@
-<template>
-  <div>
-    <div class="mb-6 flex items-center justify-between">
-      <h1>{{ $t(title || '') }}</h1>
-
-      <div data-slot="device"></div>
-    </div>
-
-    <template v-if="show">
-      <ServiceSettings v-if="isPage('settings')" />
-
-      <ServiceStorage v-if="isPage('storage')" />
-
-      <ServiceGPIO v-if="isPage('gpio')" />
-    </template>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -47,3 +29,21 @@ onMounted(() => {
   }, 100);
 });
 </script>
+
+<template>
+  <div>
+    <div class="mb-6 flex items-center justify-between">
+      <h1>{{ $t(title || '') }}</h1>
+
+      <div data-slot="device"></div>
+    </div>
+
+    <template v-if="show">
+      <ServiceSettings v-if="isPage('settings')" />
+
+      <ServiceStorage v-if="isPage('storage')" />
+
+      <ServiceGPIO v-if="isPage('gpio')" />
+    </template>
+  </div>
+</template>

@@ -1,20 +1,20 @@
 <template>
   <div class="h-[100dvh] min-h-full flex flex-col">
-    <app-overlay v-if="!isConnect">
+    <AppOverlay v-if="!isConnect">
       <div class="text-2xl font-bold mb-4">{{ $t('disconn') }}</div>
 
       <div class="flex justify-center">
         <v-loader class="text-primary"></v-loader>
       </div>
-    </app-overlay>
+    </AppOverlay>
 
     <div class="flex h-screen overflow-hidden">
-      <app-aside v-if="!isIframe" :isSidebar="isSidebar" @sidebar="onSidebar">
+      <AppAside v-if="!isIframe" :isSidebar="isSidebar" @sidebar="onSidebar">
         <h3 class="mb-4 text-xs h-5 uppercase flex items-center gap-2 justify-between" :class="isSidebar ? 'lg:hidden' : ''">
           <span v-if="nameDevice" class="text-gray-400 text-nowrap">{{ nameDevice }}</span>
         </h3>
 
-        <app-nav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
+        <AppNav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
           <template #icon="{ item }">
             <icon-ri-home-line v-if="item.icon === 'home'" class="size-6" />
             <icon-ri-dashboard-line v-else-if="item.icon === 'dashboard'" class="size-6" />
@@ -25,21 +25,31 @@
 
             <icon-ri-home-line v-else />
           </template>
-        </app-nav>
+        </AppNav>
 
         <div class="flex-auto"></div>
 
-        <BlockStatus v-slot="{ repo, home }" v-bind="info" :pkg="pkg" class="mb-4 w-full rounded-2xl bg-gray-100 px-4 py-4 text-center dark:bg-white/[0.03]" :class="isSidebar ? 'lg:hidden' : ''">
-          <div class="flex gap-2 mt-4">
-            <v-button :to="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
+        <BlockStatus
+          v-bind="info"
+          :pkg="pkg"
+          class="mb-4 w-full rounded-md border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-white/[0.03] px-4 py-4 text-center"
+          :class="isSidebar ? 'lg:hidden' : ''"
+        >
+          <template #name="{ item }">
+            {{ $t(item.name) }}
+          </template>
+          <template #default="{ repo, home }">
+            <div class="flex gap-2 mt-4">
+              <v-button :to="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
 
-            <v-button v-if="home" :to="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
-          </div>
+              <v-button v-if="home" :to="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
+            </div>
+          </template>
         </BlockStatus>
-      </app-aside>
+      </AppAside>
 
       <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
-        <app-header v-if="!isIframe" :change-theme="changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isSidebarRight = !isSidebarRight"></app-header>
+        <AppHeader v-if="!isIframe" :change-theme="changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isSidebarRight = !isSidebarRight"></AppHeader>
 
         <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
           <div :class="isIframe ? '' : 'container mx-auto h-full'">
@@ -47,13 +57,13 @@
           </div>
         </main>
 
-        <app-progress v-slot="{ isDone }" v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.SET_PROGRESS">
+        <AppProgress v-slot="{ isDone }" v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.SET_PROGRESS">
           <div class="flex-auto">{{ $t('prog') }}</div>
 
           <span v-if="isDone" class="text-green-600">{{ $t('done') }}</span>
-        </app-progress>
+        </AppProgress>
 
-        <app-notification :value="isSidebarRight" :notifications="notifications" @close="isSidebarRight = false" @remove="appStore.removeNotification" @read="appStore.readNotification">
+        <AppNotification :value="isSidebarRight" :notifications="notifications" @close="isSidebarRight = false" @remove="appStore.removeNotification" @read="appStore.readNotification">
           <template #header="{ isNew }">
             <div class="flex items-center justify-between py-4 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 px-2">
               <h5>{{ $t('noti') }}</h5>
@@ -64,7 +74,7 @@
           <template #empty>
             <p class="text-center py-10">{{ $t('empty') }}</p>
           </template>
-        </app-notification>
+        </AppNotification>
       </div>
     </div>
 
@@ -104,8 +114,7 @@ import { useSocket } from '@/composables/useSocket';
 import { useStore } from '@/composables/useStore';
 import { useLocale } from '@/composables/useLocale';
 
-import { BlockInfo } from 'vuesp-components';
-import BlockStatus from '@/components/block/BlockStatus.vue';
+import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus } from 'vuesp-components';
 
 const { $t, setLocale } = useLocale();
 
