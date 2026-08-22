@@ -5,7 +5,8 @@ export interface ICardChartProps extends Omit<IDashboardItem, 'value'> {
 }
 
 export interface ICardChartEmit {
-  (e: 'click', event: Event): void;
-  (e: 'setState', item: any): void;
+  (e: 'edit' | 'close' | 'click' | 'clone', event: Event): void;
+  (e: 'open', event: boolean): void;
+  (e: 'setState', item: string | number | boolean): void;
   (e: 'update', event: Event): void;
 }
