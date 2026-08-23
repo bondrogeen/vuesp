@@ -68,6 +68,7 @@
   "selectFile": "Select a file...",
   "ports": "I/O ports",
   "selectLang": "Select language",
+  "selectScript": "Create or select a script",
   "lang": "Language",
   "editor": "Editor",
   "logs": "Logs",

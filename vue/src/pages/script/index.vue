@@ -63,6 +63,8 @@ const onAddScriptDialog = () => {
 const onRemove = ({ id }: IScript) => {
   scripts.value = scripts.value.filter((i) => i.id !== id);
   selectedScript.value = null;
+  content.value = '';
+  onSave();
 };
 const onSaveScript = () => {
   if (!selectedScript.value) return;
@@ -318,7 +320,8 @@ const onExample = (item: IListItem<string>) => {
           </template>
 
           <div class="flex-auto bg-gray-50 dark:bg-gray-900 dark:border-gray-700 w-full overflow-auto scrollbar h-50 xl:h-[calc(100dvh-300px)]">
-            <ScriptEditor v-if="selectedScript?.name" class="h-full w-full overflow-auto scrollbar" :value="content" :suggestions="customSuggestions" @update="content = $event"></ScriptEditor>
+            <ScriptEditor v-if="selectedScript?.name" v-model="content" class="h-full w-full overflow-auto scrollbar" :suggestions="customSuggestions"></ScriptEditor>
+            <p v-else class="text-gray-500 ms-3 text-center mt-4">{{ $t('selectScript') }}</p>
           </div>
 
           <div class="text-sm border-t border-gray-200 dark:border-gray-700 text-slate-400 flex flex-wrap justify-between mt-4">
