@@ -48,9 +48,9 @@ const app = createApp(App);
         store.$patch({ pkg: __APP__ });
       }
     });
-    app.use(i18nPlugin as any, { locales, pluralize });
+    app.use(i18nPlugin, { locales, pluralize });
     app.use(pinia);
-    app.use(vuesp as any);
+    app.use(vuesp);
     app.use(router);
     app.mount('#appVuesp');
   } catch (error) {

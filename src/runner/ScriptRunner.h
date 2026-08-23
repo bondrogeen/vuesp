@@ -333,13 +333,13 @@ private:
     void logPortAction(uint8_t gpio, PortAction action, uint16_t value, uint8_t slot);
     void logDataAction(const char* id, DataKind kind, bool write, const char* value, uint8_t slot);
     void logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t slot);
-    void logEventAction(const char* eventName, uint8_t handlerCount, uint8_t slot);
+    void logEventAction(const char* eventName);
     void logScriptAction(uint8_t slot, const char* action);
     #else
     inline void logPortAction(uint8_t, PortAction, uint16_t, uint8_t) {}
     inline void logDataAction(const char*, DataKind, bool, const char*, uint8_t) {}
     inline void logLoadAction(uint8_t, uint16_t, bool, uint8_t) {}
-    inline void logEventAction(const char*, uint8_t, uint8_t) {}
+    inline void logEventAction(const char*) {}
     inline void logScriptAction(uint8_t, const char*) {}
     #endif
 

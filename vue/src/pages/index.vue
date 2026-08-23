@@ -221,7 +221,7 @@
             <div class="text-center py-1.5 border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03] rounded-xl relative overflow-hidden">
               <div class="text-sm text-gray-500">{{ `#${i}` }}</div>
 
-              <div class="font-bold text-base" :class="getColorCell(i)">
+              <div class="font-bold text-base">
                 {{ getValue(i) }}
                 <span class="text-xs text-gray-500">V</span>
               </div>
@@ -248,7 +248,7 @@
 </template>
 
 <script setup lang="ts">
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
@@ -263,11 +263,7 @@ const { main } = useConnection((send) => {
 const device = computed(() => main.value.device);
 
 const toFixed = (num: number, i = 2) => num.toFixed(i);
-const getColorCell = (v: number) => {
-  // if (v === device.value.cellLow) return 'animate-shake text-red-400/80';
-  // if (v === device.value.cellHigh) return 'animate-shake text-green-600';
-  return v;
-};
+
 const getValue = (i: number) => {
   let value = 0;
   if (i === 1) value = device.value.cell1;
