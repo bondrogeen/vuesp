@@ -46,6 +46,7 @@ declare module 'vue' {
     IconRiOutletLine: typeof import('~icons/ri/outlet-line')['default']
     IconRiPlantLine: typeof import('~icons/ri/plant-line')['default']
     IconRiPlayCircleLine: typeof import('~icons/ri/play-circle-line')['default']
+    IconRiPlaySaveLine: typeof import('~icons/ri/play-save-line')['default']
     IconRiPlugLine: typeof import('~icons/ri/plug-line')['default']
     IconRiPrinterLine: typeof import('~icons/ri/printer-line')['default']
     IconRiRamLine: typeof import('~icons/ri/ram-line')['default']
