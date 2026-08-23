@@ -16,10 +16,17 @@ void onSendDevice() {
 }
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
-void deviceGPIO(Port* port) {
+void deviceGPIO(Port* port, uint8_t type) {
   // Serial.print(port->gpio);
   // Serial.println(port->value);
 }
+
+// void sendNotification(const char* text) {
+//   message.type = MESSAGE_TYPE_NOTIFICATION;
+//   memset(message.text, 0, sizeof(message.text));
+//   strcpy(message.text, text);
+//   wsSendAll((uint8_t*)&message, sizeof(message));
+// }
 
 void setupDevice() {
   Serial1.begin(9600, SERIAL_8N1, 5, 6);
@@ -252,6 +259,7 @@ void loopDevice(uint32_t now) {
       parseMessageVersion(response);
     }
     onSendDevice();
+    // sendNotification("Test");
   }
 
   if (now - lastTimeDevice > 2000) {

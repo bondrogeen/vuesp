@@ -22,6 +22,7 @@ int ports_len = sizeof(ports) / sizeof(ports[0]);
 
 volatile uint8_t btnStatus = 0;
 uint32_t debounce = 0;
+uint32_t lastLoopInterrupt = 0;
 uint32_t lastTimeGPIO = 0;
 uint32_t lastTimeADC = 0;
 uint32_t isOneWire = 0;
@@ -33,29 +34,29 @@ void ICACHE_RAM_ATTR btnIsr() {
 
 void initGPIO() {
   for (uint8_t i = 0; i < ports_len; i++) {
-    port = ports[i];
-    if (port.mode == GPIO_MODE_ONEWIRE) {
+    if (ports[i].mode == GPIO_MODE_ONEWIRE) {
       if (!isOneWire) {
         if (ds) delete ds;
-        ds = new OneWire(port.gpio);
+        ds = new OneWire(ports[i].gpio);
         isOneWire = 1;
       }
       continue;
     }
-    if (port.mode == GPIO_MODE_PWM) {
-      pinMode(port.gpio, OUTPUT);
-      analogWrite(port.gpio, port.value);
-    } else if (port.mode == GPIO_MODE_ADC) {
-      pinMode(port.gpio, INPUT);
-      port.value = analogRead(port.gpio);
+    if (ports[i].mode == GPIO_MODE_PWM) {
+      pinMode(ports[i].gpio, OUTPUT);
+      analogWrite(ports[i].gpio, ports[i].value);
+    } else if (ports[i].mode == GPIO_MODE_ADC) {
+      pinMode(ports[i].gpio, INPUT);
+      ports[i].value = analogRead(ports[i].gpio);
       isADC = 1;
     } else {
-      pinMode(port.gpio, port.mode);
-      if (port.mode == OUTPUT || port.mode == OUTPUT_OPEN_DRAIN) digitalWrite(port.gpio, port.value);
+      pinMode(ports[i].gpio, ports[i].mode);
+      if (ports[i].mode == OUTPUT || ports[i].mode == OUTPUT_OPEN_DRAIN) digitalWrite(ports[i].gpio, ports[i].value);
 
       ports[i].value = digitalRead(ports[i].gpio);
-      if ((port.mode == INPUT || port.mode == INPUT_PULLUP) && port.interrupt) {
-        attachInterrupt(port.gpio, btnIsr, port.interrupt);
+      ports[i].valueOld = ports[i].value;
+      if ((ports[i].mode == INPUT || ports[i].mode == INPUT_PULLUP) && ports[i].interrupt) {
+        attachInterrupt(digitalPinToInterrupt(ports[i].gpio), btnIsr, ports[i].interrupt);
       }
     }
   }
@@ -63,7 +64,7 @@ void initGPIO() {
 
 void getAll() {
   for (int i = 0; i < ports_len; i++) {
-    if (ports[i].mode == GPIO_MODE_PWM || ports[i].mode == GPIO_MODE_ONEWIRE) {
+    if (ports[i].mode == GPIO_MODE_PWM || ports[i].mode == GPIO_MODE_ONEWIRE || ports[i].mode == GPIO_MODE_DAC) {
     } else if (ports[i].mode == GPIO_MODE_ADC) {
       ports[i].value = analogRead(ports[i].gpio);
     } else {
@@ -133,28 +134,79 @@ void setValueUpdate() {
   if (port.mode == GPIO_MODE_PWM || port.mode == GPIO_MODE_ONEWIRE) {
   } else if (port.mode == GPIO_MODE_ADC) {
     port.value = analogRead(port.gpio);
+  } else if (port.mode == GPIO_MODE_DAC) {
+#if defined(ARDUINO_ESP32C3_DEV)
+#elif defined(ESP32)
+    dacWrite(port.gpio, port.value);
+#endif
   } else {
     port.value = digitalRead(port.gpio);
   }
   updatePort();
 }
 
-void checkInterrupt() {
-  for (int i = 0; i < ports_len; i++) {
-    port = ports[i];
-    if (!(port.mode == INPUT || port.mode == INPUT_PULLUP) && !port.interrupt) continue;
+void emitButtonEvent(const char* format, ...) {
+  char buffer[32];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, sizeof(buffer), format, args);
+  va_end(args);
+  emitEvent(buffer);
+}
 
-    port.value = digitalRead(port.gpio);
-    if (port.interrupt == GPIO_INTERRUPT_CHANGE && ports[i].value != port.value) {
-      ports[i].value = port.value;
-      deviceGPIO(&port);
-      char buffer[16];
-      snprintf(buffer, sizeof(buffer), "btn_%d", port.gpio);
-      scriptRunner.emitEvent(buffer);
-      snprintf(buffer, sizeof(buffer), "btn_%d_%d", port.gpio, port.value);
-      scriptRunner.emitEvent(buffer);
+void loopInterrupt(uint32_t now) {
+  for (int i = 0; i < ports_len; i++) {
+    if (!(ports[i].mode == INPUT || ports[i].mode == INPUT_PULLUP) && !ports[i].interrupt) continue;
+    uint32_t time = now - ports[i].pressStart;
+    if (time > REPEAT_START_TIME) {
+      if (ports[i].isPressed && ports[i].count == 1) {
+        if (ports[i].isButton) {
+          deviceGPIO(&ports[i], EVENT_REPEAT);
+          emitButtonEvent("btn_%d_repeat", ports[i].gpio);
+        }
+      } else {
+        ports[i].count = 0;
+      }
     }
-    wsSendAll((uint8_t*)&port, sizeof(port));
+    if (time > LONG_PRESS_TIME && time < REPEAT_START_TIME) {
+      if (!ports[i].isPressed && ports[i].count == 1) {
+        if (ports[i].isButton) {
+          deviceGPIO(&ports[i], EVENT_LONG_PRESS);
+          emitButtonEvent("btn_%d_long", ports[i].gpio);
+        }
+        ports[i].count = 0;
+      }
+    }
+    if (time > CLICK_WINDOW) {
+      if (!ports[i].isPressed && ports[i].count) {
+        if (ports[i].isButton) {
+          deviceGPIO(&ports[i], EVENT_CLICK);
+          emitButtonEvent("btn_%d_click_%d", ports[i].gpio, ports[i].count);
+        }
+        ports[i].count = 0;
+      }
+    }
+  }
+}
+
+void checkInterrupt(uint32_t now) {
+  for (int i = 0; i < ports_len; i++) {
+    if (!(ports[i].mode == INPUT || ports[i].mode == INPUT_PULLUP) && !ports[i].interrupt) continue;
+
+    port = ports[i];
+    port.value = digitalRead(port.gpio);
+    if (ports[i].interrupt == GPIO_INTERRUPT_CHANGE && ports[i].value != port.value) {
+      ports[i].isPressed = ports[i].valueOld != port.value;
+      if (ports[i].isPressed) {
+        ports[i].count++;
+        ports[i].pressStart = now;
+      }
+      ports[i].value = port.value;
+      emitButtonEvent("btn_%d", ports[i].gpio);
+      emitButtonEvent("btn_%d_%d", ports[i].gpio, ports[i].value);
+      deviceGPIO(&ports[i], EVENT_NONE);
+    }
+    wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
   }
 }
 
@@ -201,7 +253,7 @@ void setupGPIO() {
 }
 
 void setupFirstGPIO() {
-  // getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+  getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
   initGPIO();
 }
 
@@ -212,7 +264,12 @@ void loopGPIO(uint32_t now) {
   }
   if (btnStatus == 2 && now - debounce > 50) {
     btnStatus = 0;
-    checkInterrupt();
+    checkInterrupt(now);
+  }
+
+  if (now - lastLoopInterrupt > REPEAT_INTERVAL) {
+    lastLoopInterrupt = now;
+    loopInterrupt(now);
   }
 
   if (now - lastTimeGPIO > 10000) {
@@ -222,7 +279,7 @@ void loopGPIO(uint32_t now) {
     }
   }
 
-  if (isADC && now - lastTimeADC > 1000) {
+  if (isADC && now - lastTimeADC > 5000) {
     lastTimeADC = now;
     getADC();
   }

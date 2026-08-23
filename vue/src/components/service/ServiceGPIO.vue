@@ -1,60 +1,6 @@
-<template>
-  <div>
-    <card-main :title="$t('ports')">
-      <div class="relative grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-        <div v-for="port in main.ports" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md border border-gray-200 dark:border-gray-700/40">
-          <h5 class="text-sm mb-2">{{ `GPIO: ${port.gpio} ${port.disabled ? `(${$t('dis')})` : ''}` }}</h5>
-
-          <div class="flex flex-col gap-4 md:flex-row">
-            <div class="grid gap-4 flex-auto" :class="isInput(port) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'">
-              <v-select :model-value="getNameList(port)" :label="$t('mode')" :disabled="Boolean(port.disabled)" hideMessage :items="getListMode(port)" @change="onMode(port, $event)" />
-
-              <v-select
-                v-if="isInput(port)"
-                hideMessage
-                :model-value="getNameListInterrupt(port)"
-                :disabled="Boolean(port.disabled)"
-                :label="$t('interrupt')"
-                :items="listInterrupt"
-                @change="onInterrupt(port, $event)"
-              />
-            </div>
-
-            <div class="md:flex-[0_0_80px]">
-              <v-button v-if="isOutput(port)" color="blue" class="w-full" :disabled="!port.mode || Boolean(port.disabled)" @click="onSetPort(port, port.value ? 0 : 1)">
-                {{ port.value ? $t('on') : $t('off') }}
-              </v-button>
-
-              <v-text-field
-                v-if="isInput(port) || isPWM(port) || isADC(port)"
-                hideMessage
-                :modelValue="port.value"
-                :disabled="isInput(port) || Boolean(port.disabled)"
-                :label="$t('value')"
-                class="md:max-w-20"
-                @update:modelValue="onInputValue(port, $event)"
-              ></v-text-field>
-            </div>
-          </div>
-        </div>
-      </div>
-    </card-main>
-
-    <Teleport to="[data-slot='device']">
-      <v-select :items="listMenu" @change="onMenu">
-        <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
-            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
-          </v-button>
-        </template>
-      </v-select>
-    </Teleport>
-  </div>
-</template>
-
 <script setup lang="ts">
 import type { IListItem, IMessagePort } from '@/types';
-import { KEYS } from '@/types';
+import { KEYS } from '@/utils/const';
 
 import { MODE_BOARD_1, MODE_BOARD_2, COMMAND, LIST } from '@/utils/gpio';
 
@@ -65,6 +11,7 @@ import { useFetch } from '@vueuse/core';
 import { PATH_FS, pathGPIO } from '@/utils/const';
 import { useLocale } from '@/composables/useLocale';
 import { computed } from 'vue';
+import { VCheckbox, VTooltip } from 'vuesp-components';
 
 const { $t } = useLocale();
 const { main, onSend, onDialog } = useConnection((send) => {
@@ -76,12 +23,12 @@ const MODE = computed(() => {
   return MODE_BOARD_1;
 });
 
-const listMenu: IListItem[] = [
+const listMenu: IListItem<number>[] = [
   { name: $t('save'), value: 1 },
   { name: $t('restore'), value: 2 },
 ];
 
-const getListMode = (port: IMessagePort): IListItem[] => {
+const getListMode = (port: IMessagePort): IListItem<number>[] => {
   const list = [];
   const data = port?.list || 0;
 
@@ -103,7 +50,7 @@ const getListMode = (port: IMessagePort): IListItem[] => {
 const getNameList = (port: IMessagePort) => getListMode(port).find((i) => i.value === port.mode)?.name;
 const getNameListInterrupt = (port: IMessagePort) => listInterrupt.find((i) => i.value === port.interrupt)?.name;
 
-const listInterrupt: IListItem[] = [
+const listInterrupt: IListItem<number>[] = [
   { name: 'OFF', value: 0 }, // 0x00
   { name: 'RISING', value: 1 }, // 0x01
   { name: 'FALLING', value: 2 }, // 0x02
@@ -114,17 +61,23 @@ const isOutput = ({ mode = 0 }: IMessagePort) => [MODE.value.OUTPUT, MODE.value.
 const isInput = ({ mode = 0 }: IMessagePort) => [MODE.value.INPUT, MODE.value.INPUT_PULLUP].includes(mode);
 const isPWM = ({ mode = 0 }: IMessagePort) => [MODE.value.PWM].includes(mode);
 const isADC = ({ mode = 0 }: IMessagePort) => [MODE.value.ADC].includes(mode);
+const isDAC = ({ mode = 0 }: IMessagePort) => [MODE.value.DAC].includes(mode);
 
 const onSetPort = (port: IMessagePort, value: number) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value });
 const onInputValue = useDebounceFn((port: IMessagePort, value: string) => onSend(KEYS.PORT, { ...port, command: COMMAND.GPIO_COMMAND_SET, value: +value }), 500);
 
-const onMode = ({ gpio }: IMessagePort, { value }: IListItem) => {
-  main.value.ports[gpio].mode = value as number;
+const onMode = ({ gpio }: IMessagePort, { value }: IListItem<number>) => {
+  main.value.ports[gpio].mode = value;
   onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 
-const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem) => {
-  main.value.ports[gpio].interrupt = value as number;
+const onInterrupt = ({ gpio }: IMessagePort, { value }: IListItem<number>) => {
+  main.value.ports[gpio].interrupt = value;
+  onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
+};
+
+const onIsButton = ({ gpio }: IMessagePort, value: boolean) => {
+  main.value.ports[gpio].isButton = value ? 1 : 0;
   onSend(KEYS.PORT, { ...main.value.ports[gpio], command: COMMAND.GPIO_COMMAND_CHANGE });
 };
 
@@ -140,8 +93,78 @@ const onRestore = async () => {
   if (data.value?.state) onReboot();
 };
 
-const onMenu = ({ value }: IListItem) => {
+const onMenu = ({ value }: IListItem<number>) => {
   if (value === 1) onSave();
   if (value === 2) onRestore();
 };
 </script>
+
+<template>
+  <div>
+    <card-main :title="$t('ports')">
+      <div class="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        <div v-for="port in main.ports" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md border border-gray-200 dark:border-gray-700/40">
+          <div class="mb-2">
+            <h5 class="text-sm">{{ `GPIO: ${port.gpio} ${port.disabled ? `(${$t('dis')})` : ''}` }}</h5>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <div class="grid gap-4 flex-auto grid-cols-1">
+              <v-select :model-value="getNameList(port)" :label="$t('mode')" :disabled="Boolean(port.disabled)" hideMessage :items="getListMode(port)" @change="onMode(port, $event)" />
+
+              <v-select
+                v-if="isInput(port)"
+                hideMessage
+                :model-value="getNameListInterrupt(port)"
+                :disabled="Boolean(port.disabled)"
+                :label="$t('interrupt')"
+                :items="listInterrupt"
+                @change="onInterrupt(port, $event)"
+              />
+
+              <div v-if="isInput(port) && getNameListInterrupt(port) === 'CHANGE'" class="flex items-center justify-between">
+                <VCheckbox v-model="port.isButton" @update:model-value="onIsButton(port, $event)">{{ $t('isButton') }}</VCheckbox>
+
+                <VTooltip>
+                  <template #activator>
+                    <icon-ri-information-line class="size-4 text-gray-500" />
+                  </template>
+                  <template #default="{ show }">
+                    <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-800">
+                      <p>{{ $t('message.shortPress') }}</p>
+                    </div>
+                  </template>
+                </VTooltip>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <v-button v-if="isOutput(port)" color="blue" class="w-full" :disabled="!port.mode || Boolean(port.disabled)" @click="onSetPort(port, port.value ? 0 : 1)">
+                {{ port.value ? $t('on') : $t('off') }}
+              </v-button>
+
+              <v-text-field
+                v-if="isInput(port) || isPWM(port) || isADC(port) || isDAC(port)"
+                hideMessage
+                :modelValue="port.value"
+                :disabled="isInput(port) || Boolean(port.disabled)"
+                :label="$t('value')"
+                @update:modelValue="onInputValue(port, $event)"
+              ></v-text-field>
+            </div>
+          </div>
+        </div>
+      </div>
+    </card-main>
+
+    <Teleport to="[data-slot='device']">
+      <v-select :items="listMenu" @change="onMenu">
+        <template #activator="{ on }">
+          <v-button color="" type="icon" @click="on.click">
+            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
+          </v-button>
+        </template>
+      </v-select>
+    </Teleport>
+  </div>
+</template>

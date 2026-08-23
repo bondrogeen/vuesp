@@ -1482,17 +1482,9 @@ void ScriptRunner::emitEvent(uint32_t hash) {
 
 void ScriptRunner::emitEvent(const char* eventName) {
     uint32_t hash = ScriptRunner::hash(eventName);
-    uint8_t handlerCount = 0;
-    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-        if (!_eventHandlers[i].active || _eventHandlers[i].hash != hash) continue;
-        uint8_t slotId = _eventHandlers[i].slotId;
-        if (slotId >= MAX_SCRIPTS) continue;
-        if (!_slots[slotId].registered) { _eventHandlers[i].active = false; continue; }
-        handlerCount++;
-        runScriptFrom(slotId, 0, getSlotLen(slotId));
-    }
+    emitEvent(hash);
     #if ENABLE_EVENT_LOGGING && ENABLE_LOGGING
-    logEventAction(eventName, handlerCount, 0);
+    logEventAction(eventName);
     #endif
 }
 
@@ -1916,10 +1908,10 @@ void ScriptRunner::logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t 
     #endif
 }
 
-void ScriptRunner::logEventAction(const char* eventName, uint8_t handlerCount, uint8_t slot) {
+void ScriptRunner::logEventAction(const char* eventName) {
     #if ENABLE_EVENT_LOGGING
     if (_logProvider && eventName) {
-        snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: event %s %d", slot, eventName, handlerCount);
+        snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s", eventName);
         _logProvider(_logBuf);
     }
     #endif
