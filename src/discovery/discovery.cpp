@@ -42,20 +42,11 @@ void sendPeer(const PeerInfo& peer) {
 bool udpHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
   if (paramCount < 2) return false;
 
-  const char* method = params[0].stringVal.data;
-  const char* url = params[1].stringVal.data;
-  const int32_t count = params[2].intVal;
-  const uint32_t num = params[3].uintVal;
-
-  const uint8_t* data = params[4].arrayVal.data;
-  uint8_t len = params[4].arrayVal.len;
-
-  for (uint8_t i = 0; i < len; i++) {
-    Serial.print(data[i]);
-  }
+  const uint32_t device = params[0].uintVal;
+  const char* text = params[1].stringVal.data;
 
   result.type = VAL_INT;
-  result.intVal = 200;
+  result.intVal = protocol.sendText(device, text);
   return true;
 }
 
@@ -78,9 +69,9 @@ void setupDiscovery() {
   });
 
   protocol.onTextReceived([](uint32_t senderId, const String& text) {
-    // Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
-    // scriptRunner.registerScript(2, text.c_str());
-    // scriptRunner.runScript(2);
+    Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
+    scriptRunner.registerScript(254, text.c_str());
+    scriptRunner.runScript(2);
   });
 
   protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {
@@ -88,7 +79,7 @@ void setupDiscovery() {
     // for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
     // Serial.println();
   });
-  scriptRunner.registerFunction("http", udpHandler);
+  scriptRunner.registerFunction("udp", udpHandler);
 }
 
 void commDiscovery() {

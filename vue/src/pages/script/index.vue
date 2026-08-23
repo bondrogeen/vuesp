@@ -1,123 +1,37 @@
 <script setup lang="ts">
+import type { IListItem } from 'vuesp-components/types';
 import { KEYS } from '@/utils/const';
-import type { IScript, ILog } from './types';
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { timeUtcToString } from 'vuesp-components/helpers';
+import { ref } from 'vue';
+
 import { ScriptType, examples } from '@/assets/js/script';
 
 import { useConnection } from '@/composables/useConnection';
-import { required, maxLen } from '@/utils/validate';
-
-import { useForm } from 'vuesp-components/composables';
-import type { IListItem, IMessageMessage, ValidationSchema, ISuggestion } from 'vuesp-components/types';
-
 import { useLocale } from '@/composables/useLocale';
-import { useFetch } from '@vueuse/core';
+import { useLogs } from '@/composables/script/useLogs';
+import { useScripts } from '@/composables/script/useScripts';
 
 import { ScriptEditor, ScriptViewDocs } from 'vuesp-components';
+import ScriptDialog from '@/components/script/ScriptDialog.vue';
+import { useSlots } from '@/composables/script/useSlots';
 
 const { $t } = useLocale();
 
-const { message, main, onSend } = useConnection((send) => {
+const { suggestions, message, main, onSend } = useConnection((send) => {
   send(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT });
 });
 
-const customSuggestions: ISuggestion[] = [
-  { label: 'myFunction', type: 'function', insertText: 'myFunction()', detail: 'моя функция' },
-  { label: 'MY_CONST', type: 'variable', detail: 'константа' },
-  { label: 'btn_5', type: 'event', detail: 'кнопка 5' },
-];
+const { logs, onHover } = useLogs(message);
+const { slotInfo, currentSlot, onSlot, getColorSlot } = useSlots(main);
+const { ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave } = useScripts();
 
 const dialogAdd = ref(false);
-const dialogViewDocs = ref(false);
-const logs = ref<ILog[]>([]);
-
-const content = ref('');
-
-const { defineField, handleSubmit } = useForm({
-  validationSchema: () =>
-    ({
-      name: [required, maxLen(8)],
-    }) as ValidationSchema,
-});
-const idScript = ref('0');
-const [name, nameProps] = defineField<string>('name');
-
-const addScript = () => {
-  scripts.value.push({ id: +idScript.value, name: name.value, content: '' });
-};
-
-const onSubmit = handleSubmit(() => {
-  addScript();
-  name.value = ``;
-  dialogAdd.value = false;
-});
-
-const ids = computed(() => scripts.value.map(({ id }) => id));
-
 const onAddScriptDialog = () => {
   const getId = Array.from({ length: 256 }, (_, i) => i + 1).find((i) => !ids.value.includes(i));
   idScript.value = `${getId}`;
   dialogAdd.value = true;
 };
-const onRemove = ({ id }: IScript) => {
-  scripts.value = scripts.value.filter((i) => i.id !== id);
-  selectedScript.value = null;
-};
-const onSaveScript = () => {
-  if (!selectedScript.value) return;
-  const { id } = selectedScript.value;
-  scripts.value = scripts.value.map((i) => (i.id === id ? { ...i, content: content.value } : i));
-  onSave();
-};
 
-const isHover = ref(false);
-const container = useTemplateRef('container');
-const scrollLastLog = () => {
-  if (!container.value?.lastElementChild) return;
-  if (isHover.value) return;
-  container.value.scrollTop = container.value.scrollHeight;
-};
-
-const onHover = (value: boolean) => {
-  isHover.value = value;
-};
-
-watch(
-  () => message.value,
-  (v) => {
-    if (v.type === 0) {
-      const date = new Date();
-      logs.value.push({ time: `${timeUtcToString(date, { minute: '2-digit', hour: '2-digit', second: '2-digit' })}`, type: 0, text: v?.text || '' });
-      nextTick(() => {
-        scrollLastLog();
-      });
-    }
-  }
-);
-
-const currentSlot = ref<IMessageMessage | null>(null);
-const slotInfo = computed(() => {
-  return Object.values(main.value.slots).reduce(
-    (acc, i: IMessageMessage) => {
-      if (i.active || i.handler) {
-        acc.used = acc.used + 1;
-      }
-      acc.total = acc.total + 1;
-      return acc;
-    },
-    { total: 0, used: 0 }
-  );
-});
-
-const onSlot = (slot: IMessageMessage) => {
-  currentSlot.value = slot;
-};
-const getColorSlot = (slot: IMessageMessage) => {
-  if (slot.active) return 'bg-violet-500';
-  if (slot.handler) return 'bg-blue-500';
-  return 'bg-gray-200 dark:bg-gray-500 ';
-};
+const dialogViewDocs = ref(false);
 
 const onRunScript = () => {
   const id = selectedScript.value?.id || 0;
@@ -142,53 +56,6 @@ const onRemoveScript = () => {
 const onUpdateScript = () => {
   onSend(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT });
 };
-
-const scripts = ref<IScript[]>([]);
-const selectedScript = ref<IScript | null>(null);
-
-// const isScriptNotSave = computed(() => {
-//   if (!selectedScript.value?.content) return false;
-//   if (formatScript(selectedScript.value?.content) === content.value) return false;
-//   return true;
-// });
-
-const onSelect = (script: IScript) => {
-  selectedScript.value = script;
-  content.value = script.content;
-};
-
-const isScriptSave = (script: IScript) => {
-  if (selectedScript.value?.id === script.id && selectedScript.value?.content !== content.value) return false;
-  return true;
-};
-
-// const validate = computed(() => ScriptValidatorAPI.validate(selectedScriptContent.value || ''));
-// const isValid = computed(() => validate.value.valid);
-// const errors = computed(() => validate.value.errors);
-
-const PATH = '/scripts.txt';
-
-const onLoad = async () => {
-  const { data } = await useFetch(`/fs?file=${PATH}`).text();
-  if (!data.value) return;
-  const lines = data.value.split('\n');
-  scripts.value = lines.map((script): IScript => {
-    const parts = script.split(':');
-    const [id, name] = parts;
-    return { id: +id, name, content: parts.slice(2).join(':') };
-  });
-};
-
-const onSave = async () => {
-  const text = scripts.value.map(({ id, name, content }) => `${id}:${name}:${content}`).join('\n');
-  const body = new FormData();
-  body.append('file[0]', new Blob([text], { type: 'text/plain' }), PATH);
-  return await useFetch('/fs', { body }).post();
-};
-
-onMounted(() => {
-  onLoad();
-});
 
 const onExample = (item: IListItem<string>) => {
   content.value = item.value;
@@ -318,7 +185,8 @@ const onExample = (item: IListItem<string>) => {
           </template>
 
           <div class="flex-auto bg-gray-50 dark:bg-gray-900 dark:border-gray-700 w-full overflow-auto scrollbar h-50 xl:h-[calc(100dvh-300px)]">
-            <ScriptEditor v-if="selectedScript?.name" class="h-full w-full overflow-auto scrollbar" :value="content" :suggestions="customSuggestions" @update="content = $event"></ScriptEditor>
+            <ScriptEditor v-if="selectedScript?.name" v-model="content" class="h-full w-full overflow-auto scrollbar" :suggestions="suggestions"></ScriptEditor>
+            <p v-else class="text-gray-500 ms-3 text-center mt-4">{{ $t('selectScript') }}</p>
           </div>
 
           <div class="text-sm border-t border-gray-200 dark:border-gray-700 text-slate-400 flex flex-wrap justify-between mt-4">
@@ -326,10 +194,6 @@ const onExample = (item: IListItem<string>) => {
               <i class="far fa-file-alt mr-1"></i>
               {{ `${$t('length')}: ${content?.length || 0}` }}
             </span>
-
-            <!-- <ul>
-                <li v-for="error of errors" :key="error.position">{{ $t(`error.${error.key}`) }}</li>
-              </ul> -->
           </div>
         </card-main>
 
@@ -359,13 +223,7 @@ const onExample = (item: IListItem<string>) => {
     </div>
 
     <v-dialog v-if="dialogAdd" size="sm" :title="`${$t('add')} #${idScript}`" @close="dialogAdd = false">
-      <div class="my-4">
-        <v-text-field v-model="name" v-bind="nameProps" :label="$t('name')" />
-
-        <v-button class="w-full" color="blue" :disabled="!idScript || !name" @click="onSubmit">
-          {{ $t('add') }}
-        </v-button>
-      </div>
+      <ScriptDialog @add="addScript" @close="dialogAdd = false" />
     </v-dialog>
 
     <v-dialog v-if="dialogViewDocs" size="lg" title="ScriptRunner Documentation" @close="dialogViewDocs = false">
