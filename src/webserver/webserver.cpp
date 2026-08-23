@@ -14,6 +14,7 @@ uint8_t progressSendCount = 0;
 const uint8_t MAX_PROGRESS_SENDS = 10;
 
 static AsyncAuthenticationMiddleware basicAuth;
+static AsyncCorsMiddleware cors;
 
 String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
@@ -253,6 +254,13 @@ void onRedirectHome(AsyncWebServerRequest* request) {
 }
 
 void setupServer() {
+  // cors.setOrigin("*");
+  // cors.setMethods("POST, GET, OPTIONS, DELETE");
+  // cors.setHeaders("X-Custom-Header");
+  // cors.setAllowCredentials(true);
+  // cors.setMaxAge(600);
+  // server.addMiddleware(&cors);
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
   server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
