@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia';
 import { useWebSocket } from '@/stores/WebSocket';
-import { localGet, localSet } from 'vuesp-components/helpers';
+import { useAppStore } from './AppStore.ts';
 
-import type { INotification, IStoreWebSocketStore, IStateMain, IMessagePort, IMessageProgress, TypeMessage, IMessageMessage, IDiscovery, IMyMessageSettings } from '@/types';
+import type { TypeMessage, IStateMain, IWebSocketStore, IMessagePort, IMessageDallas, IMessageProgress, IMessageMessage, IMessageDiscovery, IMyMessageSettings } from '@/types';
 
-const initialState = (): IStoreWebSocketStore => ({
+const initialState = (): IWebSocketStore => ({
   main: {
     ports: {},
     info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '', board: 0 },
-    device: { now: 0, pwm: 0, analog: 0 },
+    device: { command: 0, analog: 0, pwm: 0, now: 0, list: 0, message: '' },
     dallas: {},
     discovery: {},
     slots: {},
@@ -32,7 +32,6 @@ const initialState = (): IStoreWebSocketStore => ({
     discoveryPort: 0,
   },
   progress: { status: 0, empty: 0, size: 0, length: 0 },
-  notifications: localGet('notifications', true) || [],
   message: { type: 0, active: 0, handler: 0, date: 0, index: 0, id: 0, len: 0, text: '' },
 });
 
@@ -48,54 +47,36 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     SET_PORT(port: IMessagePort) {
       const gpio = port.gpio.toString();
       this.main.ports[gpio] = port;
-      // this.main = { ...this.main };
     },
-    SET_DALLAS(data: { address: number[] }) {
+    SET_DALLAS(data: IMessageDallas) {
       const name = (data.address || []).map((i) => (i < 16 ? `0${i.toString(16)}` : i.toString(16))).join('');
       this.main.dallas[name] = data;
-      // this.main = { ...this.main };
     },
-    SET_DISCOVERY(data: IDiscovery) {
+    SET_DISCOVERY(data: IMessageDiscovery) {
       const id = data.id.toString(16);
       this.main.discovery[id] = data;
-      // this.main = { ...this.main };
+      // if(data.status) appStore.setNotification({text: `new${}`})
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
       const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
       if (['ping', 'files', 'progress', 'scan'].includes(name)) return;
       this.main[name] = object;
-      // this.main = { ...this.main };
     },
     SET_MESSAGE(message: IMessageMessage) {
       this.message = message;
       const { type } = message;
-      // if (type === 1) {
-      //   const date = message?.date || Date.now();
-      //   this.notifications = [...this.notifications, { key, color: 1, isNew, timeout, text, date }];
-      //   localSet('notifications', this.notifications);
-      // }
+      if (type === 1) {
+        const appStore = useAppStore();
+        appStore.setNotification(message)
+      }
       if (type === 2) {
         const index = message.index;
         this.main.slots[index || 0] = message;
-        // this.main = { ...this.main };
       }
-    },
-    READ_NOTIFICATION(notification: INotification) {
-      this.notifications = this.notifications.map((i) => (notification.date === i.date ? { ...i, isNew: 0 } : i));
-      localSet('notifications', this.notifications);
-    },
-    READ_ALL_NOTIFICATION() {
-      this.notifications = this.notifications.map((i) => ({ ...i, isNew: 0 }));
-      localSet('notifications', this.notifications);
-    },
-    REMOVE_NOTIFICATION(notification: INotification) {
-      this.notifications = this.notifications.filter((i) => i.date !== notification.date);
-      localSet('notifications', this.notifications);
     },
     onSend(key: TypeMessage['key'], object?: TypeMessage['object']) {
       const store = useWebSocket();
       store.onSend(key, object);
     },
   },
-  getters: {},
 });

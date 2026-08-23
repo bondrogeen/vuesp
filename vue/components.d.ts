@@ -11,11 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    BlockScan: typeof import('./src/components/block/BlockScan.vue')['default']
-    BlockService: typeof import('./src/components/block/BlockService.vue')['default']
-    BlockStatus: typeof import('./src/components/block/BlockStatus.vue')['default']
-    BlockUpdate: typeof import('./src/components/block/BlockUpdate.vue')['default']
-    BlockViewDocs: typeof import('./src/components/block/BlockViewDocs.vue')['default']
     CardChart: typeof import('./src/components/dashboard/CardChart.vue')['default']
     IconRiArrowRightSLine: typeof import('~icons/ri/arrow-right-s-line')['default']
     IconRiBatteryLine: typeof import('~icons/ri/battery-line')['default']

@@ -1,10 +1,12 @@
 #include "DeviceProtocol.h"
 
-DeviceProtocol::DeviceProtocol() : _myId(0), _initialized(false), _sendCallback(nullptr), _peerDiscoveredCallback(nullptr), _peerLostCallback(nullptr), _textReceivedCallback(nullptr), _binaryReceivedCallback(nullptr) {}
+DeviceProtocol::DeviceProtocol() : _myId(0), _initialized(false), _sendCallback(nullptr), _peerDiscoveredCallback(nullptr), _peerLostCallback(nullptr), _textReceivedCallback(nullptr), _binaryReceivedCallback(nullptr), _deviceStatus(DeviceStatus::OFFLINE), _lastAnnounceTime(0) {}
 
 void DeviceProtocol::setup(uint32_t myId) {
   _myId = myId;
   _initialized = true;
+  _deviceStatus = DeviceStatus::OFFLINE;
+  _lastAnnounceTime = 0;
 }
 
 void DeviceProtocol::onSend(SendCallback callback) { _sendCallback = callback; }
@@ -69,6 +71,7 @@ void DeviceProtocol::handleIncomingData(uint32_t senderAddress, const uint8_t* d
 
   bool isNew = (_peers.find(senderId) == _peers.end());
   _peers[senderId] = PeerInfo(senderId, senderAddress);
+  _peers[senderId].lastSeen = millis();
 
   if (isNew && _peerDiscoveredCallback) _peerDiscoveredCallback(_peers[senderId]);
 
@@ -91,6 +94,20 @@ const PeerInfo* DeviceProtocol::getPeer(uint32_t id) const {
   return (it != _peers.end()) ? &it->second : nullptr;
 }
 
+const PeerInfo* DeviceProtocol::getPeerByIndex(size_t index) const {
+  if (index >= _peers.size()) {
+    return nullptr;
+  }
+  size_t currentIndex = 0;
+  for (const auto& entry : _peers) {
+    if (currentIndex == index) {
+      return &entry.second;
+    }
+    currentIndex++;
+  }
+  return nullptr;
+}
+
 size_t DeviceProtocol::getPeerCount() const {
   return _peers.size();
 }
@@ -104,20 +121,31 @@ void DeviceProtocol::forEachPeer(std::function<void(const PeerInfo& peer)> callb
 void DeviceProtocol::update() {
   if (!_initialized) return;
 
-  unsigned long now = millis();
+  uint32_t now = millis();
+
   for (auto it = _peers.begin(); it != _peers.end();) {
     if (now - it->second.lastSeen > _peerTimeout) {
+      it->second.status = 0;
       uint32_t id = it->first;
       if (_peerLostCallback) _peerLostCallback(_peers[id]);
       it = _peers.erase(it);
     } else {
+      it->second.status = 1;
       ++it;
+    }
+  }
+
+  if (_deviceStatus == DeviceStatus::ONLINE) {
+    if (now - _lastAnnounceTime > _announceInterval) {
+      uint32_t jitter = random(0, _announceJitter);
+      if (now - _lastAnnounceTime > _announceInterval + jitter) {
+        sendAnnounce();
+        _lastAnnounceTime = now;
+      }
     }
   }
 }
 
-void DeviceProtocol::setAnnounceInterval(unsigned long ms) { _announceInterval = ms; }
-void DeviceProtocol::setPeerTimeout(unsigned long ms) { _peerTimeout = ms; }
-void DeviceProtocol::setAnnounceJitter(unsigned long maxMs) { _announceJitter = maxMs; }
-
-DeviceProtocol protocol;
+void DeviceProtocol::setAnnounceInterval(uint32_t ms) { _announceInterval = ms; }
+void DeviceProtocol::setPeerTimeout(uint32_t ms) { _peerTimeout = ms; }
+void DeviceProtocol::setAnnounceJitter(uint32_t maxMs) { _announceJitter = maxMs; }

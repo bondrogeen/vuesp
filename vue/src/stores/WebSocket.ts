@@ -1,5 +1,5 @@
-import type { IStoreWebSocket, TypeMessage } from '@/types';
-import { KEYS } from '@/types';
+import type { IWebSocket, TypeMessage } from '../types/types.ts';
+import { KEYS } from '@/utils/const';
 
 import { defineStore } from 'pinia';
 import { useWebSocketStore } from './WebSocketStore.ts';
@@ -8,7 +8,7 @@ import { struct, event } from '@/assets/js/';
 
 const log = (...arg: any) => (process.env.NODE_ENV === 'development' ? console.log(arg) : null);
 
-const initialState = (): IStoreWebSocket => ({
+const initialState = (): IWebSocket => ({
   socket: null,
   pingClient: 5000,
   pingDevice: 0,

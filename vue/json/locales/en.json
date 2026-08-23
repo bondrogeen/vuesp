@@ -5,7 +5,7 @@
   "ipSett": "IP Settings",
   "wifi": "Wi-Fi",
   "scan": "Scan",
-  "fs": "File system",
+  "fb": "File Browser",
   "rebootDev": "Reboot device",
   "resetConf": "Reset configuration",
   "reboot": "Reboot",
@@ -48,6 +48,7 @@
   "disconn": "Disconnected",
   "add": "Add",
   "save": "Save",
+  "copied": "Copied",
   "restore": "Restore",
   "def": "Default",
   "mode": "Mode",
@@ -87,13 +88,14 @@
   },
   "message": {
     "pageNotFound": "Page Not Found",
-    "pathExist": "The path {path} does not exist."
+    "pathExist": "The path {path} does not exist.",
+    "shortPress": "Supports short press, long press, and hold event handling"
   },
   "menu": {
     "home": "Home",
     "dashboard": "Dashboard",
     "settings": "Settings",
-    "storage": "Storage",
+    "fs": "File system",
     "gpio": "GPIO",
     "script": "Script"
   },
