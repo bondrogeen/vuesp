@@ -28,7 +28,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 1. Read [DEVELOPMENT.md](./DEVELOPMENT.md)
 2. Set up environment: `npm install` in `vue/` directory
-3. Set `VITE_PROXY` in `.env` to your device IP
+3. Set `VITE_IP` in `.env` to your device IP
 
 ### Making Changes
 
@@ -84,7 +84,7 @@ Use strncpy instead of strcpy in onReqUpload handler.
 
 docs: update setup instructions
 
-Add troubleshooting section and clarify VITE_PROXY configuration.
+Add troubleshooting section and clarify VITE_IP configuration.
 ```
 
 ## Submitting Changes

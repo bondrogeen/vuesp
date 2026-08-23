@@ -51,7 +51,7 @@ Template for your arduino projects with a web interface.
    cd vue
    npm install
    cp .env.example .env
-   # Edit .env to set VITE_PROXY to your device IP
+   # Edit .env to set VITE_IP to your device IP
    ```
 
 3. **Start development**
@@ -104,7 +104,7 @@ npm install
 Next in [.env](./vue/.env.example) file change proxy to your ip device
 
 ```bash
-VITE_PROXY=192.168.1.100  # Change to your ESP device IP
+VITE_IP=192.168.1.100  # Change to your ESP device IP
 ```
 
 ```bash
