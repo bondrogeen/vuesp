@@ -1,6 +1,145 @@
+<script setup lang="ts">
+import type { Ref } from 'vue';
+import type { IListItem, IMessageFile, TypeMessage } from '@/types';
+import { KEYS } from '@/utils/const';
+
+import { watchEffect, ref, computed, nextTick } from 'vue';
+
+import { toByte, createDownloadLink } from 'vuesp-components/helpers';
+import { useFetch, useDebounceFn } from '@vueuse/core';
+
+import { PATH_FS } from '@/utils/const';
+
+import { useConnection } from '@/composables/useConnection';
+
+import { VFile } from 'vuesp-components';
+
+import { useLocale } from '@/composables/useLocale';
+
+const { $t } = useLocale();
+
+const files: Ref<IMessageFile[]> = ref([]);
+const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
+
+const mainMenu: IListItem<number>[] = [
+  { name: $t('upload'), value: 2 },
+  { name: $t('reload'), value: 3 },
+  { name: $t('format'), value: 4 },
+];
+const listMenu: IListItem<number>[] = [
+  { name: $t('download'), value: 1 },
+  { name: $t('remove'), value: 2 },
+];
+
+const isLoading = ref(false);
+
+const path = ref(['root']);
+
+const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
+
+const fileName = (name: string) => `${fullPath.value}${name}`;
+const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.value !== 1 : true));
+const isLast = (path: string[], i: number) => path.length > i + 1;
+
+const onMessage = ({ key, object }: TypeMessage) => {
+  if (key === 'FILES' && object) files.value.push(object);
+};
+
+const { main, onSend, onDialog } = useConnection((send) => {
+  send(KEYS.FILES, { command: 0, name: fullPath.value });
+}, onMessage);
+
+const onUpdate = () => {
+  isLoading.value = true;
+  files.value = [];
+  onSend(KEYS.FILES, { command: 0, name: fullPath.value });
+  onSend(KEYS.INFO);
+};
+
+const onPrev = (index: number) => {
+  if (path.value.length > index + 1) {
+    path.value = path.value.filter((_, i) => i < index + 1);
+    nextTick(() => onUpdate());
+  }
+};
+
+const onNext = (isDir: boolean, value: string) => {
+  if (isDir && path) {
+    path.value.push(value);
+    onUpdate();
+  }
+};
+
+const onClickUpload = () => {
+  const el: any = document.querySelector('input[type="file"]');
+  if (el) el.click();
+};
+
+const onEventService = ({ value }: IListItem<number>) => {
+  if (value === 2) onClickUpload();
+  if (value === 3) onUpdate();
+  if (value === 4) onSureFormat();
+};
+
+const onEventList = (name: string, { value }: IListItem<number>) => {
+  if (value === 1) createDownloadLink(`${PATH_FS}?file=${fileName(name)}`, name);
+  if (value === 2) onSureDelete(name);
+};
+
+const onFormat = async () => {
+  const { data } = await useFetch(`${PATH_FS}?format=true`).post().json();
+  if (data.value?.state) onUpdate();
+};
+
+const onSureFormat = () => onDialog({ value: true, message: $t('dialog.allDel'), callback: onFormat });
+
+const onUpload = async (files: FileList | null) => {
+  if (!files) return;
+  let totalSize = 0;
+  const body = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    const file = files.item(i);
+    if (!file) return;
+    totalSize += file.size;
+    body.append(`file[${i}]`, file, `${fullPath.value}${file.name}`);
+  }
+  const { totalBytes = 0, usedBytes = 0 } = main.value.info;
+  if (totalSize < totalBytes - usedBytes) {
+    const { data } = await useFetch(PATH_FS, { body }).post().json();
+    if (data.value?.state) onUpdate();
+  } else {
+    onDialog({ value: true, message: 'No free space' });
+  }
+};
+
+const onDelete = async (name: string) => {
+  const { data } = await useFetch(`${PATH_FS}?file=${fileName(name)}`)
+    .delete()
+    .json();
+  if (data.value?.state) onUpdate();
+  else onDialog({ value: true, message: 'Directory is not empty' });
+};
+
+const onSureDelete = (name: string) => {
+  if (fileName(name).includes('www')) {
+    onDialog({ value: true, message: $t('dialog.wwwDir'), callback: onDelete.bind(this, name) });
+  } else {
+    onDelete(name);
+  }
+};
+
+const onLoad = useDebounceFn((_?: IMessageFile[]) => {
+  isLoading.value = false;
+}, 300);
+
+watchEffect(() => {
+  onLoad(files.value);
+});
+</script>
+
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2">
-    <card-main :title="$t('fs')">
+    <card-main :title="$t('fb')">
       <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
@@ -57,142 +196,3 @@
     </Teleport>
   </div>
 </template>
-
-<script setup lang="ts">
-import type { Ref } from 'vue';
-import type { IListItem, IMessageFile, TypeMessage } from '@/types';
-import { KEYS } from '@/types';
-
-import { watchEffect, ref, computed, nextTick } from 'vue';
-
-import { toByte, createDownloadLink } from 'vuesp-components/helpers';
-import { useFetch, useDebounceFn } from '@vueuse/core';
-
-import { PATH_FS } from '@/utils/const';
-
-import { useConnection } from '@/composables/useConnection';
-
-import { VFile } from 'vuesp-components';
-
-import { useLocale } from '@/composables/useLocale';
-
-const { $t } = useLocale();
-
-const files: Ref<IMessageFile[]> = ref([]);
-const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
-
-const mainMenu: IListItem[] = [
-  { name: $t('upload'), value: 2 },
-  { name: $t('reload'), value: 3 },
-  { name: $t('format'), value: 4 },
-];
-const listMenu: IListItem[] = [
-  { name: $t('download'), value: 1 },
-  { name: $t('remove'), value: 2 },
-];
-
-const isLoading = ref(false);
-
-const path = ref(['root']);
-
-const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
-
-const fileName = (name: string) => `${fullPath.value}${name}`;
-const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.value !== 1 : true));
-const isLast = (path: string[], i: number) => path.length > i + 1;
-
-const onMessage = ({ key, object }: TypeMessage) => {
-  if (key === 'FILES' && object) files.value.push(object);
-};
-
-const { main, onSend, onDialog } = useConnection((send) => {
-  send(KEYS.FILES, { command: 0, name: fullPath.value });
-}, onMessage);
-
-const onUpdate = () => {
-  isLoading.value = true;
-  files.value = [];
-  onSend(KEYS.FILES, { command: 0, name: fullPath.value });
-  onSend(KEYS.INFO);
-};
-
-const onPrev = (index: number) => {
-  if (path.value.length > index + 1) {
-    path.value = path.value.filter((_, i) => i < index + 1);
-    nextTick(() => onUpdate());
-  }
-};
-
-const onNext = (isDir: boolean, value: string) => {
-  if (isDir && path) {
-    path.value.push(value);
-    onUpdate();
-  }
-};
-
-const onClickUpload = () => {
-  const el: any = document.querySelector('input[type="file"]');
-  if (el) el.click();
-};
-
-const onEventService = ({ value }: IListItem) => {
-  if (value === 2) onClickUpload();
-  if (value === 3) onUpdate();
-  if (value === 4) onSureFormat();
-};
-
-const onEventList = (name: string, { value }: IListItem) => {
-  if (value === 1) createDownloadLink(`${PATH_FS}?file=${fileName(name)}`, name);
-  if (value === 2) onSureDelete(name);
-};
-
-const onFormat = async () => {
-  const { data } = await useFetch(`${PATH_FS}?format=true`).post().json();
-  if (data.value?.state) onUpdate();
-};
-
-const onSureFormat = () => onDialog({ value: true, message: $t('dialog.allDel'), callback: onFormat });
-
-const onUpload = async (files: FileList | null) => {
-  if (!files) return;
-  let totalSize = 0;
-  const body = new FormData();
-  for (let i = 0; i < files.length; i++) {
-    const file = files.item(i);
-    if (!file) return;
-    totalSize += file.size;
-    body.append(`file[${i}]`, file, `${fullPath.value}${file.name}`);
-  }
-  const { totalBytes = 0, usedBytes = 0 } = main.value.info;
-  if (totalSize < totalBytes - usedBytes) {
-    const { data } = await useFetch(PATH_FS, { body }).post().json();
-    if (data.value?.state) onUpdate();
-  } else {
-    onDialog({ value: true, message: 'No free space' });
-  }
-};
-
-const onDelete = async (name: string) => {
-  const { data } = await useFetch(`${PATH_FS}?file=${fileName(name)}`)
-    .delete()
-    .json();
-  if (data.value?.state) onUpdate();
-  else onDialog({ value: true, message: 'Directory is not empty' });
-};
-
-const onSureDelete = (name: string) => {
-  if (fileName(name).includes('www')) {
-    onDialog({ value: true, message: $t('dialog.wwwDir'), callback: onDelete.bind(this, name) });
-  } else {
-    onDelete(name);
-  }
-};
-
-const onLoad = useDebounceFn((_?: IMessageFile[]) => {
-  isLoading.value = false;
-}, 300);
-
-watchEffect(() => {
-  onLoad(files.value);
-});
-</script>

@@ -7,6 +7,7 @@ enum keys {
   KEY_PROGRESS,
   KEY_FILES,
   KEY_REBOOT,
+  KEY_EVENT,
   KEY_PORT,
   KEY_MESSAGE,
   KEY_DALLAS,
@@ -84,6 +85,15 @@ struct Files {
   char name[32];
 };
 
+struct Event {
+  uint8_t key;
+  uint8_t comm;
+  uint16_t comm2;
+  uint32_t value1;
+  uint32_t value2;
+  char name[32];
+};
+
 struct Port {
   uint8_t key;
   uint8_t gpio;
@@ -92,8 +102,13 @@ struct Port {
   uint8_t interrupt;
   uint16_t list;
   uint8_t disabled;
+  uint8_t isButton;
   uint8_t command;
-  uint16_t empty;
+  uint8_t isPressed;
+  uint8_t count;
+  uint8_t empty;
+  uint16_t valueOld;
+  uint32_t pressStart;
 };
 
 struct Message {
@@ -126,8 +141,9 @@ struct Buffer {
 };
 struct Discovery {
   uint8_t key;
+  uint8_t comm;
   uint8_t status;
-  uint16_t empty;
+  uint8_t empty;
   uint32_t id;
   uint32_t ip;
   uint32_t lastSeen;

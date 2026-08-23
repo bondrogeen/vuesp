@@ -1,3 +1,86 @@
+<script setup lang="ts">
+import type { IListItem } from '@/types';
+
+import { KEYS } from '@/utils/const';
+
+import { useConnection } from '@/composables/useConnection';
+import { useLocale } from '@/composables/useLocale';
+
+import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs, VTooltip } from 'vuesp-components';
+import { computed, ref } from 'vue';
+import { dateUtcToString, timeUtcToString } from 'vuesp-components/helpers';
+
+const { $t } = useLocale();
+
+const { pkg, main, onSend } = useConnection((send) => {
+  send(KEYS.DEVICE);
+});
+
+interface IItemTable {
+  name: string;
+  date: string;
+  action: boolean;
+}
+
+const tabs = [{ title: 'Item 0' }, { title: 'Item 1' }, { title: 'Item 2' }];
+
+const isFormatting = ref(false);
+
+const dialogTable = ref(false);
+const tabletItem = ref<IItemTable | null>(null);
+
+const tabletHeaders = [
+  { name: 'Name', key: 'name', className: 'w-50' },
+  { name: 'Date', key: 'date', className: '' },
+  { name: 'Action', key: 'action', className: 'w-20' },
+];
+const tabletItems: IItemTable[] = [
+  { name: 'Item 1', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: false },
+  { name: 'Item 2', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: true },
+  { name: 'Item 3', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: true },
+  { name: 'Item 4', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: false },
+];
+
+const onTable = (item: IItemTable) => {
+  tabletItem.value = item;
+  dialogTable.value = true;
+};
+
+const dialog = ref(false);
+const input = ref('');
+const checkbox = ref(true);
+const loading = ref(false);
+const onLoading = () => {
+  loading.value = true;
+  setTimeout(() => {
+    loading.value = false;
+  }, 1000);
+};
+
+const items: IListItem<string | number>[] = [
+  { name: 'Item 1', value: 1 },
+  { name: 'Item 2', value: 2 },
+  { name: 'Item 3', value: '3' },
+];
+
+const select = ref<number | string>(2);
+const getSelectValue = computed(() => items.find((i) => i.value == select.value)?.name || '');
+const onSelect = ({ name, value }: IListItem<number | string>) => {
+  select.value = value;
+  input.value = name;
+};
+
+const listMenu: IListItem<number>[] = [{ name: $t('btnUpdate'), value: 2 }];
+
+const onUpdate = () => {
+  onSend('INFO');
+};
+
+const onMenu = ({ value }: IListItem<number>) => {
+  if (value === 2) onUpdate();
+};
+</script>
+
 <template>
   <div class="container mx-auto pb-10">
     <section class="mb-6 flex items-center justify-between">
@@ -49,6 +132,17 @@
             <icon-ri-chat-1-line class="text-blue-500" />
             <icon-ri-settings-2-line class="size-4" />
             <v-button color="blue" href="https://remixicon.com/" target="_blank">https://remixicon.com/</v-button>
+
+            <VTooltip>
+              <template #activator>
+                <icon-ri-information-line class="size-5 text-gray-500" />
+              </template>
+              <template #default="{ show }">
+                <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-800">
+                  <p>{{ $t('message.shortPress') }}</p>
+                </div>
+              </template>
+            </VTooltip>
           </div>
         </div>
       </div>
@@ -215,89 +309,3 @@
     </v-dialog>
   </div>
 </template>
-
-<script setup lang="ts">
-import type { IListItem } from '@/types';
-
-import { KEYS } from '@/types';
-
-import { useConnection } from '@/composables/useConnection';
-import { useLocale } from '@/composables/useLocale';
-
-import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs } from 'vuesp-components';
-import { computed, ref } from 'vue';
-import { dateUtcToString, timeUtcToString } from 'vuesp-components/helpers';
-
-const { $t } = useLocale();
-
-const { pkg, main, onSend } = useConnection((send) => {
-  send(KEYS.DEVICE);
-});
-
-interface IItemTable {
-  name: string;
-  date: string;
-  action: boolean;
-}
-
-const tabs = [{ title: 'Item 0' }, { title: 'Item 1' }, { title: 'Item 2' }];
-
-const isFormatting = ref(false);
-
-const dialogTable = ref(false);
-const tabletItem = ref<IItemTable | null>(null);
-
-const tabletHeaders = [
-  { name: 'Name', key: 'name', className: 'w-50' },
-  { name: 'Date', key: 'date', className: '' },
-  { name: 'Action', key: 'action', className: 'w-20' },
-];
-const tabletItems: IItemTable[] = [
-  { name: 'Item 1', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: false },
-  { name: 'Item 2', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: true },
-  { name: 'Item 3', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: true },
-  { name: 'Item 4', date: `${dateUtcToString(new Date())} ${timeUtcToString(new Date())}`, action: false },
-];
-
-const onTable = (item: IItemTable) => {
-  tabletItem.value = item;
-  dialogTable.value = true;
-};
-
-const dialog = ref(false);
-
-const input = ref('');
-
-const checkbox = ref(true);
-
-const loading = ref(false);
-const onLoading = () => {
-  loading.value = true;
-  setTimeout(() => {
-    loading.value = false;
-  }, 1000);
-};
-
-const items: IListItem[] = [
-  { name: 'Item 1', value: 1 },
-  { name: 'Item 2', value: 2 },
-  { name: 'Item 3', value: '3' },
-];
-
-const select = ref<number | string>(2);
-const getSelectValue = computed(() => items.find((i) => i.value == select.value)?.name || '');
-const onSelect = ({ name, value }: IListItem) => {
-  select.value = value;
-  input.value = name;
-};
-
-const listMenu: IListItem[] = [{ name: $t('btnUpdate'), value: 2 }];
-
-const onUpdate = () => {
-  onSend('INFO');
-};
-
-const onMenu = ({ value }: IListItem) => {
-  if (value === 2) onUpdate();
-};
-</script>

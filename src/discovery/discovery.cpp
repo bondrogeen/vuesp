@@ -1,9 +1,13 @@
 #include "./discovery.h"
 
+DeviceProtocol protocol;
+
 Discovery discovery = {
     KEY_DISCOVERY,
 };
+uint8_t total = 0;
 uint32_t lastTimeDiscovery = 0;
+uint32_t lastTimeProtocol = 0;
 WiFiUDP udp;
 
 bool udpSendPacket(const uint8_t* data, size_t length, uint32_t targetAddress) {
@@ -11,7 +15,7 @@ bool udpSendPacket(const uint8_t* data, size_t length, uint32_t targetAddress) {
   udp.beginPacket(targetIp, settings.discoveryPort);
   udp.write(data, length);
   bool ok = udp.endPacket();
-  Serial.printf("[SEND] %d bytes -> %s:%d\n", length, targetIp.toString().c_str(), settings.discoveryPort);
+  // Serial.printf("[SEND] %d bytes -> %s:%d\n", length, targetIp.toString().c_str(), settings.discoveryPort);
   return ok;
 }
 
@@ -21,10 +25,38 @@ void udpReceive() {
     IPAddress senderIp = udp.remoteIP();
     uint8_t buffer[TX_BUFFER_SIZE];
     int len = udp.read(buffer, packetSize);
-    Serial.printf("[RECV] %d bytes <- %s\n", len, senderIp.toString().c_str());
+    // Serial.printf("[RECV] %d bytes <- %s\n", len, senderIp.toString().c_str());
     protocol.handleIncomingData((uint32_t)senderIp, buffer, len);
     packetSize = udp.parsePacket();
   }
+}
+
+void sendPeer(const PeerInfo& peer) {
+  discovery.id = peer.id;
+  discovery.ip = peer.address;
+  discovery.lastSeen = peer.lastSeen;
+  discovery.status = peer.status;
+  wsSendAll((uint8_t*)&discovery, sizeof(discovery));
+}
+
+bool udpHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 2) return false;
+
+  const char* method = params[0].stringVal.data;
+  const char* url = params[1].stringVal.data;
+  const int32_t count = params[2].intVal;
+  const uint32_t num = params[3].uintVal;
+
+  const uint8_t* data = params[4].arrayVal.data;
+  uint8_t len = params[4].arrayVal.len;
+
+  for (uint8_t i = 0; i < len; i++) {
+    Serial.print(data[i]);
+  }
+
+  result.type = VAL_INT;
+  result.intVal = 200;
+  return true;
 }
 
 void setupDiscovery() {
@@ -38,37 +70,33 @@ void setupDiscovery() {
   });
 
   protocol.onPeerDiscovered([](const PeerInfo& peer) {
-    discovery.id = peer.id;
-    discovery.ip = peer.address;
-    discovery.lastSeen = peer.lastSeen;
-    discovery.status = 1;
-    wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    Serial.printf("+ PEER: 0x%08X @ %s\n", peer.id, IPAddress(peer.address).toString().c_str());
+    sendPeer(peer);
   });
 
   protocol.onPeerLost([](const PeerInfo& peer) {
-    discovery.id = peer.id;
-    discovery.ip = peer.address;
-    discovery.lastSeen = peer.lastSeen;
-    discovery.status = 0;
-    wsSendAll((uint8_t*)&discovery, sizeof(discovery));
-    Serial.printf("- PEER LOST: 0x%08X\n", peer.id);
+    sendPeer(peer);
   });
 
   protocol.onTextReceived([](uint32_t senderId, const String& text) {
-    Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
+    // Serial.printf("TEXT from 0x%08X: %s\n", senderId, text.c_str());
     // scriptRunner.registerScript(2, text.c_str());
     // scriptRunner.runScript(2);
   });
 
   protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {
-    Serial.printf("BINARY from 0x%08X, %d bytes: ", senderId, len);
-    for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
-    Serial.println();
+    // Serial.printf("BINARY from 0x%08X, %d bytes: ", senderId, len);
+    // for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
+    // Serial.println();
   });
+  scriptRunner.registerFunction("http", udpHandler);
 }
 
-uint8_t v = 0;
+void commDiscovery() {
+  if (discovery.comm == COMMAND_GET) {
+    total = protocol.getPeerCount();
+  }
+}
+
 void loopDiscovery(uint32_t now) {
   if (!settings.discovery) return;
   if (!isConnected) return;
@@ -80,17 +108,12 @@ void loopDiscovery(uint32_t now) {
     protocol.sendAnnounce();
   }
 
-  // static unsigned long lastText = 0;
-  // if (now - lastText > 10000) {
-  //   lastText = now;
-  //   v = v == 0 ? 1 : 0;
-  //   protocol.sendText(0, v ? "$p13=255" : "$p13=0");
-  // }
-
-  // static unsigned long lastBin = 0;
-  // if (now - lastBin > 15000) {
-  //   lastBin = now;
-  //   uint8_t cmd[] = {0x01, 0x02, 0x03};
-  //   protocol.sendBinary(14291611, cmd, 3);
-  // }
+  if (total && now - lastTimeProtocol > 100) {
+    lastTimeProtocol = now;
+    const PeerInfo* peer = protocol.getPeerByIndex(total - 1);
+    if (peer) {
+      sendPeer(*peer);
+      total--;
+    }
+  }
 }

@@ -1,3 +1,9 @@
+<script setup lang="ts">
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+</script>
+
 <template>
   <div class="flex flex-col items-center justify-center h-full">
     <h1 class="text-8xl">
@@ -15,9 +21,3 @@
     </v-button>
   </div>
 </template>
-
-<script setup lang="ts">
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-</script>
