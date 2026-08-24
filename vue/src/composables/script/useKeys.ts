@@ -1,21 +1,21 @@
 import { useMagicKeys, whenever } from '@vueuse/core';
 
-export const useKeys = () => {
-  const { ctrl_s, ctrl_f } = useMagicKeys({
+export const useKeys = ({ format, save }: Record<string, () => void>) => {
+  const keys = useMagicKeys({
     passive: false,
     onEventFired(e) {
-      if (e.ctrlKey && e.key === 's' && e.type === 'keydown') e.preventDefault();
-      if (e.ctrlKey && e.key === 'f' && e.type === 'keydown') e.preventDefault();
+      if (e.ctrlKey && e.code === 'KeyS' && e.type === 'keydown') e.preventDefault();
+      if (e.ctrlKey && e.code === 'KeyF' && e.type === 'keydown') e.preventDefault();
     },
   });
+  const ctrl_f = keys['control+keyf'];
+  const ctrl_s = keys['control+keys'];
 
   whenever(ctrl_s, () => {
-    // onSave();
+    if (save) save();
   });
   whenever(ctrl_f, () => {
-    // if (editor.value) editor.value.update({ value: formatScript(editor.value.value) });
+    if (format) format();
   });
-  return {
-
-  };
+  return {};
 };

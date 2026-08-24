@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IListItem } from 'vuesp-components/types';
+import { useDebounceFn } from '@vueuse/core';
 import { KEYS } from '@/utils/const';
 import { ref } from 'vue';
 
@@ -10,10 +10,9 @@ import { useLocale } from '@/composables/useLocale';
 import { useLogs } from '@/composables/script/useLogs';
 import { useScripts } from '@/composables/script/useScripts';
 
-import { ScriptEditor, ScriptViewDocs } from 'vuesp-components';
+import { ScriptEditor, ScriptViewDocs, VTooltip } from 'vuesp-components';
 import ScriptDialog from '@/components/script/ScriptDialog.vue';
 import { useSlots } from '@/composables/script/useSlots';
-
 const { $t } = useLocale();
 
 const { suggestions, message, main, onSend } = useConnection((send) => {
@@ -22,7 +21,7 @@ const { suggestions, message, main, onSend } = useConnection((send) => {
 
 const { logs, onHover } = useLogs(message);
 const { slotInfo, currentSlot, onSlot, getColorSlot } = useSlots(main);
-const { ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave } = useScripts();
+const { ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave, onExample } = useScripts();
 
 const dialogAdd = ref(false);
 const onAddScriptDialog = () => {
@@ -33,32 +32,27 @@ const onAddScriptDialog = () => {
 
 const dialogViewDocs = ref(false);
 
+const onUpdateScript = useDebounceFn(() => onSend(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT }), 1000);
+
 const onRunScript = () => {
   const id = selectedScript.value?.id || 0;
   onSend(KEYS.MESSAGE, { ...message.value, id, type: ScriptType.SCRIPT_START, text: content.value });
+  onUpdateScript();
 };
 
 const onStopScript = () => {
   onSend(KEYS.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_STOP, text: '' });
+  onUpdateScript();
 };
 
 const onStopScriptAll = () => {
   onSend(KEYS.MESSAGE, { ...message.value, type: ScriptType.SCRIPT_STOP_ALL, text: '' });
-  setTimeout(() => {
-    onUpdateScript();
-  }, 500);
+  onUpdateScript();
 };
 
 const onRemoveScript = () => {
   onSend(KEYS.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_REMOVE, text: '' });
-};
-
-const onUpdateScript = () => {
-  onSend(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT });
-};
-
-const onExample = (item: IListItem<string>) => {
-  content.value = item.value;
+  onUpdateScript();
 };
 </script>
 
@@ -141,22 +135,28 @@ const onExample = (item: IListItem<string>) => {
               </div>
             </div>
 
-            <ul class="overflow-y-auto flex flex-wrap gap-1 mb-2">
+            <ul class="flex flex-wrap gap-1 mb-2">
               <li v-for="slot in main.slots" :key="slot.index" class="group text-sm transition-all flex items-center rounded">
-                <v-button class="px-0! rounded-none" :class="getColorSlot(slot)" color="" size="none" @click="onSlot(slot)">
-                  <div class="flex-[0_0_8px] h-4 w-2"></div>
-                </v-button>
+                <VTooltip>
+                  <template #activator>
+                    <v-button class="px-0! rounded-none" :class="getColorSlot(slot)" color="" size="none" @click="onSlot(slot)">
+                      <div class="flex-[0_0_8px] h-4 w-2"></div>
+                    </v-button>
+                  </template>
+                  <template #default="{ show }">
+                    <div v-if="show" class="text-sm absolute bottom-full left-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-50 bg-white dark:bg-gray-800">
+                      <div class="text-slate-400">{{ slot?.id === 255 ? '' : `id:${slot?.id}` }} ({{ slot.active ? 'active' : slot.handler ? 'event' : slot?.id === 255 ? 'empty' : 'stopped' }})</div>
+
+                      <p>{{ slot?.text }}</p>
+                    </div>
+                  </template>
+                </VTooltip>
               </li>
             </ul>
           </div>
 
           <div class="px-2 border-t border-gray-200 dark:border-gray-700 text-slate-400 flex text-xs">
             <span>{{ `${$t('total')}: ${slotInfo.total} ${$t('used')}: ${slotInfo.used}` }}</span>
-          </div>
-
-          <div v-if="currentSlot?.handler || currentSlot?.active" class="text-slate-200 text-sm line-clamp-1 mt-4">
-            <span class="me-2 text-slate-400">#{{ currentSlot?.id }}</span>
-            <span>{{ currentSlot?.text }}</span>
           </div>
         </card-main>
 

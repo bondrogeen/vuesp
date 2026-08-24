@@ -1,4 +1,4 @@
 [
-  { "label": "MY_CONST", "type": "variable", "detail": "const" },
+  { "label": "MY_CONST", "type": "var", "detail": "const" },
   { "label": "btn_5", "type": "event", "detail": "button 5" }
 ]
