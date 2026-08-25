@@ -1,5 +1,13 @@
 #include "./device.h"
 
+#include <max6675.h>
+
+int thermoDO = 12;   // D6
+int thermoCS = 2;    // D4
+int thermoCLK = 14;  // D5
+
+MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
+
 Buffer myBuffer = {KEY_BUFFER};
 
 Device device = {KEY_DEVICE, 0, 100, 1760640900, 2, "text"};
@@ -130,6 +138,9 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     onSendDevice();
     // sendNotification("Test");
+
+    Serial.print("Celsius = ");
+    Serial.println(thermocouple.readCelsius());
   }
 
   if (tasks[KEY_BUFFER]) {
