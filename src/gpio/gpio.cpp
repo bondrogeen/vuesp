@@ -163,13 +163,17 @@ void setValueUpdate() {
   updatePort();
 }
 
-void emitButtonEvent(const char* format, ...) {
-  char buffer[32];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buffer, sizeof(buffer), format, args);
-  va_end(args);
-  emitEvent(buffer);
+// void emitButtonEvent(const char* format, ...) {
+//   char buffer[32];
+//   va_list args;
+//   va_start(args, format);
+//   vsnprintf(buffer, sizeof(buffer), format, args);
+//   va_end(args);
+//   emitEvent(buffer);
+// }
+
+void emitButtonEvent(Port* port, uint8_t type) {
+  scriptRunner.emitEvent("btn", 4, port->gpio, port->value, type, port->count);
 }
 
 void loopInterrupt(uint32_t now) {
@@ -180,7 +184,7 @@ void loopInterrupt(uint32_t now) {
       if (ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_REPEAT);
-          emitButtonEvent("btn_%d_repeat", ports[i].gpio);
+          scriptRunner.emitEvent("btn_repeat", 0, ports[i].gpio, ports[i].value);
         }
       } else {
         ports[i].count = 0;
@@ -190,7 +194,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_LONG_PRESS);
-          emitButtonEvent("btn_%d_long", ports[i].gpio);
+          scriptRunner.emitEvent("btn_long", 2, ports[i].gpio, ports[i].value);
         }
         ports[i].count = 0;
       }
@@ -199,7 +203,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_CLICK);
-          emitButtonEvent("btn_%d_click_%d", ports[i].gpio, ports[i].count);
+          scriptRunner.emitEvent("btn_click", 3, ports[i].gpio, ports[i].value, ports[i].count);
         }
         ports[i].count = 0;
       }
@@ -220,8 +224,7 @@ void checkInterrupt(uint32_t now) {
         ports[i].pressStart = now;
       }
       ports[i].value = port.value;
-      emitButtonEvent("btn_%d", ports[i].gpio);
-      emitButtonEvent("btn_%d_%d", ports[i].gpio, ports[i].value);
+      scriptRunner.emitEvent("btn", 2, ports[i].gpio, ports[i].value);
       deviceGPIO(&ports[i], EVENT_NONE);
     }
     wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
@@ -251,10 +254,16 @@ void findDallas() {
 }
 
 void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
+  Serial.print("stateChangeProvider:");
+  Serial.print(gpio);
+  Serial.println(newValue);
   updatePort(gpio, newValue);
 }
 
 bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
+  Serial.print("portProvider:");
+  Serial.print(gpio);
+  Serial.println(value);
   switch (action) {
     case PORT_READ:
       return getValue(gpio, value);

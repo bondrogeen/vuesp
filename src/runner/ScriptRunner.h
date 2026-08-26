@@ -48,6 +48,7 @@
 #define ARRAY_SEPARATOR ','
 
 #define SCRIPT_EXEC_INTERVAL_MS 10
+#define MAX_EVENT_PARAMS 4
 
 enum PortAction : uint8_t {
     PORT_READ = 0,
@@ -93,6 +94,10 @@ struct ScriptContext {
     char stringVars[MAX_STRING_VARS][MAX_STRING_LEN];
     uint8_t arrayVars[MAX_ARRAY_VARS][MAX_ARRAY_SIZE];
     uint8_t arrayLen[MAX_ARRAY_VARS];
+
+    // Параметры событий $e0..$e3
+    int32_t eventParams[MAX_EVENT_PARAMS];
+    uint8_t eventParamCount;
 };
 
 struct Params {
@@ -140,7 +145,7 @@ struct ScriptState {
 
     int32_t tempResult;
     bool hasTempResult;
-    
+
     bool isWhile;
     char whileConditionBuffer[32];
 };
@@ -204,11 +209,15 @@ public:
     uint8_t getFreeSlotsCount() const;
 
     static uint32_t hash(const char* str);
-    
+
     bool onEvent(uint32_t hash, uint8_t slotId);
     bool onEvent(const char* eventName, uint8_t slotId);
+
+    // emitEvent с параметрами
     void emitEvent(uint32_t hash);
     void emitEvent(const char* eventName);
+    void emitEvent(const char* eventName, uint8_t paramCount, ...);
+
     bool removeEventHandler(uint32_t hash);
     void clearAllEventHandlers();
 
@@ -263,7 +272,7 @@ private:
         void* userData;
         bool active;
     };
-    
+
     ExternalFunctionEntry _extFuncs[MAX_EXTERNAL_FUNCTIONS];
     uint8_t _extFuncCount;
     Value _funcParams[MAX_FUNCTION_PARAMS];
@@ -333,13 +342,13 @@ private:
     void logPortAction(uint8_t gpio, PortAction action, uint16_t value, uint8_t slot);
     void logDataAction(const char* id, DataKind kind, bool write, const char* value, uint8_t slot);
     void logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t slot);
-    void logEventAction(const char* eventName);
+    void logEventAction(const char* eventName, uint8_t paramCount = 0, const int32_t* params = nullptr);
     void logScriptAction(uint8_t slot, const char* action);
     #else
     inline void logPortAction(uint8_t, PortAction, uint16_t, uint8_t) {}
     inline void logDataAction(const char*, DataKind, bool, const char*, uint8_t) {}
     inline void logLoadAction(uint8_t, uint16_t, bool, uint8_t) {}
-    inline void logEventAction(const char*) {}
+    inline void logEventAction(const char*, uint8_t = 0, const int32_t* = nullptr) {}
     inline void logScriptAction(uint8_t, const char*) {}
     #endif
 
@@ -352,17 +361,17 @@ private:
         uint32_t lastAccess;
         uint8_t accessCount;
     };
-    
+
     LoadCacheEntry _loadCache[LOAD_CACHE_SIZE];
     uint32_t _loadCacheHits;
     uint32_t _loadCacheMisses;
     LoadProvider _originalLoadProvider;
-    
+
     int8_t findInLoadCache(uint8_t id, char* buffer, uint16_t& len);
     void addToLoadCache(uint8_t id, const char* script, uint16_t len);
     int8_t findEmptyLoadSlot() const;
     int8_t findLeastUsedSlot() const;
-    
+
     static bool cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len);
     #endif
 };

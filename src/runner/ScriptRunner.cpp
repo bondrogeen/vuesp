@@ -171,11 +171,29 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
     const char* pos = *p;
     while (*pos == ' ') pos++;
 
+    // $eN - параметры событий
+    if (*pos == '$' && pos[1] == 'e' && isDigit(pos[2])) {
+        pos += 2;
+        uint8_t idx = 0;
+        while (isDigit(*pos)) {
+            idx = idx * 10 + (*pos - '0');
+            pos++;
+        }
+        if (idx < MAX_EVENT_PARAMS) {
+            result = _ctx.eventParams[idx];
+            *p = pos;
+            return true;
+        }
+        result = 0;
+        *p = pos;
+        return true;
+    }
+
     if (*pos == '$') {
         const char* nameStart = pos;
         pos++;
         char type = *pos;
-        
+
         if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*(pos + 1))) {
             pos++;
             uint8_t idx = 0;
@@ -534,7 +552,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     _ctx.arrayLen[index] = (uint8_t)len;
                     return true;
                 }
-                setError("invalid string src", token, s.id, s.pos);
+                setError("invalid string src", s.id, s.pos);
                 return false;
             }
             setError("array error", s.id, s.pos);
@@ -602,7 +620,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
                     _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
                     return true;
                 }
-                setError("invalid string src", token, s.id, s.pos);
+                setError("invalid string src", s.id, s.pos);
                 return false;
             } else if (s.hasTempResult) {
                 snprintf(_strBuf, MAX_STRING_LEN, "%d", s.tempResult);
@@ -794,7 +812,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
             DataKind kind;
             DataValue dv;
             bool success = false;
-            
+
             if (varType == 'v' && varIndex < MAX_UINT_VARS) {
                 kind = KIND_UINT;
                 dv.uintVal = _ctx.uintVars[varIndex];
@@ -855,16 +873,16 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
     if (params.count < 1) { setError("log needs at least 1 param", s.id, s.pos); return false; }
     if (!_logProvider) return true;
-    
+
     char buf[128];
     snprintf(buf, sizeof(buf), "LOG[%d]: ", s.id);
     uint16_t pos = strlen(buf);
-    
+
     for (uint8_t i = 0; i < params.count && pos < 120; i++) {
         if (i > 0) { buf[pos++] = ' '; buf[pos] = '\0'; }
-        
+
         const char* param = params.values[i];
-        
+
         if (param[0] == '\'') {
             const char* p = param;
             char strBuf[MAX_STRING_LEN];
@@ -881,7 +899,7 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
             uint8_t idx = 0;
             while (isDigit(*p)) { idx = idx * 10 + (*p - '0'); p++; }
             bool found = false;
-            
+
             switch (type) {
                 case 's':
                     if (idx < MAX_STRING_VARS) {
@@ -932,6 +950,14 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
                         }
                     }
                     break;
+                case 'e': {
+                    // Параметры событий $eN
+                    if (idx < MAX_EVENT_PARAMS) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", _ctx.eventParams[idx]);
+                        found = true;
+                    }
+                    break;
+                }
                 default: {
                     int32_t val;
                     if (parseValue(&param, s, val, KIND_INT)) {
@@ -953,7 +979,7 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", val);
         }
     }
-    
+
     buf[sizeof(buf) - 1] = '\0';
     _logProvider(buf);
     return true;
@@ -1071,7 +1097,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     char varType = 0;
     uint8_t varIndex = 0;
     bool hasVar = false;
-    
+
     if (eq) {
         const char* varStart = token;
         const char* varEnd = eq;
@@ -1085,7 +1111,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (varName[2] >= '0' && varName[2] <= '9') varIndex = varName[2] - '0';
         }
     }
-    
+
     const char* cmdStart = token;
     if (eq && eq < open) cmdStart = eq + 1;
     char cmd[16];
@@ -1095,7 +1121,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     cmd[len] = '\0';
     Params params = parseParams(token);
     bool result = false;
-    
+
     if (strcmp(cmd, "call") == 0) result = handleCall(params, s);
     else if (strcmp(cmd, "on") == 0) result = handleOn(params, s, now);
     else if (strcmp(cmd, "wait") == 0) result = handleWait(params, s, now);
@@ -1108,11 +1134,11 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     else if (isExternalFunction(cmd)) {
         const char* p = open + 1;
         uint8_t paramCount = 0;
-        
+
         while (*p && *p != ')' && paramCount < MAX_FUNCTION_PARAMS) {
             while (*p == ' ') p++;
             if (*p == ')' || *p == '\0') break;
-            
+
             if (*p == '\'') {
                 const char* start = p + 1;
                 p++;
@@ -1169,6 +1195,15 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
                             paramCount++;
                         }
                         break;
+                    case 'e': {
+                        // Параметры событий $eN
+                        if (idx < MAX_EVENT_PARAMS) {
+                            _funcParams[paramCount].type = VAL_INT;
+                            _funcParams[paramCount].intVal = _ctx.eventParams[idx];
+                            paramCount++;
+                        }
+                        break;
+                    }
                     default: break;
                 }
             } else {
@@ -1193,12 +1228,12 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             }
             while (*p == ' ' || *p == ',') p++;
         }
-        
+
         if (*p != ')') { setError("missing ')'", s.id, s.pos); return false; }
-        
+
         Value resultVal;
         resultVal.type = VAL_NONE;
-        
+
         if (callExternalFunction(cmd, paramCount, _funcParams, resultVal)) {
             result = true;
             if (hasVar) {
@@ -1250,7 +1285,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
         setError("unknown cmd", cmd, s.id, s.pos);
         return false;
     }
-    
+
     if (result && s.hasTempResult && hasVar) {
         if (varType == 'v') {
             if (varIndex < MAX_UINT_VARS) _ctx.uintVars[varIndex] = (uint32_t)s.tempResult;
@@ -1271,6 +1306,22 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
 
 bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now) {
     if (!token || token[0] == '\0') { s.pos++; return false; }
+
+    // НОВОЕ: поддержка return
+    if (strcmp(token, "return") == 0) {
+        if (!s.isHandler) {
+            setError("return only allowed in event handler", s.id, s.pos);
+            return false;
+        }
+        s.active = false;
+        s.inLoop = false;
+        s.inIf = false;
+        s.inWait = false;
+        s.inEventHandler = false;
+        s.hasTempResult = false;
+        return true;
+    }
+
     if (s.inIf && s.skipElse) {
         if (strcmp(token, "end") == 0) return handleEnd(s);
         if (strcmp(token, "else") == 0) return handleElse(s);
@@ -1368,7 +1419,7 @@ bool ScriptRunner::startFade(uint8_t pin, uint8_t target, uint8_t tenths) {
     uint32_t totalTime = tenths * 100;
     uint16_t stepInterval = totalTime / steps;
     if (stepInterval < 1) stepInterval = 1;
-    
+
     for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
         if (_fadeChannels[i].pin == pin) {
             _fadeChannels[i].active = true;
@@ -1469,23 +1520,39 @@ bool ScriptRunner::onEvent(const char* eventName, uint8_t slotId) {
 }
 
 void ScriptRunner::emitEvent(uint32_t hash) {
-    uint8_t handlerCount = 0;
     for (uint8_t i = 0; i < _eventHandlerCount; i++) {
         if (!_eventHandlers[i].active || _eventHandlers[i].hash != hash) continue;
         uint8_t slotId = _eventHandlers[i].slotId;
         if (slotId >= MAX_SCRIPTS) continue;
         if (!_slots[slotId].registered) { _eventHandlers[i].active = false; continue; }
-        handlerCount++;
         runScriptFrom(slotId, 0, getSlotLen(slotId));
     }
 }
 
 void ScriptRunner::emitEvent(const char* eventName) {
+    emitEvent(eventName, 0);
+}
+
+void ScriptRunner::emitEvent(const char* eventName, uint8_t paramCount, ...) {
+    _ctx.eventParamCount = (paramCount > MAX_EVENT_PARAMS) ? MAX_EVENT_PARAMS : paramCount;
+
+    va_list args;
+    va_start(args, paramCount);
+    for (uint8_t i = 0; i < _ctx.eventParamCount; i++) {
+        _ctx.eventParams[i] = va_arg(args, int32_t);
+    }
+    va_end(args);
+
+    for (uint8_t i = _ctx.eventParamCount; i < MAX_EVENT_PARAMS; i++) {
+        _ctx.eventParams[i] = 0;
+    }
+
+    #if ENABLE_EVENT_LOGGING && ENABLE_LOGGING
+    logEventAction(eventName, _ctx.eventParamCount, _ctx.eventParams);
+    #endif
+
     uint32_t hash = ScriptRunner::hash(eventName);
     emitEvent(hash);
-    #if ENABLE_EVENT_LOGGING && ENABLE_LOGGING
-    logEventAction(eventName);
-    #endif
 }
 
 bool ScriptRunner::removeEventHandler(uint32_t hash) {
@@ -1554,13 +1621,13 @@ int8_t ScriptRunner::runScript(uint8_t id) {
             if (registerScript(id, buffer, false)) slot = findSlotById(id);
         }
     }
-    if (slot == -1) { 
-        setError("script not found", id, 0); 
-        return -1; 
+    if (slot == -1) {
+        setError("script not found", id, 0);
+        return -1;
     }
-    if (_slots[slot].isHandler) { 
-        setError("cannot run handler", id, 0); 
-        return -1; 
+    if (_slots[slot].isHandler) {
+        setError("cannot run handler", id, 0);
+        return -1;
     }
     if (_slots[slot].active) {
         #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
@@ -1582,11 +1649,11 @@ int8_t ScriptRunner::runScript(uint8_t id) {
     #if ENABLE_LOAD_LOGGING && ENABLE_LOGGING
     logLoadAction(id, _slots[slot].scriptLen, true, (uint8_t)slot);
     #endif
-    
+
     #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
     logScriptAction((uint8_t)slot, "started");
     #endif
-    
+
     return slot;
 }
 
@@ -1667,17 +1734,17 @@ void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
         }
         s.inLoop = false;
     }
-    
+
     uint8_t scriptId = s.id;
     bool wasHandler = s.isHandler;
     bool wasPersistent = s.isPersistent;
-    
+
     if (!wasHandler && !wasPersistent) {
         resetScriptState(idx);
     } else {
         s.active = false;
     }
-    
+
     if (_completeCallback) {
         _completeCallback(idx, scriptId);
     }
@@ -1880,7 +1947,7 @@ void ScriptRunner::logDataAction(const char* id, DataKind kind, bool write, cons
                 default: break;
             }
         }
-        
+
         if (write) {
             if (kindChar) {
                 snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s <- %s (%c)", slot, id, value, kindChar);
@@ -1908,10 +1975,20 @@ void ScriptRunner::logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t 
     #endif
 }
 
-void ScriptRunner::logEventAction(const char* eventName) {
+void ScriptRunner::logEventAction(const char* eventName, uint8_t paramCount, const int32_t* params) {
     #if ENABLE_EVENT_LOGGING
     if (_logProvider && eventName) {
-        snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s", eventName);
+        if (paramCount == 0) {
+            snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s", eventName);
+        } else {
+            char paramsStr[32] = {0};
+            char* p = paramsStr;
+            for (uint8_t i = 0; i < paramCount && i < MAX_EVENT_PARAMS; i++) {
+                if (i > 0) { *p++ = ','; *p++ = ' '; }
+                p += snprintf(p, sizeof(paramsStr) - (p - paramsStr), "%d", params[i]);
+            }
+            snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s (%s)", eventName, paramsStr);
+        }
         _logProvider(_logBuf);
     }
     #endif
@@ -2089,6 +2166,12 @@ ScriptRunner::ScriptRunner()
         _eventHandlers[i].hash = 0;
         _eventHandlers[i].slotId = 0;
     }
+
+    // Инициализация параметров событий
+    for (uint8_t i = 0; i < MAX_EVENT_PARAMS; i++) {
+        _ctx.eventParams[i] = 0;
+    }
+    _ctx.eventParamCount = 0;
 }
 
 ScriptRunner::~ScriptRunner() { _instance = nullptr; }
