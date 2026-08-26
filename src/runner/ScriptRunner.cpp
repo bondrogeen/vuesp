@@ -268,6 +268,81 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
     bool hasResult = false;
     char pendingOp = '\0';
 
+    bool negate = false;
+    while (*p == ' ') p++;
+    if (*p == '!') {
+        negate = true;
+        p++;
+        while (*p == ' ') p++;
+    }
+
+    const char* temp = p;
+    bool hasOperator = false;
+    while (*temp) {
+        if (*temp == '=' || *temp == '!' || *temp == '>' || *temp == '<' || 
+            (*temp == '&' && temp[1] == '&') || (*temp == '|' && temp[1] == '|')) {
+            if (*temp == '!' && temp == p) {
+                temp++;
+                continue;
+            }
+            hasOperator = true;
+            break;
+        }
+        temp++;
+    }
+
+    if (!hasOperator) {
+        int32_t value = 0;
+        const char* start = p;
+        
+        if (*p == '\'') {
+            char strBuf[MAX_STRING_LEN];
+            if (parseString(&p, strBuf)) {
+                result = (strlen(strBuf) > 0);
+                if (negate) result = !result;
+                s.ifResult = result;
+                return result;
+            }
+            return false;
+        } else if (*p == '$') {
+            const char* p2 = start;
+            if (parseValue(&p2, s, value, KIND_INT)) {
+                result = (value != 0);
+                if (negate) result = !result;
+                s.ifResult = result;
+                return result;
+            }
+
+            p2 = start;
+            if (parseValue(&p2, s, value, KIND_UINT)) {
+                result = (value != 0);
+                if (negate) result = !result;
+                s.ifResult = result;
+                return result;
+            }
+            p2 = start;
+            if (parseValue(&p2, s, value, KIND_FLOAT)) {
+                result = (value != 0);
+                if (negate) result = !result;
+                s.ifResult = result;
+                return result;
+            }
+            return false;
+        } else if (isDigit(*p) || *p == '.') {
+            char* end;
+            long val = strtol(p, &end, 10);
+            if (end > p) {
+                result = (val != 0);
+                if (negate) result = !result;
+                s.ifResult = result;
+                return result;
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+
     while (*p && *p != TOKEN_SEPARATOR) {
         int32_t leftVal;
         if (!parseValue(&p, s, leftVal, KIND_INT)) { s.ifResult = false; return false; }
@@ -309,6 +384,8 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
         else break;
         while (*p == ' ') p++;
     }
+    
+    if (negate) result = !result;
     s.ifResult = result;
     return result;
 }

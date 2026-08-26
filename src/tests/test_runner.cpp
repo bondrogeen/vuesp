@@ -595,17 +595,7 @@ TEST(if_original_bug_1) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';"
-    "if:1==1;"
-    "  $display='2';"
-    "  if:1==1;"
-    "    $display='3';"
-    "  else;"
-    "    $display='4';"
-    "  end;"
-    "  $display='5';"
-    "end;"
-    "$display='6';");
+    "$display='1';if:1==1;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';end;$display='6';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "3", "5", "6"};
@@ -616,17 +606,7 @@ TEST(if_original_bug_2) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';"
-    "if:1==1;"
-    "  $display='2';"
-    "  if:1==0;"
-    "    $display='3';"
-    "  else;"
-    "    $display='4';"
-    "  end;"
-    "  $display='5';"
-    "end;"
-    "$display='6';");
+    "$display='1';if:1==1;$display='2';if:1==0;$display='3';else;$display='4';end;$display='5';end;$display='6';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "4", "5", "6"};
@@ -637,19 +617,7 @@ TEST(if_original_bug_3) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';"
-    "if:1==0;"
-    "  $display='2';"
-    "  if:1==1;"
-    "    $display='3';"
-    "  else;"
-    "    $display='4';"
-    "  end;"
-    "  $display='5';"
-    "else;"
-    "  $display='6';"
-    "end;"
-    "$display='7';");
+    "$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';else;$display='6';end;$display='7';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "6", "7"};
@@ -660,17 +628,7 @@ TEST(if_original_bug_4) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';"
-    "if:1==0;"
-    "  $display='2';"
-    "  if:1==1;"
-    "    $display='3';"
-    "  else;"
-    "    $display='4';"
-    "  end;"
-    "  $display='5';"
-    "end;"
-    "$display='6';");
+    "$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';end;$display='6';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "6"};
@@ -856,7 +814,202 @@ TEST(end_without_if_error) {
 }
 
 // ============================================================
-// СТАРЫЕ ТЕСТЫ
+// НОВЫЕ ТЕСТЫ ДЛЯ СОКРАЩЕННОГО СИНТАКСИСА IF
+// ============================================================
+
+TEST(if_short_true) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "if:1;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_false) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "if:0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_variable_true) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$v0=5;if:$v0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_variable_false) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$v0=0;if:$v0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_negate_true) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$v0=0;if:!$v0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_negate_false) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$v0=5;if:!$v0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_negate_number_true) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "if:!0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_negate_number_false) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "if:!1;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_string_non_empty) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$s0='hello';if:$s0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_string_empty) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$s0='';if:$s0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_string_negate_empty) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$s0='';if:!$s0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_string_negate_non_empty) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$s0='hello';if:!$s0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_nested) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+    "$v0=1;$v1=0;"
+    "if:$v0;"
+    "  $display='1';"
+    "  if:!$v1;"
+    "    $display='2';"
+    "  else;"
+    "    $display='3';"
+    "  end;"
+    "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  const char* expected[] = {"1", "2"};
+  ASSERT_LOG_EXACT_ORDER(expected, 2);
+}
+
+TEST(if_short_float_true) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$f0=3.14;if:$f0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_float_false) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$f0=0.0;if:$f0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_NOT_CONTAINS("A");
+}
+
+TEST(if_short_float_negate) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$f0=0.0;if:!$f0;$display='A';end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("A");
+}
+
+TEST(if_short_with_else) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+    "$v0=0;"
+    "if:$v0;"
+    "  $display='TRUE';"
+    "else;"
+    "  $display='FALSE';"
+    "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("FALSE");
+}
+
+TEST(if_short_complex) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1,
+    "$v0=1;$v1=0;$v2=0;"
+    "if:$v0;"
+    "  $display='1';"
+    "  if:!$v1;"
+    "    $display='2';"
+    "    if:$v2;"
+    "      $display='3';"
+    "    else;"
+    "      $display='4';"
+    "    end;"
+    "  end;"
+    "end");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  const char* expected[] = {"1", "2", "4"};
+  ASSERT_LOG_EXACT_ORDER(expected, 3);
+}
+
+// ============================================================
+// СТАРЫЕ ТЕСТЫ (без изменений)
 // ============================================================
 
 TEST(variable_assignment_uint) {
@@ -2178,6 +2331,27 @@ int main() {
   RUN_TEST(if_with_multiple_commands_in_block);
   RUN_TEST(else_without_if_error);
   RUN_TEST(end_without_if_error);
+
+  // НОВЫЕ ТЕСТЫ ДЛЯ СОКРАЩЕННОГО СИНТАКСИСА
+  RUN_TEST(if_short_true);
+  RUN_TEST(if_short_false);
+  RUN_TEST(if_short_variable_true);
+  RUN_TEST(if_short_variable_false);
+  RUN_TEST(if_short_negate_true);
+  RUN_TEST(if_short_negate_false);
+  RUN_TEST(if_short_negate_number_true);
+  RUN_TEST(if_short_negate_number_false);
+  RUN_TEST(if_short_string_non_empty);
+  RUN_TEST(if_short_string_empty);
+  RUN_TEST(if_short_string_negate_empty);
+  RUN_TEST(if_short_string_negate_non_empty);
+  RUN_TEST(if_short_nested);
+  RUN_TEST(if_short_float_true);
+  RUN_TEST(if_short_float_false);
+  RUN_TEST(if_short_float_negate);
+  RUN_TEST(if_short_with_else);
+  RUN_TEST(if_short_complex);
+
   RUN_TEST(external_function_type_mismatch);
 
   printf("\n=== All tests passed ===\n");
