@@ -49,6 +49,8 @@
 
 #define SCRIPT_EXEC_INTERVAL_MS 10
 #define MAX_EVENT_PARAMS 4
+#define MAX_IF_NESTING 8
+#define MAX_BLOCK_NESTING 8
 
 enum PortAction : uint8_t {
     PORT_READ = 0,
@@ -71,6 +73,13 @@ enum ValueType : uint8_t {
     VAL_ARRAY
 };
 
+enum BlockType : uint8_t {
+    BLOCK_NONE = 0,
+    BLOCK_IF,
+    BLOCK_WHILE,
+    BLOCK_ON
+};
+
 union DataValue {
     uint32_t uintVal;
     int32_t intVal;
@@ -87,6 +96,11 @@ struct EventHandler {
     bool active;
 };
 
+struct IfStackEntry {
+    bool result;
+    bool skipElse;
+};
+
 struct ScriptContext {
     uint32_t uintVars[MAX_UINT_VARS];
     int32_t intVars[MAX_INT_VARS];
@@ -95,7 +109,6 @@ struct ScriptContext {
     uint8_t arrayVars[MAX_ARRAY_VARS][MAX_ARRAY_SIZE];
     uint8_t arrayLen[MAX_ARRAY_VARS];
 
-    // Параметры событий $e0..$e3
     int32_t eventParams[MAX_EVENT_PARAMS];
     uint8_t eventParamCount;
 };
@@ -119,7 +132,6 @@ struct FadeChannel {
 struct ScriptState {
     bool active;
     bool registered;
-    bool inEventHandler;
     bool isHandler;
     bool isPersistent;
     uint8_t id;
@@ -130,24 +142,36 @@ struct ScriptState {
     uint32_t startTime;
     uint32_t lastExecutionTime;
 
-    bool inLoop;
-    bool isInfinite;
-    uint8_t repeatCount;
-    uint16_t loopStartPos;
+    // Стек блоков (вместо inIf, inLoop, inEventHandler)
+    uint8_t blockDepth;
+    uint8_t blockStack[MAX_BLOCK_NESTING];
 
-    bool inIf;
-    bool ifResult;
-    bool skipElse;
+    // Стек условий if
+    IfStackEntry ifStack[MAX_IF_NESTING];
     uint8_t ifDepth;
 
+    // Для while
+    bool isWhile;
+    char whileConditionBuffer[32];
+    uint16_t loopStartPos;
+    uint8_t repeatCount;
+    bool isInfinite;
+
+    // Для пропуска (skipElse)
+    bool skipElse;
+    uint8_t skipDepth;
+    bool ifResult;  // текущий результат if (для быстрого доступа)
+
+    // Для wait
     bool inWait;
     uint32_t waitUntil;
 
+    // Временный результат
     int32_t tempResult;
     bool hasTempResult;
 
-    bool isWhile;
-    char whileConditionBuffer[32];
+    // Для обработчиков событий (оставляем для обратной совместимости, но используем блоки)
+    bool inEventHandler;
 };
 
 struct Value {
@@ -213,7 +237,6 @@ public:
     bool onEvent(uint32_t hash, uint8_t slotId);
     bool onEvent(const char* eventName, uint8_t slotId);
 
-    // emitEvent с параметрами
     void emitEvent(uint32_t hash);
     void emitEvent(const char* eventName);
     void emitEvent(const char* eventName, uint8_t paramCount, ...);

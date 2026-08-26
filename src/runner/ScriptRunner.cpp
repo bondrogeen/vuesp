@@ -171,7 +171,6 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
     const char* pos = *p;
     while (*pos == ' ') pos++;
 
-    // $eN - параметры событий
     if (*pos == '$' && pos[1] == 'e' && isDigit(pos[2])) {
         pos += 2;
         uint8_t idx = 0;
@@ -328,56 +327,1001 @@ bool ScriptRunner::handleWait(const Params& params, ScriptState& s, uint32_t now
 }
 
 bool ScriptRunner::handleWhile(const char* params, ScriptState& s) {
-    if (s.inLoop) { setError("nested loop", s.id, s.pos); return false; }
+    if (s.blockDepth >= MAX_BLOCK_NESTING) {
+        setError("block nesting too deep", s.id, s.pos);
+        return false;
+    }
     strncpy(s.whileConditionBuffer, params, 31);
     s.whileConditionBuffer[31] = '\0';
     s.isWhile = true;
-    if (!parseCondition(s.whileConditionBuffer, s)) return true;
+    if (!parseCondition(s.whileConditionBuffer, s)) {
+        s.blockStack[s.blockDepth] = BLOCK_WHILE;
+        s.blockDepth++;
+        s.skipDepth++;
+        return true;
+    }
     s.loopStartPos = s.pos;
-    s.inLoop = true;
-    s.isInfinite = false;
     s.repeatCount = 1;
+    s.isInfinite = false;
+    s.blockStack[s.blockDepth] = BLOCK_WHILE;
+    s.blockDepth++;
     return true;
 }
 
 bool ScriptRunner::handleIf(const char* params, ScriptState& s) {
+    if (s.skipElse) {
+        s.skipDepth++;
+        return true;
+    }
+    if (s.blockDepth >= MAX_BLOCK_NESTING) {
+        setError("block nesting too deep", s.id, s.pos);
+        return false;
+    }
+    if (s.ifDepth >= MAX_IF_NESTING) {
+        setError("if nesting too deep", s.id, s.pos);
+        return false;
+    }
+    bool condition = parseCondition(params, s);
+    s.ifStack[s.ifDepth].result = condition;
+    s.ifStack[s.ifDepth].skipElse = !condition;
     s.ifDepth++;
-    s.inIf = true;
-    s.skipElse = !parseCondition(params, s);
+    s.ifResult = condition;
+    s.skipElse = !condition;
+    s.blockStack[s.blockDepth] = BLOCK_IF;
+    s.blockDepth++;
     return true;
 }
 
 bool ScriptRunner::handleElse(ScriptState& s) {
-    if (s.inIf && s.ifDepth > 0) {
-        if (s.ifResult) s.skipElse = true;
-        else { s.skipElse = false; s.ifResult = true; }
+    if (s.skipDepth > 0) {
+        return true;
+    }
+    if (s.blockDepth == 0 || s.blockStack[s.blockDepth-1] != BLOCK_IF) {
+        setError("else without if", s.id, s.pos);
+        return false;
+    }
+    if (s.ifDepth == 0) {
+        setError("else without if", s.id, s.pos);
+        return false;
+    }
+    uint8_t top = s.ifDepth - 1;
+    if (!s.ifStack[top].result) {
+        s.ifStack[top].skipElse = false;
+        s.skipElse = false;
+        s.ifResult = false;
+    } else {
+        s.ifStack[top].skipElse = true;
+        s.skipElse = true;
+        s.ifResult = true;
     }
     return true;
 }
 
 bool ScriptRunner::handleEnd(ScriptState& s) {
-    if (s.inIf && s.ifDepth > 0) {
-        s.ifDepth--;
-        if (s.ifDepth == 0) { s.inIf = false; s.skipElse = false; s.ifResult = false; }
+    if (s.skipDepth > 0) {
+        s.skipDepth--;
         return true;
     }
-    if (s.inLoop) {
+
+    if (s.blockDepth == 0) {
+        setError("end without block", s.id, s.pos);
+        return false;
+    }
+
+    BlockType type = (BlockType)s.blockStack[s.blockDepth - 1];
+    s.blockDepth--;
+
+    if (type == BLOCK_WHILE) {
         if (s.isWhile) {
-            if (parseCondition(s.whileConditionBuffer, s)) { s.pos = s.loopStartPos; return true; }
-            s.inLoop = false; s.isWhile = false; s.repeatCount = 0;
+            if (parseCondition(s.whileConditionBuffer, s)) {
+                s.pos = s.loopStartPos;
+                s.blockStack[s.blockDepth] = BLOCK_WHILE;
+                s.blockDepth++;
+                return true;
+            }
+            s.isWhile = false;
+            s.repeatCount = 0;
+        }
+        return true;
+    }
+    else if (type == BLOCK_IF) {
+        if (s.ifDepth == 0) {
+            setError("if depth mismatch", s.id, s.pos);
+            return false;
+        }
+        s.ifDepth--;
+        if (s.ifDepth == 0) {
+            s.ifResult = false;
+            s.skipElse = false;
+        } else {
+            uint8_t parent = s.ifDepth - 1;
+            s.ifResult = s.ifStack[parent].result;
+            s.skipElse = s.ifStack[parent].skipElse;
+        }
+        return true;
+    }
+    else if (type == BLOCK_ON) {
+        s.inEventHandler = false;
+        return true;
+    }
+    else {
+        setError("unknown block type", s.id, s.pos);
+        return false;
+    }
+}
+
+bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now) {
+    if (!token || token[0] == '\0') {
+        s.pos++;
+        return false;
+    }
+
+    if (s.blockDepth > MAX_BLOCK_NESTING) {
+        setError("block nesting too deep", s.id, s.pos);
+        s.active = false;
+        return false;
+    }
+
+    if (s.skipElse) {
+        if (s.blockDepth == 0 || s.blockStack[s.blockDepth-1] != BLOCK_IF) {
+            s.skipElse = false;
+        } else {
+            if (strcmp(token, "else") == 0) {
+                return handleElse(s);
+            }
+            if (strcmp(token, "end") == 0) {
+                return handleEnd(s);
+            }
+            const char* colon = strchr(token, ':');
+            if (colon) {
+                char cmd[16];
+                uint16_t len = colon - token;
+                if (len > 15) len = 15;
+                strncpy(cmd, token, len);
+                cmd[len] = '\0';
+                if (strcmp(cmd, "if") == 0 || strcmp(cmd, "while") == 0) {
+                    s.skipDepth++;
+                    return true;
+                }
+            }
+            if (strncmp(token, "on(", 3) == 0) {
+                s.skipDepth++;
+                return true;
+            }
             return true;
         }
-        if (s.repeatCount > 0) { s.repeatCount--; if (s.repeatCount > 0) { s.pos = s.loopStartPos; return true; } }
-        s.inLoop = false; s.isInfinite = false; s.repeatCount = 0;
+    }
+
+    if (strcmp(token, "return") == 0) {
+        if (!s.isHandler) {
+            setError("return only allowed in event handler", s.id, s.pos);
+            return false;
+        }
+        s.active = false;
+        s.blockDepth = 0;
+        s.ifDepth = 0;
+        s.skipDepth = 0;
+        s.inWait = false;
+        s.inEventHandler = false;
+        s.hasTempResult = false;
         return true;
     }
-    if (s.inEventHandler) { s.inEventHandler = false; return true; }
+
+    if (strcmp(token, "else") == 0) return handleElse(s);
+    if (strcmp(token, "end") == 0) return handleEnd(s);
+
+    const char* colon = strchr(token, ':');
+    if (colon) {
+        char cmd[16];
+        uint16_t len = colon - token;
+        if (len > 15) len = 15;
+        strncpy(cmd, token, len);
+        cmd[len] = '\0';
+        const char* params = colon + 1;
+        if (strcmp(cmd, "while") == 0) return handleWhile(params, s);
+        if (strcmp(cmd, "if") == 0) return handleIf(params, s);
+    }
+
+    if (strchr(token, '(')) return processCommand(token, s, now);
+    if (token[0] == '$') return handleAssignment(token, s);
+
+    setError("unknown token", token, s.id, s.pos);
+    return false;
+}
+
+void ScriptRunner::resetScriptState(uint8_t idx) {
+    ScriptState& s = _slots[idx];
+    s.active = false;
+    s.registered = false;
+    s.isHandler = false;
+    s.isPersistent = false;
+    s.id = 0;
+    s.script[0] = '\0';
+    s.scriptLen = 0;
+    s.pos = 0;
+    s.startTime = 0;
+    s.lastExecutionTime = 0;
+
+    s.blockDepth = 0;
+    memset(s.blockStack, 0, sizeof(s.blockStack));
+    s.ifDepth = 0;
+    memset(s.ifStack, 0, sizeof(s.ifStack));
+    s.isWhile = false;
+    s.whileConditionBuffer[0] = '\0';
+    s.loopStartPos = 0;
+    s.repeatCount = 0;
+    s.isInfinite = false;
+    s.skipElse = false;
+    s.skipDepth = 0;
+    s.ifResult = false;
+    s.inWait = false;
+    s.waitUntil = 0;
+    s.tempResult = 0;
+    s.hasTempResult = false;
+    s.inEventHandler = false;
+}
+
+int8_t ScriptRunner::findSlotById(uint8_t id) const {
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+        if (_slots[i].registered && _slots[i].id == id) return (int8_t)i;
+    }
+    return -1;
+}
+
+int8_t ScriptRunner::findFreeSlot(uint16_t scriptLen) {
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+        if (!_slots[i].registered && _slots[i].slotSize >= scriptLen) return (int8_t)i;
+    }
+    return -1;
+}
+
+void ScriptRunner::initSlotPools() {
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+        resetScriptState(i);
+        _slots[i].slotSize = MAX_SCRIPT_LEN;
+    }
+}
+
+void ScriptRunner::initFade() {
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        _fadeChannels[i].active = false;
+        _fadeChannels[i].pin = 0;
+        _fadeChannels[i].current = 0;
+        _fadeChannels[i].target = 0;
+        _fadeChannels[i].step = 0;
+        _fadeChannels[i].lastStepTime = 0;
+        _fadeChannels[i].stepInterval = 0;
+        _fadeChannels[i].remainingSteps = 0;
+    }
+    for (uint8_t i = 0; i < 40; i++) _lastPortValues[i] = 0;
+}
+
+bool ScriptRunner::startFade(uint8_t pin, uint8_t target, uint8_t tenths) {
+    if (tenths == 0) tenths = 1;
+    uint8_t current = readPort(pin);
+    int16_t diff = target - current;
+    uint8_t steps = diff < 0 ? -diff : diff;
+    if (steps == 0) steps = 1;
+    uint32_t totalTime = tenths * 100;
+    uint16_t stepInterval = totalTime / steps;
+    if (stepInterval < 1) stepInterval = 1;
+
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        if (_fadeChannels[i].pin == pin) {
+            _fadeChannels[i].active = true;
+            _fadeChannels[i].current = current;
+            _fadeChannels[i].target = target;
+            _fadeChannels[i].step = (current < target) ? 1 : -1;
+            _fadeChannels[i].lastStepTime = millis();
+            _fadeChannels[i].stepInterval = stepInterval;
+            _fadeChannels[i].remainingSteps = steps;
+            return true;
+        }
+    }
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        if (!_fadeChannels[i].active) {
+            _fadeChannels[i].active = true;
+            _fadeChannels[i].pin = pin;
+            _fadeChannels[i].current = current;
+            _fadeChannels[i].target = target;
+            _fadeChannels[i].step = (current < target) ? 1 : -1;
+            _fadeChannels[i].lastStepTime = millis();
+            _fadeChannels[i].stepInterval = stepInterval;
+            _fadeChannels[i].remainingSteps = steps;
+            return true;
+        }
+    }
+    return false;
+}
+
+void ScriptRunner::processFade() {
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        FadeChannel& ch = _fadeChannels[i];
+        if (!ch.active) continue;
+        uint32_t now = millis();
+        if (now - ch.lastStepTime < ch.stepInterval) continue;
+        ch.lastStepTime = now;
+        if (ch.remainingSteps == 0) {
+            ch.active = false;
+            writePortSilent(ch.pin, ch.target);
+            if (_stateChangeProvider) _stateChangeProvider(ch.pin, 0, ch.target);
+            continue;
+        }
+        ch.remainingSteps--;
+        ch.current += ch.step;
+        writePortSilent(ch.pin, ch.current);
+    }
+}
+
+uint8_t ScriptRunner::readPort(uint8_t pin) {
+    uint16_t val = 0;
+    if (_portProvider && _portProvider(pin, PORT_READ, val)) {
+        if (pin < 40) _lastPortValues[pin] = (uint8_t)val;
+        return (uint8_t)val;
+    }
+    if (pin < 40) return _lastPortValues[pin];
+    return 0;
+}
+
+void ScriptRunner::writePort(uint8_t pin, uint16_t value, uint8_t slot) {
+    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
+    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
+        if (_fadeChannels[i].active && _fadeChannels[i].pin == pin) {
+            _fadeChannels[i].active = false;
+            break;
+        }
+    }
+    if (pin < 40) _lastPortValues[pin] = (uint8_t)value;
+    #if ENABLE_PORT_LOGGING && ENABLE_LOGGING
+    logPortAction(pin, PORT_WRITE, value, slot);
+    #endif
+    if (_portProvider) {
+        _portProvider(pin, PORT_WRITE, value);
+        if (_stateChangeProvider) _stateChangeProvider(pin, 0, value);
+    }
+}
+
+void ScriptRunner::writePortSilent(uint8_t pin, uint16_t value) {
+    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
+    if (pin < 40) _lastPortValues[pin] = (uint8_t)value;
+    if (_portProvider) _portProvider(pin, PORT_WRITE, value);
+}
+
+bool ScriptRunner::onEvent(uint32_t hash, uint8_t slotId) {
+    if (slotId >= MAX_SCRIPTS) return false;
+    if (!_slots[slotId].registered) return false;
+    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].hash == hash) return true;
+    }
+    if (_eventHandlerCount >= MAX_EVENT_HANDLERS) return false;
+    _eventHandlers[_eventHandlerCount].hash = hash;
+    _eventHandlers[_eventHandlerCount].slotId = slotId;
+    _eventHandlers[_eventHandlerCount].active = true;
+    _eventHandlerCount++;
     return true;
 }
 
+bool ScriptRunner::onEvent(const char* eventName, uint8_t slotId) {
+    return onEvent(ScriptRunner::hash(eventName), slotId);
+}
+
+void ScriptRunner::emitEvent(uint32_t hash) {
+    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
+        if (!_eventHandlers[i].active || _eventHandlers[i].hash != hash) continue;
+        uint8_t slotId = _eventHandlers[i].slotId;
+        if (slotId >= MAX_SCRIPTS) continue;
+        if (!_slots[slotId].registered) { _eventHandlers[i].active = false; continue; }
+        runScriptFrom(slotId, 0, getSlotLen(slotId));
+    }
+}
+
+void ScriptRunner::emitEvent(const char* eventName) {
+    emitEvent(eventName, 0);
+}
+
+void ScriptRunner::emitEvent(const char* eventName, uint8_t paramCount, ...) {
+    _ctx.eventParamCount = (paramCount > MAX_EVENT_PARAMS) ? MAX_EVENT_PARAMS : paramCount;
+
+    va_list args;
+    va_start(args, paramCount);
+    for (uint8_t i = 0; i < _ctx.eventParamCount; i++) {
+        _ctx.eventParams[i] = va_arg(args, int32_t);
+    }
+    va_end(args);
+
+    for (uint8_t i = _ctx.eventParamCount; i < MAX_EVENT_PARAMS; i++) {
+        _ctx.eventParams[i] = 0;
+    }
+
+    #if ENABLE_EVENT_LOGGING && ENABLE_LOGGING
+    logEventAction(eventName, _ctx.eventParamCount, _ctx.eventParams);
+    #endif
+
+    uint32_t hash = ScriptRunner::hash(eventName);
+    emitEvent(hash);
+}
+
+bool ScriptRunner::removeEventHandler(uint32_t hash) {
+    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].hash == hash) {
+            _eventHandlers[i].active = false;
+            uint8_t slotId = _eventHandlers[i].slotId;
+            if (slotId < MAX_SCRIPTS) resetScriptState(slotId);
+            return true;
+        }
+    }
+    return false;
+}
+
+void ScriptRunner::clearAllEventHandlers() {
+    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active) {
+            uint8_t slotId = _eventHandlers[i].slotId;
+            if (slotId < MAX_SCRIPTS) resetScriptState(slotId);
+        }
+    }
+    _eventHandlerCount = 0;
+    for (uint8_t i = 0; i < MAX_EVENT_HANDLERS; i++) {
+        _eventHandlers[i].active = false;
+        _eventHandlers[i].hash = 0;
+        _eventHandlers[i].slotId = 0;
+    }
+}
+
+bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persistent) {
+    uint16_t len = strlen(script);
+    if (len >= MAX_SCRIPT_LEN) { setError("script too long"); return false; }
+    int8_t existing = findSlotById(id);
+    if (existing != -1) {
+        if (_slots[existing].isHandler) { setError("slot is handler", id, 0); return false; }
+        strcpy(_slots[existing].script, script);
+        _slots[existing].scriptLen = len;
+        _slots[existing].pos = 0;
+        _slots[existing].active = false;
+        _slots[existing].isHandler = false;
+        _slots[existing].isPersistent = persistent;
+        _slots[existing].inEventHandler = false;
+        return true;
+    }
+    int8_t slot = findFreeSlot(len);
+    if (slot == -1) { setError("no free slots"); return false; }
+    resetScriptState((uint8_t)slot);
+    _slots[slot].registered = true;
+    _slots[slot].id = id;
+    _slots[slot].isHandler = false;
+    _slots[slot].isPersistent = persistent;
+    strcpy(_slots[slot].script, script);
+    _slots[slot].scriptLen = len;
+    _slots[slot].pos = 0;
+    _slots[slot].active = false;
+    _slots[slot].inEventHandler = false;
+    return true;
+}
+
+int8_t ScriptRunner::runScript(uint8_t id) {
+    int8_t slot = findSlotById(id);
+    if (slot == -1 && _loadProvider) {
+        char buffer[MAX_SCRIPT_LEN];
+        uint16_t len = 0;
+        if (_loadProvider(id, buffer, len)) {
+            if (registerScript(id, buffer, false)) slot = findSlotById(id);
+        }
+    }
+    if (slot == -1) {
+        setError("script not found", id, 0);
+        return -1;
+    }
+    if (_slots[slot].isHandler) {
+        setError("cannot run handler", id, 0);
+        return -1;
+    }
+    if (_slots[slot].active) {
+        #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
+        logScriptAction((uint8_t)slot, "already running");
+        #endif
+        return slot;
+    }
+
+    _slots[slot].pos = 0;
+    _slots[slot].scriptLen = strlen(_slots[slot].script);
+    _slots[slot].active = true;
+    _slots[slot].startTime = millis();
+    _slots[slot].lastExecutionTime = 0;
+    _slots[slot].blockDepth = 0;
+    _slots[slot].ifDepth = 0;
+    _slots[slot].skipDepth = 0;
+    _slots[slot].skipElse = false;
+    _slots[slot].inWait = false;
+    _slots[slot].inEventHandler = false;
+
+    #if ENABLE_LOAD_LOGGING && ENABLE_LOGGING
+    logLoadAction(id, _slots[slot].scriptLen, true, (uint8_t)slot);
+    #endif
+
+    #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
+    logScriptAction((uint8_t)slot, "started");
+    #endif
+
+    return slot;
+}
+
+bool ScriptRunner::runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len) {
+    if (slot >= MAX_SCRIPTS) { setError("invalid slot"); return false; }
+    if (!_slots[slot].registered) { setError("slot not registered"); return false; }
+    if (_slots[slot].active) _slots[slot].active = false;
+    if (offset + len > _slots[slot].slotSize) len = _slots[slot].slotSize - offset;
+    _slots[slot].pos = offset;
+    _slots[slot].scriptLen = offset + len;
+    _slots[slot].active = true;
+    _slots[slot].startTime = millis();
+    _slots[slot].lastExecutionTime = 0;
+    _slots[slot].blockDepth = 0;
+    _slots[slot].ifDepth = 0;
+    _slots[slot].skipDepth = 0;
+    _slots[slot].skipElse = false;
+    _slots[slot].inWait = false;
+    _slots[slot].inEventHandler = false;
+    return true;
+}
+
+bool ScriptRunner::stopScript(uint8_t id) {
+    int8_t slot = findSlotById(id);
+    if (slot == -1) return false;
+    _slots[slot].active = false;
+    return true;
+}
+
+void ScriptRunner::stopAll() {
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) _slots[i].active = false;
+}
+
+bool ScriptRunner::removeScript(uint8_t id) {
+    int8_t slot = findSlotById(id);
+    if (slot == -1) return false;
+    if (_slots[slot].active) _slots[slot].active = false;
+    resetScriptState((uint8_t)slot);
+    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
+        if (_eventHandlers[i].active && _eventHandlers[i].slotId == slot) {
+            _eventHandlers[i].active = false;
+        }
+    }
+    return true;
+}
+
+bool ScriptRunner::isEventId(uint8_t id) const {
+    return id >= EVENT_ID_OFFSET;
+}
+
+bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen) {
+    const char* p = s.script + s.pos;
+    while (*p == ' ' || *p == TOKEN_SEPARATOR || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
+        p++; s.pos++;
+        if (s.pos >= s.scriptLen) break;
+    }
+    if (s.pos >= s.scriptLen) { token[0] = '\0'; tokenLen = 0; return false; }
+    const char* start = p;
+    uint8_t parenCount = 0;
+    while (*p && (p - s.script) < s.scriptLen) {
+        if (*p == '(') parenCount++;
+        if (*p == ')') parenCount--;
+        if (*p == TOKEN_SEPARATOR && parenCount == 0) break;
+        p++;
+    }
+    tokenLen = p - start;
+    if (tokenLen >= MAX_TOKEN_LEN) tokenLen = MAX_TOKEN_LEN - 1;
+    strncpy(token, start, tokenLen);
+    token[tokenLen] = '\0';
+    s.pos = p - s.script;
+    return tokenLen > 0 && token[0] != '\0' && token[0] != TOKEN_SEPARATOR;
+}
+
+void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
+    if (s.isWhile && s.blockDepth > 0 && s.blockStack[s.blockDepth-1] == BLOCK_WHILE) {
+        s.isWhile = false;
+        s.repeatCount = 0;
+        s.blockDepth--;
+    }
+
+    uint8_t scriptId = s.id;
+    bool wasHandler = s.isHandler;
+    bool wasPersistent = s.isPersistent;
+
+    if (!wasHandler && !wasPersistent) {
+        resetScriptState(idx);
+    } else {
+        s.active = false;
+    }
+
+    if (_completeCallback) {
+        _completeCallback(idx, scriptId);
+    }
+}
+
+void ScriptRunner::processScript(uint8_t idx, uint32_t now) {
+    ScriptState& s = _slots[idx];
+    if (!s.active || !s.registered) return;
+    if (s.inWait) {
+        if (now >= s.waitUntil) s.inWait = false;
+        else return;
+    }
+    if (now - s.lastExecutionTime < SCRIPT_EXEC_INTERVAL_MS) return;
+    s.lastExecutionTime = now;
+    if (s.pos >= s.scriptLen) { finishScript(s, idx); return; }
+    uint16_t tokenLen = 0;
+    if (!getNextToken(s, _tokenBuf, tokenLen)) {
+        if (s.pos >= s.scriptLen) finishScript(s, idx);
+        return;
+    }
+    bool ok = processToken(_tokenBuf, s, now);
+    if (!ok && s.active) {
+        if (!s.inWait && !s.isWhile && !(s.blockDepth > 0 && s.blockStack[s.blockDepth-1] == BLOCK_IF)) {
+            s.active = false;
+        }
+    }
+}
+
+void ScriptRunner::update() {
+    uint32_t now = millis();
+    processFade();
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) processScript(i, now);
+}
+
+bool ScriptRunner::registerFunction(const char* name, ExternalFunction func, void* userData) {
+    if (!name || !func) return false;
+    if (_extFuncCount >= MAX_EXTERNAL_FUNCTIONS) { setError("too many funcs"); return false; }
+    for (uint8_t i = 0; i < _extFuncCount; i++) {
+        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
+            _extFuncs[i].func = func;
+            _extFuncs[i].userData = userData;
+            return true;
+        }
+    }
+    strncpy(_extFuncs[_extFuncCount].name, name, 15);
+    _extFuncs[_extFuncCount].name[15] = '\0';
+    _extFuncs[_extFuncCount].func = func;
+    _extFuncs[_extFuncCount].userData = userData;
+    _extFuncs[_extFuncCount].active = true;
+    _extFuncCount++;
+    return true;
+}
+
+bool ScriptRunner::isExternalFunction(const char* name) const {
+    if (!name) return false;
+    for (uint8_t i = 0; i < _extFuncCount; i++) {
+        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) return true;
+    }
+    return false;
+}
+
+bool ScriptRunner::callExternalFunction(const char* name, uint8_t paramCount, const Value* params, Value& result) {
+    if (!name) return false;
+    for (uint8_t i = 0; i < _extFuncCount; i++) {
+        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
+            return _extFuncs[i].func(paramCount, params, result, _extFuncs[i].userData);
+        }
+    }
+    return false;
+}
+
+void ScriptRunner::setScriptCompleteCallback(ScriptCompleteCallback callback) {
+    _completeCallback = callback;
+}
+
+const char* ScriptRunner::getScript(uint8_t slot) const {
+    if (slot >= MAX_SCRIPTS) return nullptr;
+    if (!_slots[slot].registered) return nullptr;
+    return _slots[slot].script;
+}
+
+uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
+    if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
+    return 0;
+}
+
+int32_t ScriptRunner::getIntVar(uint8_t idx) const {
+    if (idx < MAX_INT_VARS) return _ctx.intVars[idx];
+    return 0;
+}
+
+float ScriptRunner::getFloatVar(uint8_t idx) const {
+    if (idx < MAX_FLOAT_VARS) return (float)_ctx.floatVars[idx];
+    return 0.0f;
+}
+
+void ScriptRunner::setUintVar(uint8_t idx, uint32_t value) {
+    if (idx < MAX_UINT_VARS) _ctx.uintVars[idx] = value;
+}
+
+void ScriptRunner::setIntVar(uint8_t idx, int32_t value) {
+    if (idx < MAX_INT_VARS) _ctx.intVars[idx] = value;
+}
+
+void ScriptRunner::setFloatVar(uint8_t idx, float value) {
+    if (idx < MAX_FLOAT_VARS) _ctx.floatVars[idx] = (double)value;
+}
+
+uint8_t ScriptRunner::getArrayByte(uint8_t idx, uint8_t pos) const {
+    if (idx < MAX_ARRAY_VARS && pos < _ctx.arrayLen[idx]) return _ctx.arrayVars[idx][pos];
+    return 0;
+}
+
+void ScriptRunner::setArrayByte(uint8_t idx, uint8_t pos, uint8_t value) {
+    if (idx < MAX_ARRAY_VARS && pos < MAX_ARRAY_SIZE) {
+        _ctx.arrayVars[idx][pos] = value;
+        if (pos >= _ctx.arrayLen[idx]) _ctx.arrayLen[idx] = pos + 1;
+    }
+}
+
+uint8_t ScriptRunner::getArrayLen(uint8_t idx) const {
+    if (idx < MAX_ARRAY_VARS) return _ctx.arrayLen[idx];
+    return 0;
+}
+
+bool ScriptRunner::isRunning(uint8_t id) const {
+    int8_t slot = findSlotById(id);
+    if (slot == -1) return false;
+    return _slots[slot].active;
+}
+
+bool ScriptRunner::isBusy() const {
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+        if (_slots[i].active) return true;
+    }
+    return false;
+}
+
+bool ScriptRunner::isSlotUsed(uint8_t slot) const {
+    if (slot >= MAX_SCRIPTS) return false;
+    return _slots[slot].registered;
+}
+
+int8_t ScriptRunner::getSlotId(uint8_t slot) const {
+    if (slot >= MAX_SCRIPTS) return -1;
+    return _slots[slot].registered ? (int8_t)_slots[slot].id : -1;
+}
+
+bool ScriptRunner::isSlotActive(uint8_t slot) const {
+    if (slot >= MAX_SCRIPTS) return false;
+    return _slots[slot].active;
+}
+
+bool ScriptRunner::isSlotHandler(uint8_t slot) const {
+    if (slot >= MAX_SCRIPTS) return false;
+    return _slots[slot].isHandler;
+}
+
+uint16_t ScriptRunner::getSlotLen(uint8_t slot) const {
+    if (slot >= MAX_SCRIPTS) return 0;
+    return _slots[slot].scriptLen;
+}
+
+uint8_t ScriptRunner::getTotalSlots() const { return MAX_SCRIPTS; }
+
+uint8_t ScriptRunner::getUsedSlotsCount() const {
+    uint8_t count = 0;
+    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+        if (_slots[i].registered) count++;
+    }
+    return count;
+}
+
+uint8_t ScriptRunner::getFreeSlotsCount() const {
+    return MAX_SCRIPTS - getUsedSlotsCount();
+}
+
+#if ENABLE_LOGGING
+
+void ScriptRunner::logPortAction(uint8_t gpio, PortAction action, uint16_t value, uint8_t slot) {
+    #if ENABLE_PORT_LOGGING
+    if (_logProvider) {
+        if (action == PORT_WRITE) {
+            snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: $p%d <- %d", slot, gpio, value);
+        } else {
+            snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: $p%d -> %d", slot, gpio, value);
+        }
+        _logProvider(_logBuf);
+    }
+    #endif
+}
+
+void ScriptRunner::logDataAction(const char* id, DataKind kind, bool write, const char* value, uint8_t slot) {
+    #if ENABLE_DATA_LOGGING
+    if (_logProvider && id && value) {
+        char kindChar = 0;
+        if (kind != KIND_UINT) {
+            switch (kind) {
+                case KIND_INT: kindChar = 'I'; break;
+                case KIND_FLOAT: kindChar = 'F'; break;
+                case KIND_STRING: kindChar = 'S'; break;
+                default: break;
+            }
+        }
+
+        if (write) {
+            if (kindChar) {
+                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s <- %s (%c)", slot, id, value, kindChar);
+            } else {
+                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s <- %s", slot, id, value);
+            }
+        } else {
+            if (kindChar) {
+                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s -> %s (%c)", slot, id, value, kindChar);
+            } else {
+                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s -> %s", slot, id, value);
+            }
+        }
+        _logProvider(_logBuf);
+    }
+    #endif
+}
+
+void ScriptRunner::logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t slot) {
+    #if ENABLE_LOAD_LOGGING
+    if (_logProvider) {
+        snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: load size:%d%s", slot, len, cached ? " C" : "");
+        _logProvider(_logBuf);
+    }
+    #endif
+}
+
+void ScriptRunner::logEventAction(const char* eventName, uint8_t paramCount, const int32_t* params) {
+    #if ENABLE_EVENT_LOGGING
+    if (_logProvider && eventName) {
+        if (paramCount == 0) {
+            snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s", eventName);
+        } else {
+            char paramsStr[32] = {0};
+            char* p = paramsStr;
+            for (uint8_t i = 0; i < paramCount && i < MAX_EVENT_PARAMS; i++) {
+                if (i > 0) { *p++ = ','; *p++ = ' '; }
+                p += snprintf(p, sizeof(paramsStr) - (p - paramsStr), "%d", params[i]);
+            }
+            snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s (%s)", eventName, paramsStr);
+        }
+        _logProvider(_logBuf);
+    }
+    #endif
+}
+
+void ScriptRunner::logScriptAction(uint8_t slot, const char* action) {
+    #if ENABLE_SCRIPT_LOGGING
+    if (_logProvider && action) {
+        snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s", slot, action);
+        _logProvider(_logBuf);
+    }
+    #endif
+}
+
+#endif
+
+void ScriptRunner::setError(const char* msg) {
+    if (_logProvider) {
+        snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
+        _logProvider(_logBuf);
+    }
+}
+
+void ScriptRunner::setError(const char* msg, uint8_t slot, uint16_t pos) {
+    if (_logProvider) {
+        if (slot > 0 || pos > 0) {
+            snprintf(_logBuf, sizeof(_logBuf), "ERR[%d]: [%d] %s", slot, pos, msg);
+        } else {
+            snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
+        }
+        _logProvider(_logBuf);
+    }
+}
+
+void ScriptRunner::setError(const char* msg, const char* token, uint8_t slot, uint16_t pos) {
+    if (_logProvider) {
+        if (slot > 0 || pos > 0) {
+            if (token) {
+                snprintf(_logBuf, sizeof(_logBuf), "ERR[%d]: [%d] %s '%s'", slot, pos, msg, token);
+            } else {
+                snprintf(_logBuf, sizeof(_logBuf), "ERR[%d]: [%d] %s", slot, pos, msg);
+            }
+        } else {
+            if (token) {
+                snprintf(_logBuf, sizeof(_logBuf), "ERR: %s '%s'", msg, token);
+            } else {
+                snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
+            }
+        }
+        _logProvider(_logBuf);
+    }
+}
+
+void ScriptRunner::setDataProvider(DataProvider provider) { _dataProvider = provider; }
+void ScriptRunner::setLogProvider(LogProvider provider) { _logProvider = provider; }
+void ScriptRunner::setPortProvider(PortProvider provider) { _portProvider = provider; }
+void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) { _stateChangeProvider = provider; }
+
+#ifdef ENABLE_LOAD_CACHE
+int8_t ScriptRunner::findInLoadCache(uint8_t id, char* buffer, uint16_t& len) {
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        if (_loadCache[i].valid && _loadCache[i].id == id) {
+            _loadCache[i].lastAccess = millis();
+            _loadCache[i].accessCount++;
+            strcpy(buffer, _loadCache[i].script);
+            len = _loadCache[i].len;
+            _loadCacheHits++;
+            return (int8_t)i;
+        }
+    }
+    _loadCacheMisses++;
+    return -1;
+}
+
+void ScriptRunner::addToLoadCache(uint8_t id, const char* script, uint16_t len) {
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        if (_loadCache[i].valid && _loadCache[i].id == id) {
+            _loadCache[i].lastAccess = millis();
+            _loadCache[i].accessCount++;
+            return;
+        }
+    }
+    int8_t slot = findEmptyLoadSlot();
+    if (slot == -1) slot = findLeastUsedSlot();
+    if (slot != -1) {
+        _loadCache[slot].id = id;
+        strcpy(_loadCache[slot].script, script);
+        _loadCache[slot].len = len;
+        _loadCache[slot].valid = true;
+        _loadCache[slot].lastAccess = millis();
+        _loadCache[slot].accessCount = 1;
+    }
+}
+
+int8_t ScriptRunner::findEmptyLoadSlot() const {
+    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
+        if (!_loadCache[i].valid) return (int8_t)i;
+    }
+    return -1;
+}
+
+int8_t ScriptRunner::findLeastUsedSlot() const {
+    int8_t least = 0;
+    for (uint8_t i = 1; i < LOAD_CACHE_SIZE; i++) {
+        if (_loadCache[i].accessCount < _loadCache[least].accessCount) least = (int8_t)i;
+    }
+    return least;
+}
+
+bool ScriptRunner::cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len) {
+    if (!_instance) return false;
+    int8_t found = _instance->findInLoadCache(id, buffer, len);
+    if (found != -1) return true;
+    if (_instance->_originalLoadProvider) {
+        bool result = _instance->_originalLoadProvider(id, buffer, len);
+        if (result && len > 0) _instance->addToLoadCache(id, buffer, len);
+        return result;
+    }
+    return false;
+}
+
+void ScriptRunner::setLoadProvider(LoadProvider provider) {
+    #ifdef ENABLE_LOAD_CACHE
+    _originalLoadProvider = provider;
+    _loadProvider = provider ? cachedLoadProviderWrapper : nullptr;
+    #else
+    _loadProvider = provider;
+    #endif
+}
+#else
+void ScriptRunner::setLoadProvider(LoadProvider provider) {
+    _loadProvider = provider;
+}
+#endif
+
 bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) {
-    if (params.count < 1) { setError("on needs 1 param", s.id, s.pos); return false; }
-    if (s.inEventHandler) { setError("nested event", s.id, s.pos); return false; }
+    if (params.count < 1) {
+        setError("on needs 1 param", s.id, s.pos);
+        return false;
+    }
+    if (s.inEventHandler) {
+        setError("nested event", s.id, s.pos);
+        return false;
+    }
 
     const char* rawEventName = params.values[0];
     char cleanEventName[MAX_EVENT_NAME_LEN] = {0};
@@ -410,13 +1354,22 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
         if (strncmp(p, "if:", 3) == 0) { depth++; p += 3; continue; }
         if (strncmp(p, "while:", 6) == 0) { depth++; p += 6; continue; }
         if (strncmp(p, "end", 3) == 0) {
-            if (depth == 0) { bodyLen = p - bodyStart; p += 3; break; }
-            depth--; p += 3; continue;
+            if (depth == 0) {
+                bodyLen = p - bodyStart;
+                p += 3;
+                break;
+            }
+            depth--;
+            p += 3;
+            continue;
         }
         p++;
     }
 
-    if (bodyLen == 0) { setError("empty handler", s.id, s.pos); return false; }
+    if (bodyLen == 0) {
+        setError("empty handler", s.id, s.pos);
+        return false;
+    }
 
     strncpy(_handlerBody, bodyStart, bodyLen);
     _handlerBody[bodyLen] = '\0';
@@ -449,11 +1402,17 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
         }
         token = strtok(NULL, ";");
     }
-    if (strlen(_cleanedBody) == 0) { setError("empty body", s.id, s.pos); return false; }
+    if (strlen(_cleanedBody) == 0) {
+        setError("empty body", s.id, s.pos);
+        return false;
+    }
 
     uint16_t scriptLen = strlen(_cleanedBody);
     int8_t slot = findFreeSlot(scriptLen);
-    if (slot == -1) { setError("no free slot", s.id, s.pos); return false; }
+    if (slot == -1) {
+        setError("no free slot", s.id, s.pos);
+        return false;
+    }
 
     uint8_t eventId = (uint8_t)(EVENT_ID_OFFSET + (uint8_t)slot);
 
@@ -470,7 +1429,10 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
     es.active = false;
     es.inEventHandler = false;
 
-    if (!onEvent(eventHash, (uint8_t)slot)) { resetScriptState((uint8_t)slot); return false; }
+    if (!onEvent(eventHash, (uint8_t)slot)) {
+        resetScriptState((uint8_t)slot);
+        return false;
+    }
     return true;
 }
 
@@ -951,7 +1913,6 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
                     }
                     break;
                 case 'e': {
-                    // Параметры событий $eN
                     if (idx < MAX_EVENT_PARAMS) {
                         pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", _ctx.eventParams[idx]);
                         found = true;
@@ -1196,7 +2157,6 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
                         }
                         break;
                     case 'e': {
-                        // Параметры событий $eN
                         if (idx < MAX_EVENT_PARAMS) {
                             _funcParams[paramCount].type = VAL_INT;
                             _funcParams[paramCount].intVal = _ctx.eventParams[idx];
@@ -1304,820 +2264,6 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
     return result;
 }
 
-bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now) {
-    if (!token || token[0] == '\0') { s.pos++; return false; }
-
-    // НОВОЕ: поддержка return
-    if (strcmp(token, "return") == 0) {
-        if (!s.isHandler) {
-            setError("return only allowed in event handler", s.id, s.pos);
-            return false;
-        }
-        s.active = false;
-        s.inLoop = false;
-        s.inIf = false;
-        s.inWait = false;
-        s.inEventHandler = false;
-        s.hasTempResult = false;
-        return true;
-    }
-
-    if (s.inIf && s.skipElse) {
-        if (strcmp(token, "end") == 0) return handleEnd(s);
-        if (strcmp(token, "else") == 0) return handleElse(s);
-        return true;
-    }
-    if (strcmp(token, "else") == 0) return handleElse(s);
-    if (strcmp(token, "end") == 0) return handleEnd(s);
-    const char* colon = strchr(token, ':');
-    if (colon) {
-        char cmd[16];
-        uint16_t len = colon - token;
-        if (len > 15) len = 15;
-        strncpy(cmd, token, len);
-        cmd[len] = '\0';
-        const char* params = colon + 1;
-        if (strcmp(cmd, "while") == 0) return handleWhile(params, s);
-        if (strcmp(cmd, "if") == 0) return handleIf(params, s);
-    }
-    if (strchr(token, '(')) return processCommand(token, s, now);
-    if (token[0] == '$') return handleAssignment(token, s);
-    setError("unknown token", token, s.id, s.pos);
-    return false;
-}
-
-void ScriptRunner::resetScriptState(uint8_t idx) {
-    ScriptState& s = _slots[idx];
-    s.active = false;
-    s.registered = false;
-    s.inEventHandler = false;
-    s.isHandler = false;
-    s.isPersistent = false;
-    s.id = 0;
-    s.script[0] = '\0';
-    s.scriptLen = 0;
-    s.pos = 0;
-    s.startTime = 0;
-    s.lastExecutionTime = 0;
-    s.inLoop = false;
-    s.isInfinite = false;
-    s.repeatCount = 0;
-    s.loopStartPos = 0;
-    s.inIf = false;
-    s.ifResult = false;
-    s.skipElse = false;
-    s.ifDepth = 0;
-    s.inWait = false;
-    s.waitUntil = 0;
-    s.tempResult = 0;
-    s.hasTempResult = false;
-    s.isWhile = false;
-    s.whileConditionBuffer[0] = '\0';
-}
-
-int8_t ScriptRunner::findSlotById(uint8_t id) const {
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        if (_slots[i].registered && _slots[i].id == id) return (int8_t)i;
-    }
-    return -1;
-}
-
-int8_t ScriptRunner::findFreeSlot(uint16_t scriptLen) {
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        if (!_slots[i].registered && _slots[i].slotSize >= scriptLen) return (int8_t)i;
-    }
-    return -1;
-}
-
-void ScriptRunner::initSlotPools() {
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        resetScriptState(i);
-        _slots[i].slotSize = MAX_SCRIPT_LEN;
-    }
-}
-
-void ScriptRunner::initFade() {
-    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
-        _fadeChannels[i].active = false;
-        _fadeChannels[i].pin = 0;
-        _fadeChannels[i].current = 0;
-        _fadeChannels[i].target = 0;
-        _fadeChannels[i].step = 0;
-        _fadeChannels[i].lastStepTime = 0;
-        _fadeChannels[i].stepInterval = 0;
-        _fadeChannels[i].remainingSteps = 0;
-    }
-    for (uint8_t i = 0; i < 40; i++) _lastPortValues[i] = 0;
-}
-
-bool ScriptRunner::startFade(uint8_t pin, uint8_t target, uint8_t tenths) {
-    if (tenths == 0) tenths = 1;
-    uint8_t current = readPort(pin);
-    int16_t diff = target - current;
-    uint8_t steps = diff < 0 ? -diff : diff;
-    if (steps == 0) steps = 1;
-    uint32_t totalTime = tenths * 100;
-    uint16_t stepInterval = totalTime / steps;
-    if (stepInterval < 1) stepInterval = 1;
-
-    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
-        if (_fadeChannels[i].pin == pin) {
-            _fadeChannels[i].active = true;
-            _fadeChannels[i].current = current;
-            _fadeChannels[i].target = target;
-            _fadeChannels[i].step = (current < target) ? 1 : -1;
-            _fadeChannels[i].lastStepTime = millis();
-            _fadeChannels[i].stepInterval = stepInterval;
-            _fadeChannels[i].remainingSteps = steps;
-            return true;
-        }
-    }
-    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
-        if (!_fadeChannels[i].active) {
-            _fadeChannels[i].active = true;
-            _fadeChannels[i].pin = pin;
-            _fadeChannels[i].current = current;
-            _fadeChannels[i].target = target;
-            _fadeChannels[i].step = (current < target) ? 1 : -1;
-            _fadeChannels[i].lastStepTime = millis();
-            _fadeChannels[i].stepInterval = stepInterval;
-            _fadeChannels[i].remainingSteps = steps;
-            return true;
-        }
-    }
-    return false;
-}
-
-void ScriptRunner::processFade() {
-    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
-        FadeChannel& ch = _fadeChannels[i];
-        if (!ch.active) continue;
-        uint32_t now = millis();
-        if (now - ch.lastStepTime < ch.stepInterval) continue;
-        ch.lastStepTime = now;
-        if (ch.remainingSteps == 0) {
-            ch.active = false;
-            writePortSilent(ch.pin, ch.target);
-            if (_stateChangeProvider) _stateChangeProvider(ch.pin, 0, ch.target);
-            continue;
-        }
-        ch.remainingSteps--;
-        ch.current += ch.step;
-        writePortSilent(ch.pin, ch.current);
-    }
-}
-
-uint8_t ScriptRunner::readPort(uint8_t pin) {
-    uint16_t val = 0;
-    if (_portProvider && _portProvider(pin, PORT_READ, val)) {
-        if (pin < 40) _lastPortValues[pin] = (uint8_t)val;
-        return (uint8_t)val;
-    }
-    if (pin < 40) return _lastPortValues[pin];
-    return 0;
-}
-
-void ScriptRunner::writePort(uint8_t pin, uint16_t value, uint8_t slot) {
-    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
-    for (uint8_t i = 0; i < MAX_FADE_PINS; i++) {
-        if (_fadeChannels[i].active && _fadeChannels[i].pin == pin) {
-            _fadeChannels[i].active = false;
-            break;
-        }
-    }
-    if (pin < 40) _lastPortValues[pin] = (uint8_t)value;
-    #if ENABLE_PORT_LOGGING && ENABLE_LOGGING
-    logPortAction(pin, PORT_WRITE, value, slot);
-    #endif
-    if (_portProvider) {
-        _portProvider(pin, PORT_WRITE, value);
-        if (_stateChangeProvider) _stateChangeProvider(pin, 0, value);
-    }
-}
-
-void ScriptRunner::writePortSilent(uint8_t pin, uint16_t value) {
-    if (value > MAX_PWM_VALUE) value = MAX_PWM_VALUE;
-    if (pin < 40) _lastPortValues[pin] = (uint8_t)value;
-    if (_portProvider) _portProvider(pin, PORT_WRITE, value);
-}
-
-bool ScriptRunner::onEvent(uint32_t hash, uint8_t slotId) {
-    if (slotId >= MAX_SCRIPTS) return false;
-    if (!_slots[slotId].registered) return false;
-    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-        if (_eventHandlers[i].active && _eventHandlers[i].hash == hash) return true;
-    }
-    if (_eventHandlerCount >= MAX_EVENT_HANDLERS) return false;
-    _eventHandlers[_eventHandlerCount].hash = hash;
-    _eventHandlers[_eventHandlerCount].slotId = slotId;
-    _eventHandlers[_eventHandlerCount].active = true;
-    _eventHandlerCount++;
-    return true;
-}
-
-bool ScriptRunner::onEvent(const char* eventName, uint8_t slotId) {
-    return onEvent(ScriptRunner::hash(eventName), slotId);
-}
-
-void ScriptRunner::emitEvent(uint32_t hash) {
-    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-        if (!_eventHandlers[i].active || _eventHandlers[i].hash != hash) continue;
-        uint8_t slotId = _eventHandlers[i].slotId;
-        if (slotId >= MAX_SCRIPTS) continue;
-        if (!_slots[slotId].registered) { _eventHandlers[i].active = false; continue; }
-        runScriptFrom(slotId, 0, getSlotLen(slotId));
-    }
-}
-
-void ScriptRunner::emitEvent(const char* eventName) {
-    emitEvent(eventName, 0);
-}
-
-void ScriptRunner::emitEvent(const char* eventName, uint8_t paramCount, ...) {
-    _ctx.eventParamCount = (paramCount > MAX_EVENT_PARAMS) ? MAX_EVENT_PARAMS : paramCount;
-
-    va_list args;
-    va_start(args, paramCount);
-    for (uint8_t i = 0; i < _ctx.eventParamCount; i++) {
-        _ctx.eventParams[i] = va_arg(args, int32_t);
-    }
-    va_end(args);
-
-    for (uint8_t i = _ctx.eventParamCount; i < MAX_EVENT_PARAMS; i++) {
-        _ctx.eventParams[i] = 0;
-    }
-
-    #if ENABLE_EVENT_LOGGING && ENABLE_LOGGING
-    logEventAction(eventName, _ctx.eventParamCount, _ctx.eventParams);
-    #endif
-
-    uint32_t hash = ScriptRunner::hash(eventName);
-    emitEvent(hash);
-}
-
-bool ScriptRunner::removeEventHandler(uint32_t hash) {
-    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-        if (_eventHandlers[i].active && _eventHandlers[i].hash == hash) {
-            _eventHandlers[i].active = false;
-            uint8_t slotId = _eventHandlers[i].slotId;
-            if (slotId < MAX_SCRIPTS) resetScriptState(slotId);
-            return true;
-        }
-    }
-    return false;
-}
-
-void ScriptRunner::clearAllEventHandlers() {
-    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-        if (_eventHandlers[i].active) {
-            uint8_t slotId = _eventHandlers[i].slotId;
-            if (slotId < MAX_SCRIPTS) resetScriptState(slotId);
-        }
-    }
-    _eventHandlerCount = 0;
-    for (uint8_t i = 0; i < MAX_EVENT_HANDLERS; i++) {
-        _eventHandlers[i].active = false;
-        _eventHandlers[i].hash = 0;
-        _eventHandlers[i].slotId = 0;
-    }
-}
-
-bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persistent) {
-    uint16_t len = strlen(script);
-    if (len >= MAX_SCRIPT_LEN) { setError("script too long"); return false; }
-    int8_t existing = findSlotById(id);
-    if (existing != -1) {
-        if (_slots[existing].isHandler) { setError("slot is handler", id, 0); return false; }
-        strcpy(_slots[existing].script, script);
-        _slots[existing].scriptLen = len;
-        _slots[existing].pos = 0;
-        _slots[existing].active = false;
-        _slots[existing].inEventHandler = false;
-        _slots[existing].isHandler = false;
-        _slots[existing].isPersistent = persistent;
-        return true;
-    }
-    int8_t slot = findFreeSlot(len);
-    if (slot == -1) { setError("no free slots"); return false; }
-    resetScriptState((uint8_t)slot);
-    _slots[slot].registered = true;
-    _slots[slot].id = id;
-    _slots[slot].isHandler = false;
-    _slots[slot].isPersistent = persistent;
-    strcpy(_slots[slot].script, script);
-    _slots[slot].scriptLen = len;
-    _slots[slot].pos = 0;
-    _slots[slot].active = false;
-    _slots[slot].inEventHandler = false;
-    return true;
-}
-
-int8_t ScriptRunner::runScript(uint8_t id) {
-    int8_t slot = findSlotById(id);
-    if (slot == -1 && _loadProvider) {
-        char buffer[MAX_SCRIPT_LEN];
-        uint16_t len = 0;
-        if (_loadProvider(id, buffer, len)) {
-            if (registerScript(id, buffer, false)) slot = findSlotById(id);
-        }
-    }
-    if (slot == -1) {
-        setError("script not found", id, 0);
-        return -1;
-    }
-    if (_slots[slot].isHandler) {
-        setError("cannot run handler", id, 0);
-        return -1;
-    }
-    if (_slots[slot].active) {
-        #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
-        logScriptAction((uint8_t)slot, "already running");
-        #endif
-        return slot;
-    }
-
-    _slots[slot].pos = 0;
-    _slots[slot].scriptLen = strlen(_slots[slot].script);
-    _slots[slot].active = true;
-    _slots[slot].startTime = millis();
-    _slots[slot].lastExecutionTime = 0;
-    _slots[slot].inLoop = false;
-    _slots[slot].inIf = false;
-    _slots[slot].inWait = false;
-    _slots[slot].inEventHandler = false;
-
-    #if ENABLE_LOAD_LOGGING && ENABLE_LOGGING
-    logLoadAction(id, _slots[slot].scriptLen, true, (uint8_t)slot);
-    #endif
-
-    #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
-    logScriptAction((uint8_t)slot, "started");
-    #endif
-
-    return slot;
-}
-
-bool ScriptRunner::runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len) {
-    if (slot >= MAX_SCRIPTS) { setError("invalid slot"); return false; }
-    if (!_slots[slot].registered) { setError("slot not registered"); return false; }
-    if (_slots[slot].active) _slots[slot].active = false;
-    if (offset + len > _slots[slot].slotSize) len = _slots[slot].slotSize - offset;
-    _slots[slot].pos = offset;
-    _slots[slot].scriptLen = offset + len;
-    _slots[slot].active = true;
-    _slots[slot].startTime = millis();
-    _slots[slot].lastExecutionTime = 0;
-    _slots[slot].inLoop = false;
-    _slots[slot].inIf = false;
-    _slots[slot].inWait = false;
-    _slots[slot].inEventHandler = false;
-    return true;
-}
-
-bool ScriptRunner::stopScript(uint8_t id) {
-    int8_t slot = findSlotById(id);
-    if (slot == -1) return false;
-    _slots[slot].active = false;
-    return true;
-}
-
-void ScriptRunner::stopAll() {
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) _slots[i].active = false;
-}
-
-bool ScriptRunner::removeScript(uint8_t id) {
-    int8_t slot = findSlotById(id);
-    if (slot == -1) return false;
-    if (_slots[slot].active) _slots[slot].active = false;
-    resetScriptState((uint8_t)slot);
-    for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-        if (_eventHandlers[i].active && _eventHandlers[i].slotId == slot) {
-            _eventHandlers[i].active = false;
-        }
-    }
-    return true;
-}
-
-bool ScriptRunner::isEventId(uint8_t id) const {
-    return id >= EVENT_ID_OFFSET;
-}
-
-bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen) {
-    const char* p = s.script + s.pos;
-    while (*p == ' ' || *p == TOKEN_SEPARATOR || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
-        p++; s.pos++;
-        if (s.pos >= s.scriptLen) break;
-    }
-    if (s.pos >= s.scriptLen) { token[0] = '\0'; tokenLen = 0; return false; }
-    const char* start = p;
-    uint8_t parenCount = 0;
-    while (*p && (p - s.script) < s.scriptLen) {
-        if (*p == '(') parenCount++;
-        if (*p == ')') parenCount--;
-        if (*p == TOKEN_SEPARATOR && parenCount == 0) break;
-        p++;
-    }
-    tokenLen = p - start;
-    if (tokenLen >= MAX_TOKEN_LEN) tokenLen = MAX_TOKEN_LEN - 1;
-    strncpy(token, start, tokenLen);
-    token[tokenLen] = '\0';
-    s.pos = p - s.script;
-    return tokenLen > 0 && token[0] != '\0' && token[0] != TOKEN_SEPARATOR;
-}
-
-void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
-    if (s.inLoop) {
-        if (s.isInfinite) { s.pos = s.loopStartPos; return; }
-        if (s.repeatCount > 0) {
-            s.repeatCount--;
-            if (s.repeatCount > 0) { s.pos = s.loopStartPos; return; }
-        }
-        s.inLoop = false;
-    }
-
-    uint8_t scriptId = s.id;
-    bool wasHandler = s.isHandler;
-    bool wasPersistent = s.isPersistent;
-
-    if (!wasHandler && !wasPersistent) {
-        resetScriptState(idx);
-    } else {
-        s.active = false;
-    }
-
-    if (_completeCallback) {
-        _completeCallback(idx, scriptId);
-    }
-}
-
-void ScriptRunner::processScript(uint8_t idx, uint32_t now) {
-    ScriptState& s = _slots[idx];
-    if (!s.active || !s.registered) return;
-    if (s.inWait) {
-        if (now >= s.waitUntil) s.inWait = false;
-        else return;
-    }
-    if (now - s.lastExecutionTime < SCRIPT_EXEC_INTERVAL_MS) return;
-    s.lastExecutionTime = now;
-    if (s.pos >= s.scriptLen) { finishScript(s, idx); return; }
-    uint16_t tokenLen = 0;
-    if (!getNextToken(s, _tokenBuf, tokenLen)) {
-        if (s.pos >= s.scriptLen) finishScript(s, idx);
-        return;
-    }
-    bool ok = processToken(_tokenBuf, s, now);
-    if (!ok && s.active) {
-        if (!s.inWait && !s.inLoop && !s.inIf) s.active = false;
-    }
-}
-
-void ScriptRunner::update() {
-    uint32_t now = millis();
-    processFade();
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) processScript(i, now);
-}
-
-bool ScriptRunner::registerFunction(const char* name, ExternalFunction func, void* userData) {
-    if (!name || !func) return false;
-    if (_extFuncCount >= MAX_EXTERNAL_FUNCTIONS) { setError("too many funcs"); return false; }
-    for (uint8_t i = 0; i < _extFuncCount; i++) {
-        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
-            _extFuncs[i].func = func;
-            _extFuncs[i].userData = userData;
-            return true;
-        }
-    }
-    strncpy(_extFuncs[_extFuncCount].name, name, 15);
-    _extFuncs[_extFuncCount].name[15] = '\0';
-    _extFuncs[_extFuncCount].func = func;
-    _extFuncs[_extFuncCount].userData = userData;
-    _extFuncs[_extFuncCount].active = true;
-    _extFuncCount++;
-    return true;
-}
-
-bool ScriptRunner::isExternalFunction(const char* name) const {
-    if (!name) return false;
-    for (uint8_t i = 0; i < _extFuncCount; i++) {
-        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) return true;
-    }
-    return false;
-}
-
-bool ScriptRunner::callExternalFunction(const char* name, uint8_t paramCount, const Value* params, Value& result) {
-    if (!name) return false;
-    for (uint8_t i = 0; i < _extFuncCount; i++) {
-        if (_extFuncs[i].active && strcmp(_extFuncs[i].name, name) == 0) {
-            return _extFuncs[i].func(paramCount, params, result, _extFuncs[i].userData);
-        }
-    }
-    return false;
-}
-
-void ScriptRunner::setScriptCompleteCallback(ScriptCompleteCallback callback) {
-    _completeCallback = callback;
-}
-
-const char* ScriptRunner::getScript(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return nullptr;
-    if (!_slots[slot].registered) return nullptr;
-    return _slots[slot].script;
-}
-
-uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
-    if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
-    return 0;
-}
-
-int32_t ScriptRunner::getIntVar(uint8_t idx) const {
-    if (idx < MAX_INT_VARS) return _ctx.intVars[idx];
-    return 0;
-}
-
-float ScriptRunner::getFloatVar(uint8_t idx) const {
-    if (idx < MAX_FLOAT_VARS) return (float)_ctx.floatVars[idx];
-    return 0.0f;
-}
-
-void ScriptRunner::setUintVar(uint8_t idx, uint32_t value) {
-    if (idx < MAX_UINT_VARS) _ctx.uintVars[idx] = value;
-}
-
-void ScriptRunner::setIntVar(uint8_t idx, int32_t value) {
-    if (idx < MAX_INT_VARS) _ctx.intVars[idx] = value;
-}
-
-void ScriptRunner::setFloatVar(uint8_t idx, float value) {
-    if (idx < MAX_FLOAT_VARS) _ctx.floatVars[idx] = (double)value;
-}
-
-uint8_t ScriptRunner::getArrayByte(uint8_t idx, uint8_t pos) const {
-    if (idx < MAX_ARRAY_VARS && pos < _ctx.arrayLen[idx]) return _ctx.arrayVars[idx][pos];
-    return 0;
-}
-
-void ScriptRunner::setArrayByte(uint8_t idx, uint8_t pos, uint8_t value) {
-    if (idx < MAX_ARRAY_VARS && pos < MAX_ARRAY_SIZE) {
-        _ctx.arrayVars[idx][pos] = value;
-        if (pos >= _ctx.arrayLen[idx]) _ctx.arrayLen[idx] = pos + 1;
-    }
-}
-
-uint8_t ScriptRunner::getArrayLen(uint8_t idx) const {
-    if (idx < MAX_ARRAY_VARS) return _ctx.arrayLen[idx];
-    return 0;
-}
-
-bool ScriptRunner::isRunning(uint8_t id) const {
-    int8_t slot = findSlotById(id);
-    if (slot == -1) return false;
-    return _slots[slot].active;
-}
-
-bool ScriptRunner::isBusy() const {
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        if (_slots[i].active) return true;
-    }
-    return false;
-}
-
-bool ScriptRunner::isSlotUsed(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return false;
-    return _slots[slot].registered;
-}
-
-int8_t ScriptRunner::getSlotId(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return -1;
-    return _slots[slot].registered ? (int8_t)_slots[slot].id : -1;
-}
-
-bool ScriptRunner::isSlotActive(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return false;
-    return _slots[slot].active;
-}
-
-bool ScriptRunner::isSlotHandler(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return false;
-    return _slots[slot].isHandler;
-}
-
-uint16_t ScriptRunner::getSlotLen(uint8_t slot) const {
-    if (slot >= MAX_SCRIPTS) return 0;
-    return _slots[slot].scriptLen;
-}
-
-uint8_t ScriptRunner::getTotalSlots() const { return MAX_SCRIPTS; }
-
-uint8_t ScriptRunner::getUsedSlotsCount() const {
-    uint8_t count = 0;
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-        if (_slots[i].registered) count++;
-    }
-    return count;
-}
-
-uint8_t ScriptRunner::getFreeSlotsCount() const {
-    return MAX_SCRIPTS - getUsedSlotsCount();
-}
-
-#if ENABLE_LOGGING
-
-void ScriptRunner::logPortAction(uint8_t gpio, PortAction action, uint16_t value, uint8_t slot) {
-    #if ENABLE_PORT_LOGGING
-    if (_logProvider) {
-        if (action == PORT_WRITE) {
-            snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: $p%d <- %d", slot, gpio, value);
-        } else {
-            snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: $p%d -> %d", slot, gpio, value);
-        }
-        _logProvider(_logBuf);
-    }
-    #endif
-}
-
-void ScriptRunner::logDataAction(const char* id, DataKind kind, bool write, const char* value, uint8_t slot) {
-    #if ENABLE_DATA_LOGGING
-    if (_logProvider && id && value) {
-        char kindChar = 0;
-        if (kind != KIND_UINT) {
-            switch (kind) {
-                case KIND_INT: kindChar = 'I'; break;
-                case KIND_FLOAT: kindChar = 'F'; break;
-                case KIND_STRING: kindChar = 'S'; break;
-                default: break;
-            }
-        }
-
-        if (write) {
-            if (kindChar) {
-                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s <- %s (%c)", slot, id, value, kindChar);
-            } else {
-                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s <- %s", slot, id, value);
-            }
-        } else {
-            if (kindChar) {
-                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s -> %s (%c)", slot, id, value, kindChar);
-            } else {
-                snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s -> %s", slot, id, value);
-            }
-        }
-        _logProvider(_logBuf);
-    }
-    #endif
-}
-
-void ScriptRunner::logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t slot) {
-    #if ENABLE_LOAD_LOGGING
-    if (_logProvider) {
-        snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: load size:%d%s", slot, len, cached ? " C" : "");
-        _logProvider(_logBuf);
-    }
-    #endif
-}
-
-void ScriptRunner::logEventAction(const char* eventName, uint8_t paramCount, const int32_t* params) {
-    #if ENABLE_EVENT_LOGGING
-    if (_logProvider && eventName) {
-        if (paramCount == 0) {
-            snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s", eventName);
-        } else {
-            char paramsStr[32] = {0};
-            char* p = paramsStr;
-            for (uint8_t i = 0; i < paramCount && i < MAX_EVENT_PARAMS; i++) {
-                if (i > 0) { *p++ = ','; *p++ = ' '; }
-                p += snprintf(p, sizeof(paramsStr) - (p - paramsStr), "%d", params[i]);
-            }
-            snprintf(_logBuf, sizeof(_logBuf), "EVENT: %s (%s)", eventName, paramsStr);
-        }
-        _logProvider(_logBuf);
-    }
-    #endif
-}
-
-void ScriptRunner::logScriptAction(uint8_t slot, const char* action) {
-    #if ENABLE_SCRIPT_LOGGING
-    if (_logProvider && action) {
-        snprintf(_logBuf, sizeof(_logBuf), "INFO[%d]: %s", slot, action);
-        _logProvider(_logBuf);
-    }
-    #endif
-}
-
-#endif
-
-void ScriptRunner::setError(const char* msg) {
-    if (_logProvider) {
-        snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
-        _logProvider(_logBuf);
-    }
-}
-
-void ScriptRunner::setError(const char* msg, uint8_t slot, uint16_t pos) {
-    if (_logProvider) {
-        if (slot > 0 || pos > 0) {
-            snprintf(_logBuf, sizeof(_logBuf), "ERR[%d]: [%d] %s", slot, pos, msg);
-        } else {
-            snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
-        }
-        _logProvider(_logBuf);
-    }
-}
-
-void ScriptRunner::setError(const char* msg, const char* token, uint8_t slot, uint16_t pos) {
-    if (_logProvider) {
-        if (slot > 0 || pos > 0) {
-            if (token) {
-                snprintf(_logBuf, sizeof(_logBuf), "ERR[%d]: [%d] %s '%s'", slot, pos, msg, token);
-            } else {
-                snprintf(_logBuf, sizeof(_logBuf), "ERR[%d]: [%d] %s", slot, pos, msg);
-            }
-        } else {
-            if (token) {
-                snprintf(_logBuf, sizeof(_logBuf), "ERR: %s '%s'", msg, token);
-            } else {
-                snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
-            }
-        }
-        _logProvider(_logBuf);
-    }
-}
-
-void ScriptRunner::setDataProvider(DataProvider provider) { _dataProvider = provider; }
-void ScriptRunner::setLogProvider(LogProvider provider) { _logProvider = provider; }
-void ScriptRunner::setPortProvider(PortProvider provider) { _portProvider = provider; }
-void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) { _stateChangeProvider = provider; }
-void ScriptRunner::setLoadProvider(LoadProvider provider) {
-    #ifdef ENABLE_LOAD_CACHE
-    _originalLoadProvider = provider;
-    _loadProvider = provider ? cachedLoadProviderWrapper : nullptr;
-    #else
-    _loadProvider = provider;
-    #endif
-}
-
-#ifdef ENABLE_LOAD_CACHE
-int8_t ScriptRunner::findInLoadCache(uint8_t id, char* buffer, uint16_t& len) {
-    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-        if (_loadCache[i].valid && _loadCache[i].id == id) {
-            _loadCache[i].lastAccess = millis();
-            _loadCache[i].accessCount++;
-            strcpy(buffer, _loadCache[i].script);
-            len = _loadCache[i].len;
-            _loadCacheHits++;
-            return (int8_t)i;
-        }
-    }
-    _loadCacheMisses++;
-    return -1;
-}
-
-void ScriptRunner::addToLoadCache(uint8_t id, const char* script, uint16_t len) {
-    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-        if (_loadCache[i].valid && _loadCache[i].id == id) {
-            _loadCache[i].lastAccess = millis();
-            _loadCache[i].accessCount++;
-            return;
-        }
-    }
-    int8_t slot = findEmptyLoadSlot();
-    if (slot == -1) slot = findLeastUsedSlot();
-    if (slot != -1) {
-        _loadCache[slot].id = id;
-        strcpy(_loadCache[slot].script, script);
-        _loadCache[slot].len = len;
-        _loadCache[slot].valid = true;
-        _loadCache[slot].lastAccess = millis();
-        _loadCache[slot].accessCount = 1;
-    }
-}
-
-int8_t ScriptRunner::findEmptyLoadSlot() const {
-    for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-        if (!_loadCache[i].valid) return (int8_t)i;
-    }
-    return -1;
-}
-
-int8_t ScriptRunner::findLeastUsedSlot() const {
-    int8_t least = 0;
-    for (uint8_t i = 1; i < LOAD_CACHE_SIZE; i++) {
-        if (_loadCache[i].accessCount < _loadCache[least].accessCount) least = (int8_t)i;
-    }
-    return least;
-}
-
-bool ScriptRunner::cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len) {
-    if (!_instance) return false;
-    int8_t found = _instance->findInLoadCache(id, buffer, len);
-    if (found != -1) return true;
-    if (_instance->_originalLoadProvider) {
-        bool result = _instance->_originalLoadProvider(id, buffer, len);
-        if (result && len > 0) _instance->addToLoadCache(id, buffer, len);
-        return result;
-    }
-    return false;
-}
-#endif
 
 ScriptRunner::ScriptRunner()
     : _dataProvider(nullptr), _logProvider(nullptr), _portProvider(nullptr),
@@ -2167,7 +2313,6 @@ ScriptRunner::ScriptRunner()
         _eventHandlers[i].slotId = 0;
     }
 
-    // Инициализация параметров событий
     for (uint8_t i = 0; i < MAX_EVENT_PARAMS; i++) {
         _ctx.eventParams[i] = 0;
     }
