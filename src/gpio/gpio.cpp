@@ -33,7 +33,7 @@ Port ports[10] = {
 #endif
 
 OneWire* ds = nullptr;
-
+Fade fade;
 Dallas ht1 = {KEY_DALLAS};
 
 int ports_len = sizeof(ports) / sizeof(ports[0]);
@@ -253,20 +253,11 @@ void findDallas() {
   }
 }
 
-void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
-  Serial.print("stateChangeProvider:");
-  Serial.print(gpio);
-  Serial.println(newValue);
-  updatePort(gpio, newValue);
+void stateChangeProvider(uint8_t gpio, uint16_t value) {
+  updatePort(gpio, value);
 }
 
-bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
-  // Serial.print("portProvider gpio:");
-  // Serial.print(gpio);
-  // Serial.print("action:");
-  // Serial.print(action);
-  // Serial.print("value:");
-  Serial.println(value);
+bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
   switch (action) {
     case PORT_READ:
       return getValue(gpio, value);
@@ -277,9 +268,26 @@ bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
   return false;
 }
 
+bool fadeHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 3) return false;
+  const uint32_t port = params[0].uintVal;
+  const uint32_t value = params[1].uintVal;
+  const uint32_t time = params[2].uintVal;
+  result.type = VAL_INT;
+  result.intVal = fade.start(port, value, time);
+  return true;
+}
+
 void setupGPIO() {
   scriptRunner.setStateChangeProvider(stateChangeProvider);
   scriptRunner.setPortProvider(portProvider);
+  scriptRunner.registerFunction("fade", fadeHandler);
+
+  fade.init(5, 3);
+  fade.setDataProvider(portProvider);
+  fade.setStateChangeProvider(stateChangeProvider);
+  // fade.start(13, 0, 5000);
+  // fade.start(14, 255, 1000);
 }
 
 void setupFirstGPIO() {
@@ -288,6 +296,8 @@ void setupFirstGPIO() {
 }
 
 void loopGPIO(uint32_t now) {
+  fade.loop();
+
   if (btnStatus == 1) {
     btnStatus = 2;
     debounce = now;

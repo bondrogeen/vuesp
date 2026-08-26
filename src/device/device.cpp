@@ -145,3 +145,33 @@ void loopDevice(uint32_t now) {
     onSendDevice();
   };
 }
+
+// // внешняя функция получения текущего значения и управление состоянием шим 
+// bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
+//   switch (action) {
+//     case PORT_READ:
+//       return getValue(gpio, value);
+//     case PORT_WRITE:
+//       setValue(gpio, value);
+//       return true;
+//   }
+//   return false;
+// }
+
+// // внешняя функция которая обновляет значение перемененой (срабатывает только при старте (fabe.start(...)) и завершении )
+// void stateChangeProvider(uint8_t gpio, uint16_t value) {
+//   updatePort(gpio, value);
+// }
+
+// void setup() {
+//   fabe.init(5); // 5 независимых каналов 
+//   fabe.setDataProvider(dataProvider); 
+//   fabe.setStateChangeProvider(stateChangeProvider);
+
+//   fabe.start(13, 255, 2000); // 13-gpio, 255 value, 2000 = 2сек время за которое поменяется от текущего значения до 255
+//   fabe.start(13, 0, 1000); // 13-gpio, 0 value, 1000 = 1сек время за которое поменяется от текущего значения до 0
+// }
+
+// void loop() {
+//   fabe.loop();
+// }

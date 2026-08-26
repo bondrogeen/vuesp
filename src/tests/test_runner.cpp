@@ -12,7 +12,7 @@ static std::vector<std::string> testLog;
 static std::map<std::string, std::string> dataStore;
 static bool test_failed = false;
 
-bool testPortProvider(uint8_t gpio, PortAction action, uint16_t& value) {
+bool testPortProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
   if (gpio >= 40) return false;
   if (action == PORT_READ) {
     value = virtualPins[gpio];
@@ -23,7 +23,7 @@ bool testPortProvider(uint8_t gpio, PortAction action, uint16_t& value) {
   }
 }
 
-void testStateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
+void testStateChangeProvider(uint8_t gpio, uint16_t newValue) {
 }
 
 bool testDataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
