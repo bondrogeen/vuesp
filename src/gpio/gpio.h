@@ -53,6 +53,7 @@
 #include <OneWire.h>
 
 #include "../init/init.h"
+#include "./add/fade.h"
 #include "./webserver/webserver.h"
 
 void setupGPIO();

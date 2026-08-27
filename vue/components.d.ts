@@ -66,6 +66,7 @@ declare module 'vue' {
     IconRiWindyLine: typeof import('~icons/ri/windy-line')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScriptDialog: typeof import('./src/components/script/ScriptDialog.vue')['default']
     ServiceGPIO: typeof import('./src/components/service/ServiceGPIO.vue')['default']
     ServiceSettings: typeof import('./src/components/service/ServiceSettings.vue')['default']
     ServiceStorage: typeof import('./src/components/service/ServiceStorage.vue')['default']
