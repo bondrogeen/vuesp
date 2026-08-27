@@ -12,7 +12,7 @@
 ScriptRunner* ScriptRunner::_instance = nullptr;
 
 uint32_t ScriptRunner::hash(const char* str) {
-  if (!str) return 0;
+  if (!str || *str == '\0') return 0;
   uint32_t hash = 5381;
   while (*str) hash = ((hash << 5) + hash) + (uint8_t)*str++;
   return hash;
@@ -119,44 +119,6 @@ Params ScriptRunner::parseParams(const char* str) const {
   return result;
 }
 
-bool ScriptRunner::parseVarUint(uint8_t idx, int32_t& result) {
-  if (idx >= MAX_UINT_VARS) return false;
-  result = (int32_t)_ctx.uintVars[idx];
-  return true;
-}
-
-bool ScriptRunner::parseVarInt(uint8_t idx, int32_t& result) {
-  if (idx >= MAX_INT_VARS) return false;
-  result = _ctx.intVars[idx];
-  return true;
-}
-
-bool ScriptRunner::parseVarFloat(uint8_t idx, int32_t& result) {
-  if (idx >= MAX_FLOAT_VARS) return false;
-  result = (int32_t)((float)_ctx.floatVars[idx] * 1000.0f);
-  return true;
-}
-
-bool ScriptRunner::parseVarString(uint8_t idx, int32_t& result) {
-  if (idx >= MAX_STRING_VARS) return false;
-  if (_ctx.stringVars[idx][0] == '\0') {
-    result = 0;
-    return true;
-  }
-  result = (int32_t)hash(_ctx.stringVars[idx]);
-  return true;
-}
-
-bool ScriptRunner::parseVarPort(uint8_t idx, int32_t& result, uint8_t slot) {
-  uint16_t val = 0;
-  if (!_portProvider || !_portProvider(idx, PORT_READ, val)) return false;
-#if ENABLE_PORT_LOGGING && ENABLE_LOGGING
-  logPortAction(idx, PORT_READ, val, slot);
-#endif
-  result = (int32_t)val;
-  return true;
-}
-
 bool ScriptRunner::parseVarData(const char* start, int32_t& result, const char** p, DataKind expectedKind) {
   if (!_dataProvider) return false;
   const char* end = start;
@@ -212,34 +174,31 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
   const char* pos = *p;
   while (*pos == ' ') pos++;
 
-  if (*pos == '$' && pos[1] == 'e' && isDigit(pos[2])) {
+  if (*pos == '$' && (pos[1] == 'e' || pos[1] == 'c') && isDigit(pos[2])) {
+    char type = pos[1];
     pos += 2;
     uint8_t idx = 0;
     while (isDigit(*pos)) {
       idx = idx * 10 + (*pos - '0');
       pos++;
     }
-    if (idx < MAX_EVENT_PARAMS) {
-      result = _ctx.eventParams[idx];
+    Value val;
+    if (getVariable(type, idx, s, val)) {
       *p = pos;
-      return true;
-    }
-    result = 0;
-    *p = pos;
-    return true;
-  }
-
-  if (*pos == '$' && pos[1] == 'c' && isDigit(pos[2])) {
-    pos += 2;
-    uint8_t idx = 0;
-    while (isDigit(*pos)) {
-      idx = idx * 10 + (*pos - '0');
-      pos++;
-    }
-    if (idx < s.callParamCount) {
-      result = s.callParams[idx];
-      *p = pos;
-      return true;
+      switch (val.type) {
+        case VAL_UINT:
+          result = (int32_t)val.uintVal;
+          return true;
+        case VAL_INT:
+          result = val.intVal;
+          return true;
+        case VAL_FLOAT:
+          result = (int32_t)(val.floatVal * 1000.0f);
+          return true;
+        default:
+          result = 0;
+          return true;
+      }
     }
     result = 0;
     *p = pos;
@@ -258,21 +217,31 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
         idx = idx * 10 + (*pos - '0');
         pos++;
       }
-      *p = pos;
-      switch (type) {
-        case 'v':
-          return parseVarUint(idx, result);
-        case 'i':
-          return parseVarInt(idx, result);
-        case 'f':
-          return parseVarFloat(idx, result);
-        case 's':
-          return parseVarString(idx, result);
-        case 'p':
-          return parseVarPort(idx, result, s.id);
-        default:
-          return false;
+      Value val;
+      if (getVariable(type, idx, s, val)) {
+        *p = pos;
+        switch (val.type) {
+          case VAL_UINT:
+            result = (int32_t)val.uintVal;
+            return true;
+          case VAL_INT:
+            result = val.intVal;
+            return true;
+          case VAL_FLOAT:
+            result = (int32_t)(val.floatVal * 1000.0f);
+            return true;
+          case VAL_STRING:
+            result = (int32_t)hash(val.stringVal.data);
+            return true;
+          case VAL_ARRAY:
+            result = val.arrayVal.len;
+            return true;
+          default:
+            return false;
+        }
       }
+      *p = nameStart;
+      return parseVarData(nameStart, result, p, expectedKind);
     }
     *p = nameStart;
     return parseVarData(nameStart, result, p, expectedKind);
@@ -336,6 +305,277 @@ bool ScriptRunner::parseArray(const char** p, uint8_t idx) {
   return true;
 }
 
+bool ScriptRunner::getVariable(uint8_t type, uint8_t idx, ScriptState& s, Value& val) {
+  val.type = VAL_NONE;
+  uint16_t portVal = 0;
+  switch (type) {
+    case 'v':
+      if (idx >= MAX_UINT_VARS) return false;
+      val.type = VAL_UINT;
+      val.uintVal = _ctx.uintVars[idx];
+      return true;
+    case 'i':
+      if (idx >= MAX_INT_VARS) return false;
+      val.type = VAL_INT;
+      val.intVal = _ctx.intVars[idx];
+      return true;
+    case 'f':
+      if (idx >= MAX_FLOAT_VARS) return false;
+      val.type = VAL_FLOAT;
+      val.floatVal = (float)_ctx.floatVars[idx];
+      return true;
+    case 's':
+      if (idx >= MAX_STRING_VARS) return false;
+      val.type = VAL_STRING;
+      val.stringVal.data = _ctx.stringVars[idx];
+      val.stringVal.len = strlen(_ctx.stringVars[idx]);
+      return true;
+    case 'a':
+      if (idx >= MAX_ARRAY_VARS) return false;
+      val.type = VAL_ARRAY;
+      val.arrayVal.data = _ctx.arrayVars[idx];
+      val.arrayVal.len = _ctx.arrayLen[idx];
+      return true;
+    case 'p':
+      if (!_portProvider) return false;
+      if (!_portProvider(idx, PORT_READ, portVal)) return false;
+      val.type = VAL_UINT;
+      val.uintVal = portVal;
+      return true;
+    case 'e':
+      if (idx >= MAX_EVENT_PARAMS) return false;
+      val.type = VAL_INT;
+      val.intVal = _ctx.eventParams[idx];
+      return true;
+    case 'c':
+      if (idx >= s.callParamCount) return false;
+      val.type = VAL_INT;
+      val.intVal = s.callParams[idx];
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result) {
+  while (*p == ' ') p++;
+
+  Value left;
+  left.type = VAL_NONE;
+  bool isUnary = false;
+  char unaryOp = '\0';
+  if (*p == '-') {
+    isUnary = true;
+    unaryOp = '-';
+    p++;
+    while (*p == ' ') p++;
+  } else if (*p == '~') {
+    isUnary = true;
+    unaryOp = '~';
+    p++;
+    while (*p == ' ') p++;
+  }
+
+  if (*p == '$') {
+    p++;
+    char type = *p;
+    if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
+         type == 'e' || type == 'c') && isDigit(*(p + 1))) {
+      p++;
+      uint8_t idx = 0;
+      while (isDigit(*p)) {
+        idx = idx * 10 + (*p - '0');
+        p++;
+      }
+      if (!getVariable(type, idx, s, left)) {
+        setError("undefined variable", s.id, s.pos);
+        return false;
+      }
+    } else {
+      setError("invalid expression", s.id, s.pos);
+      return false;
+    }
+  } else if (*p == '\'') {
+    if (!parseString(&p, _strBuf)) {
+      setError("invalid string", s.id, s.pos);
+      return false;
+    }
+    left.type = VAL_STRING;
+    left.stringVal.data = _strBuf;
+    left.stringVal.len = strlen(_strBuf);
+  } else if (isDigit(*p) || *p == '.') {
+    const char* temp = p;
+    bool hasDot = false;
+    while (*temp && (*temp != '+' && *temp != '-' && *temp != '*' && *temp != '/' &&
+                     *temp != '%' && *temp != '&' && *temp != '|' && *temp != '^' &&
+                     *temp != '<' && *temp != '>' && *temp != '~' && *temp != ' ' && *temp != '\0')) {
+      if (*temp == '.') hasDot = true;
+      temp++;
+    }
+    if (hasDot) {
+      float fval = parseFloat(&p);
+      left.type = VAL_FLOAT;
+      left.floatVal = fval;
+    } else {
+      int32_t ival = parseInt(&p);
+      left.type = VAL_INT;
+      left.intVal = ival;
+    }
+  } else {
+    setError("expected operand", s.id, s.pos);
+    return false;
+  }
+
+  if (isUnary) {
+    if (unaryOp == '-') {
+      if (left.type == VAL_INT) {
+        left.intVal = -left.intVal;
+      } else if (left.type == VAL_FLOAT) {
+        left.floatVal = -left.floatVal;
+      } else {
+        setError("unary minus on non-numeric", s.id, s.pos);
+        return false;
+      }
+    } else if (unaryOp == '~') {
+      if (left.type == VAL_INT) {
+        left.intVal = ~left.intVal;
+      } else if (left.type == VAL_UINT) {
+        left.uintVal = ~left.uintVal;
+      } else {
+        setError("bitwise not on non-integer", s.id, s.pos);
+        return false;
+      }
+    }
+  }
+
+  while (true) {
+    while (*p == ' ') p++;
+    char op1 = *p;
+    char op2 = '\0';
+    if ((op1 == '<' && p[1] == '<') || (op1 == '>' && p[1] == '>')) {
+      op2 = p[1];
+      p += 2;
+    } else if (op1 == '+' || op1 == '-' || op1 == '*' || op1 == '/' || op1 == '%' ||
+               op1 == '&' || op1 == '|' || op1 == '^') {
+      p++;
+    } else {
+      break;
+    }
+    while (*p == ' ') p++;
+
+    Value right;
+    right.type = VAL_NONE;
+    if (*p == '$') {
+      p++;
+      char type = *p;
+      if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
+           type == 'e' || type == 'c') && isDigit(*(p + 1))) {
+        p++;
+        uint8_t idx = 0;
+        while (isDigit(*p)) {
+          idx = idx * 10 + (*p - '0');
+          p++;
+        }
+        if (!getVariable(type, idx, s, right)) {
+          setError("undefined variable", s.id, s.pos);
+          return false;
+        }
+      } else {
+        setError("invalid expression", s.id, s.pos);
+        return false;
+      }
+    } else if (*p == '\'') {
+      if (!parseString(&p, _strBuf)) {
+        setError("invalid string", s.id, s.pos);
+        return false;
+      }
+      right.type = VAL_STRING;
+      right.stringVal.data = _strBuf;
+      right.stringVal.len = strlen(_strBuf);
+    } else if (isDigit(*p) || *p == '.') {
+      const char* temp = p;
+      bool hasDot = false;
+      while (*temp && (*temp != '+' && *temp != '-' && *temp != '*' && *temp != '/' &&
+                       *temp != '%' && *temp != '&' && *temp != '|' && *temp != '^' &&
+                       *temp != '<' && *temp != '>' && *temp != '~' && *temp != ' ' && *temp != '\0')) {
+        if (*temp == '.') hasDot = true;
+        temp++;
+      }
+      if (hasDot) {
+        float fval = parseFloat(&p);
+        right.type = VAL_FLOAT;
+        right.floatVal = fval;
+      } else {
+        int32_t ival = parseInt(&p);
+        right.type = VAL_INT;
+        right.intVal = ival;
+      }
+    } else {
+      setError("expected operand", s.id, s.pos);
+      return false;
+    }
+
+    if (left.type == VAL_STRING && right.type == VAL_STRING && op1 == '+' && op2 == '\0') {
+      char tempBuf[MAX_STRING_LEN * 2];
+      strcpy(tempBuf, left.stringVal.data);
+      strcat(tempBuf, right.stringVal.data);
+      strncpy(_strBuf, tempBuf, MAX_STRING_LEN - 1);
+      _strBuf[MAX_STRING_LEN - 1] = '\0';
+      left.type = VAL_STRING;
+      left.stringVal.data = _strBuf;
+      left.stringVal.len = strlen(_strBuf);
+      continue;
+    }
+
+    bool isFloatOp = (left.type == VAL_FLOAT) || (right.type == VAL_FLOAT);
+    if (isFloatOp) {
+      float l = (left.type == VAL_FLOAT) ? left.floatVal : (left.type == VAL_INT) ? (float)left.intVal : (float)left.uintVal;
+      float r = (right.type == VAL_FLOAT) ? right.floatVal : (right.type == VAL_INT) ? (float)right.intVal : (float)right.uintVal;
+      float res = 0.0f;
+      if (op1 == '+' && op2 == '\0') res = l + r;
+      else if (op1 == '-' && op2 == '\0') res = l - r;
+      else if (op1 == '*' && op2 == '\0') res = l * r;
+      else if (op1 == '/' && op2 == '\0') { if (r == 0.0f) { setError("div by zero", s.id, s.pos); return false; } res = l / r; }
+      else {
+        int32_t li = (left.type == VAL_FLOAT) ? (int32_t)left.floatVal : (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
+        int32_t ri = (right.type == VAL_FLOAT) ? (int32_t)right.floatVal : (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
+        int32_t resi = 0;
+        if (op1 == '&' && op2 == '\0') resi = li & ri;
+        else if (op1 == '|' && op2 == '\0') resi = li | ri;
+        else if (op1 == '^' && op2 == '\0') resi = li ^ ri;
+        else if (op1 == '<' && op2 == '<') resi = li << (ri & 31);
+        else if (op1 == '>' && op2 == '>') resi = li >> (ri & 31);
+        else { setError("unsupported op", s.id, s.pos); return false; }
+        left.type = VAL_INT;
+        left.intVal = resi;
+        continue;
+      }
+      left.type = VAL_FLOAT;
+      left.floatVal = res;
+    } else {
+      int32_t l = (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
+      int32_t r = (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
+      int32_t resi = 0;
+      if (op1 == '+' && op2 == '\0') resi = l + r;
+      else if (op1 == '-' && op2 == '\0') resi = l - r;
+      else if (op1 == '*' && op2 == '\0') resi = l * r;
+      else if (op1 == '/' && op2 == '\0') { if (r == 0) { setError("div by zero", s.id, s.pos); return false; } resi = l / r; }
+      else if (op1 == '%' && op2 == '\0') { if (r == 0) { setError("div by zero", s.id, s.pos); return false; } resi = l % r; }
+      else if (op1 == '&' && op2 == '\0') resi = l & r;
+      else if (op1 == '|' && op2 == '\0') resi = l | r;
+      else if (op1 == '^' && op2 == '\0') resi = l ^ r;
+      else if (op1 == '<' && op2 == '<') resi = l << (r & 31);
+      else if (op1 == '>' && op2 == '>') resi = l >> (r & 31);
+      else { setError("unsupported op", s.id, s.pos); return false; }
+      left.type = VAL_INT;
+      left.intVal = resi;
+    }
+  }
+
+  result = left;
+  return true;
+}
+
 bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
   const char* p = token;
   bool result = false;
@@ -386,7 +626,6 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
         s.ifResult = result;
         return result;
       }
-
       p2 = start;
       if (parseValue(&p2, s, value, KIND_UINT)) {
         result = (value != 0);
@@ -528,13 +767,10 @@ bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
     _slots[slot].inWait = false;
     _slots[slot].inEventHandler = false;
     _slots[slot].isWhile = false;
-    _slots[slot].repeatCount = 0;
-    _slots[slot].isInfinite = false;
     _slots[slot].waitUntil = 0;
     _slots[slot].tempResult = 0;
     _slots[slot].hasTempResult = false;
     _slots[slot].callParamCount = 0;
-    _slots[slot].isCalled = false;
     for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) _slots[slot].callParams[i] = 0;
   }
 
@@ -544,7 +780,16 @@ bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
   for (uint8_t i = 0; i < paramCount; i++) {
     const char* paramStr = params.values[i+1];
     int32_t val = 0;
-    if (paramStr[0] == '$') {
+
+    if (paramStr[0] == '\'') {
+      char strBuf[MAX_STRING_LEN];
+      const char* p = paramStr;
+      if (parseString(&p, strBuf)) {
+        val = (int32_t)hash(strBuf);
+      } else {
+        val = 0;
+      }
+    } else if (paramStr[0] == '$') {
       const char* p = paramStr;
       if (!parseValue(&p, s, val, KIND_INT)) {
         parseValue(&p, s, val, KIND_UINT);
@@ -560,7 +805,6 @@ bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
 
   _slots[slot].pos = 0;
   _slots[slot].active = true;
-  _slots[slot].startTime = millis();
   _slots[slot].lastExecutionTime = 0;
   _slots[slot].blockDepth = 0;
   _slots[slot].ifDepth = 0;
@@ -568,7 +812,6 @@ bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
   _slots[slot].skipElse = false;
   _slots[slot].inWait = false;
   _slots[slot].inEventHandler = false;
-  _slots[slot].isCalled = true;
 
   return true;
 }
@@ -601,8 +844,6 @@ bool ScriptRunner::handleWhile(const char* params, ScriptState& s) {
     return true;
   }
   s.loopStartPos = s.pos;
-  s.repeatCount = 1;
-  s.isInfinite = false;
   s.blockStack[s.blockDepth] = BLOCK_WHILE;
   s.blockDepth++;
   return true;
@@ -680,7 +921,6 @@ bool ScriptRunner::handleEnd(ScriptState& s) {
         return true;
       }
       s.isWhile = false;
-      s.repeatCount = 0;
     }
     return true;
   } else if (type == BLOCK_IF) {
@@ -796,7 +1036,6 @@ void ScriptRunner::resetScriptState(uint8_t idx) {
   s.script[0] = '\0';
   s.scriptLen = 0;
   s.pos = 0;
-  s.startTime = 0;
   s.lastExecutionTime = 0;
 
   s.blockDepth = 0;
@@ -806,8 +1045,6 @@ void ScriptRunner::resetScriptState(uint8_t idx) {
   s.isWhile = false;
   s.whileConditionBuffer[0] = '\0';
   s.loopStartPos = 0;
-  s.repeatCount = 0;
-  s.isInfinite = false;
   s.skipElse = false;
   s.skipDepth = 0;
   s.ifResult = false;
@@ -817,7 +1054,6 @@ void ScriptRunner::resetScriptState(uint8_t idx) {
   s.hasTempResult = false;
   s.inEventHandler = false;
   s.callParamCount = 0;
-  s.isCalled = false;
   for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) s.callParams[i] = 0;
 }
 
@@ -828,9 +1064,9 @@ int8_t ScriptRunner::findSlotById(uint8_t id) const {
   return -1;
 }
 
-int8_t ScriptRunner::findFreeSlot(uint16_t scriptLen) {
+int8_t ScriptRunner::findFreeSlot() {
   for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-    if (!_slots[i].registered && _slots[i].slotSize >= scriptLen) return (int8_t)i;
+    if (!_slots[i].registered) return (int8_t)i;
   }
   return -1;
 }
@@ -838,7 +1074,6 @@ int8_t ScriptRunner::findFreeSlot(uint16_t scriptLen) {
 void ScriptRunner::initSlotPools() {
   for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
     resetScriptState(i);
-    _slots[i].slotSize = MAX_SCRIPT_LEN;
   }
   for (uint8_t i = 0; i < 40; i++) _lastPortValues[i] = 0;
 }
@@ -928,33 +1163,6 @@ void ScriptRunner::emitEvent(const char* eventName, uint8_t paramCount, ...) {
   emitEvent(hash);
 }
 
-bool ScriptRunner::removeEventHandler(uint32_t hash) {
-  for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-    if (_eventHandlers[i].active && _eventHandlers[i].hash == hash) {
-      _eventHandlers[i].active = false;
-      uint8_t slotId = _eventHandlers[i].slotId;
-      if (slotId < MAX_SCRIPTS) resetScriptState(slotId);
-      return true;
-    }
-  }
-  return false;
-}
-
-void ScriptRunner::clearAllEventHandlers() {
-  for (uint8_t i = 0; i < _eventHandlerCount; i++) {
-    if (_eventHandlers[i].active) {
-      uint8_t slotId = _eventHandlers[i].slotId;
-      if (slotId < MAX_SCRIPTS) resetScriptState(slotId);
-    }
-  }
-  _eventHandlerCount = 0;
-  for (uint8_t i = 0; i < MAX_EVENT_HANDLERS; i++) {
-    _eventHandlers[i].active = false;
-    _eventHandlers[i].hash = 0;
-    _eventHandlers[i].slotId = 0;
-  }
-}
-
 bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persistent) {
   uint16_t len = strlen(script);
   if (len >= MAX_SCRIPT_LEN) {
@@ -976,7 +1184,7 @@ bool ScriptRunner::registerScript(uint8_t id, const char* script, bool persisten
     _slots[existing].inEventHandler = false;
     return true;
   }
-  int8_t slot = findFreeSlot(len);
+  int8_t slot = findFreeSlot();
   if (slot == -1) {
     setError("no free slots");
     return false;
@@ -1021,7 +1229,6 @@ int8_t ScriptRunner::runScript(uint8_t id) {
   _slots[slot].pos = 0;
   _slots[slot].scriptLen = strlen(_slots[slot].script);
   _slots[slot].active = true;
-  _slots[slot].startTime = millis();
   _slots[slot].lastExecutionTime = 0;
   _slots[slot].blockDepth = 0;
   _slots[slot].ifDepth = 0;
@@ -1031,7 +1238,7 @@ int8_t ScriptRunner::runScript(uint8_t id) {
   _slots[slot].inEventHandler = false;
 
 #if ENABLE_LOAD_LOGGING && ENABLE_LOGGING
-  logLoadAction(id, _slots[slot].scriptLen, true, (uint8_t)slot);
+  logLoadAction(id, _slots[slot].scriptLen, false, (uint8_t)slot);
 #endif
 
 #if ENABLE_SCRIPT_LOGGING && ENABLE_LOGGING
@@ -1051,11 +1258,10 @@ bool ScriptRunner::runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len) {
     return false;
   }
   if (_slots[slot].active) _slots[slot].active = false;
-  if (offset + len > _slots[slot].slotSize) len = _slots[slot].slotSize - offset;
+  if (offset + len > MAX_SCRIPT_LEN) len = MAX_SCRIPT_LEN - offset;
   _slots[slot].pos = offset;
   _slots[slot].scriptLen = offset + len;
   _slots[slot].active = true;
-  _slots[slot].startTime = millis();
   _slots[slot].lastExecutionTime = 0;
   _slots[slot].blockDepth = 0;
   _slots[slot].ifDepth = 0;
@@ -1090,10 +1296,6 @@ bool ScriptRunner::removeScript(uint8_t id) {
   return true;
 }
 
-bool ScriptRunner::isEventId(uint8_t id) const {
-  return id >= EVENT_ID_OFFSET;
-}
-
 bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen) {
   const char* p = s.script + s.pos;
   while (*p == ' ' || *p == TOKEN_SEPARATOR || *p == '\t' || *p == '\r' || *p == '\n' || *p < 32) {
@@ -1125,7 +1327,6 @@ bool ScriptRunner::getNextToken(ScriptState& s, char* token, uint16_t& tokenLen)
 void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
   if (s.isWhile && s.blockDepth > 0 && s.blockStack[s.blockDepth - 1] == BLOCK_WHILE) {
     s.isWhile = false;
-    s.repeatCount = 0;
     s.blockDepth--;
   }
 
@@ -1138,7 +1339,6 @@ void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
   } else {
     s.active = false;
     s.callParamCount = 0;
-    s.isCalled = false;
     for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) s.callParams[i] = 0;
   }
 
@@ -1224,69 +1424,6 @@ void ScriptRunner::setScriptCompleteCallback(ScriptCompleteCallback callback) {
   _completeCallback = callback;
 }
 
-const char* ScriptRunner::getScript(uint8_t slot) const {
-  if (slot >= MAX_SCRIPTS) return nullptr;
-  if (!_slots[slot].registered) return nullptr;
-  return _slots[slot].script;
-}
-
-uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
-  if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
-  return 0;
-}
-
-int32_t ScriptRunner::getIntVar(uint8_t idx) const {
-  if (idx < MAX_INT_VARS) return _ctx.intVars[idx];
-  return 0;
-}
-
-float ScriptRunner::getFloatVar(uint8_t idx) const {
-  if (idx < MAX_FLOAT_VARS) return (float)_ctx.floatVars[idx];
-  return 0.0f;
-}
-
-void ScriptRunner::setUintVar(uint8_t idx, uint32_t value) {
-  if (idx < MAX_UINT_VARS) _ctx.uintVars[idx] = value;
-}
-
-void ScriptRunner::setIntVar(uint8_t idx, int32_t value) {
-  if (idx < MAX_INT_VARS) _ctx.intVars[idx] = value;
-}
-
-void ScriptRunner::setFloatVar(uint8_t idx, float value) {
-  if (idx < MAX_FLOAT_VARS) _ctx.floatVars[idx] = (double)value;
-}
-
-uint8_t ScriptRunner::getArrayByte(uint8_t idx, uint8_t pos) const {
-  if (idx < MAX_ARRAY_VARS && pos < _ctx.arrayLen[idx]) return _ctx.arrayVars[idx][pos];
-  return 0;
-}
-
-void ScriptRunner::setArrayByte(uint8_t idx, uint8_t pos, uint8_t value) {
-  if (idx < MAX_ARRAY_VARS && pos < MAX_ARRAY_SIZE) {
-    _ctx.arrayVars[idx][pos] = value;
-    if (pos >= _ctx.arrayLen[idx]) _ctx.arrayLen[idx] = pos + 1;
-  }
-}
-
-uint8_t ScriptRunner::getArrayLen(uint8_t idx) const {
-  if (idx < MAX_ARRAY_VARS) return _ctx.arrayLen[idx];
-  return 0;
-}
-
-bool ScriptRunner::isRunning(uint8_t id) const {
-  int8_t slot = findSlotById(id);
-  if (slot == -1) return false;
-  return _slots[slot].active;
-}
-
-bool ScriptRunner::isBusy() const {
-  for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
-    if (_slots[i].active) return true;
-  }
-  return false;
-}
-
 bool ScriptRunner::isSlotUsed(uint8_t slot) const {
   if (slot >= MAX_SCRIPTS) return false;
   return _slots[slot].registered;
@@ -1314,6 +1451,47 @@ uint16_t ScriptRunner::getSlotLen(uint8_t slot) const {
 
 uint8_t ScriptRunner::getTotalSlots() const { return MAX_SCRIPTS; }
 
+// ============================================================
+// МЕТОДЫ, ВОЗВРАЩЁННЫЕ ДЛЯ ТЕСТОВ
+// ============================================================
+
+bool ScriptRunner::isBusy() const {
+  for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+    if (_slots[i].active) return true;
+  }
+  return false;
+}
+
+uint32_t ScriptRunner::getUintVar(uint8_t idx) const {
+  if (idx < MAX_UINT_VARS) return _ctx.uintVars[idx];
+  return 0;
+}
+
+int32_t ScriptRunner::getIntVar(uint8_t idx) const {
+  if (idx < MAX_INT_VARS) return _ctx.intVars[idx];
+  return 0;
+}
+
+float ScriptRunner::getFloatVar(uint8_t idx) const {
+  if (idx < MAX_FLOAT_VARS) return (float)_ctx.floatVars[idx];
+  return 0.0f;
+}
+
+void ScriptRunner::setUintVar(uint8_t idx, uint32_t value) {
+  if (idx < MAX_UINT_VARS) _ctx.uintVars[idx] = value;
+}
+
+uint8_t ScriptRunner::getArrayLen(uint8_t idx) const {
+  if (idx < MAX_ARRAY_VARS) return _ctx.arrayLen[idx];
+  return 0;
+}
+
+const char* ScriptRunner::getScript(uint8_t slot) const {
+  if (slot >= MAX_SCRIPTS) return nullptr;
+  if (!_slots[slot].registered) return nullptr;
+  return _slots[slot].script;
+}
+
 uint8_t ScriptRunner::getUsedSlotsCount() const {
   uint8_t count = 0;
   for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
@@ -1325,6 +1503,10 @@ uint8_t ScriptRunner::getUsedSlotsCount() const {
 uint8_t ScriptRunner::getFreeSlotsCount() const {
   return MAX_SCRIPTS - getUsedSlotsCount();
 }
+
+// ============================================================
+// ЛОГИРОВАНИЕ
+// ============================================================
 
 #if ENABLE_LOGGING
 
@@ -1421,6 +1603,10 @@ void ScriptRunner::logScriptAction(uint8_t slot, const char* action) {
 
 #endif
 
+// ============================================================
+// ОБРАБОТКА ОШИБОК
+// ============================================================
+
 void ScriptRunner::setError(const char* msg) {
   if (_logProvider) {
     snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
@@ -1458,87 +1644,19 @@ void ScriptRunner::setError(const char* msg, const char* token, uint8_t slot, ui
   }
 }
 
+// ============================================================
+// УСТАНОВКА ПРОВАЙДЕРОВ
+// ============================================================
+
 void ScriptRunner::setDataProvider(DataProvider provider) { _dataProvider = provider; }
 void ScriptRunner::setLogProvider(LogProvider provider) { _logProvider = provider; }
 void ScriptRunner::setPortProvider(PortProvider provider) { _portProvider = provider; }
 void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) { _stateChangeProvider = provider; }
+void ScriptRunner::setLoadProvider(LoadProvider provider) { _loadProvider = provider; }
 
-#ifdef ENABLE_LOAD_CACHE
-int8_t ScriptRunner::findInLoadCache(uint8_t id, char* buffer, uint16_t& len) {
-  for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-    if (_loadCache[i].valid && _loadCache[i].id == id) {
-      _loadCache[i].lastAccess = millis();
-      _loadCache[i].accessCount++;
-      strcpy(buffer, _loadCache[i].script);
-      len = _loadCache[i].len;
-      _loadCacheHits++;
-      return (int8_t)i;
-    }
-  }
-  _loadCacheMisses++;
-  return -1;
-}
-
-void ScriptRunner::addToLoadCache(uint8_t id, const char* script, uint16_t len) {
-  for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-    if (_loadCache[i].valid && _loadCache[i].id == id) {
-      _loadCache[i].lastAccess = millis();
-      _loadCache[i].accessCount++;
-      return;
-    }
-  }
-  int8_t slot = findEmptyLoadSlot();
-  if (slot == -1) slot = findLeastUsedSlot();
-  if (slot != -1) {
-    _loadCache[slot].id = id;
-    strcpy(_loadCache[slot].script, script);
-    _loadCache[slot].len = len;
-    _loadCache[slot].valid = true;
-    _loadCache[slot].lastAccess = millis();
-    _loadCache[slot].accessCount = 1;
-  }
-}
-
-int8_t ScriptRunner::findEmptyLoadSlot() const {
-  for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-    if (!_loadCache[i].valid) return (int8_t)i;
-  }
-  return -1;
-}
-
-int8_t ScriptRunner::findLeastUsedSlot() const {
-  int8_t least = 0;
-  for (uint8_t i = 1; i < LOAD_CACHE_SIZE; i++) {
-    if (_loadCache[i].accessCount < _loadCache[least].accessCount) least = (int8_t)i;
-  }
-  return least;
-}
-
-bool ScriptRunner::cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len) {
-  if (!_instance) return false;
-  int8_t found = _instance->findInLoadCache(id, buffer, len);
-  if (found != -1) return true;
-  if (_instance->_originalLoadProvider) {
-    bool result = _instance->_originalLoadProvider(id, buffer, len);
-    if (result && len > 0) _instance->addToLoadCache(id, buffer, len);
-    return result;
-  }
-  return false;
-}
-
-void ScriptRunner::setLoadProvider(LoadProvider provider) {
-#ifdef ENABLE_LOAD_CACHE
-  _originalLoadProvider = provider;
-  _loadProvider = provider ? cachedLoadProviderWrapper : nullptr;
-#else
-  _loadProvider = provider;
-#endif
-}
-#else
-void ScriptRunner::setLoadProvider(LoadProvider provider) {
-  _loadProvider = provider;
-}
-#endif
+// ============================================================
+// ОБРАБОТЧИК ON
+// ============================================================
 
 bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) {
   if (params.count < 1) {
@@ -1650,7 +1768,7 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
   }
 
   uint16_t scriptLen = strlen(_cleanedBody);
-  int8_t slot = findFreeSlot(scriptLen);
+  int8_t slot = findFreeSlot();
   if (slot == -1) {
     setError("no free slot", s.id, s.pos);
     return false;
@@ -1701,353 +1819,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     }
   }
 
-  if (isInternal) {
-    if (type == 'p') {
-      if (isDigit(*right) || *right == '-') {
-        const char* p2 = right;
-        int32_t val = parseInt(&p2);
-        writePort(index, (uint16_t)val, s.id);
-        return true;
-      } else if (*right == '$') {
-        int32_t val;
-        if (parseValue(&right, s, val, KIND_INT)) {
-          writePort(index, (uint16_t)val, s.id);
-          return true;
-        }
-        setError("invalid port value", token, s.id, s.pos);
-        return false;
-      } else {
-        uint16_t val = 0;
-        if (_portProvider && _portProvider(index, PORT_READ, val)) {
-          s.tempResult = (int32_t)val;
-          s.hasTempResult = true;
-          return true;
-        }
-        setError("port read failed", s.id, s.pos);
-        return false;
-      }
-    }
-
-    if (type == 'a' && index < MAX_ARRAY_VARS) {
-      if (*right == '{') return parseArray(&right, index);
-      if (*right == '$' && right[1] == 'a') {
-        right += 2;
-        uint8_t srcIdx = (uint8_t)parseUint(&right);
-        if (srcIdx < MAX_ARRAY_VARS) {
-          _ctx.arrayLen[index] = _ctx.arrayLen[srcIdx];
-          for (uint8_t i = 0; i < _ctx.arrayLen[index]; i++) {
-            _ctx.arrayVars[index][i] = _ctx.arrayVars[srcIdx][i];
-          }
-          return true;
-        }
-        setError("invalid array src", s.id, s.pos);
-        return false;
-      }
-      if (*right == '$' && right[1] == 's') {
-        right += 2;
-        uint8_t srcIdx = (uint8_t)parseUint(&right);
-        if (srcIdx < MAX_STRING_VARS) {
-          uint16_t len = strlen(_ctx.stringVars[srcIdx]);
-          if (len > MAX_ARRAY_SIZE) len = MAX_ARRAY_SIZE;
-          for (uint8_t i = 0; i < len; i++) {
-            _ctx.arrayVars[index][i] = (uint8_t)_ctx.stringVars[srcIdx][i];
-          }
-          _ctx.arrayLen[index] = (uint8_t)len;
-          return true;
-        }
-        setError("invalid string src", s.id, s.pos);
-        return false;
-      }
-      setError("array error", s.id, s.pos);
-      return false;
-    }
-
-    if (type == 's' && index < MAX_STRING_VARS) {
-      if (*right == '\'') {
-        if (!parseString(&right, _strBuf)) {
-          setError("invalid string", s.id, s.pos);
-          return false;
-        }
-        strncpy(_ctx.stringVars[index], _strBuf, MAX_STRING_LEN - 1);
-        _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
-        return true;
-      } else if (strchr(right, '+') != nullptr) {
-        const char* p2 = right;
-        char leftStr[MAX_STRING_LEN] = {0};
-        char rightStr[MAX_STRING_LEN] = {0};
-
-        if (*p2 == '$' && p2[1] == 's') {
-          p2 += 2;
-          uint8_t leftIdx = (uint8_t)parseUint(&p2);
-          if (leftIdx < MAX_STRING_VARS) {
-            strncpy(leftStr, _ctx.stringVars[leftIdx], MAX_STRING_LEN - 1);
-            leftStr[MAX_STRING_LEN - 1] = '\0';
-          }
-        } else if (*p2 == '\'') {
-          parseString(&p2, leftStr);
-        }
-        while (*p2 && *p2 != '+') p2++;
-        if (*p2 == '+') p2++;
-
-        if (*p2 == '\'') {
-          parseString(&p2, rightStr);
-        } else if (*p2 == '$' && p2[1] == 'v') {
-          p2 += 2;
-          uint8_t rightIdx = (uint8_t)parseUint(&p2);
-          if (rightIdx < MAX_UINT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%u", _ctx.uintVars[rightIdx]);
-        } else if (*p2 == '$' && p2[1] == 'i') {
-          p2 += 2;
-          uint8_t rightIdx = (uint8_t)parseUint(&p2);
-          if (rightIdx < MAX_INT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%d", _ctx.intVars[rightIdx]);
-        } else if (*p2 == '$' && p2[1] == 'f') {
-          p2 += 2;
-          uint8_t rightIdx = (uint8_t)parseUint(&p2);
-          if (rightIdx < MAX_FLOAT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%.2f", _ctx.floatVars[rightIdx]);
-        } else if (*p2 == '$' && p2[1] == 's') {
-          p2 += 2;
-          uint8_t rightIdx = (uint8_t)parseUint(&p2);
-          if (rightIdx < MAX_STRING_VARS) {
-            strncpy(rightStr, _ctx.stringVars[rightIdx], MAX_STRING_LEN - 1);
-            rightStr[MAX_STRING_LEN - 1] = '\0';
-          }
-        } else if (isDigit(*p2) || *p2 == '-') {
-          int32_t val = parseInt(&p2);
-          snprintf(rightStr, MAX_STRING_LEN, "%d", val);
-        }
-        char result[MAX_STRING_LEN];
-        strncpy(result, leftStr, MAX_STRING_LEN - 1);
-        result[MAX_STRING_LEN - 1] = '\0';
-        strncat(result, rightStr, MAX_STRING_LEN - strlen(result) - 1);
-        strncpy(_ctx.stringVars[index], result, MAX_STRING_LEN - 1);
-        _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
-        return true;
-      } else if (*right == '$' && right[1] == 's') {
-        right += 2;
-        uint8_t srcIdx = (uint8_t)parseUint(&right);
-        if (srcIdx < MAX_STRING_VARS) {
-          strncpy(_ctx.stringVars[index], _ctx.stringVars[srcIdx], MAX_STRING_LEN - 1);
-          _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
-          return true;
-        }
-        setError("invalid string src", s.id, s.pos);
-        return false;
-      } else if (s.hasTempResult) {
-        snprintf(_strBuf, MAX_STRING_LEN, "%d", s.tempResult);
-        strncpy(_ctx.stringVars[index], _strBuf, MAX_STRING_LEN - 1);
-        _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
-        s.hasTempResult = false;
-        return true;
-      }
-      setError("string error", s.id, s.pos);
-      return false;
-    }
-
-    if (type == 'v' || type == 'i' || type == 'f') {
-      const char* p2 = right;
-      int32_t leftVal = 0;
-      float leftFloatVal = 0.0f;
-      bool hasLeft = false;
-      bool leftIsFloat = false;
-
-      if (s.hasTempResult) {
-        leftVal = s.tempResult;
-        hasLeft = true;
-      } else if (*p2 == '$') {
-        if (p2[1] == 'f') {
-          const char* temp = p2 + 2;
-          uint8_t idx = (uint8_t)parseUint(&temp);
-          if (idx < MAX_FLOAT_VARS) {
-            leftFloatVal = (float)_ctx.floatVars[idx];
-            leftIsFloat = true;
-            hasLeft = true;
-            p2 = temp;
-          }
-        } else if (p2[1] == 'p') {
-          const char* temp = p2 + 2;
-          uint8_t gpio = (uint8_t)parseUint(&temp);
-          uint16_t val = 0;
-          if (_portProvider && _portProvider(gpio, PORT_READ, val)) {
-#if ENABLE_PORT_LOGGING && ENABLE_LOGGING
-            logPortAction(gpio, PORT_READ, val, s.id);
-#endif
-            leftVal = (int32_t)val;
-            hasLeft = true;
-            p2 = temp;
-          } else {
-            setError("port read failed", s.id, s.pos);
-            return false;
-          }
-        } else {
-          DataKind expected = (type == 'v') ? KIND_UINT : (type == 'i') ? KIND_INT
-                                                                        : KIND_FLOAT;
-          if (parseValue(&p2, s, leftVal, expected)) hasLeft = true;
-        }
-      } else if (isDigit(*p2) || *p2 == '.' || *p2 == '-') {
-        const char* temp = p2;
-        bool hasDot = false;
-        while (*temp && (*temp != '+' && *temp != '-' && *temp != '*' && *temp != '/' && *temp != '&' && *temp != '|')) {
-          if (*temp == '.') hasDot = true;
-          temp++;
-        }
-        if (hasDot || type == 'f') {
-          leftIsFloat = true;
-          leftFloatVal = parseFloat(&p2);
-          hasLeft = true;
-        } else {
-          leftVal = parseInt(&p2);
-          hasLeft = true;
-        }
-      }
-
-      if (*p2 == '+' || *p2 == '-' || *p2 == '*' || *p2 == '/' || *p2 == '%' ||
-          *p2 == '&' || *p2 == '|' || *p2 == '^' || *p2 == '~' ||
-          (*p2 == '<' && p2[1] == '<') || (*p2 == '>' && p2[1] == '>')) {
-        char op1 = *p2;
-        char op2 = '\0';
-        if ((op1 == '<' && p2[1] == '<') || (op1 == '>' && p2[1] == '>')) {
-          op2 = p2[1];
-          p2 += 2;
-        } else
-          p2++;
-
-        int32_t rightVal = 0;
-        float rightFloatVal = 0.0f;
-        bool rightIsFloat = false;
-
-        if (*p2 == '$') {
-          if (p2[1] == 'f') {
-            const char* temp = p2 + 2;
-            uint8_t idx = (uint8_t)parseUint(&temp);
-            if (idx < MAX_FLOAT_VARS) {
-              rightFloatVal = (float)_ctx.floatVars[idx];
-              rightIsFloat = true;
-              p2 = temp;
-            }
-          } else {
-            DataKind expected = (type == 'v') ? KIND_UINT : (type == 'i') ? KIND_INT
-                                                                          : KIND_FLOAT;
-            parseValue(&p2, s, rightVal, expected);
-          }
-        } else if (isDigit(*p2) || *p2 == '.' || *p2 == '-') {
-          const char* temp = p2;
-          bool hasDot = false;
-          while (*temp && (*temp != '+' && *temp != '-' && *temp != '*' && *temp != '/')) {
-            if (*temp == '.') hasDot = true;
-            temp++;
-          }
-          if (hasDot || leftIsFloat || type == 'f') {
-            rightIsFloat = true;
-            rightFloatVal = parseFloat(&p2);
-          } else {
-            rightVal = parseInt(&p2);
-          }
-        }
-
-        int32_t resultInt = 0;
-        float resultFloat = 0.0f;
-        bool resultIsFloat = leftIsFloat || rightIsFloat || type == 'f';
-
-        if (resultIsFloat) {
-          float l = leftIsFloat ? leftFloatVal : (float)leftVal;
-          float r = rightIsFloat ? rightFloatVal : (float)rightVal;
-          switch (op1) {
-            case '+':
-              resultFloat = l + r;
-              break;
-            case '-':
-              resultFloat = l - r;
-              break;
-            case '*':
-              resultFloat = l * r;
-              break;
-            case '/':
-              if (r == 0) {
-                setError("div by zero", s.id, s.pos);
-                return false;
-              }
-              resultFloat = l / r;
-              break;
-            default:
-              setError("unknown op", s.id, s.pos);
-              return false;
-          }
-          resultInt = (int32_t)resultFloat;
-        } else {
-          switch (op1) {
-            case '+':
-              resultInt = leftVal + rightVal;
-              break;
-            case '-':
-              resultInt = leftVal - rightVal;
-              break;
-            case '*':
-              resultInt = leftVal * rightVal;
-              break;
-            case '/':
-              if (rightVal == 0) {
-                setError("div by zero", s.id, s.pos);
-                return false;
-              }
-              resultInt = leftVal / rightVal;
-              break;
-            case '%':
-              if (rightVal == 0) {
-                setError("div by zero", s.id, s.pos);
-                return false;
-              }
-              resultInt = leftVal % rightVal;
-              break;
-            case '&':
-              resultInt = leftVal & rightVal;
-              break;
-            case '|':
-              resultInt = leftVal | rightVal;
-              break;
-            case '^':
-              resultInt = leftVal ^ rightVal;
-              break;
-            case '~':
-              resultInt = (int32_t)(~(uint32_t)leftVal);
-              break;
-            case '<':
-              resultInt = leftVal << (rightVal & 31);
-              break;
-            case '>':
-              resultInt = leftVal >> (rightVal & 31);
-              break;
-            default:
-              setError("unknown op", s.id, s.pos);
-              return false;
-          }
-          resultFloat = (float)resultInt;
-        }
-
-        if (type == 'v')
-          _ctx.uintVars[index] = resultIsFloat ? (uint32_t)resultFloat : (uint32_t)resultInt;
-        else if (type == 'i')
-          _ctx.intVars[index] = resultIsFloat ? (int32_t)resultFloat : resultInt;
-        else if (type == 'f')
-          _ctx.floatVars[index] = resultIsFloat ? (double)resultFloat : (double)resultInt;
-        return true;
-      }
-
-      if (hasLeft) {
-        if (type == 'v')
-          _ctx.uintVars[index] = leftIsFloat ? (uint32_t)leftFloatVal : (uint32_t)leftVal;
-        else if (type == 'i')
-          _ctx.intVars[index] = leftIsFloat ? (int32_t)leftFloatVal : leftVal;
-        else if (type == 'f')
-          _ctx.floatVars[index] = leftIsFloat ? (double)leftFloatVal : (double)leftVal;
-        return true;
-      }
-      setError("invalid value", token, s.id, s.pos);
-      return false;
-    }
-    setError("invalid var op", token, s.id, s.pos);
-    return false;
-  }
-
-  if (_dataProvider) {
+  if (!isInternal) {
     const char* leftStart = left;
     const char* leftEnd = leftStart;
     while (*leftEnd && *leftEnd != '=' && *leftEnd != ',' && *leftEnd != ' ') leftEnd++;
@@ -2056,95 +1828,197 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     strncpy(_nameBuf, leftStart, nameLen);
     _nameBuf[nameLen] = '\0';
 
-    if (*right == '\'') {
-      const char* p = right;
-      if (!parseString(&p, _strBuf)) {
-        setError("invalid string", s.id, s.pos);
-        return false;
-      }
-      DataValue dv;
-      dv.stringVal.data = (uint8_t*)_strBuf;
-      dv.stringVal.len = strlen(_strBuf);
-      if (_dataProvider(_nameBuf, KIND_STRING, dv, true)) {
-#if ENABLE_DATA_LOGGING && ENABLE_LOGGING
-        logDataAction(_nameBuf, KIND_STRING, true, _strBuf, s.id);
-#endif
-        return true;
-      }
-      setError("data write failed", s.id, s.pos);
-      return false;
-    } else if (*right == '$') {
-      const char* p = right;
-      char varType = p[1];
-      p += 2;
-      uint8_t varIndex = (uint8_t)parseUint(&p);
-      DataKind kind;
-      DataValue dv;
-      bool success = false;
-
-      if (varType == 'v' && varIndex < MAX_UINT_VARS) {
-        kind = KIND_UINT;
-        dv.uintVal = _ctx.uintVars[varIndex];
-        success = true;
-      } else if (varType == 'i' && varIndex < MAX_INT_VARS) {
-        kind = KIND_INT;
-        dv.intVal = _ctx.intVars[varIndex];
-        success = true;
-      } else if (varType == 'f' && varIndex < MAX_FLOAT_VARS) {
-        kind = KIND_FLOAT;
-        dv.floatVal = (float)_ctx.floatVars[varIndex];
-        success = true;
-      } else if (varType == 's' && varIndex < MAX_STRING_VARS) {
-        kind = KIND_STRING;
-        dv.stringVal.data = (uint8_t*)_ctx.stringVars[varIndex];
-        dv.stringVal.len = strlen(_ctx.stringVars[varIndex]);
-        success = true;
-      }
-      if (success) {
-        if (_dataProvider(_nameBuf, kind, dv, true)) {
-#if ENABLE_DATA_LOGGING && ENABLE_LOGGING
-          char buf[64];
-          switch (kind) {
-            case KIND_INT:
-              snprintf(buf, sizeof(buf), "%d", dv.intVal);
-              break;
-            case KIND_UINT:
-              snprintf(buf, sizeof(buf), "%u", dv.uintVal);
-              break;
-            case KIND_FLOAT:
-              snprintf(buf, sizeof(buf), "%.2f", dv.floatVal);
-              break;
-            case KIND_STRING:
-              snprintf(buf, sizeof(buf), "%s", (char*)dv.stringVal.data);
-              break;
-          }
-          logDataAction(_nameBuf, kind, true, buf, s.id);
-#endif
-          return true;
-        }
-      }
-      setError("data write failed", s.id, s.pos);
-      return false;
-    } else if (isDigit(*right) || *right == '.') {
-      const char* p = right;
-      int32_t value = parseInt(&p);
-      DataValue dv;
-      dv.intVal = value;
-      if (_dataProvider(_nameBuf, KIND_INT, dv, true)) {
-#if ENABLE_DATA_LOGGING && ENABLE_LOGGING
-        char buf[32];
-        snprintf(buf, sizeof(buf), "%d", value);
-        logDataAction(_nameBuf, KIND_INT, true, buf, s.id);
-#endif
-        return true;
-      }
-      setError("data write failed", s.id, s.pos);
+    const char* exprPtr = right;
+    Value val;
+    if (!parseExpression(exprPtr, s, val)) {
       return false;
     }
-    setError("data op error", s.id, s.pos);
+
+    DataValue dv;
+    DataKind kind;
+    if (val.type == VAL_STRING) {
+      kind = KIND_STRING;
+      dv.stringVal.data = (uint8_t*)val.stringVal.data;
+      dv.stringVal.len = val.stringVal.len;
+    } else if (val.type == VAL_INT) {
+      kind = KIND_INT;
+      dv.intVal = val.intVal;
+    } else if (val.type == VAL_UINT) {
+      kind = KIND_UINT;
+      dv.uintVal = val.uintVal;
+    } else if (val.type == VAL_FLOAT) {
+      kind = KIND_FLOAT;
+      dv.floatVal = val.floatVal;
+    } else {
+      setError("unsupported type for data", s.id, s.pos);
+      return false;
+    }
+
+    if (_dataProvider && _dataProvider(_nameBuf, kind, dv, true)) {
+#if ENABLE_DATA_LOGGING && ENABLE_LOGGING
+      char buf[64];
+      switch (kind) {
+        case KIND_INT: snprintf(buf, sizeof(buf), "%d", dv.intVal); break;
+        case KIND_UINT: snprintf(buf, sizeof(buf), "%u", dv.uintVal); break;
+        case KIND_FLOAT: snprintf(buf, sizeof(buf), "%.2f", dv.floatVal); break;
+        case KIND_STRING: snprintf(buf, sizeof(buf), "%s", (char*)dv.stringVal.data); break;
+      }
+      logDataAction(_nameBuf, kind, true, buf, s.id);
+#endif
+      return true;
+    }
+    setError("data write failed", s.id, s.pos);
     return false;
   }
-  setError("unknown var", token, s.id, s.pos);
+
+  if (type == 'p') {
+    const char* exprPtr = right;
+    Value val;
+    if (!parseExpression(exprPtr, s, val)) {
+      return false;
+    }
+    int32_t intVal = 0;
+    if (val.type == VAL_INT) intVal = val.intVal;
+    else if (val.type == VAL_UINT) intVal = (int32_t)val.uintVal;
+    else if (val.type == VAL_FLOAT) intVal = (int32_t)val.floatVal;
+    else { setError("invalid port value", s.id, s.pos); return false; }
+    writePort(index, (uint16_t)intVal, s.id);
+    return true;
+  }
+
+  if (type == 'a' && index < MAX_ARRAY_VARS) {
+    const char* exprPtr = right;
+    if (*exprPtr == '{') {
+      return parseArray(&exprPtr, index);
+    }
+    Value val;
+    if (!parseExpression(exprPtr, s, val)) {
+      return false;
+    }
+    if (val.type == VAL_ARRAY) {
+      uint8_t len = val.arrayVal.len;
+      if (len > MAX_ARRAY_SIZE) len = MAX_ARRAY_SIZE;
+      for (uint8_t i = 0; i < len; i++) {
+        _ctx.arrayVars[index][i] = val.arrayVal.data[i];
+      }
+      _ctx.arrayLen[index] = len;
+      return true;
+    } else if (val.type == VAL_STRING) {
+      uint16_t len = val.stringVal.len;
+      if (len > MAX_ARRAY_SIZE) len = MAX_ARRAY_SIZE;
+      for (uint8_t i = 0; i < len; i++) {
+        _ctx.arrayVars[index][i] = (uint8_t)val.stringVal.data[i];
+      }
+      _ctx.arrayLen[index] = (uint8_t)len;
+      return true;
+    }
+    setError("array assignment requires array or string", s.id, s.pos);
+    return false;
+  }
+
+  if (type == 's' && index < MAX_STRING_VARS) {
+    const char* rightExpr = right;
+    if (strchr(rightExpr, '+') != nullptr) {
+      const char* p2 = rightExpr;
+      char leftStr[MAX_STRING_LEN] = {0};
+      char rightStr[MAX_STRING_LEN] = {0};
+
+      if (*p2 == '$' && p2[1] == 's') {
+        p2 += 2;
+        uint8_t leftIdx = (uint8_t)parseUint(&p2);
+        if (leftIdx < MAX_STRING_VARS) {
+          strncpy(leftStr, _ctx.stringVars[leftIdx], MAX_STRING_LEN - 1);
+          leftStr[MAX_STRING_LEN - 1] = '\0';
+        }
+      } else if (*p2 == '\'') {
+        parseString(&p2, leftStr);
+      }
+      while (*p2 && *p2 != '+') p2++;
+      if (*p2 == '+') p2++;
+
+      if (*p2 == '\'') {
+        parseString(&p2, rightStr);
+      } else if (*p2 == '$' && p2[1] == 'v') {
+        p2 += 2;
+        uint8_t rightIdx = (uint8_t)parseUint(&p2);
+        if (rightIdx < MAX_UINT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%u", _ctx.uintVars[rightIdx]);
+      } else if (*p2 == '$' && p2[1] == 'i') {
+        p2 += 2;
+        uint8_t rightIdx = (uint8_t)parseUint(&p2);
+        if (rightIdx < MAX_INT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%d", _ctx.intVars[rightIdx]);
+      } else if (*p2 == '$' && p2[1] == 'f') {
+        p2 += 2;
+        uint8_t rightIdx = (uint8_t)parseUint(&p2);
+        if (rightIdx < MAX_FLOAT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%.2f", _ctx.floatVars[rightIdx]);
+      } else if (*p2 == '$' && p2[1] == 's') {
+        p2 += 2;
+        uint8_t rightIdx = (uint8_t)parseUint(&p2);
+        if (rightIdx < MAX_STRING_VARS) {
+          strncpy(rightStr, _ctx.stringVars[rightIdx], MAX_STRING_LEN - 1);
+          rightStr[MAX_STRING_LEN - 1] = '\0';
+        }
+      } else if (isDigit(*p2) || *p2 == '-') {
+        int32_t val = parseInt(&p2);
+        snprintf(rightStr, MAX_STRING_LEN, "%d", val);
+      }
+      char result[MAX_STRING_LEN];
+      strncpy(result, leftStr, MAX_STRING_LEN - 1);
+      result[MAX_STRING_LEN - 1] = '\0';
+      strncat(result, rightStr, MAX_STRING_LEN - strlen(result) - 1);
+      strncpy(_ctx.stringVars[index], result, MAX_STRING_LEN - 1);
+      _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
+      return true;
+    } else {
+      const char* exprPtr = rightExpr;
+      Value val;
+      if (!parseExpression(exprPtr, s, val)) {
+        return false;
+      }
+      if (val.type == VAL_STRING) {
+        strncpy(_ctx.stringVars[index], val.stringVal.data, MAX_STRING_LEN - 1);
+        _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
+        return true;
+      } else if (val.type == VAL_INT || val.type == VAL_UINT || val.type == VAL_FLOAT) {
+        char buf[32];
+        if (val.type == VAL_INT) snprintf(buf, sizeof(buf), "%d", val.intVal);
+        else if (val.type == VAL_UINT) snprintf(buf, sizeof(buf), "%u", val.uintVal);
+        else snprintf(buf, sizeof(buf), "%.6f", val.floatVal);
+        strncpy(_ctx.stringVars[index], buf, MAX_STRING_LEN - 1);
+        _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
+        return true;
+      }
+      setError("string assignment requires string or number", s.id, s.pos);
+      return false;
+    }
+  }
+
+  if (type == 'v' || type == 'i' || type == 'f') {
+    const char* exprPtr = right;
+    Value val;
+    if (!parseExpression(exprPtr, s, val)) {
+      return false;
+    }
+
+    if (type == 'v') {
+      if (val.type == VAL_UINT) _ctx.uintVars[index] = val.uintVal;
+      else if (val.type == VAL_INT) _ctx.uintVars[index] = (uint32_t)val.intVal;
+      else if (val.type == VAL_FLOAT) _ctx.uintVars[index] = (uint32_t)val.floatVal;
+      else { setError("cannot assign to uint", s.id, s.pos); return false; }
+    } else if (type == 'i') {
+      if (val.type == VAL_INT) _ctx.intVars[index] = val.intVal;
+      else if (val.type == VAL_UINT) _ctx.intVars[index] = (int32_t)val.uintVal;
+      else if (val.type == VAL_FLOAT) _ctx.intVars[index] = (int32_t)val.floatVal;
+      else { setError("cannot assign to int", s.id, s.pos); return false; }
+    } else if (type == 'f') {
+      if (val.type == VAL_FLOAT) _ctx.floatVars[index] = (double)val.floatVal;
+      else if (val.type == VAL_INT) _ctx.floatVars[index] = (double)val.intVal;
+      else if (val.type == VAL_UINT) _ctx.floatVars[index] = (double)val.uintVal;
+      else { setError("cannot assign to float", s.id, s.pos); return false; }
+    }
+    return true;
+  }
+
+  setError("invalid variable type", s.id, s.pos);
   return false;
 }
 
@@ -2187,89 +2061,52 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
       }
       bool found = false;
 
-      switch (type) {
-        case 's':
-          if (idx < MAX_STRING_VARS) {
-            uint16_t len = strlen(_ctx.stringVars[idx]);
-            if (pos + len < sizeof(buf) - 1) {
-              strcpy(buf + pos, _ctx.stringVars[idx]);
-              pos += len;
-              found = true;
+      Value val;
+      if (getVariable(type, idx, s, val)) {
+        switch (val.type) {
+          case VAL_UINT:
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%u", val.uintVal);
+            found = true;
+            break;
+          case VAL_INT:
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", val.intVal);
+            found = true;
+            break;
+          case VAL_FLOAT:
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%.2f", val.floatVal);
+            found = true;
+            break;
+          case VAL_STRING:
+            {
+              uint16_t len = val.stringVal.len;
+              if (pos + len < sizeof(buf) - 1) {
+                strncpy(buf + pos, val.stringVal.data, len);
+                pos += len;
+                buf[pos] = '\0';
+                found = true;
+              }
             }
-          }
-          break;
-        case 'v':
-          if (idx < MAX_UINT_VARS) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%u", _ctx.uintVars[idx]);
-            found = true;
-          }
-          break;
-        case 'i':
-          if (idx < MAX_INT_VARS) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", _ctx.intVars[idx]);
-            found = true;
-          }
-          break;
-        case 'f':
-          if (idx < MAX_FLOAT_VARS) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%.2f", _ctx.floatVars[idx]);
-            found = true;
-          }
-          break;
-        case 'a':
-          if (idx < MAX_ARRAY_VARS) {
+            break;
+          case VAL_ARRAY:
             buf[pos++] = '{';
-            for (uint8_t j = 0; j < _ctx.arrayLen[idx]; j++) {
+            for (uint8_t j = 0; j < val.arrayVal.len; j++) {
               if (j > 0) {
                 buf[pos++] = ',';
                 buf[pos] = '\0';
               }
-              pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", _ctx.arrayVars[idx][j]);
+              pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", val.arrayVal.data[j]);
             }
             buf[pos++] = '}';
             buf[pos] = '\0';
             found = true;
-          }
-          break;
-        case 'p':
-          if (idx < 40) {
-            uint16_t val = 0;
-            if (_portProvider && _portProvider(idx, PORT_READ, val)) {
-              pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", val);
-              found = true;
-            }
-          }
-          break;
-        case 'e': {
-          if (idx < MAX_EVENT_PARAMS) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", _ctx.eventParams[idx]);
-            found = true;
-          }
-          break;
-        }
-        case 'c': {
-          if (idx < s.callParamCount) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", s.callParams[idx]);
-            found = true;
-          }
-          break;
-        }
-        default: {
-          int32_t val;
-          if (parseValue(&param, s, val, KIND_INT)) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", val);
-            found = true;
-          } else if (parseValue(&param, s, val, KIND_UINT)) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%u", (uint32_t)val);
-            found = true;
-          } else if (parseValue(&param, s, val, KIND_FLOAT)) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%.2f", (float)val / 1000.0f);
-            found = true;
-          }
-          break;
+            break;
+          default:
+            break;
         }
       }
-      if (!found) pos += snprintf(buf + pos, sizeof(buf) - pos, "?");
+      if (!found) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "?");
+      }
     } else {
       int32_t val = atoi(param);
       pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", val);
@@ -2717,20 +2554,6 @@ ScriptRunner::ScriptRunner()
     _funcParams[i].intVal = 0;
     _funcStrBufs[i][0] = '\0';
   }
-
-#ifdef ENABLE_LOAD_CACHE
-  _loadCacheHits = 0;
-  _loadCacheMisses = 0;
-  _originalLoadProvider = nullptr;
-  for (uint8_t i = 0; i < LOAD_CACHE_SIZE; i++) {
-    _loadCache[i].valid = false;
-    _loadCache[i].id = 0;
-    _loadCache[i].len = 0;
-    _loadCache[i].script[0] = '\0';
-    _loadCache[i].lastAccess = 0;
-    _loadCache[i].accessCount = 0;
-  }
-#endif
 
   for (uint8_t i = 0; i < MAX_UINT_VARS; i++) _ctx.uintVars[i] = 0;
   for (uint8_t i = 0; i < MAX_INT_VARS; i++) _ctx.intVars[i] = 0;

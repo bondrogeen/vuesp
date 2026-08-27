@@ -36,7 +36,7 @@ $v0 = 10; if : $v0 > 5; log('Greater'); end;
 ```scriptrunner
 $s0='Hello World';
 log('Temperature:',$temp);
-on('btn_13_1');
+on('btn');
 ```
 
 ### Комментарии
@@ -266,7 +266,14 @@ $v0=0;while:$v0<10;log('Count:',$v0);$v0=$v0+1;wait(1s);end;log('Done!');
 ### Плавное зажигание
 
 ```scriptrunner
-$p14=255/20;wait(2s);$p14=0/20;
+$v0=0;
+while:$v0<5;
+  fade(14,255,1000);
+  wait(1s);
+  fade(14,0,1000);
+  wait(1s);
+  $v0=$v0+1;
+end;
 ```
 
 ### Кнопка управляет светодиодом
