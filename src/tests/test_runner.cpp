@@ -1341,7 +1341,7 @@ TEST(wait_time) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   uint32_t start = stub_millis;
-  runner.registerScript(1, "$display='START';wait(100u);$display='END'");
+  runner.registerScript(1, "$display='START';wait(100ms);$display='END'");
   runner.runScript(1);
   runScriptUntilDone(runner, 50);
   uint32_t elapsed = stub_millis - start;
@@ -1724,7 +1724,7 @@ TEST(script_too_long) {
 TEST(stop_script) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "wait(1000u);$display='SHOULD_NOT_RUN'");
+  runner.registerScript(1, "wait(1000ms);$display='SHOULD_NOT_RUN'");
   runner.runScript(1);
   runner.stopScript(1);
   runScriptUntilDone(runner);
@@ -1734,8 +1734,8 @@ TEST(stop_script) {
 TEST(stop_all) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "wait(1000u);$display='S1'");
-  runner.registerScript(2, "wait(1000u);$display='S2'");
+  runner.registerScript(1, "wait(1000ms);$display='S1'");
+  runner.registerScript(2, "wait(1000ms);$display='S2'");
   runner.runScript(1);
   runner.runScript(2);
   runner.stopAll();
@@ -1747,7 +1747,7 @@ TEST(stop_all) {
 TEST(is_busy) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "wait(100u)");
+  runner.registerScript(1, "wait(100ms)");
   runner.runScript(1);
   ASSERT_TRUE(runner.isBusy());
   runScriptUntilDone(runner);
@@ -1758,7 +1758,7 @@ TEST(wait_until) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   uint32_t start = stub_millis;
-  runner.registerScript(1, "$display='START';wait(50u);wait(50u);$display='END'");
+  runner.registerScript(1, "$display='START';wait(50ms);wait(50ms);$display='END'");
   runner.runScript(1);
   runScriptUntilDone(runner);
   uint32_t elapsed = stub_millis - start;

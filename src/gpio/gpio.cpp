@@ -163,19 +163,6 @@ void setValueUpdate() {
   updatePort();
 }
 
-// void emitButtonEvent(const char* format, ...) {
-//   char buffer[32];
-//   va_list args;
-//   va_start(args, format);
-//   vsnprintf(buffer, sizeof(buffer), format, args);
-//   va_end(args);
-//   emitEvent(buffer);
-// }
-
-void emitButtonEvent(Port* port, uint8_t type) {
-  scriptRunner.emitEvent("btn", 4, port->gpio, port->value, type, port->count);
-}
-
 void loopInterrupt(uint32_t now) {
   for (int i = 0; i < ports_len; i++) {
     if (!(ports[i].mode == INPUT || ports[i].mode == INPUT_PULLUP) && !ports[i].interrupt) continue;
@@ -286,8 +273,6 @@ void setupGPIO() {
   fade.init(5, 3);
   fade.setDataProvider(portProvider);
   fade.setStateChangeProvider(stateChangeProvider);
-  // fade.start(13, 0, 5000);
-  // fade.start(14, 255, 1000);
 }
 
 void setupFirstGPIO() {

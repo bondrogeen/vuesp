@@ -75,10 +75,11 @@ uint32_t ScriptRunner::parseTime(const char* str) const {
     value = value * 10 + (*p - '0');
     p++;
   }
+  if (p[0] == 'm' && p[1] == 's') {
+    return value;
+  }
   char unit = *p;
   switch (unit) {
-    case 'u':
-      return value;
     case 's':
       return value * 1000;
     case 'm':
@@ -220,6 +221,23 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
     }
     if (idx < MAX_EVENT_PARAMS) {
       result = _ctx.eventParams[idx];
+      *p = pos;
+      return true;
+    }
+    result = 0;
+    *p = pos;
+    return true;
+  }
+
+  if (*pos == '$' && pos[1] == 'c' && isDigit(pos[2])) {
+    pos += 2;
+    uint8_t idx = 0;
+    while (isDigit(*pos)) {
+      idx = idx * 10 + (*pos - '0');
+      pos++;
+    }
+    if (idx < s.callParamCount) {
+      result = s.callParams[idx];
       *p = pos;
       return true;
     }
@@ -475,11 +493,84 @@ bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
 
 bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
   if (params.count < 1) {
-    setError("call needs 1 param", s.id, s.pos);
+    setError("call needs at least 1 param (script id)", s.id, s.pos);
     return false;
   }
-  int8_t slot = runScript((uint8_t)atoi(params.values[0]));
-  return slot >= 0;
+
+  uint8_t targetId = (uint8_t)atoi(params.values[0]);
+  int8_t slot = findSlotById(targetId);
+  if (slot == -1 && _loadProvider) {
+    char buffer[MAX_SCRIPT_LEN];
+    uint16_t len = 0;
+    if (_loadProvider(targetId, buffer, len)) {
+      if (registerScript(targetId, buffer, false)) {
+        slot = findSlotById(targetId);
+      }
+    }
+  }
+  if (slot == -1) {
+    setError("call: script not found", s.id, s.pos);
+    return false;
+  }
+
+  if ((uint8_t)slot == s.id) {
+    setError("call: recursive call not allowed", s.id, s.pos);
+    return false;
+  }
+
+  if (_slots[slot].active) {
+    _slots[slot].active = false;
+    _slots[slot].pos = 0;
+    _slots[slot].blockDepth = 0;
+    _slots[slot].ifDepth = 0;
+    _slots[slot].skipDepth = 0;
+    _slots[slot].skipElse = false;
+    _slots[slot].inWait = false;
+    _slots[slot].inEventHandler = false;
+    _slots[slot].isWhile = false;
+    _slots[slot].repeatCount = 0;
+    _slots[slot].isInfinite = false;
+    _slots[slot].waitUntil = 0;
+    _slots[slot].tempResult = 0;
+    _slots[slot].hasTempResult = false;
+    _slots[slot].callParamCount = 0;
+    _slots[slot].isCalled = false;
+    for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) _slots[slot].callParams[i] = 0;
+  }
+
+  uint8_t paramCount = params.count - 1;
+  if (paramCount > MAX_CALL_PARAMS) paramCount = MAX_CALL_PARAMS;
+  _slots[slot].callParamCount = paramCount;
+  for (uint8_t i = 0; i < paramCount; i++) {
+    const char* paramStr = params.values[i+1];
+    int32_t val = 0;
+    if (paramStr[0] == '$') {
+      const char* p = paramStr;
+      if (!parseValue(&p, s, val, KIND_INT)) {
+        parseValue(&p, s, val, KIND_UINT);
+      }
+    } else {
+      val = atoi(paramStr);
+    }
+    _slots[slot].callParams[i] = val;
+  }
+  for (uint8_t i = paramCount; i < MAX_CALL_PARAMS; i++) {
+    _slots[slot].callParams[i] = 0;
+  }
+
+  _slots[slot].pos = 0;
+  _slots[slot].active = true;
+  _slots[slot].startTime = millis();
+  _slots[slot].lastExecutionTime = 0;
+  _slots[slot].blockDepth = 0;
+  _slots[slot].ifDepth = 0;
+  _slots[slot].skipDepth = 0;
+  _slots[slot].skipElse = false;
+  _slots[slot].inWait = false;
+  _slots[slot].inEventHandler = false;
+  _slots[slot].isCalled = true;
+
+  return true;
 }
 
 bool ScriptRunner::handleWait(const Params& params, ScriptState& s, uint32_t now) {
@@ -725,6 +816,9 @@ void ScriptRunner::resetScriptState(uint8_t idx) {
   s.tempResult = 0;
   s.hasTempResult = false;
   s.inEventHandler = false;
+  s.callParamCount = 0;
+  s.isCalled = false;
+  for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) s.callParams[i] = 0;
 }
 
 int8_t ScriptRunner::findSlotById(uint8_t id) const {
@@ -1043,6 +1137,9 @@ void ScriptRunner::finishScript(ScriptState& s, uint8_t idx) {
     resetScriptState(idx);
   } else {
     s.active = false;
+    s.callParamCount = 0;
+    s.isCalled = false;
+    for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) s.callParams[i] = 0;
   }
 
   if (_completeCallback) {
@@ -1231,7 +1328,6 @@ uint8_t ScriptRunner::getFreeSlotsCount() const {
 
 #if ENABLE_LOGGING
 
-// Изменено: тип action с PortAction на uint8_t
 void ScriptRunner::logPortAction(uint8_t gpio, uint8_t action, uint16_t value, uint8_t slot) {
 #if ENABLE_PORT_LOGGING
   if (_logProvider) {
@@ -2151,6 +2247,13 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
           }
           break;
         }
+        case 'c': {
+          if (idx < s.callParamCount) {
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", s.callParams[idx]);
+            found = true;
+          }
+          break;
+        }
         default: {
           int32_t val;
           if (parseValue(&param, s, val, KIND_INT)) {
@@ -2452,6 +2555,14 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (idx < MAX_EVENT_PARAMS) {
               _funcParams[paramCount].type = VAL_INT;
               _funcParams[paramCount].intVal = _ctx.eventParams[idx];
+              paramCount++;
+            }
+            break;
+          }
+          case 'c': {
+            if (idx < s.callParamCount) {
+              _funcParams[paramCount].type = VAL_INT;
+              _funcParams[paramCount].intVal = s.callParams[idx];
               paramCount++;
             }
             break;

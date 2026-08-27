@@ -39,6 +39,8 @@
 #define MAX_EXTERNAL_FUNCTIONS 5
 #define MAX_FUNCTION_PARAMS 5
 
+#define MAX_CALL_PARAMS 4
+
 #define SCRIPT_ID_BASE 1
 #define EVENT_ID_OFFSET (255 - MAX_SCRIPTS)
 
@@ -50,7 +52,6 @@
 #define MAX_IF_NESTING 8
 #define MAX_BLOCK_NESTING 8
 
-// Заменяем enum PortAction на макросы
 #define PORT_READ  0
 #define PORT_WRITE 1
 
@@ -144,6 +145,9 @@ struct ScriptState {
   int32_t tempResult;
   bool hasTempResult;
   bool inEventHandler;
+  int32_t callParams[MAX_CALL_PARAMS];
+  uint8_t callParamCount;
+  bool isCalled;
 };
 
 struct Value {
@@ -171,7 +175,6 @@ typedef bool (*ExternalFunction)(
 
 typedef bool (*DataProvider)(const char* id, DataKind kind, DataValue& value, bool write);
 typedef void (*LogProvider)(const char* message);
-// Изменён тип action с PortAction на uint8_t
 typedef bool (*PortProvider)(uint8_t gpio, uint8_t action, uint16_t& value);
 typedef void (*StateChangeProvider)(uint8_t gpio, uint16_t newValue);
 typedef bool (*LoadProvider)(uint8_t id, char* buffer, uint16_t& len);
@@ -330,7 +333,6 @@ class ScriptRunner {
   void writePortSilent(uint8_t pin, uint16_t value);
 
 #if ENABLE_LOGGING
-  // Изменён тип action на uint8_t
   void logPortAction(uint8_t gpio, uint8_t action, uint16_t value, uint8_t slot);
   void logDataAction(const char* id, DataKind kind, bool write, const char* value, uint8_t slot);
   void logLoadAction(uint8_t id, uint16_t len, bool cached, uint8_t slot);
