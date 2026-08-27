@@ -13,6 +13,7 @@ import { useScripts } from '@/composables/script/useScripts';
 import { ScriptEditor, ScriptViewDocs, VTooltip } from 'vuesp-components';
 import ScriptDialog from '@/components/script/ScriptDialog.vue';
 import { useSlots } from '@/composables/script/useSlots';
+import { normalizeScript } from 'vuesp-components/helpers';
 const { $t } = useLocale();
 
 const { suggestions, message, main, onSend } = useConnection((send) => {
@@ -192,7 +193,7 @@ const onRemoveScript = () => {
           <div class="text-sm border-t border-gray-200 dark:border-gray-700 text-slate-400 flex flex-wrap justify-between mt-4">
             <span>
               <i class="far fa-file-alt mr-1"></i>
-              {{ `${$t('length')}: ${content?.length || 0}` }}
+              {{ `${$t('length')}: ${normalizeScript(content)?.length || 0}` }}
             </span>
           </div>
         </card-main>

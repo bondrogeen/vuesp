@@ -8,10 +8,8 @@
 #endif
 
 #include <stdint.h>
-#include <cstring>
 
-#define ENABLE_LOAD_CACHE 1
-#define LOAD_CACHE_SIZE 2
+#include <cstring>
 
 #define ENABLE_LOGGING 1
 #define ENABLE_PORT_LOGGING 1
@@ -32,7 +30,7 @@
 #define MAX_STRING_LEN 32
 
 #define MAX_PWM_VALUE 255
-#define MAX_PARAMS 4
+#define MAX_PARAMS 5
 #define MAX_EVENT_HANDLERS 20
 #define MAX_EVENT_NAME_LEN 16
 
@@ -52,7 +50,7 @@
 #define MAX_IF_NESTING 8
 #define MAX_BLOCK_NESTING 8
 
-#define PORT_READ  0
+#define PORT_READ 0
 #define PORT_WRITE 1
 
 enum DataKind : uint8_t {
@@ -124,9 +122,7 @@ struct ScriptState {
   uint8_t id;
   char script[MAX_SCRIPT_LEN];
   uint16_t scriptLen;
-  uint16_t slotSize;
   uint16_t pos;
-  uint32_t startTime;
   uint32_t lastExecutionTime;
   uint8_t blockDepth;
   uint8_t blockStack[MAX_BLOCK_NESTING];
@@ -135,8 +131,6 @@ struct ScriptState {
   bool isWhile;
   char whileConditionBuffer[32];
   uint16_t loopStartPos;
-  uint8_t repeatCount;
-  bool isInfinite;
   bool skipElse;
   uint8_t skipDepth;
   bool ifResult;
@@ -147,7 +141,6 @@ struct ScriptState {
   bool inEventHandler;
   int32_t callParams[MAX_CALL_PARAMS];
   uint8_t callParamCount;
-  bool isCalled;
 };
 
 struct Value {
@@ -187,48 +180,35 @@ class ScriptRunner {
 
   bool registerScript(uint8_t id, const char* script, bool persistent = false);
   int8_t runScript(uint8_t id);
-  bool runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len);
   void update();
   bool stopScript(uint8_t id);
   void stopAll();
-  bool isRunning(uint8_t id) const;
-  bool isBusy() const;
   bool removeScript(uint8_t id);
-  bool isEventId(uint8_t id) const;
 
   bool isSlotUsed(uint8_t slot) const;
   int8_t getSlotId(uint8_t slot) const;
   bool isSlotActive(uint8_t slot) const;
   bool isSlotHandler(uint8_t slot) const;
   uint16_t getSlotLen(uint8_t slot) const;
-  const char* getScript(uint8_t slot) const;
-
   uint8_t getTotalSlots() const;
-  uint8_t getUsedSlotsCount() const;
-  uint8_t getFreeSlotsCount() const;
 
-  static uint32_t hash(const char* str);
-
-  bool onEvent(uint32_t hash, uint8_t slotId);
-  bool onEvent(const char* eventName, uint8_t slotId);
-
-  void emitEvent(uint32_t hash);
-  void emitEvent(const char* eventName);
-  void emitEvent(const char* eventName, uint8_t paramCount, ...);
-
-  bool removeEventHandler(uint32_t hash);
-  void clearAllEventHandlers();
-
+  // Возвращённые для тестов
+  bool isBusy() const;
   uint32_t getUintVar(uint8_t idx) const;
   int32_t getIntVar(uint8_t idx) const;
   float getFloatVar(uint8_t idx) const;
   void setUintVar(uint8_t idx, uint32_t value);
-  void setIntVar(uint8_t idx, int32_t value);
-  void setFloatVar(uint8_t idx, float value);
-
-  uint8_t getArrayByte(uint8_t idx, uint8_t pos) const;
-  void setArrayByte(uint8_t idx, uint8_t pos, uint8_t value);
   uint8_t getArrayLen(uint8_t idx) const;
+  uint8_t getUsedSlotsCount() const;
+  uint8_t getFreeSlotsCount() const;
+
+  static uint32_t hash(const char* str);
+  const char* getScript(uint8_t slot) const;
+  bool onEvent(uint32_t hash, uint8_t slotId);
+  bool onEvent(const char* eventName, uint8_t slotId);
+  void emitEvent(uint32_t hash);
+  void emitEvent(const char* eventName);
+  void emitEvent(const char* eventName, uint8_t paramCount, ...);
 
   bool registerFunction(const char* name, ExternalFunction func, void* userData = nullptr);
 
@@ -240,6 +220,8 @@ class ScriptRunner {
   void setScriptCompleteCallback(ScriptCompleteCallback callback);
 
  private:
+  bool runScriptFrom(uint8_t slot, uint16_t offset, uint16_t len);
+
   ScriptState _slots[MAX_SCRIPTS];
   ScriptContext _ctx;
   EventHandler _eventHandlers[MAX_EVENT_HANDLERS];
@@ -277,7 +259,7 @@ class ScriptRunner {
 
   void resetScriptState(uint8_t idx);
   int8_t findSlotById(uint8_t id) const;
-  int8_t findFreeSlot(uint16_t scriptLen);
+  int8_t findFreeSlot();
   void initSlotPools();
 
   Params parseParams(const char* str) const;
@@ -288,6 +270,8 @@ class ScriptRunner {
   bool parseString(const char** p, char* buf) const;
   bool parseValue(const char** p, ScriptState& s, int32_t& result, DataKind expectedKind);
   bool parseArray(const char** p, uint8_t idx);
+  bool getVariable(uint8_t type, uint8_t idx, ScriptState& s, Value& val);
+  bool parseExpression(const char*& p, ScriptState& s, Value& result);
 
   bool processToken(const char* token, ScriptState& s, uint32_t now);
   bool processCommand(const char* token, ScriptState& s, uint32_t now);
@@ -309,12 +293,6 @@ class ScriptRunner {
   bool handleOrd(const Params& params, ScriptState& s);
 
   bool parseCondition(const char* token, ScriptState& s);
-
-  bool parseVarUint(uint8_t idx, int32_t& result);
-  bool parseVarInt(uint8_t idx, int32_t& result);
-  bool parseVarFloat(uint8_t idx, int32_t& result);
-  bool parseVarString(uint8_t idx, int32_t& result);
-  bool parseVarPort(uint8_t idx, int32_t& result, uint8_t slot);
   bool parseVarData(const char* start, int32_t& result, const char** p, DataKind expectedKind);
 
   void processScript(uint8_t idx, uint32_t now);
@@ -344,29 +322,6 @@ class ScriptRunner {
   inline void logLoadAction(uint8_t, uint16_t, bool, uint8_t) {}
   inline void logEventAction(const char*, uint8_t = 0, const int32_t* = nullptr) {}
   inline void logScriptAction(uint8_t, const char*) {}
-#endif
-
-#ifdef ENABLE_LOAD_CACHE
-  struct LoadCacheEntry {
-    uint8_t id;
-    char script[MAX_SCRIPT_LEN];
-    uint16_t len;
-    bool valid;
-    uint32_t lastAccess;
-    uint8_t accessCount;
-  };
-
-  LoadCacheEntry _loadCache[LOAD_CACHE_SIZE];
-  uint32_t _loadCacheHits;
-  uint32_t _loadCacheMisses;
-  LoadProvider _originalLoadProvider;
-
-  int8_t findInLoadCache(uint8_t id, char* buffer, uint16_t& len);
-  void addToLoadCache(uint8_t id, const char* script, uint16_t len);
-  int8_t findEmptyLoadSlot() const;
-  int8_t findLeastUsedSlot() const;
-
-  static bool cachedLoadProviderWrapper(uint8_t id, char* buffer, uint16_t& len);
 #endif
 };
 

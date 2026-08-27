@@ -171,7 +171,7 @@ void loopInterrupt(uint32_t now) {
       if (ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_REPEAT);
-          scriptRunner.emitEvent("btn_repeat", 0, ports[i].gpio, ports[i].value);
+          scriptRunner.emitEvent("btn_r", 2, ports[i].gpio, ports[i].value);
         }
       } else {
         ports[i].count = 0;
@@ -181,7 +181,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_LONG_PRESS);
-          scriptRunner.emitEvent("btn_long", 2, ports[i].gpio, ports[i].value);
+          scriptRunner.emitEvent("btn_l", 2, ports[i].gpio, ports[i].value);
         }
         ports[i].count = 0;
       }
@@ -190,7 +190,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_CLICK);
-          scriptRunner.emitEvent("btn_click", 3, ports[i].gpio, ports[i].value, ports[i].count);
+          scriptRunner.emitEvent("btn_c", 3, ports[i].gpio, ports[i].value, ports[i].count);
         }
         ports[i].count = 0;
       }
