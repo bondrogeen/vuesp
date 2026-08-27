@@ -14,7 +14,7 @@ const route = useRoute();
 
     <h2 class="text-3xl">{{ $t('message.pageNotFound') }}</h2>
 
-    <p class="text-gray-500 my-4">{{ $t('message.pathExist', { path: route.params.path as string }) }}</p>
+    <p class="text-gray-500 my-4">{{ $t('message.pathExist', { path: route.fullPath }) }}</p>
 
     <v-button to="/">
       {{ $t('home') }}

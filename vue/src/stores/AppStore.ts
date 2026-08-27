@@ -8,6 +8,7 @@ import type { IDialog, IAppStore, INotification } from '@/types';
 const initialState = (): IAppStore => ({
   theme: localGet('theme') || 'dark',
   dialog: { value: false },
+  suggestions: [],
   menu: [],
   dashboard: [],
   dialogInfo: isNewVersion(),

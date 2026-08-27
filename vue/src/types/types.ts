@@ -10,6 +10,7 @@ import type {
   IMenuItem,
   IDialog,
   IPackage,
+  ISuggestion,
 } from 'vuesp-components/types';
 
 import type { TypeMessage, IMyMessageSettings, IMessageDevice } from './custom';
@@ -25,6 +26,7 @@ export type TypeSend = <K extends keyof TypeMessageMap>(key: K, object?: TypeMes
 export interface IAppStore {
   menu: IMenuItem[];
   dashboard: IDashboardItem[];
+  suggestions: ISuggestion[];
   theme: string;
   dialog: IDialog;
   dialogInfo: boolean;

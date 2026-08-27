@@ -33,7 +33,7 @@ Port ports[10] = {
 #endif
 
 OneWire* ds = nullptr;
-
+Fade fade;
 Dallas ht1 = {KEY_DALLAS};
 
 int ports_len = sizeof(ports) / sizeof(ports[0]);
@@ -163,15 +163,6 @@ void setValueUpdate() {
   updatePort();
 }
 
-void emitButtonEvent(const char* format, ...) {
-  char buffer[32];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buffer, sizeof(buffer), format, args);
-  va_end(args);
-  emitEvent(buffer);
-}
-
 void loopInterrupt(uint32_t now) {
   for (int i = 0; i < ports_len; i++) {
     if (!(ports[i].mode == INPUT || ports[i].mode == INPUT_PULLUP) && !ports[i].interrupt) continue;
@@ -180,7 +171,7 @@ void loopInterrupt(uint32_t now) {
       if (ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_REPEAT);
-          emitButtonEvent("btn_%d_repeat", ports[i].gpio);
+          scriptRunner.emitEvent("btn_r", 2, ports[i].gpio, ports[i].value);
         }
       } else {
         ports[i].count = 0;
@@ -190,7 +181,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_LONG_PRESS);
-          emitButtonEvent("btn_%d_long", ports[i].gpio);
+          scriptRunner.emitEvent("btn_l", 2, ports[i].gpio, ports[i].value);
         }
         ports[i].count = 0;
       }
@@ -199,7 +190,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_CLICK);
-          emitButtonEvent("btn_%d_click_%d", ports[i].gpio, ports[i].count);
+          scriptRunner.emitEvent("btn_c", 3, ports[i].gpio, ports[i].value, ports[i].count);
         }
         ports[i].count = 0;
       }
@@ -220,8 +211,7 @@ void checkInterrupt(uint32_t now) {
         ports[i].pressStart = now;
       }
       ports[i].value = port.value;
-      emitButtonEvent("btn_%d", ports[i].gpio);
-      emitButtonEvent("btn_%d_%d", ports[i].gpio, ports[i].value);
+      scriptRunner.emitEvent("btn", 2, ports[i].gpio, ports[i].value);
       deviceGPIO(&ports[i], EVENT_NONE);
     }
     wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
@@ -250,11 +240,11 @@ void findDallas() {
   }
 }
 
-void stateChangeProvider(uint8_t gpio, uint16_t oldValue, uint16_t newValue) {
-  updatePort(gpio, newValue);
+void stateChangeProvider(uint8_t gpio, uint16_t value) {
+  updatePort(gpio, value);
 }
 
-bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
+bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
   switch (action) {
     case PORT_READ:
       return getValue(gpio, value);
@@ -265,9 +255,24 @@ bool portProvider(uint8_t gpio, PortAction action, uint16_t& value) {
   return false;
 }
 
+bool fadeHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 3) return false;
+  const uint32_t port = params[0].uintVal;
+  const uint32_t value = params[1].uintVal;
+  const uint32_t time = params[2].uintVal;
+  result.type = VAL_INT;
+  result.intVal = fade.start(port, value, time);
+  return true;
+}
+
 void setupGPIO() {
   scriptRunner.setStateChangeProvider(stateChangeProvider);
   scriptRunner.setPortProvider(portProvider);
+  scriptRunner.registerFunction("fade", fadeHandler);
+
+  fade.init(5, 3);
+  fade.setDataProvider(portProvider);
+  fade.setStateChangeProvider(stateChangeProvider);
 }
 
 void setupFirstGPIO() {
@@ -276,6 +281,8 @@ void setupFirstGPIO() {
 }
 
 void loopGPIO(uint32_t now) {
+  fade.loop();
+
   if (btnStatus == 1) {
     btnStatus = 2;
     debounce = now;
