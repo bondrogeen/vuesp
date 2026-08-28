@@ -210,7 +210,7 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
     pos++;
     char type = *pos;
 
-    if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*(pos + 1))) {
+    if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*(pos + 1))) {
       pos++;
       uint8_t idx = 0;
       while (isDigit(*pos)) {
@@ -309,7 +309,7 @@ bool ScriptRunner::getVariable(uint8_t type, uint8_t idx, ScriptState& s, Value&
   val.type = VAL_NONE;
   uint16_t portVal = 0;
   switch (type) {
-    case 'v':
+    case 'u':
       if (idx >= MAX_UINT_VARS) return false;
       val.type = VAL_UINT;
       val.uintVal = _ctx.uintVars[idx];
@@ -357,7 +357,7 @@ bool ScriptRunner::getVariable(uint8_t type, uint8_t idx, ScriptState& s, Value&
   }
 }
 
-// ===== parseExpression с поддержкой скобок, тернарного оператора и унарного ! =====
+// ===== parseExpression с поддержкой произвольных имён переменных =====
 bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result) {
   while (*p == ' ') p++;
 
@@ -383,7 +383,7 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
     while (*p == ' ') p++;
   }
 
-  // Разбор левой части: скобки, переменная, строка, число
+  // Разбор левой части
   if (*p == '(') {
     p++;
     while (*p == ' ') p++;
@@ -397,9 +397,12 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
     }
     p++;
   } else if (*p == '$') {
+    const char* nameStart = p;
     p++;
     char type = *p;
-    if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
+
+    // Проверяем, является ли переменная встроенной (с индексом)
+    if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
          type == 'e' || type == 'c') &&
         isDigit(*(p + 1))) {
       p++;
@@ -413,8 +416,17 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
         return false;
       }
     } else {
-      setError("invalid expression", s.id, s.pos);
-      return false;
+      // Произвольное имя переменной (например, $display)
+      int32_t val = 0;
+      const char* temp = nameStart;
+      if (parseVarData(nameStart, val, &temp, KIND_INT)) {
+        left.type = VAL_INT;
+        left.intVal = val;
+        p = temp;
+      } else {
+        setError("unknown variable", nameStart, s.id, s.pos);
+        return false;
+      }
     }
   } else if (*p == '\'') {
     if (!parseString(&p, _strBuf)) {
@@ -469,16 +481,11 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
       }
     } else if (unaryOp == '!') {
       bool val = false;
-      if (left.type == VAL_INT)
-        val = (left.intVal != 0);
-      else if (left.type == VAL_UINT)
-        val = (left.uintVal != 0);
-      else if (left.type == VAL_FLOAT)
-        val = (left.floatVal != 0.0f);
-      else if (left.type == VAL_STRING)
-        val = (left.stringVal.len > 0);
-      else if (left.type == VAL_ARRAY)
-        val = (left.arrayVal.len > 0);
+      if (left.type == VAL_INT) val = (left.intVal != 0);
+      else if (left.type == VAL_UINT) val = (left.uintVal != 0);
+      else if (left.type == VAL_FLOAT) val = (left.floatVal != 0.0f);
+      else if (left.type == VAL_STRING) val = (left.stringVal.len > 0);
+      else if (left.type == VAL_ARRAY) val = (left.arrayVal.len > 0);
       else {
         setError("cannot invert non-boolean", s.id, s.pos);
         return false;
@@ -488,7 +495,7 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
     }
   }
 
-  // Цикл бинарных операторов (сначала все, потом тернарный)
+  // Цикл бинарных операторов
   while (true) {
     while (*p == ' ') p++;
 
@@ -528,7 +535,7 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
 
       Value right;
       right.type = VAL_NONE;
-      // Разбор правой части (поддерживаем скобки)
+      // Разбор правой части
       if (*p == '(') {
         p++;
         while (*p == ' ') p++;
@@ -542,9 +549,10 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
         }
         p++;
       } else if (*p == '$') {
+        const char* nameStart = p;
         p++;
         char type = *p;
-        if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
+        if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
              type == 'e' || type == 'c') &&
             isDigit(*(p + 1))) {
           p++;
@@ -558,8 +566,17 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
             return false;
           }
         } else {
-          setError("invalid expression", s.id, s.pos);
-          return false;
+          // Произвольное имя
+          int32_t val = 0;
+          const char* temp = nameStart;
+          if (parseVarData(nameStart, val, &temp, KIND_INT)) {
+            right.type = VAL_INT;
+            right.intVal = val;
+            p = temp;
+          } else {
+            setError("unknown variable", nameStart, s.id, s.pos);
+            return false;
+          }
         }
       } else if (*p == '\'') {
         if (!parseString(&p, _strBuf)) {
@@ -594,33 +611,23 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
 
       // Выполнение операции
       if (isComparison || isShift) {
-        int32_t l = (left.type == VAL_INT) ? left.intVal : (left.type == VAL_UINT) ? (int32_t)left.uintVal
-                                                                                   : (int32_t)left.floatVal;
-        int32_t r = (right.type == VAL_INT) ? right.intVal : (right.type == VAL_UINT) ? (int32_t)right.uintVal
-                                                                                      : (int32_t)right.floatVal;
+        int32_t l = (left.type == VAL_INT) ? left.intVal : (left.type == VAL_UINT) ? (int32_t)left.uintVal : (int32_t)left.floatVal;
+        int32_t r = (right.type == VAL_INT) ? right.intVal : (right.type == VAL_UINT) ? (int32_t)right.uintVal : (int32_t)right.floatVal;
         int32_t resi = 0;
         if (isShift) {
-          if (op1 == '<' && op2 == '<')
-            resi = l << (r & 31);
-          else if (op1 == '>' && op2 == '>')
-            resi = l >> (r & 31);
+          if (op1 == '<' && op2 == '<') resi = l << (r & 31);
+          else if (op1 == '>' && op2 == '>') resi = l >> (r & 31);
           else {
             setError("invalid shift", s.id, s.pos);
             return false;
           }
         } else {
-          if (op1 == '<' && op2 == '\0')
-            resi = (l < r) ? 1 : 0;
-          else if (op1 == '>' && op2 == '\0')
-            resi = (l > r) ? 1 : 0;
-          else if (op1 == '<' && op2 == '=')
-            resi = (l <= r) ? 1 : 0;
-          else if (op1 == '>' && op2 == '=')
-            resi = (l >= r) ? 1 : 0;
-          else if (op1 == '=' && op2 == '=')
-            resi = (l == r) ? 1 : 0;
-          else if (op1 == '!' && op2 == '=')
-            resi = (l != r) ? 1 : 0;
+          if (op1 == '<' && op2 == '\0') resi = (l < r) ? 1 : 0;
+          else if (op1 == '>' && op2 == '\0') resi = (l > r) ? 1 : 0;
+          else if (op1 == '<' && op2 == '=') resi = (l <= r) ? 1 : 0;
+          else if (op1 == '>' && op2 == '=') resi = (l >= r) ? 1 : 0;
+          else if (op1 == '=' && op2 == '=') resi = (l == r) ? 1 : 0;
+          else if (op1 == '!' && op2 == '=') resi = (l != r) ? 1 : 0;
           else {
             setError("unknown comparison", s.id, s.pos);
             return false;
@@ -645,39 +652,23 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
 
       bool isFloatOp = (left.type == VAL_FLOAT) || (right.type == VAL_FLOAT);
       if (isFloatOp) {
-        float l = (left.type == VAL_FLOAT) ? left.floatVal : (left.type == VAL_INT) ? (float)left.intVal
-                                                                                    : (float)left.uintVal;
-        float r = (right.type == VAL_FLOAT) ? right.floatVal : (right.type == VAL_INT) ? (float)right.intVal
-                                                                                       : (float)right.uintVal;
+        float l = (left.type == VAL_FLOAT) ? left.floatVal : (left.type == VAL_INT) ? (float)left.intVal : (float)left.uintVal;
+        float r = (right.type == VAL_FLOAT) ? right.floatVal : (right.type == VAL_INT) ? (float)right.intVal : (float)right.uintVal;
         float res = 0.0f;
-        if (op1 == '+' && op2 == '\0')
-          res = l + r;
-        else if (op1 == '-' && op2 == '\0')
-          res = l - r;
-        else if (op1 == '*' && op2 == '\0')
-          res = l * r;
+        if (op1 == '+' && op2 == '\0') res = l + r;
+        else if (op1 == '-' && op2 == '\0') res = l - r;
+        else if (op1 == '*' && op2 == '\0') res = l * r;
         else if (op1 == '/' && op2 == '\0') {
-          if (r == 0.0f) {
-            setError("div by zero", s.id, s.pos);
-            return false;
-          }
+          if (r == 0.0f) { setError("div by zero", s.id, s.pos); return false; }
           res = l / r;
         } else {
-          int32_t li = (left.type == VAL_FLOAT) ? (int32_t)left.floatVal : (left.type == VAL_INT) ? left.intVal
-                                                                                                  : (int32_t)left.uintVal;
-          int32_t ri = (right.type == VAL_FLOAT) ? (int32_t)right.floatVal : (right.type == VAL_INT) ? right.intVal
-                                                                                                     : (int32_t)right.uintVal;
+          int32_t li = (left.type == VAL_FLOAT) ? (int32_t)left.floatVal : (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
+          int32_t ri = (right.type == VAL_FLOAT) ? (int32_t)right.floatVal : (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
           int32_t resi = 0;
-          if (op1 == '&' && op2 == '\0')
-            resi = li & ri;
-          else if (op1 == '|' && op2 == '\0')
-            resi = li | ri;
-          else if (op1 == '^' && op2 == '\0')
-            resi = li ^ ri;
-          else {
-            setError("unsupported op", s.id, s.pos);
-            return false;
-          }
+          if (op1 == '&' && op2 == '\0') resi = li & ri;
+          else if (op1 == '|' && op2 == '\0') resi = li | ri;
+          else if (op1 == '^' && op2 == '\0') resi = li ^ ri;
+          else { setError("unsupported op", s.id, s.pos); return false; }
           left.type = VAL_INT;
           left.intVal = resi;
           continue;
@@ -688,34 +679,19 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
         int32_t l = (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
         int32_t r = (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
         int32_t resi = 0;
-        if (op1 == '+' && op2 == '\0')
-          resi = l + r;
-        else if (op1 == '-' && op2 == '\0')
-          resi = l - r;
-        else if (op1 == '*' && op2 == '\0')
-          resi = l * r;
+        if (op1 == '+' && op2 == '\0') resi = l + r;
+        else if (op1 == '-' && op2 == '\0') resi = l - r;
+        else if (op1 == '*' && op2 == '\0') resi = l * r;
         else if (op1 == '/' && op2 == '\0') {
-          if (r == 0) {
-            setError("div by zero", s.id, s.pos);
-            return false;
-          }
+          if (r == 0) { setError("div by zero", s.id, s.pos); return false; }
           resi = l / r;
         } else if (op1 == '%' && op2 == '\0') {
-          if (r == 0) {
-            setError("div by zero", s.id, s.pos);
-            return false;
-          }
+          if (r == 0) { setError("div by zero", s.id, s.pos); return false; }
           resi = l % r;
-        } else if (op1 == '&' && op2 == '\0')
-          resi = l & r;
-        else if (op1 == '|' && op2 == '\0')
-          resi = l | r;
-        else if (op1 == '^' && op2 == '\0')
-          resi = l ^ r;
-        else {
-          setError("unsupported op", s.id, s.pos);
-          return false;
-        }
+        } else if (op1 == '&' && op2 == '\0') resi = l & r;
+        else if (op1 == '|' && op2 == '\0') resi = l | r;
+        else if (op1 == '^' && op2 == '\0') resi = l ^ r;
+        else { setError("unsupported op", s.id, s.pos); return false; }
         left.type = VAL_INT;
         left.intVal = resi;
       }
@@ -728,16 +704,11 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
       while (*p == ' ') p++;
 
       bool cond = false;
-      if (left.type == VAL_INT)
-        cond = (left.intVal != 0);
-      else if (left.type == VAL_UINT)
-        cond = (left.uintVal != 0);
-      else if (left.type == VAL_FLOAT)
-        cond = (left.floatVal != 0.0f);
-      else if (left.type == VAL_STRING)
-        cond = (left.stringVal.len > 0);
-      else if (left.type == VAL_ARRAY)
-        cond = (left.arrayVal.len > 0);
+      if (left.type == VAL_INT) cond = (left.intVal != 0);
+      else if (left.type == VAL_UINT) cond = (left.uintVal != 0);
+      else if (left.type == VAL_FLOAT) cond = (left.floatVal != 0.0f);
+      else if (left.type == VAL_STRING) cond = (left.stringVal.len > 0);
+      else if (left.type == VAL_ARRAY) cond = (left.arrayVal.len > 0);
       else {
         setError("invalid condition type in ternary", s.id, s.pos);
         return false;
@@ -1217,33 +1188,15 @@ bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now)
     if (strcmp(cmd, "if") == 0) return handleIf(params, s);
   }
 
-  // Обработка присваиваний и команд
-  if (token[0] == '$') {
-    const char* eq = strchr(token, '=');
-    if (eq) {
-      // Проверяем, является ли правая часть вызовом функции (команды)
-      const char* p = eq + 1;
-      while (*p == ' ') p++;
-      if (isAlpha(*p)) {
-        const char* paren = strchr(p, '(');
-        if (paren && paren < p + 16) { // защита от длинных имён
-          // Это вызов команды/функции — передаём в processCommand
-          return processCommand(token, s, now);
-        }
-      }
-      // Иначе это просто присваивание с выражением
-      return handleAssignment(token, s);
-    }
-    // Если нет '=', но начинается с '$' — это ошибка, но попробуем handleAssignment
-    return handleAssignment(token, s);
-  }
+  // Сначала присваивания
+  if (token[0] == '$') return handleAssignment(token, s);
 
+  // Потом команды с '('
   if (strchr(token, '(')) return processCommand(token, s, now);
 
   setError("unknown token", token, s.id, s.pos);
   return false;
 }
-
 
 void ScriptRunner::resetScriptState(uint8_t idx) {
   ScriptState& s = _slots[idx];
@@ -1995,7 +1948,6 @@ bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) 
   return true;
 }
 
-
 bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
   const char* eq = strchr(token, '=');
   if (!eq) {
@@ -2003,15 +1955,26 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     return false;
   }
 
+  // Проверяем, является ли правая часть вызовом функции
+  const char* right = eq + 1;
+  while (*right == ' ') right++;
+  if (isAlpha(*right)) {
+    const char* paren = strchr(right, '(');
+    if (paren) {
+      // Это вызов функции - передаём в processCommand
+      return processCommand(token, s, 0);
+    }
+  }
+
   const char* left = token;
   char type = left[1];
-  const char* right = eq + 1;
+  const char* rightExpr = eq + 1;
 
   bool isInternal = false;
   uint8_t index = 0;
   const char* p = left + 2;
 
-  if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*p)) {
+  if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*p)) {
     isInternal = true;
     while (isDigit(*p)) {
       index = index * 10 + (*p - '0');
@@ -2028,7 +1991,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     strncpy(_nameBuf, leftStart, nameLen);
     _nameBuf[nameLen] = '\0';
 
-    const char* exprPtr = right;
+    const char* exprPtr = rightExpr;
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
       setError("invalid expression in assignment", s.id, s.pos);
@@ -2081,7 +2044,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
   }
 
   if (type == 'p') {
-    const char* exprPtr = right;
+    const char* exprPtr = rightExpr;
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
       setError("invalid expression for port", s.id, s.pos);
@@ -2103,7 +2066,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
   }
 
   if (type == 'a' && index < MAX_ARRAY_VARS) {
-    const char* exprPtr = right;
+    const char* exprPtr = rightExpr;
     if (*exprPtr == '{') {
       return parseArray(&exprPtr, index);
     }
@@ -2134,9 +2097,9 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
   }
 
   if (type == 's' && index < MAX_STRING_VARS) {
-    const char* rightExpr = right;
-    if (strchr(rightExpr, '+') != nullptr) {
-      const char* p2 = rightExpr;
+    const char* rightExpr2 = rightExpr;
+    if (strchr(rightExpr2, '+') != nullptr) {
+      const char* p2 = rightExpr2;
       char leftStr[MAX_STRING_LEN] = {0};
       char rightStr[MAX_STRING_LEN] = {0};
 
@@ -2155,7 +2118,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 
       if (*p2 == '\'') {
         parseString(&p2, rightStr);
-      } else if (*p2 == '$' && p2[1] == 'v') {
+      } else if (*p2 == '$' && p2[1] == 'u') {
         p2 += 2;
         uint8_t rightIdx = (uint8_t)parseUint(&p2);
         if (rightIdx < MAX_UINT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%u", _ctx.uintVars[rightIdx]);
@@ -2186,7 +2149,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
       _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
       return true;
     } else {
-      const char* exprPtr = rightExpr;
+      const char* exprPtr = rightExpr2;
       Value val;
       if (!parseExpression(exprPtr, s, val)) {
         setError("invalid expression for string", s.id, s.pos);
@@ -2213,15 +2176,15 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     }
   }
 
-  if (type == 'v' || type == 'i' || type == 'f') {
-    const char* exprPtr = right;
+  if (type == 'u' || type == 'i' || type == 'f') {
+    const char* exprPtr = rightExpr;
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
       setError("invalid expression for variable", s.id, s.pos);
       return false;
     }
 
-    if (type == 'v') {
+    if (type == 'u') {
       if (val.type == VAL_UINT)
         _ctx.uintVars[index] = val.uintVal;
       else if (val.type == VAL_INT)
@@ -2449,7 +2412,7 @@ bool ScriptRunner::handleLen(const Params& params, ScriptState& s) {
     case 's':
       if (idx < MAX_STRING_VARS) len = strlen(_ctx.stringVars[idx]);
       break;
-    case 'v':
+    case 'u':
     case 'i':
     case 'f':
       len = 1;
@@ -2490,7 +2453,7 @@ bool ScriptRunner::handleOrd(const Params& params, ScriptState& s) {
   } else if (arg[0] == '$' && arg[1] == 's') {
     uint8_t idx = (uint8_t)(arg[2] - '0');
     if (idx < MAX_STRING_VARS) val = (uint8_t)_ctx.stringVars[idx][0];
-  } else if (arg[0] == '$' && arg[1] == 'v') {
+  } else if (arg[0] == '$' && arg[1] == 'u') {
     uint8_t idx = (uint8_t)(arg[2] - '0');
     if (idx < MAX_UINT_VARS) val = (uint8_t)_ctx.uintVars[idx];
   } else if (arg[0] == '$' && arg[1] == 'i') {
@@ -2589,7 +2552,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
           p++;
         }
         switch (type) {
-          case 'v':
+          case 'u':
             if (idx < MAX_UINT_VARS) {
               _funcParams[paramCount].type = VAL_UINT;
               _funcParams[paramCount].uintVal = _ctx.uintVars[idx];
@@ -2688,7 +2651,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (varType == 'i') {
               _ctx.intVars[varIndex] = resultVal.intVal;
               typeMatch = true;
-            } else if (varType == 'v') {
+            } else if (varType == 'u') {
               _ctx.uintVars[varIndex] = (uint32_t)resultVal.intVal;
               typeMatch = true;
             } else if (varType == 'f') {
@@ -2697,7 +2660,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             }
             break;
           case VAL_UINT:
-            if (varType == 'v') {
+            if (varType == 'u') {
               _ctx.uintVars[varIndex] = resultVal.uintVal;
               typeMatch = true;
             } else if (varType == 'i') {
@@ -2712,7 +2675,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (varType == 'f') {
               _ctx.floatVars[varIndex] = (double)resultVal.floatVal;
               typeMatch = true;
-            } else if (varType == 'v') {
+            } else if (varType == 'u') {
               _ctx.uintVars[varIndex] = (uint32_t)resultVal.floatVal;
               typeMatch = true;
             } else if (varType == 'i') {
@@ -2757,7 +2720,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
   }
 
   if (result && s.hasTempResult && hasVar) {
-    if (varType == 'v') {
+    if (varType == 'u') {
       if (varIndex < MAX_UINT_VARS) _ctx.uintVars[varIndex] = (uint32_t)s.tempResult;
     } else if (varType == 'i') {
       if (varIndex < MAX_INT_VARS) _ctx.intVars[varIndex] = s.tempResult;

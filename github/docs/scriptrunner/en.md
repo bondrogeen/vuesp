@@ -15,16 +15,16 @@ ScriptRunner is a script interpreter for ESP8266/ESP32 with cooperative multitas
 
 All commands are separated by a semicolon `;`.
 
-    $v0=0;while:$v0<10;log($v0);$v0=$v0+1;wait(1s);end;
+    $u0=0;while:$u0<10;log($u0);$u0=$u0+1;wait(1s);end;
 
 ### Whitespace
 
 Whitespace is allowed inside expressions (on the right side of assignments, in function arguments, in the ternary operator). It is ignored by the parser.
 
 **Where you can put spaces:**
-- Around operators: `$v0 = 10 + 5`
-- In the ternary operator: `$v0 > 5 ? 100 : 0`
-- In function parameters: `log('Hello', $v0)`
+- Around operators: `$u0 = 10 + 5`
+- In the ternary operator: `$u0 > 5 ? 100 : 0`
+- In function parameters: `log('Hello', $u0)`
 
 **Where spaces are NOT allowed:**
 - Between commands (commands are separated only by `;`).
@@ -50,7 +50,7 @@ Comments are not supported.
 
 | Type | Syntax | Example |
 |------|--------|---------|
-| Unsigned integer | `$vN` | `$v0=255` |
+| Unsigned integer | `$uN` | `$u0=255` |
 | Signed integer | `$iN` | `$i0=-10` |
 | Floating point | `$fN` | `$f0=3.14` |
 | String | `$sN` | `$s0='Hello'` |
@@ -98,7 +98,7 @@ Format: `fade(gpio, value, time)`
 
 ### Read Value
 
-    $v0=$p0;      // Read pin 0 into variable
+    $u0=$p0;      // Read pin 0 into variable
     log('Pin0:',$p0);
 
 ### Limitations
@@ -131,17 +131,17 @@ Events are automatically generated when the state of INPUT ports changes:
 
 ### While Loop
 
-    $v0=0;
-    while:$v0<10;
-      log($v0);
-      $v0=$v0+1;
+    $u0=0;
+    while:$u0<10;
+      log($u0);
+      $u0=$u0+1;
       wait(1s);
     end;
 
 ### If / Else
 
-    $v0=5;
-    if:$v0>10;
+    $u0=5;
+    if:$u0>10;
       log('Greater');
     else;
       log('Less or equal');
@@ -149,11 +149,11 @@ Events are automatically generated when the state of INPUT ports changes:
 
 ### Complex Conditions
 
-    if:$v0>=0&&$v0<=10;
+    if:$u0>=0&&$u0<=10;
       log('In range');
     end;
 
-    if:$v0==10||$v0==20;
+    if:$u0==10||$u0==20;
       log('Ten or twenty');
     end;
 
@@ -161,9 +161,9 @@ Events are automatically generated when the state of INPUT ports changes:
 ## Logging (log)
 
     log('Hello');
-    log('Count:',$v0);
+    log('Count:',$u0);
     log('Pin0=',$p0,'Pin1=',$p1);
-    log($v0,$v1,$v2);
+    log($u0,$u1,$u2);
     log('Temp:',$temp,'Hum:',$hum);
 
 **Features:**
@@ -178,28 +178,28 @@ Scripts support full expressions with operators, parentheses, and the ternary co
 
 ### Arithmetic Operators
 
-    $v0=10+5;
-    $v1=10-3;
-    $v2=10*3;
-    $v3=10/3;
-    $v4=10%3;    // remainder
+    $u0=10+5;
+    $u1=10-3;
+    $u2=10*3;
+    $u3=10/3;
+    $u4=10%3;    // remainder
 
 ### Bitwise Operators
 
-    $v4=10&3;     // AND
-    $v5=10|3;     // OR
-    $v6=10^3;     // XOR
-    $v7=10<<2;    // Shift left
-    $v8=10>>1;    // Shift right
+    $u4=10&3;     // AND
+    $u5=10|3;     // OR
+    $u6=10^3;     // XOR
+    $u7=10<<2;    // Shift left
+    $u8=10>>1;    // Shift right
 
 ### Comparison Operators
 
 Available in expressions (not only in `if`/`while`):
 
-    $v0=5>3?1:0;          // 1
-    $v1=10==10?100:0;     // 100
-    $v2=$v0!=0?$v0:0;     // 1
-    $v3=(2+3)*4>10?1:0;   // 1
+    $u0=5>3?1:0;          // 1
+    $u1=10==10?100:0;     // 100
+    $u2=$u0!=0?$u0:0;     // 1
+    $u3=(2+3)*4>10?1:0;   // 1
 
 Full list: `==`, `!=`, `<`, `>`, `<=`, `>=`
 
@@ -215,19 +215,19 @@ Works **only in expressions** (on the right side of assignments, in function arg
 
 **Examples:**
 
-    $v0=10>5?100:0;            // $v0=100
-    $v1=$v0>50?$v0*2:$v0/2;
-    $s0=$v0==0?'zero':'non-zero';
-    $p14=$v0>100?255:0;
+    $u0=10>5?100:0;            // $u0=100
+    $u1=$u0>50?$u0*2:$u0/2;
+    $s0=$u0==0?'zero':'non-zero';
+    $p14=$u0>100?255:0;
     $f0=3.14;
     $f1=$f0>3.0?6.28:1.57;
 
     // Nesting with parentheses (supported)
-    $v0=5;
-    $v1=$v0>0?($v0<10?1:2):0;   // $v1=1
+    $u0=5;
+    $u1=$u0>0?($u0<10?1:2):0;   // $u1=1
 
     // Grouping complex expressions
-    $v2=(($v0+$v1)*2)>10?100:0;
+    $u2=(($u0+$u1)*2)>10?100:0;
 
 **Parentheses** `( )` are supported for explicit precedence.
 
@@ -237,12 +237,12 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
 
 **Examples:**
 
-    $v0=0;
-    $v1=!$v0;          // $v1=1
+    $u0=0;
+    $u1=!$u0;          // $u1=1
     $s0='';
-    $v2=!$s0;          // $v2=1 (empty string → false → inversion)
-    $v3=!5;            // 5 → true → inversion → 0
-    $v4=!$v0?100:55;   // $v4=100
+    $u2=!$s0;          // $u2=1 (empty string → false → inversion)
+    $u3=!5;            // 5 → true → inversion → 0
+    $u4=!$u0?100:55;   // $u4=100
 
 **Operator precedence (left to right):**
 1. Unary: `-`, `~`, `!`
@@ -261,19 +261,19 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
     $a0={1,2,3,4,5};
 
     // Array length
-    $v0=len($a0);
+    $u0=len($a0);
 
     // Read element
-    $v1=get($a0,0);
+    $u1=get($a0,0);
 
     // Write element
     set($a0,2,10);
 
     // Fill
-    $v0=0;
-    while:$v0<5;
-      set($a0,$v0,$v0*10);
-      $v0=$v0+1;
+    $u0=0;
+    while:$u0<5;
+      set($a0,$u0,$u0*10);
+      $u0=$u0+1;
     end;
 
 
@@ -285,10 +285,10 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
     $s2=$s0+$s1;
 
     // String length
-    $v0=len($s0);
+    $u0=len($s0);
 
     // Code of first character
-    $v1=ord($s0);    // 'H' -> 72
+    $u1=ord($s0);    // 'H' -> 72
 
     // Character by code
     $s3=chr(65);     // 65 -> 'A'
@@ -313,17 +313,17 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
 
 ### Counter
 
-    $v0=0;while:$v0<10;log('Count:',$v0);$v0=$v0+1;wait(1s);end;log('Done!');
+    $u0=0;while:$u0<10;log('Count:',$u0);$u0=$u0+1;wait(1s);end;log('Done!');
 
 ### Smooth Fade
 
-    $v0=0;
-    while:$v0<5;
+    $u0=0;
+    while:$u0<5;
       fade(14,255,1000);
       wait(1s);
       fade(14,0,1000);
       wait(1s);
-      $v0=$v0+1;
+      $u0=$u0+1;
     end;
 
 ### Button Toggles LED
@@ -360,7 +360,7 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
 | Separator | `;` |
 | Strings | `'text'` |
 | Spaces | allowed inside expressions |
-| Variables | `$v0`, `$i0`, `$f0`, `$s0`, `$a0` |
+| Variables | `$u0`, `$i0`, `$f0`, `$s0`, `$a0` |
 | Delay | `wait(100ms)`, `wait(1s)`, `wait(1m)`, `wait(1h)` |
 | Loop | `while:condition; ... end;` |
 | Condition | `if:condition; ... else; ... end;` |
@@ -369,5 +369,5 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
 | Ports | `$p13` |
 | Fade | `fade(gpio, value, time)` |
 | Ternary operator | `condition?true:false` |
-| Parentheses in expressions | `($v0+$v1)*2` |
-| Unary negation | `!$v0` |
+| Parentheses in expressions | `($u0+$u1)*2` |
+| Unary negation | `!$u0` |
