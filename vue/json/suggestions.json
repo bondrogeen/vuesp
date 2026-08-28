@@ -1,4 +1,5 @@
 [
-  { "label": "MY_CONST", "type": "var", "detail": "const" },
-  { "label": "btn_5", "type": "event", "detail": "button 5" }
+  { "label": "pass", "type": "event", "detail": "my event" },
+  { "label": "$test", "type": "var", "detail": "my test var" },
+  { "label": "test", "type": "func", "insert": "test(${0})", "detail": "my func test(id:number, text?:string)" }
 ]
