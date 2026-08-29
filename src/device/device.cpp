@@ -88,27 +88,26 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
   return false;
 }
 
-bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
-  if (paramCount < 2) return false;
+bool lcdHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  if (paramCount < 3) return false;
+  const char* text = params[0].stringVal.data;
+  const uint32_t h = params[1].uintVal;
+  const uint32_t v = params[2].uintVal;
+  display.setCursor(h, v);
+  display.print(text);
+  result.type = VAL_INT;
+  result.intVal = 200;
+  return true;
+}
+bool showHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  display.display();
+  result.type = VAL_INT;
+  result.intVal = 200;
+  return true;
+}
 
-  const char* method = params[0].stringVal.data;
-  const char* url = params[1].stringVal.data;
-  const int32_t count = params[2].intVal;
-  const uint32_t num = params[3].uintVal;
-
-  const uint8_t* data = params[4].arrayVal.data;
-  uint8_t len = params[4].arrayVal.len;
-
-  for (uint8_t i = 0; i < len; i++) {
-    Serial.print(data[i]);
-  }
-
-  Serial.println("method");
-  Serial.println(method);
-  Serial.println(url);
-  Serial.println(count);
-  Serial.println(num);
-
+bool clearHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
+  display.clearDisplay();
   result.type = VAL_INT;
   result.intVal = 200;
   return true;
@@ -123,31 +122,22 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
 
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
-  scriptRunner.registerFunction("http", httpHandler);
+  scriptRunner.registerFunction("clear", clearHandler);
+  scriptRunner.registerFunction("lcd", lcdHandler);
+  scriptRunner.registerFunction("show", showHandler);
 
   Wire.begin(14, 12);
 
-  // Инициализация дисплея с адресом 0x3C
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    for (;;);  // Ошибка инициализации
+  if (display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.print("HW-364");
+    display.setCursor(0, 16);
+    display.print("Ready!");
+    display.display();
   }
-
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 0);
-  display.print("HW-364");
-  display.setCursor(0, 16);
-  display.print("Ready!");
-  display.display();
-  display.startscrollright(0, 0x5F);  // прокручиваем сообщение вправо
-  // delay(3000);                           // в течении 3-х секунд
-  // display.stopscroll();                  // останавливаем прокрутку
-  // delay(1000);                           // ждём 1 секунду
-  // display.startscrollleft(0x00, 0x0F);   // прокручиваем сообщение влево
-  // delay(3000);                           // в течение 3-х секунд
-  // display.stopscroll();                  // останавливаем прокрутку
-  // delay(1000);                           // ждём 1 секунду
 }
 
 void setupFirstDevice() {
