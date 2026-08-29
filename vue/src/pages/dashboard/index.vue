@@ -61,7 +61,7 @@ import { COMMAND } from '@/utils/gpio';
 import { useConnection } from '@/composables/useConnection';
 import { pathListDef } from '@/utils/const';
 
-import { CardButton, CardDate, CardDimmer, CardInfo, CardInput, CardList, ItemEdit, VDragDrop } from 'vuesp-components';
+import { CardButton, CardDate, CardDimmer, CardInfo, CardInput, CardList, ItemEdit, VDragDrop } from 'vuesp-components/components';
 
 import { useLocale } from '@/composables/useLocale';
 
