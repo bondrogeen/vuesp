@@ -13,7 +13,7 @@ import { useSlots } from '@/composables/script/useSlots';
 import { normalizeScript } from 'vuesp-components/helpers';
 import { useFiles } from '@/composables/useFiles';
 
-import { VFile, ScriptEditor, ScriptViewDocs, VTooltip, ScriptDialog } from 'vuesp-components';
+import { VFile, ScriptEditor, ScriptViewDocs, VTooltip, ScriptDialog } from 'vuesp-components/components';
 
 const { $t } = useLocale();
 
