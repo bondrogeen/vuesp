@@ -210,7 +210,7 @@ bool ScriptRunner::parseValue(const char** p, ScriptState& s, int32_t& result, D
     pos++;
     char type = *pos;
 
-    if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*(pos + 1))) {
+    if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*(pos + 1))) {
       pos++;
       uint8_t idx = 0;
       while (isDigit(*pos)) {
@@ -309,7 +309,7 @@ bool ScriptRunner::getVariable(uint8_t type, uint8_t idx, ScriptState& s, Value&
   val.type = VAL_NONE;
   uint16_t portVal = 0;
   switch (type) {
-    case 'v':
+    case 'u':
       if (idx >= MAX_UINT_VARS) return false;
       val.type = VAL_UINT;
       val.uintVal = _ctx.uintVars[idx];
@@ -357,6 +357,7 @@ bool ScriptRunner::getVariable(uint8_t type, uint8_t idx, ScriptState& s, Value&
   }
 }
 
+// ===== parseExpression с поддержкой произвольных имён переменных =====
 bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result) {
   while (*p == ' ') p++;
 
@@ -364,7 +365,13 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
   left.type = VAL_NONE;
   bool isUnary = false;
   char unaryOp = '\0';
-  if (*p == '-') {
+
+  if (*p == '!') {
+    isUnary = true;
+    unaryOp = '!';
+    p++;
+    while (*p == ' ') p++;
+  } else if (*p == '-') {
     isUnary = true;
     unaryOp = '-';
     p++;
@@ -376,11 +383,28 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
     while (*p == ' ') p++;
   }
 
-  if (*p == '$') {
+  // Разбор левой части
+  if (*p == '(') {
+    p++;
+    while (*p == ' ') p++;
+    if (!parseExpression(p, s, left)) {
+      return false;
+    }
+    while (*p == ' ') p++;
+    if (*p != ')') {
+      setError("expected ')'", s.id, s.pos);
+      return false;
+    }
+    p++;
+  } else if (*p == '$') {
+    const char* nameStart = p;
     p++;
     char type = *p;
-    if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
-         type == 'e' || type == 'c') && isDigit(*(p + 1))) {
+
+    // Проверяем, является ли переменная встроенной (с индексом)
+    if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
+         type == 'e' || type == 'c') &&
+        isDigit(*(p + 1))) {
       p++;
       uint8_t idx = 0;
       while (isDigit(*p)) {
@@ -392,8 +416,17 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
         return false;
       }
     } else {
-      setError("invalid expression", s.id, s.pos);
-      return false;
+      // Произвольное имя переменной (например, $display)
+      int32_t val = 0;
+      const char* temp = nameStart;
+      if (parseVarData(nameStart, val, &temp, KIND_INT)) {
+        left.type = VAL_INT;
+        left.intVal = val;
+        p = temp;
+      } else {
+        setError("unknown variable", nameStart, s.id, s.pos);
+        return false;
+      }
     }
   } else if (*p == '\'') {
     if (!parseString(&p, _strBuf)) {
@@ -426,6 +459,7 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
     return false;
   }
 
+  // Обработка унарных операторов
   if (isUnary) {
     if (unaryOp == '-') {
       if (left.type == VAL_INT) {
@@ -445,136 +479,271 @@ bool ScriptRunner::parseExpression(const char*& p, ScriptState& s, Value& result
         setError("bitwise not on non-integer", s.id, s.pos);
         return false;
       }
+    } else if (unaryOp == '!') {
+      bool val = false;
+      if (left.type == VAL_INT) val = (left.intVal != 0);
+      else if (left.type == VAL_UINT) val = (left.uintVal != 0);
+      else if (left.type == VAL_FLOAT) val = (left.floatVal != 0.0f);
+      else if (left.type == VAL_STRING) val = (left.stringVal.len > 0);
+      else if (left.type == VAL_ARRAY) val = (left.arrayVal.len > 0);
+      else {
+        setError("cannot invert non-boolean", s.id, s.pos);
+        return false;
+      }
+      left.type = VAL_INT;
+      left.intVal = val ? 0 : 1;
     }
   }
 
+  // Цикл бинарных операторов
   while (true) {
     while (*p == ' ') p++;
+
     char op1 = *p;
     char op2 = '\0';
+    bool isComparison = false;
+    bool isShift = false;
+    bool isBinary = false;
+
     if ((op1 == '<' && p[1] == '<') || (op1 == '>' && p[1] == '>')) {
       op2 = p[1];
       p += 2;
+      isShift = true;
+      isBinary = true;
+    } else if ((op1 == '<' && p[1] == '=') || (op1 == '>' && p[1] == '=') ||
+               (op1 == '=' && p[1] == '=') || (op1 == '!' && p[1] == '=')) {
+      op2 = p[1];
+      p += 2;
+      isComparison = true;
+      isBinary = true;
+    } else if (op1 == '<' || op1 == '>' || op1 == '=' || op1 == '!') {
+      if (op1 == '=' || op1 == '!') {
+        setError("expected '==' or '!='", s.id, s.pos);
+        return false;
+      }
+      p++;
+      isComparison = true;
+      isBinary = true;
     } else if (op1 == '+' || op1 == '-' || op1 == '*' || op1 == '/' || op1 == '%' ||
                op1 == '&' || op1 == '|' || op1 == '^') {
       p++;
-    } else {
-      break;
+      isBinary = true;
     }
-    while (*p == ' ') p++;
 
-    Value right;
-    right.type = VAL_NONE;
-    if (*p == '$') {
-      p++;
-      char type = *p;
-      if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
-           type == 'e' || type == 'c') && isDigit(*(p + 1))) {
+    if (isBinary) {
+      while (*p == ' ') p++;
+
+      Value right;
+      right.type = VAL_NONE;
+      // Разбор правой части
+      if (*p == '(') {
         p++;
-        uint8_t idx = 0;
-        while (isDigit(*p)) {
-          idx = idx * 10 + (*p - '0');
-          p++;
-        }
-        if (!getVariable(type, idx, s, right)) {
-          setError("undefined variable", s.id, s.pos);
+        while (*p == ' ') p++;
+        if (!parseExpression(p, s, right)) {
           return false;
         }
+        while (*p == ' ') p++;
+        if (*p != ')') {
+          setError("expected ')'", s.id, s.pos);
+          return false;
+        }
+        p++;
+      } else if (*p == '$') {
+        const char* nameStart = p;
+        p++;
+        char type = *p;
+        if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p' ||
+             type == 'e' || type == 'c') &&
+            isDigit(*(p + 1))) {
+          p++;
+          uint8_t idx = 0;
+          while (isDigit(*p)) {
+            idx = idx * 10 + (*p - '0');
+            p++;
+          }
+          if (!getVariable(type, idx, s, right)) {
+            setError("undefined variable", s.id, s.pos);
+            return false;
+          }
+        } else {
+          // Произвольное имя
+          int32_t val = 0;
+          const char* temp = nameStart;
+          if (parseVarData(nameStart, val, &temp, KIND_INT)) {
+            right.type = VAL_INT;
+            right.intVal = val;
+            p = temp;
+          } else {
+            setError("unknown variable", nameStart, s.id, s.pos);
+            return false;
+          }
+        }
+      } else if (*p == '\'') {
+        if (!parseString(&p, _strBuf)) {
+          setError("invalid string", s.id, s.pos);
+          return false;
+        }
+        right.type = VAL_STRING;
+        right.stringVal.data = _strBuf;
+        right.stringVal.len = strlen(_strBuf);
+      } else if (isDigit(*p) || *p == '.') {
+        const char* temp = p;
+        bool hasDot = false;
+        while (*temp && (*temp != '+' && *temp != '-' && *temp != '*' && *temp != '/' &&
+                         *temp != '%' && *temp != '&' && *temp != '|' && *temp != '^' &&
+                         *temp != '<' && *temp != '>' && *temp != '~' && *temp != ' ' && *temp != '\0')) {
+          if (*temp == '.') hasDot = true;
+          temp++;
+        }
+        if (hasDot) {
+          float fval = parseFloat(&p);
+          right.type = VAL_FLOAT;
+          right.floatVal = fval;
+        } else {
+          int32_t ival = parseInt(&p);
+          right.type = VAL_INT;
+          right.intVal = ival;
+        }
       } else {
-        setError("invalid expression", s.id, s.pos);
+        setError("expected operand", s.id, s.pos);
         return false;
       }
-    } else if (*p == '\'') {
-      if (!parseString(&p, _strBuf)) {
-        setError("invalid string", s.id, s.pos);
-        return false;
-      }
-      right.type = VAL_STRING;
-      right.stringVal.data = _strBuf;
-      right.stringVal.len = strlen(_strBuf);
-    } else if (isDigit(*p) || *p == '.') {
-      const char* temp = p;
-      bool hasDot = false;
-      while (*temp && (*temp != '+' && *temp != '-' && *temp != '*' && *temp != '/' &&
-                       *temp != '%' && *temp != '&' && *temp != '|' && *temp != '^' &&
-                       *temp != '<' && *temp != '>' && *temp != '~' && *temp != ' ' && *temp != '\0')) {
-        if (*temp == '.') hasDot = true;
-        temp++;
-      }
-      if (hasDot) {
-        float fval = parseFloat(&p);
-        right.type = VAL_FLOAT;
-        right.floatVal = fval;
-      } else {
-        int32_t ival = parseInt(&p);
-        right.type = VAL_INT;
-        right.intVal = ival;
-      }
-    } else {
-      setError("expected operand", s.id, s.pos);
-      return false;
-    }
 
-    if (left.type == VAL_STRING && right.type == VAL_STRING && op1 == '+' && op2 == '\0') {
-      char tempBuf[MAX_STRING_LEN * 2];
-      strcpy(tempBuf, left.stringVal.data);
-      strcat(tempBuf, right.stringVal.data);
-      strncpy(_strBuf, tempBuf, MAX_STRING_LEN - 1);
-      _strBuf[MAX_STRING_LEN - 1] = '\0';
-      left.type = VAL_STRING;
-      left.stringVal.data = _strBuf;
-      left.stringVal.len = strlen(_strBuf);
-      continue;
-    }
-
-    bool isFloatOp = (left.type == VAL_FLOAT) || (right.type == VAL_FLOAT);
-    if (isFloatOp) {
-      float l = (left.type == VAL_FLOAT) ? left.floatVal : (left.type == VAL_INT) ? (float)left.intVal : (float)left.uintVal;
-      float r = (right.type == VAL_FLOAT) ? right.floatVal : (right.type == VAL_INT) ? (float)right.intVal : (float)right.uintVal;
-      float res = 0.0f;
-      if (op1 == '+' && op2 == '\0') res = l + r;
-      else if (op1 == '-' && op2 == '\0') res = l - r;
-      else if (op1 == '*' && op2 == '\0') res = l * r;
-      else if (op1 == '/' && op2 == '\0') { if (r == 0.0f) { setError("div by zero", s.id, s.pos); return false; } res = l / r; }
-      else {
-        int32_t li = (left.type == VAL_FLOAT) ? (int32_t)left.floatVal : (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
-        int32_t ri = (right.type == VAL_FLOAT) ? (int32_t)right.floatVal : (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
+      // Выполнение операции
+      if (isComparison || isShift) {
+        int32_t l = (left.type == VAL_INT) ? left.intVal : (left.type == VAL_UINT) ? (int32_t)left.uintVal : (int32_t)left.floatVal;
+        int32_t r = (right.type == VAL_INT) ? right.intVal : (right.type == VAL_UINT) ? (int32_t)right.uintVal : (int32_t)right.floatVal;
         int32_t resi = 0;
-        if (op1 == '&' && op2 == '\0') resi = li & ri;
-        else if (op1 == '|' && op2 == '\0') resi = li | ri;
-        else if (op1 == '^' && op2 == '\0') resi = li ^ ri;
-        else if (op1 == '<' && op2 == '<') resi = li << (ri & 31);
-        else if (op1 == '>' && op2 == '>') resi = li >> (ri & 31);
-        else { setError("unsupported op", s.id, s.pos); return false; }
+        if (isShift) {
+          if (op1 == '<' && op2 == '<') resi = l << (r & 31);
+          else if (op1 == '>' && op2 == '>') resi = l >> (r & 31);
+          else {
+            setError("invalid shift", s.id, s.pos);
+            return false;
+          }
+        } else {
+          if (op1 == '<' && op2 == '\0') resi = (l < r) ? 1 : 0;
+          else if (op1 == '>' && op2 == '\0') resi = (l > r) ? 1 : 0;
+          else if (op1 == '<' && op2 == '=') resi = (l <= r) ? 1 : 0;
+          else if (op1 == '>' && op2 == '=') resi = (l >= r) ? 1 : 0;
+          else if (op1 == '=' && op2 == '=') resi = (l == r) ? 1 : 0;
+          else if (op1 == '!' && op2 == '=') resi = (l != r) ? 1 : 0;
+          else {
+            setError("unknown comparison", s.id, s.pos);
+            return false;
+          }
+        }
         left.type = VAL_INT;
         left.intVal = resi;
         continue;
       }
-      left.type = VAL_FLOAT;
-      left.floatVal = res;
-    } else {
-      int32_t l = (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
-      int32_t r = (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
-      int32_t resi = 0;
-      if (op1 == '+' && op2 == '\0') resi = l + r;
-      else if (op1 == '-' && op2 == '\0') resi = l - r;
-      else if (op1 == '*' && op2 == '\0') resi = l * r;
-      else if (op1 == '/' && op2 == '\0') { if (r == 0) { setError("div by zero", s.id, s.pos); return false; } resi = l / r; }
-      else if (op1 == '%' && op2 == '\0') { if (r == 0) { setError("div by zero", s.id, s.pos); return false; } resi = l % r; }
-      else if (op1 == '&' && op2 == '\0') resi = l & r;
-      else if (op1 == '|' && op2 == '\0') resi = l | r;
-      else if (op1 == '^' && op2 == '\0') resi = l ^ r;
-      else if (op1 == '<' && op2 == '<') resi = l << (r & 31);
-      else if (op1 == '>' && op2 == '>') resi = l >> (r & 31);
-      else { setError("unsupported op", s.id, s.pos); return false; }
-      left.type = VAL_INT;
-      left.intVal = resi;
+
+      if (left.type == VAL_STRING && right.type == VAL_STRING && op1 == '+' && op2 == '\0') {
+        char tempBuf[MAX_STRING_LEN * 2];
+        strcpy(tempBuf, left.stringVal.data);
+        strcat(tempBuf, right.stringVal.data);
+        strncpy(_strBuf, tempBuf, MAX_STRING_LEN - 1);
+        _strBuf[MAX_STRING_LEN - 1] = '\0';
+        left.type = VAL_STRING;
+        left.stringVal.data = _strBuf;
+        left.stringVal.len = strlen(_strBuf);
+        continue;
+      }
+
+      bool isFloatOp = (left.type == VAL_FLOAT) || (right.type == VAL_FLOAT);
+      if (isFloatOp) {
+        float l = (left.type == VAL_FLOAT) ? left.floatVal : (left.type == VAL_INT) ? (float)left.intVal : (float)left.uintVal;
+        float r = (right.type == VAL_FLOAT) ? right.floatVal : (right.type == VAL_INT) ? (float)right.intVal : (float)right.uintVal;
+        float res = 0.0f;
+        if (op1 == '+' && op2 == '\0') res = l + r;
+        else if (op1 == '-' && op2 == '\0') res = l - r;
+        else if (op1 == '*' && op2 == '\0') res = l * r;
+        else if (op1 == '/' && op2 == '\0') {
+          if (r == 0.0f) { setError("div by zero", s.id, s.pos); return false; }
+          res = l / r;
+        } else {
+          int32_t li = (left.type == VAL_FLOAT) ? (int32_t)left.floatVal : (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
+          int32_t ri = (right.type == VAL_FLOAT) ? (int32_t)right.floatVal : (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
+          int32_t resi = 0;
+          if (op1 == '&' && op2 == '\0') resi = li & ri;
+          else if (op1 == '|' && op2 == '\0') resi = li | ri;
+          else if (op1 == '^' && op2 == '\0') resi = li ^ ri;
+          else { setError("unsupported op", s.id, s.pos); return false; }
+          left.type = VAL_INT;
+          left.intVal = resi;
+          continue;
+        }
+        left.type = VAL_FLOAT;
+        left.floatVal = res;
+      } else {
+        int32_t l = (left.type == VAL_INT) ? left.intVal : (int32_t)left.uintVal;
+        int32_t r = (right.type == VAL_INT) ? right.intVal : (int32_t)right.uintVal;
+        int32_t resi = 0;
+        if (op1 == '+' && op2 == '\0') resi = l + r;
+        else if (op1 == '-' && op2 == '\0') resi = l - r;
+        else if (op1 == '*' && op2 == '\0') resi = l * r;
+        else if (op1 == '/' && op2 == '\0') {
+          if (r == 0) { setError("div by zero", s.id, s.pos); return false; }
+          resi = l / r;
+        } else if (op1 == '%' && op2 == '\0') {
+          if (r == 0) { setError("div by zero", s.id, s.pos); return false; }
+          resi = l % r;
+        } else if (op1 == '&' && op2 == '\0') resi = l & r;
+        else if (op1 == '|' && op2 == '\0') resi = l | r;
+        else if (op1 == '^' && op2 == '\0') resi = l ^ r;
+        else { setError("unsupported op", s.id, s.pos); return false; }
+        left.type = VAL_INT;
+        left.intVal = resi;
+      }
+      continue;
     }
+
+    // === ТЕРНАРНЫЙ ОПЕРАТОР ===
+    if (*p == '?') {
+      p++;
+      while (*p == ' ') p++;
+
+      bool cond = false;
+      if (left.type == VAL_INT) cond = (left.intVal != 0);
+      else if (left.type == VAL_UINT) cond = (left.uintVal != 0);
+      else if (left.type == VAL_FLOAT) cond = (left.floatVal != 0.0f);
+      else if (left.type == VAL_STRING) cond = (left.stringVal.len > 0);
+      else if (left.type == VAL_ARRAY) cond = (left.arrayVal.len > 0);
+      else {
+        setError("invalid condition type in ternary", s.id, s.pos);
+        return false;
+      }
+
+      Value trueVal;
+      if (!parseExpression(p, s, trueVal)) {
+        setError("invalid true branch in ternary", s.id, s.pos);
+        return false;
+      }
+      while (*p == ' ') p++;
+      if (*p != ':') {
+        setError("expected ':' in ternary", s.id, s.pos);
+        return false;
+      }
+      p++;
+      while (*p == ' ') p++;
+
+      Value falseVal;
+      if (!parseExpression(p, s, falseVal)) {
+        setError("invalid false branch in ternary", s.id, s.pos);
+        return false;
+      }
+
+      result = cond ? trueVal : falseVal;
+      return true;
+    }
+
+    break;
   }
 
   result = left;
   return true;
 }
+// ===== КОНЕЦ parseExpression =====
 
 bool ScriptRunner::parseCondition(const char* token, ScriptState& s) {
   const char* p = token;
@@ -778,7 +947,7 @@ bool ScriptRunner::handleCall(const Params& params, ScriptState& s) {
   if (paramCount > MAX_CALL_PARAMS) paramCount = MAX_CALL_PARAMS;
   _slots[slot].callParamCount = paramCount;
   for (uint8_t i = 0; i < paramCount; i++) {
-    const char* paramStr = params.values[i+1];
+    const char* paramStr = params.values[i + 1];
     int32_t val = 0;
 
     if (paramStr[0] == '\'') {
@@ -1019,8 +1188,11 @@ bool ScriptRunner::processToken(const char* token, ScriptState& s, uint32_t now)
     if (strcmp(cmd, "if") == 0) return handleIf(params, s);
   }
 
-  if (strchr(token, '(')) return processCommand(token, s, now);
+  // Сначала присваивания
   if (token[0] == '$') return handleAssignment(token, s);
+
+  // Потом команды с '('
+  if (strchr(token, '(')) return processCommand(token, s, now);
 
   setError("unknown token", token, s.id, s.pos);
   return false;
@@ -1451,10 +1623,6 @@ uint16_t ScriptRunner::getSlotLen(uint8_t slot) const {
 
 uint8_t ScriptRunner::getTotalSlots() const { return MAX_SCRIPTS; }
 
-// ============================================================
-// МЕТОДЫ, ВОЗВРАЩЁННЫЕ ДЛЯ ТЕСТОВ
-// ============================================================
-
 bool ScriptRunner::isBusy() const {
   for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
     if (_slots[i].active) return true;
@@ -1503,10 +1671,6 @@ uint8_t ScriptRunner::getUsedSlotsCount() const {
 uint8_t ScriptRunner::getFreeSlotsCount() const {
   return MAX_SCRIPTS - getUsedSlotsCount();
 }
-
-// ============================================================
-// ЛОГИРОВАНИЕ
-// ============================================================
 
 #if ENABLE_LOGGING
 
@@ -1603,10 +1767,6 @@ void ScriptRunner::logScriptAction(uint8_t slot, const char* action) {
 
 #endif
 
-// ============================================================
-// ОБРАБОТКА ОШИБОК
-// ============================================================
-
 void ScriptRunner::setError(const char* msg) {
   if (_logProvider) {
     snprintf(_logBuf, sizeof(_logBuf), "ERR: %s", msg);
@@ -1644,19 +1804,11 @@ void ScriptRunner::setError(const char* msg, const char* token, uint8_t slot, ui
   }
 }
 
-// ============================================================
-// УСТАНОВКА ПРОВАЙДЕРОВ
-// ============================================================
-
 void ScriptRunner::setDataProvider(DataProvider provider) { _dataProvider = provider; }
 void ScriptRunner::setLogProvider(LogProvider provider) { _logProvider = provider; }
 void ScriptRunner::setPortProvider(PortProvider provider) { _portProvider = provider; }
 void ScriptRunner::setStateChangeProvider(StateChangeProvider provider) { _stateChangeProvider = provider; }
 void ScriptRunner::setLoadProvider(LoadProvider provider) { _loadProvider = provider; }
-
-// ============================================================
-// ОБРАБОТЧИК ON
-// ============================================================
 
 bool ScriptRunner::handleOn(const Params& params, ScriptState& s, uint32_t now) {
   if (params.count < 1) {
@@ -1803,15 +1955,26 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     return false;
   }
 
+  // Проверяем, является ли правая часть вызовом функции
+  const char* right = eq + 1;
+  while (*right == ' ') right++;
+  if (isAlpha(*right)) {
+    const char* paren = strchr(right, '(');
+    if (paren) {
+      // Это вызов функции - передаём в processCommand
+      return processCommand(token, s, 0);
+    }
+  }
+
   const char* left = token;
   char type = left[1];
-  const char* right = eq + 1;
+  const char* rightExpr = eq + 1;
 
   bool isInternal = false;
   uint8_t index = 0;
   const char* p = left + 2;
 
-  if ((type == 'v' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*p)) {
+  if ((type == 'u' || type == 'i' || type == 'f' || type == 's' || type == 'a' || type == 'p') && isDigit(*p)) {
     isInternal = true;
     while (isDigit(*p)) {
       index = index * 10 + (*p - '0');
@@ -1828,9 +1991,10 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     strncpy(_nameBuf, leftStart, nameLen);
     _nameBuf[nameLen] = '\0';
 
-    const char* exprPtr = right;
+    const char* exprPtr = rightExpr;
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
+      setError("invalid expression in assignment", s.id, s.pos);
       return false;
     }
 
@@ -1858,10 +2022,18 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 #if ENABLE_DATA_LOGGING && ENABLE_LOGGING
       char buf[64];
       switch (kind) {
-        case KIND_INT: snprintf(buf, sizeof(buf), "%d", dv.intVal); break;
-        case KIND_UINT: snprintf(buf, sizeof(buf), "%u", dv.uintVal); break;
-        case KIND_FLOAT: snprintf(buf, sizeof(buf), "%.2f", dv.floatVal); break;
-        case KIND_STRING: snprintf(buf, sizeof(buf), "%s", (char*)dv.stringVal.data); break;
+        case KIND_INT:
+          snprintf(buf, sizeof(buf), "%d", dv.intVal);
+          break;
+        case KIND_UINT:
+          snprintf(buf, sizeof(buf), "%u", dv.uintVal);
+          break;
+        case KIND_FLOAT:
+          snprintf(buf, sizeof(buf), "%.2f", dv.floatVal);
+          break;
+        case KIND_STRING:
+          snprintf(buf, sizeof(buf), "%s", (char*)dv.stringVal.data);
+          break;
       }
       logDataAction(_nameBuf, kind, true, buf, s.id);
 #endif
@@ -1872,27 +2044,35 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
   }
 
   if (type == 'p') {
-    const char* exprPtr = right;
+    const char* exprPtr = rightExpr;
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
+      setError("invalid expression for port", s.id, s.pos);
       return false;
     }
     int32_t intVal = 0;
-    if (val.type == VAL_INT) intVal = val.intVal;
-    else if (val.type == VAL_UINT) intVal = (int32_t)val.uintVal;
-    else if (val.type == VAL_FLOAT) intVal = (int32_t)val.floatVal;
-    else { setError("invalid port value", s.id, s.pos); return false; }
+    if (val.type == VAL_INT)
+      intVal = val.intVal;
+    else if (val.type == VAL_UINT)
+      intVal = (int32_t)val.uintVal;
+    else if (val.type == VAL_FLOAT)
+      intVal = (int32_t)val.floatVal;
+    else {
+      setError("invalid port value", s.id, s.pos);
+      return false;
+    }
     writePort(index, (uint16_t)intVal, s.id);
     return true;
   }
 
   if (type == 'a' && index < MAX_ARRAY_VARS) {
-    const char* exprPtr = right;
+    const char* exprPtr = rightExpr;
     if (*exprPtr == '{') {
       return parseArray(&exprPtr, index);
     }
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
+      setError("invalid expression for array", s.id, s.pos);
       return false;
     }
     if (val.type == VAL_ARRAY) {
@@ -1917,9 +2097,9 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
   }
 
   if (type == 's' && index < MAX_STRING_VARS) {
-    const char* rightExpr = right;
-    if (strchr(rightExpr, '+') != nullptr) {
-      const char* p2 = rightExpr;
+    const char* rightExpr2 = rightExpr;
+    if (strchr(rightExpr2, '+') != nullptr) {
+      const char* p2 = rightExpr2;
       char leftStr[MAX_STRING_LEN] = {0};
       char rightStr[MAX_STRING_LEN] = {0};
 
@@ -1938,7 +2118,7 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
 
       if (*p2 == '\'') {
         parseString(&p2, rightStr);
-      } else if (*p2 == '$' && p2[1] == 'v') {
+      } else if (*p2 == '$' && p2[1] == 'u') {
         p2 += 2;
         uint8_t rightIdx = (uint8_t)parseUint(&p2);
         if (rightIdx < MAX_UINT_VARS) snprintf(rightStr, MAX_STRING_LEN, "%u", _ctx.uintVars[rightIdx]);
@@ -1969,9 +2149,10 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
       _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
       return true;
     } else {
-      const char* exprPtr = rightExpr;
+      const char* exprPtr = rightExpr2;
       Value val;
       if (!parseExpression(exprPtr, s, val)) {
+        setError("invalid expression for string", s.id, s.pos);
         return false;
       }
       if (val.type == VAL_STRING) {
@@ -1980,9 +2161,12 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
         return true;
       } else if (val.type == VAL_INT || val.type == VAL_UINT || val.type == VAL_FLOAT) {
         char buf[32];
-        if (val.type == VAL_INT) snprintf(buf, sizeof(buf), "%d", val.intVal);
-        else if (val.type == VAL_UINT) snprintf(buf, sizeof(buf), "%u", val.uintVal);
-        else snprintf(buf, sizeof(buf), "%.6f", val.floatVal);
+        if (val.type == VAL_INT)
+          snprintf(buf, sizeof(buf), "%d", val.intVal);
+        else if (val.type == VAL_UINT)
+          snprintf(buf, sizeof(buf), "%u", val.uintVal);
+        else
+          snprintf(buf, sizeof(buf), "%.6f", val.floatVal);
         strncpy(_ctx.stringVars[index], buf, MAX_STRING_LEN - 1);
         _ctx.stringVars[index][MAX_STRING_LEN - 1] = '\0';
         return true;
@@ -1992,28 +2176,47 @@ bool ScriptRunner::handleAssignment(const char* token, ScriptState& s) {
     }
   }
 
-  if (type == 'v' || type == 'i' || type == 'f') {
-    const char* exprPtr = right;
+  if (type == 'u' || type == 'i' || type == 'f') {
+    const char* exprPtr = rightExpr;
     Value val;
     if (!parseExpression(exprPtr, s, val)) {
+      setError("invalid expression for variable", s.id, s.pos);
       return false;
     }
 
-    if (type == 'v') {
-      if (val.type == VAL_UINT) _ctx.uintVars[index] = val.uintVal;
-      else if (val.type == VAL_INT) _ctx.uintVars[index] = (uint32_t)val.intVal;
-      else if (val.type == VAL_FLOAT) _ctx.uintVars[index] = (uint32_t)val.floatVal;
-      else { setError("cannot assign to uint", s.id, s.pos); return false; }
+    if (type == 'u') {
+      if (val.type == VAL_UINT)
+        _ctx.uintVars[index] = val.uintVal;
+      else if (val.type == VAL_INT)
+        _ctx.uintVars[index] = (uint32_t)val.intVal;
+      else if (val.type == VAL_FLOAT)
+        _ctx.uintVars[index] = (uint32_t)val.floatVal;
+      else {
+        setError("cannot assign to uint", s.id, s.pos);
+        return false;
+      }
     } else if (type == 'i') {
-      if (val.type == VAL_INT) _ctx.intVars[index] = val.intVal;
-      else if (val.type == VAL_UINT) _ctx.intVars[index] = (int32_t)val.uintVal;
-      else if (val.type == VAL_FLOAT) _ctx.intVars[index] = (int32_t)val.floatVal;
-      else { setError("cannot assign to int", s.id, s.pos); return false; }
+      if (val.type == VAL_INT)
+        _ctx.intVars[index] = val.intVal;
+      else if (val.type == VAL_UINT)
+        _ctx.intVars[index] = (int32_t)val.uintVal;
+      else if (val.type == VAL_FLOAT)
+        _ctx.intVars[index] = (int32_t)val.floatVal;
+      else {
+        setError("cannot assign to int", s.id, s.pos);
+        return false;
+      }
     } else if (type == 'f') {
-      if (val.type == VAL_FLOAT) _ctx.floatVars[index] = (double)val.floatVal;
-      else if (val.type == VAL_INT) _ctx.floatVars[index] = (double)val.intVal;
-      else if (val.type == VAL_UINT) _ctx.floatVars[index] = (double)val.uintVal;
-      else { setError("cannot assign to float", s.id, s.pos); return false; }
+      if (val.type == VAL_FLOAT)
+        _ctx.floatVars[index] = (double)val.floatVal;
+      else if (val.type == VAL_INT)
+        _ctx.floatVars[index] = (double)val.intVal;
+      else if (val.type == VAL_UINT)
+        _ctx.floatVars[index] = (double)val.uintVal;
+      else {
+        setError("cannot assign to float", s.id, s.pos);
+        return false;
+      }
     }
     return true;
   }
@@ -2076,17 +2279,15 @@ bool ScriptRunner::handleLog(const Params& params, ScriptState& s) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, "%.2f", val.floatVal);
             found = true;
             break;
-          case VAL_STRING:
-            {
-              uint16_t len = val.stringVal.len;
-              if (pos + len < sizeof(buf) - 1) {
-                strncpy(buf + pos, val.stringVal.data, len);
-                pos += len;
-                buf[pos] = '\0';
-                found = true;
-              }
+          case VAL_STRING: {
+            uint16_t len = val.stringVal.len;
+            if (pos + len < sizeof(buf) - 1) {
+              strncpy(buf + pos, val.stringVal.data, len);
+              pos += len;
+              buf[pos] = '\0';
+              found = true;
             }
-            break;
+          } break;
           case VAL_ARRAY:
             buf[pos++] = '{';
             for (uint8_t j = 0; j < val.arrayVal.len; j++) {
@@ -2211,7 +2412,7 @@ bool ScriptRunner::handleLen(const Params& params, ScriptState& s) {
     case 's':
       if (idx < MAX_STRING_VARS) len = strlen(_ctx.stringVars[idx]);
       break;
-    case 'v':
+    case 'u':
     case 'i':
     case 'f':
       len = 1;
@@ -2252,7 +2453,7 @@ bool ScriptRunner::handleOrd(const Params& params, ScriptState& s) {
   } else if (arg[0] == '$' && arg[1] == 's') {
     uint8_t idx = (uint8_t)(arg[2] - '0');
     if (idx < MAX_STRING_VARS) val = (uint8_t)_ctx.stringVars[idx][0];
-  } else if (arg[0] == '$' && arg[1] == 'v') {
+  } else if (arg[0] == '$' && arg[1] == 'u') {
     uint8_t idx = (uint8_t)(arg[2] - '0');
     if (idx < MAX_UINT_VARS) val = (uint8_t)_ctx.uintVars[idx];
   } else if (arg[0] == '$' && arg[1] == 'i') {
@@ -2351,7 +2552,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
           p++;
         }
         switch (type) {
-          case 'v':
+          case 'u':
             if (idx < MAX_UINT_VARS) {
               _funcParams[paramCount].type = VAL_UINT;
               _funcParams[paramCount].uintVal = _ctx.uintVars[idx];
@@ -2450,7 +2651,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (varType == 'i') {
               _ctx.intVars[varIndex] = resultVal.intVal;
               typeMatch = true;
-            } else if (varType == 'v') {
+            } else if (varType == 'u') {
               _ctx.uintVars[varIndex] = (uint32_t)resultVal.intVal;
               typeMatch = true;
             } else if (varType == 'f') {
@@ -2459,7 +2660,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             }
             break;
           case VAL_UINT:
-            if (varType == 'v') {
+            if (varType == 'u') {
               _ctx.uintVars[varIndex] = resultVal.uintVal;
               typeMatch = true;
             } else if (varType == 'i') {
@@ -2474,7 +2675,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
             if (varType == 'f') {
               _ctx.floatVars[varIndex] = (double)resultVal.floatVal;
               typeMatch = true;
-            } else if (varType == 'v') {
+            } else if (varType == 'u') {
               _ctx.uintVars[varIndex] = (uint32_t)resultVal.floatVal;
               typeMatch = true;
             } else if (varType == 'i') {
@@ -2519,7 +2720,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
   }
 
   if (result && s.hasTempResult && hasVar) {
-    if (varType == 'v') {
+    if (varType == 'u') {
       if (varIndex < MAX_UINT_VARS) _ctx.uintVars[varIndex] = (uint32_t)s.tempResult;
     } else if (varType == 'i') {
       if (varIndex < MAX_INT_VARS) _ctx.intVars[varIndex] = s.tempResult;
@@ -2537,9 +2738,7 @@ bool ScriptRunner::processCommand(const char* token, ScriptState& s, uint32_t no
 }
 
 ScriptRunner::ScriptRunner()
-    : _dataProvider(nullptr), _logProvider(nullptr), _portProvider(nullptr), 
-      _stateChangeProvider(nullptr), _loadProvider(nullptr), 
-      _eventHandlerCount(0), _extFuncCount(0), _completeCallback(nullptr) {
+    : _dataProvider(nullptr), _logProvider(nullptr), _portProvider(nullptr), _stateChangeProvider(nullptr), _loadProvider(nullptr), _eventHandlerCount(0), _extFuncCount(0), _completeCallback(nullptr) {
   _instance = this;
   initSlotPools();
 

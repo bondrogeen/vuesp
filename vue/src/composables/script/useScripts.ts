@@ -11,7 +11,7 @@ interface IScript {
 
 export const useScripts = () => {
   const PATH = '/scripts.txt';
-  const idScript = ref('0');
+  const idScript = ref(0);
   const scripts = ref<IScript[]>([]);
   const selectedScript = ref<IScript | null>(null);
   const content = ref('');
@@ -42,7 +42,7 @@ export const useScripts = () => {
   };
 
   const addScript = (name: string) => {
-    scripts.value.push({ id: +idScript.value, name: name, content: '' });
+    scripts.value.push({ id: idScript.value, name: name, content: '' });
   };
 
   const onExample = (item: IListItem<string>) => {
@@ -58,6 +58,10 @@ export const useScripts = () => {
       const [id, name] = parts;
       return { id: +id, name, content: parts.slice(2).join(':') };
     });
+    if (scripts.value?.[0]) {
+      selectedScript.value = scripts.value?.[0] || null;
+      content.value = formatScript(scripts.value?.[0]?.content);
+    }
   };
 
   const onSave = async () => {
@@ -82,6 +86,7 @@ export const useScripts = () => {
     scripts,
     idScript,
     selectedScript,
+    onLoad,
     onSave,
     onRemove,
     onSelect,

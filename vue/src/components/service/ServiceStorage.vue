@@ -4,22 +4,15 @@ import type { IListItem, IMessageFile, TypeMessage } from '@/types';
 import { KEYS } from '@/utils/const';
 
 import { watchEffect, ref, computed, nextTick } from 'vue';
-
-import { toByte, createDownloadLink } from 'vuesp-components/helpers';
-import { useFetch, useDebounceFn } from '@vueuse/core';
-
-import { PATH_FS } from '@/utils/const';
-
+import { useDebounceFn } from '@vueuse/core';
+import { toByte } from 'vuesp-components/helpers';
+import { useFiles } from '@/composables/useFiles';
 import { useConnection } from '@/composables/useConnection';
-
-import { VFile } from 'vuesp-components';
-
 import { useLocale } from '@/composables/useLocale';
 
-const { $t } = useLocale();
+import { VFile } from 'vuesp-components/components';
 
-const files: Ref<IMessageFile[]> = ref([]);
-const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
+const { $t } = useLocale();
 
 const mainMenu: IListItem<number>[] = [
   { name: $t('upload'), value: 2 },
@@ -32,12 +25,11 @@ const listMenu: IListItem<number>[] = [
 ];
 
 const isLoading = ref(false);
-
 const path = ref(['root']);
-
+const files: Ref<IMessageFile[]> = ref([]);
+const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
 const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
 
-const fileName = (name: string) => `${fullPath.value}${name}`;
 const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.value !== 1 : true));
 const isLast = (path: string[], i: number) => path.length > i + 1;
 
@@ -45,7 +37,7 @@ const onMessage = ({ key, object }: TypeMessage) => {
   if (key === 'FILES' && object) files.value.push(object);
 };
 
-const { main, onSend, onDialog } = useConnection((send) => {
+const { onSend, onDialog } = useConnection((send) => {
   send(KEYS.FILES, { command: 0, name: fullPath.value });
 }, onMessage);
 
@@ -55,6 +47,8 @@ const onUpdate = () => {
   onSend(KEYS.FILES, { command: 0, name: fullPath.value });
   onSend(KEYS.INFO);
 };
+
+const { fileName, createLink, onDelete, onUpload, onFormat, onClickUpload } = useFiles(fullPath, onUpdate);
 
 const onPrev = (index: number) => {
   if (path.value.length > index + 1) {
@@ -70,54 +64,17 @@ const onNext = (isDir: boolean, value: string) => {
   }
 };
 
-const onClickUpload = () => {
-  const el: any = document.querySelector('input[type="file"]');
-  if (el) el.click();
-};
-
 const onEventService = ({ value }: IListItem<number>) => {
   if (value === 2) onClickUpload();
   if (value === 3) onUpdate();
   if (value === 4) onSureFormat();
 };
 
-const onEventList = (name: string, { value }: IListItem<number>) => {
-  if (value === 1) createDownloadLink(`${PATH_FS}?file=${fileName(name)}`, name);
-  if (value === 2) onSureDelete(name);
-};
-
-const onFormat = async () => {
-  const { data } = await useFetch(`${PATH_FS}?format=true`).post().json();
-  if (data.value?.state) onUpdate();
-};
-
 const onSureFormat = () => onDialog({ value: true, message: $t('dialog.allDel'), callback: onFormat });
 
-const onUpload = async (files: FileList | null) => {
-  if (!files) return;
-  let totalSize = 0;
-  const body = new FormData();
-  for (let i = 0; i < files.length; i++) {
-    const file = files.item(i);
-    if (!file) return;
-    totalSize += file.size;
-    body.append(`file[${i}]`, file, `${fullPath.value}${file.name}`);
-  }
-  const { totalBytes = 0, usedBytes = 0 } = main.value.info;
-  if (totalSize < totalBytes - usedBytes) {
-    const { data } = await useFetch(PATH_FS, { body }).post().json();
-    if (data.value?.state) onUpdate();
-  } else {
-    onDialog({ value: true, message: 'No free space' });
-  }
-};
-
-const onDelete = async (name: string) => {
-  const { data } = await useFetch(`${PATH_FS}?file=${fileName(name)}`)
-    .delete()
-    .json();
-  if (data.value?.state) onUpdate();
-  else onDialog({ value: true, message: 'Directory is not empty' });
+const onEventList = (name: string, { value }: IListItem<number>) => {
+  if (value === 1) createLink(name);
+  if (value === 2) onSureDelete(name);
 };
 
 const onSureDelete = (name: string) => {

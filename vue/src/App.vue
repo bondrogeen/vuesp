@@ -114,7 +114,7 @@ import { useSocket } from '@/composables/useSocket';
 import { useStore } from '@/composables/useStore';
 import { useLocale } from '@/composables/useLocale';
 
-import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus } from 'vuesp-components';
+import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus } from 'vuesp-components/components';
 
 const { $t, setLocale } = useLocale();
 

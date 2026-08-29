@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core';
 import { KEYS } from '@/utils/const';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { ScriptType, examples } from '@/assets/js/script';
 
@@ -9,11 +9,12 @@ import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 import { useLogs } from '@/composables/script/useLogs';
 import { useScripts } from '@/composables/script/useScripts';
-
-import { ScriptEditor, ScriptViewDocs, VTooltip } from 'vuesp-components';
-import ScriptDialog from '@/components/script/ScriptDialog.vue';
 import { useSlots } from '@/composables/script/useSlots';
 import { normalizeScript } from 'vuesp-components/helpers';
+import { useFiles } from '@/composables/useFiles';
+
+import { VFile, ScriptEditor, ScriptViewDocs, VTooltip, ScriptDialog } from 'vuesp-components/components';
+
 const { $t } = useLocale();
 
 const { suggestions, message, main, onSend } = useConnection((send) => {
@@ -22,12 +23,17 @@ const { suggestions, message, main, onSend } = useConnection((send) => {
 
 const { logs, onHover } = useLogs(message);
 const { slotInfo, currentSlot, onSlot, getColorSlot } = useSlots(main);
-const { ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave, onExample } = useScripts();
+const { ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave, onExample, onLoad } = useScripts();
+const fullPath = computed(() => '/');
+const onUpdate = () => {
+  onLoad();
+};
+const { createLink, onUpload, onClickUpload } = useFiles(fullPath, onUpdate);
 
 const dialogAdd = ref(false);
 const onAddScriptDialog = () => {
-  const getId = Array.from({ length: 256 }, (_, i) => i + 1).find((i) => !ids.value.includes(i));
-  idScript.value = `${getId}`;
+  const getId = Array.from({ length: 256 }, (_, i) => i).find((i) => !ids.value.includes(i));
+  idScript.value = getId || 0;
   dialogAdd.value = true;
 };
 
@@ -76,9 +82,18 @@ const onRemoveScript = () => {
         <card-main :title="$t('list')" class="order-2 md:order-1 [grid-area:list]">
           <template #header>
             <div class="flex gap-3">
-              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('add')" :disabled="false" @click="onAddScriptDialog()">
-                <icon-ri-sticky-note-add-line class="rotate-90"></icon-ri-sticky-note-add-line>
+              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('export')" :disabled="false" @click="createLink('scripts.txt')">
+                <icon-ri-upload-2-line></icon-ri-upload-2-line>
               </v-button>
+
+              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('import')" :disabled="false" @click="onClickUpload()">
+                <icon-ri-download-2-line></icon-ri-download-2-line>
+              </v-button>
+
+              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('add')" :disabled="false" @click="onAddScriptDialog()">
+                <icon-ri-sticky-note-add-line class=""></icon-ri-sticky-note-add-line>
+              </v-button>
+              <VFile accept=".txt" @change="onUpload($event, '/scripts.txt')"></VFile>
             </div>
           </template>
 
@@ -224,11 +239,11 @@ const onRemoveScript = () => {
     </div>
 
     <v-dialog v-if="dialogAdd" size="sm" :title="`${$t('add')} #${idScript}`" @close="dialogAdd = false">
-      <ScriptDialog @add="addScript" @close="dialogAdd = false" />
+      <ScriptDialog :idScript="idScript" @add="addScript" @close="dialogAdd = false" />
     </v-dialog>
 
-    <v-dialog v-if="dialogViewDocs" size="lg" title="ScriptRunner Documentation" @close="dialogViewDocs = false">
-      <ScriptViewDocs />
+    <v-dialog v-if="dialogViewDocs" size="lg" @close="dialogViewDocs = false">
+      <ScriptViewDocs class="min-h-100" />
     </v-dialog>
   </div>
 </template>

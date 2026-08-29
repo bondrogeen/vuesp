@@ -219,21 +219,21 @@ void printLog() {
     }                                                           \
   } while (0)
 
-#define ASSERT_LOG_EXACT_ORDER(expected, count)                 \
-  do {                                                          \
-    bool ok = true;                                             \
-    for (int i = 0; i < (count); i++) {                         \
-      if (i >= (int)testLog.size() || testLog[i] != expected[i]) { \
-        ok = false;                                             \
-        break;                                                  \
-      }                                                         \
-    }                                                           \
-    if (!ok) {                                                  \
+#define ASSERT_LOG_EXACT_ORDER(expected, count)                         \
+  do {                                                                  \
+    bool ok = true;                                                     \
+    for (int i = 0; i < (count); i++) {                                 \
+      if (i >= (int)testLog.size() || testLog[i] != expected[i]) {      \
+        ok = false;                                                     \
+        break;                                                          \
+      }                                                                 \
+    }                                                                   \
+    if (!ok) {                                                          \
       printf("  FAIL %s:%d: log order mismatch\n", __FILE__, __LINE__); \
-      printLog();                                               \
-      test_failed = true;                                       \
-      return;                                                   \
-    }                                                           \
+      printLog();                                                       \
+      test_failed = true;                                               \
+      return;                                                           \
+    }                                                                   \
   } while (0)
 
 #define TEST(name) void test_##name()
@@ -445,14 +445,14 @@ TEST(if_else_false) {
 TEST(if_nested_both_true) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, 
-    "if:1==1;"
-    "  $display='1';"
-    "  if:1==1;"
-    "    $display='2';"
-    "  end;"
-    "  $display='3';"
-    "end");
+  runner.registerScript(1,
+                        "if:1==1;"
+                        "  $display='1';"
+                        "  if:1==1;"
+                        "    $display='2';"
+                        "  end;"
+                        "  $display='3';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "3"};
@@ -463,13 +463,13 @@ TEST(if_nested_outer_true_inner_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  $display='1';"
-    "  if:1==0;"
-    "    $display='2';"
-    "  end;"
-    "  $display='3';"
-    "end");
+                        "if:1==1;"
+                        "  $display='1';"
+                        "  if:1==0;"
+                        "    $display='2';"
+                        "  end;"
+                        "  $display='3';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "3"};
@@ -480,13 +480,13 @@ TEST(if_nested_outer_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==0;"
-    "  $display='1';"
-    "  if:1==1;"
-    "    $display='2';"
-    "  end;"
-    "  $display='3';"
-    "end");
+                        "if:1==0;"
+                        "  $display='1';"
+                        "  if:1==1;"
+                        "    $display='2';"
+                        "  end;"
+                        "  $display='3';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(testLog.size(), 0u);
@@ -496,15 +496,15 @@ TEST(if_nested_with_else_outer_true_inner_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  $display='1';"
-    "  if:1==0;"
-    "    $display='2';"
-    "  else;"
-    "    $display='3';"
-    "  end;"
-    "  $display='4';"
-    "end");
+                        "if:1==1;"
+                        "  $display='1';"
+                        "  if:1==0;"
+                        "    $display='2';"
+                        "  else;"
+                        "    $display='3';"
+                        "  end;"
+                        "  $display='4';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "3", "4"};
@@ -515,15 +515,15 @@ TEST(if_nested_with_else_outer_true_inner_true) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  $display='1';"
-    "  if:1==1;"
-    "    $display='2';"
-    "  else;"
-    "    $display='3';"
-    "  end;"
-    "  $display='4';"
-    "end");
+                        "if:1==1;"
+                        "  $display='1';"
+                        "  if:1==1;"
+                        "    $display='2';"
+                        "  else;"
+                        "    $display='3';"
+                        "  end;"
+                        "  $display='4';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "4"};
@@ -534,17 +534,17 @@ TEST(if_nested_with_else_outer_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==0;"
-    "  $display='1';"
-    "  if:1==1;"
-    "    $display='2';"
-    "  else;"
-    "    $display='3';"
-    "  end;"
-    "  $display='4';"
-    "else;"
-    "  $display='5';"
-    "end");
+                        "if:1==0;"
+                        "  $display='1';"
+                        "  if:1==1;"
+                        "    $display='2';"
+                        "  else;"
+                        "    $display='3';"
+                        "  end;"
+                        "  $display='4';"
+                        "else;"
+                        "  $display='5';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("5");
@@ -554,15 +554,15 @@ TEST(if_nested_deep_3_levels) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  $display='1';"
-    "  if:1==1;"
-    "    $display='2';"
-    "    if:1==1;"
-    "      $display='3';"
-    "    end;"
-    "  end;"
-    "end");
+                        "if:1==1;"
+                        "  $display='1';"
+                        "  if:1==1;"
+                        "    $display='2';"
+                        "    if:1==1;"
+                        "      $display='3';"
+                        "    end;"
+                        "  end;"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "3"};
@@ -573,18 +573,18 @@ TEST(if_nested_deep_3_levels_with_else) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  $display='1';"
-    "  if:1==1;"
-    "    $display='2';"
-    "    if:1==0;"
-    "      $display='3';"
-    "    else;"
-    "      $display='4';"
-    "    end;"
-    "    $display='5';"
-    "  end;"
-    "end");
+                        "if:1==1;"
+                        "  $display='1';"
+                        "  if:1==1;"
+                        "    $display='2';"
+                        "    if:1==0;"
+                        "      $display='3';"
+                        "    else;"
+                        "      $display='4';"
+                        "    end;"
+                        "    $display='5';"
+                        "  end;"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "4", "5"};
@@ -595,7 +595,7 @@ TEST(if_original_bug_1) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';if:1==1;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';end;$display='6';");
+                        "$display='1';if:1==1;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';end;$display='6';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "3", "5", "6"};
@@ -606,7 +606,7 @@ TEST(if_original_bug_2) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';if:1==1;$display='2';if:1==0;$display='3';else;$display='4';end;$display='5';end;$display='6';");
+                        "$display='1';if:1==1;$display='2';if:1==0;$display='3';else;$display='4';end;$display='5';end;$display='6';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "4", "5", "6"};
@@ -617,7 +617,7 @@ TEST(if_original_bug_3) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';else;$display='6';end;$display='7';");
+                        "$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';else;$display='6';end;$display='7';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "6", "7"};
@@ -628,7 +628,7 @@ TEST(if_original_bug_4) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';end;$display='6';");
+                        "$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';end;$display='6';");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "6"};
@@ -639,16 +639,16 @@ TEST(if_multiple_else_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=2;"
-    "if:$v0==1;"
-    "  $display='ONE';"
-    "else;"
-    "  if:$v0==2;"
-    "    $display='TWO';"
-    "  else;"
-    "    $display='OTHER';"
-    "  end;"
-    "end");
+                        "$u0=2;"
+                        "if:$u0==1;"
+                        "  $display='ONE';"
+                        "else;"
+                        "  if:$u0==2;"
+                        "    $display='TWO';"
+                        "  else;"
+                        "    $display='OTHER';"
+                        "  end;"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("TWO");
@@ -658,12 +658,12 @@ TEST(if_with_variable_condition) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=5;"
-    "if:$v0>3;"
-    "  $display='GREATER';"
-    "else;"
-    "  $display='LESS';"
-    "end");
+                        "$u0=5;"
+                        "if:$u0>3;"
+                        "  $display='GREATER';"
+                        "else;"
+                        "  $display='LESS';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("GREATER");
@@ -673,12 +673,12 @@ TEST(if_with_negative_condition) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$i0=-5;"
-    "if:$i0<0;"
-    "  $display='NEGATIVE';"
-    "else;"
-    "  $display='POSITIVE';"
-    "end");
+                        "$i0=-5;"
+                        "if:$i0<0;"
+                        "  $display='NEGATIVE';"
+                        "else;"
+                        "  $display='POSITIVE';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("NEGATIVE");
@@ -688,12 +688,12 @@ TEST(if_with_string_condition) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$s0='hello';"
-    "if:$s0=='hello';"
-    "  $display='MATCH';"
-    "else;"
-    "  $display='NO';"
-    "end");
+                        "$s0='hello';"
+                        "if:$s0=='hello';"
+                        "  $display='MATCH';"
+                        "else;"
+                        "  $display='NO';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("MATCH");
@@ -703,13 +703,13 @@ TEST(if_with_or_condition) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=5;"
-    "$v1=10;"
-    "if:$v0==1||$v1==10;"
-    "  $display='OR_TRUE';"
-    "else;"
-    "  $display='OR_FALSE';"
-    "end");
+                        "$u0=5;"
+                        "$u1=10;"
+                        "if:$u0==1||$u1==10;"
+                        "  $display='OR_TRUE';"
+                        "else;"
+                        "  $display='OR_FALSE';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("OR_TRUE");
@@ -719,13 +719,13 @@ TEST(if_with_and_condition) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=5;"
-    "$v1=10;"
-    "if:$v0==5&&$v1==10;"
-    "  $display='AND_TRUE';"
-    "else;"
-    "  $display='AND_FALSE';"
-    "end");
+                        "$u0=5;"
+                        "$u1=10;"
+                        "if:$u0==5&&$u1==10;"
+                        "  $display='AND_TRUE';"
+                        "else;"
+                        "  $display='AND_FALSE';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("AND_TRUE");
@@ -735,15 +735,15 @@ TEST(if_nested_with_skip_else) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==0;"
-    "  if:1==1;"
-    "    $display='BAD';"
-    "  else;"
-    "    $display='BAD2';"
-    "  end;"
-    "else;"
-    "  $display='GOOD';"
-    "end");
+                        "if:1==0;"
+                        "  if:1==1;"
+                        "    $display='BAD';"
+                        "  else;"
+                        "    $display='BAD2';"
+                        "  end;"
+                        "else;"
+                        "  $display='GOOD';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("GOOD");
@@ -753,14 +753,14 @@ TEST(if_nested_skip_inner_else) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  if:1==0;"
-    "    $display='BAD';"
-    "  else;"
-    "    $display='GOOD_INNER';"
-    "  end;"
-    "  $display='GOOD_OUTER';"
-    "end");
+                        "if:1==1;"
+                        "  if:1==0;"
+                        "    $display='BAD';"
+                        "  else;"
+                        "    $display='GOOD_INNER';"
+                        "  end;"
+                        "  $display='GOOD_OUTER';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"GOOD_INNER", "GOOD_OUTER"};
@@ -771,7 +771,7 @@ TEST(if_deep_nested_with_skip) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';else;$display='6';if:1==1;$display='7';else;$display='8';end;$display='9';end;$display='10';end");
+                        "if:1==1;$display='1';if:1==0;$display='2';if:1==1;$display='3';else;$display='4';end;$display='5';else;$display='6';if:1==1;$display='7';else;$display='8';end;$display='9';end;$display='10';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "6", "7", "9", "10"};
@@ -782,12 +782,12 @@ TEST(if_with_multiple_commands_in_block) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "if:1==1;"
-    "  $v0=5;"
-    "  $v1=10;"
-    "  $v2=$v0+$v1;"
-    "  $display=$v2;"
-    "end");
+                        "if:1==1;"
+                        "  $u0=5;"
+                        "  $u1=10;"
+                        "  $u2=$u0+$u1;"
+                        "  $display=$u2;"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("15");
@@ -838,7 +838,7 @@ TEST(if_short_false) {
 TEST(if_short_variable_true) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=5;if:$v0;$display='A';end");
+  runner.registerScript(1, "$u0=5;if:$u0;$display='A';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("A");
@@ -847,7 +847,7 @@ TEST(if_short_variable_true) {
 TEST(if_short_variable_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;if:$v0;$display='A';end");
+  runner.registerScript(1, "$u0=0;if:$u0;$display='A';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_NOT_CONTAINS("A");
@@ -856,7 +856,7 @@ TEST(if_short_variable_false) {
 TEST(if_short_negate_true) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;if:!$v0;$display='A';end");
+  runner.registerScript(1, "$u0=0;if:!$u0;$display='A';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("A");
@@ -865,7 +865,7 @@ TEST(if_short_negate_true) {
 TEST(if_short_negate_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=5;if:!$v0;$display='A';end");
+  runner.registerScript(1, "$u0=5;if:!$u0;$display='A';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_NOT_CONTAINS("A");
@@ -929,15 +929,15 @@ TEST(if_short_nested) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=1;$v1=0;"
-    "if:$v0;"
-    "  $display='1';"
-    "  if:!$v1;"
-    "    $display='2';"
-    "  else;"
-    "    $display='3';"
-    "  end;"
-    "end");
+                        "$u0=1;$u1=0;"
+                        "if:$u0;"
+                        "  $display='1';"
+                        "  if:!$u1;"
+                        "    $display='2';"
+                        "  else;"
+                        "    $display='3';"
+                        "  end;"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2"};
@@ -975,12 +975,12 @@ TEST(if_short_with_else) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=0;"
-    "if:$v0;"
-    "  $display='TRUE';"
-    "else;"
-    "  $display='FALSE';"
-    "end");
+                        "$u0=0;"
+                        "if:$u0;"
+                        "  $display='TRUE';"
+                        "else;"
+                        "  $display='FALSE';"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("FALSE");
@@ -990,18 +990,18 @@ TEST(if_short_complex) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-    "$v0=1;$v1=0;$v2=0;"
-    "if:$v0;"
-    "  $display='1';"
-    "  if:!$v1;"
-    "    $display='2';"
-    "    if:$v2;"
-    "      $display='3';"
-    "    else;"
-    "      $display='4';"
-    "    end;"
-    "  end;"
-    "end");
+                        "$u0=1;$u1=0;$u2=0;"
+                        "if:$u0;"
+                        "  $display='1';"
+                        "  if:!$u1;"
+                        "    $display='2';"
+                        "    if:$u2;"
+                        "      $display='3';"
+                        "    else;"
+                        "      $display='4';"
+                        "    end;"
+                        "  end;"
+                        "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   const char* expected[] = {"1", "2", "4"};
@@ -1015,7 +1015,7 @@ TEST(if_short_complex) {
 TEST(variable_assignment_uint) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=42;$display=$v0");
+  runner.registerScript(1, "$u0=42;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 42u);
@@ -1055,7 +1055,7 @@ TEST(variable_assignment_string) {
 TEST(arithmetic_add) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=10;$v0=$v0+5;$display=$v0");
+  runner.registerScript(1, "$u0=10;$u0=$u0+5;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 15u);
@@ -1065,7 +1065,7 @@ TEST(arithmetic_add) {
 TEST(arithmetic_sub) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=20;$v0=$v0-8;$display=$v0");
+  runner.registerScript(1, "$u0=20;$u0=$u0-8;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 12u);
@@ -1075,7 +1075,7 @@ TEST(arithmetic_sub) {
 TEST(arithmetic_mul) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=6;$v0=$v0*7;$display=$v0");
+  runner.registerScript(1, "$u0=6;$u0=$u0*7;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 42u);
@@ -1085,7 +1085,7 @@ TEST(arithmetic_mul) {
 TEST(arithmetic_div) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=100;$v0=$v0/4;$display=$v0");
+  runner.registerScript(1, "$u0=100;$u0=$u0/4;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 25u);
@@ -1095,7 +1095,7 @@ TEST(arithmetic_div) {
 TEST(arithmetic_mod) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=17;$v0=$v0%5;$display=$v0");
+  runner.registerScript(1, "$u0=17;$u0=$u0%5;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 2u);
@@ -1126,7 +1126,7 @@ TEST(arithmetic_float) {
 TEST(bitwise_and) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=255;$v0=$v0&15;$display=$v0");
+  runner.registerScript(1, "$u0=255;$u0=$u0&15;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 15u);
@@ -1136,7 +1136,7 @@ TEST(bitwise_and) {
 TEST(bitwise_or) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=240;$v0=$v0|15;$display=$v0");
+  runner.registerScript(1, "$u0=240;$u0=$u0|15;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 255u);
@@ -1146,7 +1146,7 @@ TEST(bitwise_or) {
 TEST(bitwise_xor) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=255;$v0=$v0^255;$display=$v0");
+  runner.registerScript(1, "$u0=255;$u0=$u0^255;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
@@ -1166,7 +1166,7 @@ TEST(bitwise_not) {
 TEST(shift_left) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1;$v0=$v0<<4;$display=$v0");
+  runner.registerScript(1, "$u0=1;$u0=$u0<<4;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 16u);
@@ -1176,7 +1176,7 @@ TEST(shift_left) {
 TEST(shift_right) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=16;$v0=$v0>>2;$display=$v0");
+  runner.registerScript(1, "$u0=16;$u0=$u0>>2;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 4u);
@@ -1186,7 +1186,7 @@ TEST(shift_right) {
 TEST(condition_if_true) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1;if:$v0==1;$display='TRUE';else;$display='FALSE';end");
+  runner.registerScript(1, "$u0=1;if:$u0==1;$display='TRUE';else;$display='FALSE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("TRUE");
@@ -1196,7 +1196,7 @@ TEST(condition_if_true) {
 TEST(condition_if_false) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;if:$v0==1;$display='TRUE';else;$display='FALSE';end");
+  runner.registerScript(1, "$u0=0;if:$u0==1;$display='TRUE';else;$display='FALSE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("FALSE");
@@ -1206,7 +1206,7 @@ TEST(condition_if_false) {
 TEST(condition_if_else_chain) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=2;if:$v0==1;$display='ONE';else;if:$v0==2;$display='TWO';else;$display='OTHER';end;end");
+  runner.registerScript(1, "$u0=2;if:$u0==1;$display='ONE';else;if:$u0==2;$display='TWO';else;$display='OTHER';end;end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("TWO");
@@ -1215,7 +1215,7 @@ TEST(condition_if_else_chain) {
 TEST(condition_logical_and) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1;$v1=1;if:$v0==1&&$v1==1;$display='BOTH';else;$display='NONE';end");
+  runner.registerScript(1, "$u0=1;$u1=1;if:$u0==1&&$u1==1;$display='BOTH';else;$display='NONE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("BOTH");
@@ -1224,7 +1224,7 @@ TEST(condition_logical_and) {
 TEST(condition_logical_or) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;$v1=1;if:$v0==1||$v1==1;$display='ANY';else;$display='NONE';end");
+  runner.registerScript(1, "$u0=0;$u1=1;if:$u0==1||$u1==1;$display='ANY';else;$display='NONE';end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("ANY");
@@ -1242,7 +1242,7 @@ TEST(condition_compare_string) {
 TEST(loop_while) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;while:$v0<5;$v0=$v0+1;end;$display=$v0");
+  runner.registerScript(1, "$u0=0;while:$u0<5;$u0=$u0+1;end;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
@@ -1270,7 +1270,7 @@ TEST(string_copy) {
 TEST(string_concat_number) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=42;$s0='Value: ';$s0=$s0+$v0;$display=$s0");
+  runner.registerScript(1, "$u0=42;$s0='Value: ';$s0=$s0+$u0;$display=$s0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("Value: 42");
@@ -1310,7 +1310,7 @@ TEST(port_read) {
   runner.setPortProvider(testPortProvider);
   runner.setStateChangeProvider(testStateChangeProvider);
   virtualPins[13] = 200;
-  runner.registerScript(1, "$v0=$p13;$display=$v0");
+  runner.registerScript(1, "$u0=$p13;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 200u);
@@ -1353,7 +1353,7 @@ TEST(wait_time) {
 TEST(nested_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1;$v1=1;if:$v0==1;if:$v1==1;$display='DEEP';end;end");
+  runner.registerScript(1, "$u0=1;$u1=1;if:$u0==1;if:$u1==1;$display='DEEP';end;end");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_EXACT("DEEP");
@@ -1362,7 +1362,7 @@ TEST(nested_if) {
 TEST(loop_in_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;$v1=1;if:$v1==1;while:$v0<3;$v0=$v0+1;end;end;$display=$v0");
+  runner.registerScript(1, "$u0=0;$u1=1;if:$u1==1;while:$u0<3;$u0=$u0+1;end;end;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 3u);
@@ -1409,7 +1409,7 @@ TEST(strategy_restart_if_same) {
 TEST(macro_var_to_var) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=99;$v1=$v0;$display=$v1");
+  runner.registerScript(1, "$u0=99;$u1=$u0;$display=$u1");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(1), 99u);
@@ -1419,7 +1419,7 @@ TEST(macro_var_to_var) {
 TEST(macro_float_to_uint) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$f0=12.5;$v0=$f0;$display=$v0");
+  runner.registerScript(1, "$f0=12.5;$u0=$f0;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 12u);
@@ -1429,7 +1429,7 @@ TEST(macro_float_to_uint) {
 TEST(variable_increment) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=5;$v0=$v0+3;$display=$v0");
+  runner.registerScript(1, "$u0=5;$u0=$u0+3;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 8u);
@@ -1439,7 +1439,7 @@ TEST(variable_increment) {
 TEST(variable_decrement) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=10;$v0=$v0-4;$display=$v0");
+  runner.registerScript(1, "$u0=10;$u0=$u0-4;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 6u);
@@ -1449,7 +1449,7 @@ TEST(variable_decrement) {
 TEST(variable_multiply_assign) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=4;$v0=$v0*5;$display=$v0");
+  runner.registerScript(1, "$u0=4;$u0=$u0*5;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 20u);
@@ -1459,7 +1459,7 @@ TEST(variable_multiply_assign) {
 TEST(variable_divide_assign) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=30;$v0=$v0/6;$display=$v0");
+  runner.registerScript(1, "$u0=30;$u0=$u0/6;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 5u);
@@ -1469,7 +1469,7 @@ TEST(variable_divide_assign) {
 TEST(array_init) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10,20,30};$v2=len($a0);$display=$v2");
+  runner.registerScript(1, "$a0={10,20,30};$u2=len($a0);$display=$u2");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getArrayLen(0), 3u);
@@ -1479,7 +1479,7 @@ TEST(array_init) {
 TEST(array_get) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10,20,30};$v0=get($a0,1);$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30};$u0=get($a0,1);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 20u);
@@ -1489,7 +1489,7 @@ TEST(array_get) {
 TEST(array_set) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10,20,30};set($a0,1,99);$v0=get($a0,1);$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30};set($a0,1,99);$u0=get($a0,1);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 99u);
@@ -1499,7 +1499,7 @@ TEST(array_set) {
 TEST(array_copy) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10,20,30};$a1=$a0;$v0=get($a1,0);$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30};$a1=$a0;$u0=get($a1,0);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 10u);
@@ -1509,7 +1509,7 @@ TEST(array_copy) {
 TEST(array_len) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={10,20,30};$v2=len($a0);$display=$v2");
+  runner.registerScript(1, "$a0={10,20,30};$u2=len($a0);$display=$u2");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(2), 3u);
@@ -1519,7 +1519,7 @@ TEST(array_len) {
 TEST(chr_ord) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0=chr(65);$v0=ord($s0);$display=$v0");
+  runner.registerScript(1, "$s0=chr(65);$u0=ord($s0);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 65u);
@@ -1530,7 +1530,7 @@ TEST(division_by_zero) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.setLogProvider(testLogProvider);
-  runner.registerScript(1, "$v0=10;$v0=$v0/0;$display=$v0");
+  runner.registerScript(1, "$u0=10;$u0=$u0/0;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_TRUE(true);
@@ -1584,7 +1584,7 @@ TEST(recursive_call) {
 TEST(if_without_else) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1;if:$v0==1;$display='TRUE';end;$display='DONE'");
+  runner.registerScript(1, "$u0=1;if:$u0==1;$display='TRUE';end;$display='DONE'");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("TRUE");
@@ -1594,7 +1594,7 @@ TEST(if_without_else) {
 TEST(if_without_end) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=1;if:$v0==1;$display='TRUE'");
+  runner.registerScript(1, "$u0=1;if:$u0==1;$display='TRUE'");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_TRUE(true);
@@ -1603,7 +1603,7 @@ TEST(if_without_end) {
 TEST(while_with_break) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;while:$v0<10;$v0=$v0+1;if:$v0==5;$v0=10;end;end;$display=$v0");
+  runner.registerScript(1, "$u0=0;while:$u0<10;$u0=$u0+1;if:$u0==5;$u0=10;end;end;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 10u);
@@ -1612,7 +1612,7 @@ TEST(while_with_break) {
 TEST(array_out_of_bounds) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={1,2,3};$v0=get($a0,10);$display=$v0");
+  runner.registerScript(1, "$a0={1,2,3};$u0=get($a0,10);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
@@ -1621,7 +1621,7 @@ TEST(array_out_of_bounds) {
 TEST(string_index_out_of_bounds) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$s0='ABC';$v0=ord($s0,10);$display=$v0");
+  runner.registerScript(1, "$s0='ABC';$u0=ord($s0,10);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_TRUE(true);
@@ -1630,7 +1630,7 @@ TEST(string_index_out_of_bounds) {
 TEST(negative_array_index) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$a0={1,2,3};$v0=get($a0,-1);$display=$v0");
+  runner.registerScript(1, "$a0={1,2,3};$u0=get($a0,-1);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 0u);
@@ -1770,7 +1770,7 @@ TEST(wait_until) {
 TEST(while_infinite_protection) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
-  runner.registerScript(1, "$v0=0;while:$v0<10;$v0=$v0+1;end;$display=$v0");
+  runner.registerScript(1, "$u0=0;while:$u0<10;$u0=$u0+1;end;$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner, 50);
   ASSERT_EQ(runner.getUintVar(0), 10u);
@@ -1804,8 +1804,8 @@ TEST(nested_if_inside_on) {
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
                         "on('EVENT');"
-                        "  $v0=1;"
-                        "  if:$v0==1;"
+                        "  $u0=1;"
+                        "  if:$u0==1;"
                         "    $display='IF_TRUE';"
                         "  else;"
                         "    $display='IF_FALSE';"
@@ -1825,11 +1825,11 @@ TEST(nested_while_inside_on) {
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
                         "on('EVENT');"
-                        "  $v0=0;"
-                        "  while:$v0<3;"
-                        "    $v0=$v0+1;"
+                        "  $u0=0;"
+                        "  while:$u0<3;"
+                        "    $u0=$u0+1;"
                         "  end;"
-                        "  $display=$v0;"
+                        "  $display=$u0;"
                         "end");
   runner.runScript(1);
   runScriptUntilDone(runner);
@@ -1844,10 +1844,10 @@ TEST(if_inside_while_inside_on) {
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
                         "on('EVENT');"
-                        "  $v0=0;"
-                        "  while:$v0<5;"
-                        "    $v0=$v0+1;"
-                        "    if:$v0==3;"
+                        "  $u0=0;"
+                        "  while:$u0<5;"
+                        "    $u0=$u0+1;"
+                        "    if:$u0==3;"
                         "      $display='THREE';"
                         "    end;"
                         "  end;"
@@ -1864,8 +1864,8 @@ TEST(on_inside_if) {
   ScriptRunner runner;
   runner.setDataProvider(testDataProvider);
   runner.registerScript(1,
-                        "$v0=1;"
-                        "if:$v0==1;"
+                        "$u0=1;"
+                        "if:$u0==1;"
                         "  on('EVENT');"
                         "    $display='INSIDE_IF';"
                         "  end;"
@@ -1885,7 +1885,7 @@ TEST(external_function_add) {
   bool registered = runner.registerFunction("add", testAddHandler);
   ASSERT_TRUE(registered);
 
-  runner.registerScript(1, "$v0=add(10,20);$display=$v0");
+  runner.registerScript(1, "$u0=add(10,20);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 30u);
@@ -1898,7 +1898,7 @@ TEST(external_function_add_with_vars) {
 
   runner.registerFunction("add", testAddHandler);
 
-  runner.registerScript(1, "$v0=5;$v1=7;$v2=add($v0,$v1);$display=$v2");
+  runner.registerScript(1, "$u0=5;$u1=7;$u2=add($u0,$u1);$display=$u2");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(2), 12u);
@@ -1911,7 +1911,7 @@ TEST(external_function_mul) {
 
   runner.registerFunction("mul", testMulHandler);
 
-  runner.registerScript(1, "$v0=mul(6,7);$display=$v0");
+  runner.registerScript(1, "$u0=mul(6,7);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 42u);
@@ -1960,7 +1960,7 @@ TEST(external_function_3_params) {
 
   runner.registerFunction("sum3", testSum3Handler);
 
-  runner.registerScript(1, "$v0=sum3(1,2,3);$display=$v0");
+  runner.registerScript(1, "$u0=sum3(1,2,3);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 6u);
@@ -1973,7 +1973,7 @@ TEST(external_function_3_params_with_vars) {
 
   runner.registerFunction("sum3", testSum3Handler);
 
-  runner.registerScript(1, "$v0=1;$v1=2;$v2=3;$v3=sum3($v0,$v1,$v2);$display=$v3");
+  runner.registerScript(1, "$u0=1;$u1=2;$u2=3;$u3=sum3($u0,$u1,$u2);$display=$u3");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(3), 6u);
@@ -2013,7 +2013,7 @@ TEST(external_function_4_params) {
 
   runner.registerFunction("multi", testMultiParamHandler);
 
-  runner.registerScript(1, "$v0=multi('POST','http://test.com',154,21);$display=$v0");
+  runner.registerScript(1, "$u0=multi('POST','http://test.com',154,21);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 175u);
@@ -2026,7 +2026,7 @@ TEST(external_function_4_params_no_spaces) {
 
   runner.registerFunction("multi", testMultiParamNoSpacesHandler);
 
-  runner.registerScript(1, "$v0=multi('POST','http://test.com',154,21);$display=$v0");
+  runner.registerScript(1, "$u0=multi('POST','http://test.com',154,21);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 175u);
@@ -2065,7 +2065,7 @@ TEST(external_function_array_sum) {
 
   runner.registerFunction("sum", testArraySumHandler);
 
-  runner.registerScript(1, "$a0={10,20,30,40,50};$v0=sum($a0);$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30,40,50};$u0=sum($a0);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 150u);
@@ -2078,7 +2078,7 @@ TEST(external_function_array_mul) {
 
   runner.registerFunction("mul", testArrayMulHandler);
 
-  runner.registerScript(1, "$a0={1,2,3,4,5};$v0=mul($a0);$display=$v0");
+  runner.registerScript(1, "$a0={1,2,3,4,5};$u0=mul($a0);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 120u);
@@ -2108,7 +2108,7 @@ TEST(external_function_array_return_array) {
 
   runner.registerFunction("double", doubleArrayHandler);
 
-  runner.registerScript(1, "$a0={1,2,3,4};$a1=double($a0);$v0=get($a1,2);$display=$v0");
+  runner.registerScript(1, "$a0={1,2,3,4};$a1=double($a0);$u0=get($a1,2);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 6u);
@@ -2135,7 +2135,7 @@ TEST(external_function_array_and_int) {
 
   runner.registerFunction("addToArray", arrayAndIntHandler);
 
-  runner.registerScript(1, "$a0={10,20,30,40};$v0=addToArray($a0,100);$display=$v0");
+  runner.registerScript(1, "$a0={10,20,30,40};$u0=addToArray($a0,100);$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_EQ(runner.getUintVar(0), 200u);
@@ -2163,10 +2163,157 @@ TEST(external_function_type_mismatch) {
 
   runner.registerFunction("hello", testHelloHandler);
 
-  runner.registerScript(1, "$v0=hello();$display=$v0");
+  runner.registerScript(1, "$u0=hello();$display=$u0");
   runner.runScript(1);
   runScriptUntilDone(runner);
   ASSERT_LOG_CONTAINS("type mismatch");
+}
+
+TEST(ternary_simple_true) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=10>5?100:0;$display=$u0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("100");
+}
+
+TEST(ternary_simple_false) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=10>15?100:0;$display=$u0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("0");
+}
+
+TEST(ternary_with_variable) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=7;$u1=$u0>5?$u0*2:$u0/2;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("14");
+}
+
+TEST(ternary_with_arithmetic_no_parens) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=3;$u1=4;$u2=$u0*$u1+1>6?$u0+$u1*2:$u0-$u1*3;$display=$u2");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("14");
+}
+
+TEST(ternary_nested) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=5;$u1=$u0>0?$u0<10?1:2:0;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("1");
+}
+
+TEST(ternary_float) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$f0=3.14;$f1=$f0>3.0?6.28:1.57;$display=$f1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_CONTAINS("1.57");
+}
+
+TEST(ternary_port) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.setPortProvider(testPortProvider);
+  virtualPins[0] = 0;
+  runner.registerScript(1, "$p1=$p0==0?255:0;$display=$p1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_EQ(virtualPins[1], 255u);
+  ASSERT_LOG_EXACT("255");
+}
+
+TEST(ternary_with_compare_equal) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=5;$u1=$u0==5?100:0;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("100");
+}
+
+TEST(ternary_with_compare_not_equal) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=5;$u1=$u0!=5?100:0;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("0");
+}
+
+TEST(ternary_with_less_equal) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=5;$u1=$u0<=5?1:0;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("1");
+}
+
+TEST(ternary_with_greater_equal) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=5;$u1=$u0>=5?1:0;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("1");
+}
+
+TEST(arithmetic_with_parens) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=(2+3)*4;$display=$u0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("20");
+}
+
+TEST(ternary_with_parens) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=5;$u1=$u0>0?($u0<10?1:2):0;$display=$u1");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("1");
+}
+
+TEST(ternary_complex_with_parens) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=3;$u1=4;$u2=(($u0+$u1)*2)>10?100:0;$display=$u2");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("100");
+}
+
+TEST(arithmetic_nested_parens) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=((2+3)*4+5)*2;$display=$u0");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("50");
+}
+
+TEST(ternary_with_parens_and_compare) {
+  ScriptRunner runner;
+  runner.setDataProvider(testDataProvider);
+  runner.registerScript(1, "$u0=10;$u1=5;$u2=($u0>$u1)?($u0*$u1):($u0+$u1);$display=$u2");
+  runner.runScript(1);
+  runScriptUntilDone(runner);
+  ASSERT_LOG_EXACT("50");
 }
 
 int main() {
@@ -2332,7 +2479,6 @@ int main() {
   RUN_TEST(else_without_if_error);
   RUN_TEST(end_without_if_error);
 
-  // НОВЫЕ ТЕСТЫ ДЛЯ СОКРАЩЕННОГО СИНТАКСИСА
   RUN_TEST(if_short_true);
   RUN_TEST(if_short_false);
   RUN_TEST(if_short_variable_true);
@@ -2353,6 +2499,24 @@ int main() {
   RUN_TEST(if_short_complex);
 
   RUN_TEST(external_function_type_mismatch);
+
+  RUN_TEST(ternary_simple_true);
+  RUN_TEST(ternary_simple_false);
+  RUN_TEST(ternary_with_variable);
+  RUN_TEST(ternary_with_arithmetic_no_parens);
+  RUN_TEST(ternary_nested);
+  RUN_TEST(ternary_float);
+  RUN_TEST(ternary_port);
+  RUN_TEST(ternary_with_compare_equal);
+  RUN_TEST(ternary_with_compare_not_equal);
+  RUN_TEST(ternary_with_less_equal);
+  RUN_TEST(ternary_with_greater_equal);
+
+  RUN_TEST(arithmetic_with_parens);
+  RUN_TEST(ternary_with_parens);
+  RUN_TEST(ternary_complex_with_parens);
+  RUN_TEST(arithmetic_nested_parens);
+  RUN_TEST(ternary_with_parens_and_compare);
 
   printf("\n=== All tests passed ===\n");
   return 0;
