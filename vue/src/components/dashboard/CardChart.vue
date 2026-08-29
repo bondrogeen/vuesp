@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import type { ICardChartProps, ICardChartEmit } from './types';
 
 import { loadScript, timeUtcToString } from 'vuesp-components/helpers';
-import { CardBase } from 'vuesp-components';
+import { CardBase } from 'vuesp-components/components';
 
 const props = defineProps<ICardChartProps>();
 

@@ -10,7 +10,7 @@ import { useFiles } from '@/composables/useFiles';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 
-import { VFile } from 'vuesp-components';
+import { VFile } from 'vuesp-components/components';
 
 const { $t } = useLocale();
 

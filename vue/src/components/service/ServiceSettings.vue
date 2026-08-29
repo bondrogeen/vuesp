@@ -13,7 +13,7 @@ import type { ValidationSchema } from 'vuesp-components/types';
 import { useConnection } from '@/composables/useConnection';
 import { arrToStr, strToArr } from 'vuesp-components/helpers';
 
-import { VCheckbox, BlockScan, BlockService, BlockUpdate } from 'vuesp-components';
+import { VCheckbox, BlockScan, BlockService, BlockUpdate } from 'vuesp-components/components';
 import { useLocale } from '@/composables/useLocale';
 import { useFetch } from '@vueuse/core';
 
