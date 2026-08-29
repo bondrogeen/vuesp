@@ -3,7 +3,7 @@ import type { Ref } from 'vue';
 import type { TypeMessage, IMessageScan, IListItem, TypeSend } from '@/types';
 
 import { computed, ref, nextTick, watch } from 'vue';
-import { required, maxLen, minLen, sameAs, ip, minVal, maxVal } from '@/utils/validate';
+import { required, maxLen, minLen, sameAs, ip, minVal, maxVal } from 'vuesp-components/validate';
 
 import { KEYS } from '@/utils/const';
 

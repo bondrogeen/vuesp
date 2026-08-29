@@ -48,15 +48,11 @@
 }
 
 .docs-content th {
-  @apply bg-green-500 text-white px-3 py-2.5 text-left font-semibold;
+  @apply px-3 py-2.5 text-left border-y;
 }
 
 .docs-content td {
   @apply px-3 py-2 border-b border-gray-200;
-}
-
-.docs-content tr:hover {
-  @apply bg-gray-50;
 }
 
 .docs-content blockquote {
