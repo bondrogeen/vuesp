@@ -58,6 +58,10 @@ export const useScripts = () => {
       const [id, name] = parts;
       return { id: +id, name, content: parts.slice(2).join(':') };
     });
+    if (scripts.value?.[0]) {
+      selectedScript.value = scripts.value?.[0] || null;
+      content.value = formatScript(scripts.value?.[0]?.content);
+    }
   };
 
   const onSave = async () => {
