@@ -202,10 +202,10 @@ jobs:
           TAG="${{ steps.vars.outputs.tag }}"
           REPO="https://github.com/${GITHUB_REPOSITORY}"
           
-          echo "{" > firmware.json
-          echo "  \"version\": \"$VERSION\"," >> firmware.json
-          echo "  \"tag\": \"$TAG\"," >> firmware.json
-          echo "  \"files\": {" >> firmware.json
+          echo "{" > release.json
+          echo "  \"version\": \"$VERSION\"," >> release.json
+          echo "  \"tag\": \"$TAG\"," >> release.json
+          echo "  \"files\": {" >> release.json
           
           first=true
           for f in release/*.bin; do
@@ -213,16 +213,16 @@ jobs:
             if [ "$first" = true ]; then
               first=false
             else
-              echo "," >> firmware.json
+              echo "," >> release.json
             fi
-            printf "    \"$name\": \"$REPO/releases/download/$TAG/$(basename $f)\"" >> firmware.json
+            printf "    \"$name\": \"$REPO/releases/download/$TAG/$(basename $f)\"" >> release.json
           done
           
-          echo "" >> firmware.json
-          echo "  }" >> firmware.json
-          echo "}" >> firmware.json
+          echo "" >> release.json
+          echo "  }" >> release.json
+          echo "}" >> release.json
           
-          cat firmware.json
+          cat release.json
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
@@ -230,7 +230,7 @@ jobs:
           tag_name: ${{ steps.vars.outputs.tag }}
           files: |
             release/*.bin
-            firmware.json
+            release.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
