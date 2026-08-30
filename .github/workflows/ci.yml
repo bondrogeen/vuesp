@@ -115,9 +115,9 @@ jobs:
 
       - name: Rename firmware files
         run: |
-          cp build/${{ matrix.platform }}/firmware.bin vuesp-${{ matrix.platform }}.bin
+          cp build/${{ matrix.platform }}/firmware.bin ${{ matrix.platform }}_firmware.bin
           if [ -f build/${{ matrix.platform }}/littlefs.bin ]; then
-            cp build/${{ matrix.platform }}/littlefs.bin vuesp-${{ matrix.platform }}-littlefs.bin
+            cp build/${{ matrix.platform }}/littlefs.bin ${{ matrix.platform }}_littlefs.bin
           fi
 
       - name: Upload firmware artifact
@@ -125,8 +125,8 @@ jobs:
         with:
           name: firmware-${{ matrix.platform }}
           path: |
-            vuesp-${{ matrix.platform }}.bin
-            vuesp-${{ matrix.platform }}-littlefs.bin
+            ${{ matrix.platform }}_firmware.bin
+            ${{ matrix.platform }}_littlefs.bin
           if-no-files-found: warn
           retention-days: 30
 
