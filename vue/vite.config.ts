@@ -18,6 +18,11 @@ const info = { name, version, author, description, repository, license, homepage
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const authLogin = env.VITE_AUTH_LOGIN;
+  const authPassword = env.VITE_AUTH_PASSWORD;
+  const ip = env.VITE_IP;
+  const url = authLogin && authPassword ? `${authLogin}:${authPassword}@${ip}` : ip;
+  console.log(url);
 
   return {
     build: {
@@ -59,20 +64,17 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/esp': {
-          target: `ws://${env.VITE_PROXY}`,
+          target: `ws://${url}`,
           ws: true,
         },
-        '/get': {
-          target: `http://${env.VITE_PROXY}`,
-        },
         '/fs': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${url}`,
         },
-        '/upload': {
-          target: `http://${env.VITE_PROXY}`,
+        '/cmd': {
+          target: `http://${url}`,
         },
         '/update': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${url}`,
         },
       },
     },

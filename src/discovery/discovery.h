@@ -12,5 +12,8 @@
 
 void setupDiscovery();
 void loopDiscovery(uint32_t now);
+void commDiscovery();
+extern DeviceProtocol protocol;
+extern Discovery discovery;
 
 #endif

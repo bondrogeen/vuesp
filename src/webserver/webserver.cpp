@@ -13,12 +13,8 @@ uint32_t lastTime = 0;
 uint8_t progressSendCount = 0;
 const uint8_t MAX_PROGRESS_SENDS = 10;
 
-static bool isAuthenticated(AsyncWebServerRequest* request) {
-  if (!settings.authMode) return true;
-  if (request->authenticate(settings.authLogin, settings.authPass)) return true;
-  request->requestAuthentication();
-  return false;
-}
+static AsyncAuthenticationMiddleware basicAuth;
+static AsyncCorsMiddleware cors;
 
 String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
@@ -34,6 +30,14 @@ void wsSend(uint8_t* message, size_t len) {
 void wsSendAll(uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
   ws.binaryAll(message, len);
+}
+
+void emitEvent(char* message) {
+  if (message == nullptr) return;
+  memset(event.name, 0, sizeof(event.name));
+  strcpy(event.name, message);
+  wsSendAll((uint8_t*)&event, sizeof(event));
+  scriptRunner.emitEvent(message);
 }
 
 void sendProgress() {
@@ -69,7 +73,6 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
 }
 
 void onReqUpload(AsyncWebServerRequest* request) {
-  if (!isAuthenticated(request)) return;
   uint8_t method = request->method();
   if (request->hasParam("file")) {
     const AsyncWebParameter* p = request->getParam("file");
@@ -133,7 +136,6 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onReqUpdate(AsyncWebServerRequest* request) {
-  if (!isAuthenticated(request)) return;
   uint8_t isReboot = !Update.hasError();
   AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
@@ -143,7 +145,6 @@ void onReqUpdate(AsyncWebServerRequest* request) {
 }
 
 void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
-  if (!isAuthenticated(request)) return;
   progress.size += len;
   progress.status = !index ? 1 : 2;
 
@@ -186,7 +187,6 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onRecovery(AsyncWebServerRequest* request) {
-  if (!isAuthenticated(request)) return;
   if (LittleFS.exists("/www/index.html")) {
     request->redirect("/");
   } else {
@@ -197,7 +197,6 @@ void onRecovery(AsyncWebServerRequest* request) {
 }
 
 // void onGetData(AsyncWebServerRequest *request) {
-//   if (!isAuthenticated(request)) return;
 //   AsyncResponseStream *response = request->beginResponseStream("application/x-binary", sizeof(infoFS));
 //   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
 //   request->send(response);
@@ -243,7 +242,6 @@ void onCmd(AsyncWebServerRequest* request) {
 }
 
 void onRoot(AsyncWebServerRequest* request) {
-  if (!isAuthenticated(request)) return;
   if (LittleFS.exists("/www/index.html")) {
     request->send(LittleFS, "/www/index.html", "text/html");
   } else {
@@ -256,13 +254,16 @@ void onRedirectHome(AsyncWebServerRequest* request) {
 }
 
 void setupServer() {
+  // cors.setOrigin("*");
+  // cors.setMethods("POST, GET, OPTIONS, DELETE");
+  // cors.setHeaders("X-Custom-Header");
+  // cors.setAllowCredentials(true);
+  // cors.setMaxAge(600);
+  // server.addMiddleware(&cors);
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
-  if (settings.authMode) {
-    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html").setAuthentication(settings.authLogin, settings.authPass);
-  } else {
-    server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
-  }
+  server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
 
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
   server.on("/cmd", HTTP_GET, onCmd);
@@ -270,9 +271,17 @@ void setupServer() {
   server.on("/recovery", HTTP_GET, onRecovery);
   server.on("/", HTTP_GET, onRoot);
   server.on("*", HTTP_ANY, onRoot);
-  // server.onNotFound([](AsyncWebServerRequest* request) {
-  //   request->send(404, "text/plain", "Not Found");
-  // });
+
+  if (settings.authMode) {
+    basicAuth.setUsername(settings.authLogin);
+    basicAuth.setPassword(settings.authPass);
+    basicAuth.setRealm("vuesp");
+    basicAuth.setAuthFailureMessage("Authentication failed");
+    basicAuth.setAuthType(AsyncAuthType::AUTH_BASIC);
+    basicAuth.generateHash();
+    server.addMiddleware(&basicAuth);
+  }
+
   server.begin();
 }
 

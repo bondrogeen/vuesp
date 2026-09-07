@@ -52,7 +52,7 @@ cp .env.example .env
 Edit `.env` to set your device IP:
 
 ```env
-VITE_PROXY=192.168.1.100
+VITE_IP=192.168.1.100
 ```
 
 ### Development Server
@@ -246,7 +246,7 @@ See `.github/workflows/ci.yml` for configuration.
 
 ### WebSocket Won't Connect
 
-1. Check `VITE_PROXY` is set to correct device IP
+1. Check `VITE_IP` is set to correct device IP
 2. Verify device is on network: `ping 192.168.1.100`
 3. Check browser console for specific error
 4. Ensure device firmware is running and WiFi enabled

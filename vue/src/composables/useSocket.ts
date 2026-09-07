@@ -9,13 +9,8 @@ export const useSocket = () => {
 
   let ping: ReturnType<typeof setInterval> | null = null;
 
-  const mode = import.meta.env.MODE;
-  const proxy = import.meta.env.VITE_PROXY;
-
-  const host = mode === 'production' ? window.location.host : proxy;
-
   const connect = () => {
-    const instance: WebSocket = new WebSocket(`ws://${host}/esp`);
+    const instance: WebSocket = new WebSocket(`/esp`);
     instance.binaryType = 'arraybuffer';
     instance.onopen = webSocket.onopen;
     instance.onmessage = webSocket.onmessage;

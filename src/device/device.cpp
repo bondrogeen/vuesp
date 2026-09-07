@@ -141,12 +141,21 @@ void getData() {
 }
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
-void deviceGPIO(Port* port) {
+void deviceGPIO(Port* port, uint8_t type) {
   if (port->gpio == 13) {
     getGPIO();
   }
-  // Serial.print(port->gpio);
-  // Serial.println(port->value);
+  // Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
+  // if (type == EVENT_LONG_PRESS) {
+  //   Serial.print(", type:long");
+  // } else if (type == EVENT_REPEAT) {
+  //   Serial.print(", type:repeat");
+  // } else if (type == EVENT_CLICK) {
+  //   Serial.printf(", type:click, count:%d", port->count);
+  // } else {
+  //   // Serial.print(port->gpio);
+  // }
+  // Serial.println("");
 }
 
 static char displayBuffer[64] = "5";
@@ -232,6 +241,13 @@ bool outputHandler(uint8_t paramCount, const Value* params, Value& result, void*
   return false;
 }
 
+// void sendNotification(const char* text) {
+//   message.type = MESSAGE_TYPE_NOTIFICATION;
+//   memset(message.text, 0, sizeof(message.text));
+//   strcpy(message.text, text);
+//   wsSendAll((uint8_t*)&message, sizeof(message));
+// }
+
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
   scriptRunner.registerFunction("input", inputHandler);
@@ -256,6 +272,7 @@ void loopDevice(uint32_t now) {
     lastTimeDevice = now;
     getData();
     onSendDevice();
+    // sendNotification("Test");
   }
 
   if (tasks[KEY_DEVICE]) {
@@ -271,8 +288,39 @@ void loopDevice(uint32_t now) {
     } else {
       getData();
     }
+    // if (device.command == COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
 
     device.command = 0;
     onSendDevice();
   };
 }
+
+// // внешняя функция получения текущего значения и управление состоянием шим
+// bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
+//   switch (action) {
+//     case PORT_READ:
+//       return getValue(gpio, value);
+//     case PORT_WRITE:
+//       setValue(gpio, value);
+//       return true;
+//   }
+//   return false;
+// }
+
+// // внешняя функция которая обновляет значение перемененой (срабатывает только при старте (fabe.start(...)) и завершении )
+// void stateChangeProvider(uint8_t gpio, uint16_t value) {
+//   updatePort(gpio, value);
+// }
+
+// void setup() {
+//   fabe.init(5); // 5 независимых каналов
+//   fabe.setDataProvider(dataProvider);
+//   fabe.setStateChangeProvider(stateChangeProvider);
+
+//   fabe.start(13, 255, 2000); // 13-gpio, 255 value, 2000 = 2сек время за которое поменяется от текущего значения до 255
+//   fabe.start(13, 0, 1000); // 13-gpio, 0 value, 1000 = 1сек время за которое поменяется от текущего значения до 0
+// }
+
+// void loop() {
+//   fabe.loop();
+// }

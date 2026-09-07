@@ -1,5 +1,3 @@
-export * from './format';
-
 export const examples = [
   { name: 'variable', value: "$v0=0;$v0=$v0+5;$v9=4561213;$i0=-1000;$s0='text:';$s0=$s0+$v0;" },
   { name: 'if', value: 'if:$v0==0;$v0=1;else;$v0=0;end;log($v0)' },
