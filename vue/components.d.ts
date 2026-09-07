@@ -11,11 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    BlockScan: typeof import('./src/components/block/BlockScan.vue')['default']
-    BlockService: typeof import('./src/components/block/BlockService.vue')['default']
-    BlockStatus: typeof import('./src/components/block/BlockStatus.vue')['default']
-    BlockUpdate: typeof import('./src/components/block/BlockUpdate.vue')['default']
-    BlockViewDocs: typeof import('./src/components/block/BlockViewDocs.vue')['default']
     CardChart: typeof import('./src/components/dashboard/CardChart.vue')['default']
     IconRiArrowRightSLine: typeof import('~icons/ri/arrow-right-s-line')['default']
     IconRiBatteryLine: typeof import('~icons/ri/battery-line')['default']
@@ -29,6 +24,7 @@ declare module 'vue' {
     IconRiDatabaseLine: typeof import('~icons/ri/database-line')['default']
     IconRiDeleteBinLine: typeof import('~icons/ri/delete-bin-line')['default']
     IconRiDoorLine: typeof import('~icons/ri/door-line')['default']
+    IconRiDownload2Line: typeof import('~icons/ri/download2-line')['default']
     IconRiEqualizerLine: typeof import('~icons/ri/equalizer-line')['default']
     IconRiEraserLine: typeof import('~icons/ri/eraser-line')['default']
     IconRiEyeLine: typeof import('~icons/ri/eye-line')['default']
@@ -67,6 +63,7 @@ declare module 'vue' {
     IconRiTempColdLine: typeof import('~icons/ri/temp-cold-line')['default']
     IconRiTimerLine: typeof import('~icons/ri/timer-line')['default']
     IconRiTvLine: typeof import('~icons/ri/tv-line')['default']
+    IconRiUpload2Line: typeof import('~icons/ri/upload2-line')['default']
     IconRiVideoOnLine: typeof import('~icons/ri/video-on-line')['default']
     IconRiWindyLine: typeof import('~icons/ri/windy-line')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

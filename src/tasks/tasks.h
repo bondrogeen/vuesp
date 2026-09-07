@@ -5,6 +5,7 @@
 #include "./files/files.h"
 #include "./init/init.h"
 #include "./webserver/webserver.h"
+#include "./discovery/discovery.h"
 
 #define MESSAGE_TYPE_LOG 0
 #define MESSAGE_TYPE_NOTIFICATION 1

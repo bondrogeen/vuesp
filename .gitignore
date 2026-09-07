@@ -14,13 +14,14 @@
 
 # Dependencies
 node_modules/
+/firmware/
 dist/
 .turbo/
 
 # Firmware builds
 /firmware/*.bin
 /firmware/*.elf
-/data/www/
+/data/
 
 # OS
 .DS_Store
