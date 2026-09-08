@@ -14,6 +14,25 @@ Device device = {
 };
 
 uint32_t lastTimeDevice = 0;
+uint32_t lastLoopInput = 0;
+uint32_t deviceInputOld = 0;
+
+struct PortDevice {
+  uint8_t isPressed;
+  uint8_t count;
+  uint8_t value;
+  uint8_t valueOld;
+  uint32_t pressStart;
+};
+
+PortDevice portsDevice[PORTS_LEN] = {
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0},
+};
 
 Buffer myBuffer = {KEY_BUFFER};
 
@@ -140,12 +159,73 @@ void getData() {
   getDate();
 }
 
+void loopInput(uint32_t now) {
+  for (int i = 0; i < PORTS_LEN; i++) {
+    uint32_t time = now - portsDevice[i].pressStart;
+    // Serial.println(time);
+    // if (time > REPEAT_START_TIME) {
+    //   if (portsDevice[i].isPressed && portsDevice[i].count == 1) {
+    //     scriptRunner.emitEvent("port_r", 2, i, portsDevice[i].value);
+    //   } else {
+    //     portsDevice[i].count = 0;
+    //   }
+    // }
+    // if (time > LONG_PRESS_TIME && time < REPEAT_START_TIME) {
+    //   if (!portsDevice[i].isPressed && portsDevice[i].count == 1) {
+    //     scriptRunner.emitEvent("port_l", 2, i, portsDevice[i].value);
+    //     portsDevice[i].count = 0;
+    //   }
+    // }
+    if (time > 400) {
+      if (!portsDevice[i].isPressed && portsDevice[i].count) {
+        Serial.println(time);
+        Serial.println(portsDevice[i].count);
+        scriptRunner.emitEvent("port_c", 3, i, portsDevice[i].value, portsDevice[i].count);
+        portsDevice[i].count = 0;
+      }
+    }
+  }
+}
+
+void findPort() {
+  for (uint8_t i = 0; i < PORTS_LEN; i++) {
+    uint8_t valueNew = (device.input & (1 << i)) != 0;
+    if (portsDevice[i].value != valueNew) {
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(valueNew);
+      portsDevice[i].isPressed = portsDevice[i].valueOld != valueNew;
+      if (portsDevice[i].isPressed) {
+        Serial.print("isPressed");
+        portsDevice[i].count++;
+        Serial.print(": ");
+        Serial.println(portsDevice[i].count);
+
+        // Serial.println(portsDevice[i].valueOld);
+        // Serial.println(valueNew);
+      }
+      portsDevice[i].pressStart = millis();
+      portsDevice[i].value = valueNew;
+      // scriptRunner.emitEvent("port", 2, i, portsDevice[i].value);
+    }
+  }
+}
+
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port, uint8_t type) {
-  if (port->gpio == 13) {
-    getGPIO();
+  if (port->gpio == 13 && port->value == 0) {
+    getInput();
+    delay(50);
+    if(digitalRead(13) == 0) {
+      getInput();
+    }
+    // findPort();
+    // onSendDevice();
   }
-  // Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
+
+  Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
+  
+  Serial.println(digitalRead(13));
   // if (type == EVENT_LONG_PRESS) {
   //   Serial.print(", type:long");
   // } else if (type == EVENT_REPEAT) {
@@ -155,58 +235,10 @@ void deviceGPIO(Port* port, uint8_t type) {
   // } else {
   //   // Serial.print(port->gpio);
   // }
-  // Serial.println("");
+  Serial.println("");
 }
 
 static char displayBuffer[64] = "5";
-
-bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
-  Serial.print(id);
-  Serial.print(write ? "WRITE" : "READ");
-  Serial.print(" kind=");
-  Serial.println(kind);
-
-  if (strcmp(id, "$device") == 0) {
-    if (write) {
-      if (kind == KIND_STRING) {
-        char buf[65];
-        uint8_t len = value.stringVal.len;
-        if (len > 64) len = 64;
-        strncpy(buf, (char*)value.stringVal.data, len);
-        buf[len] = '\0';
-        strcpy(displayBuffer, buf);
-        Serial.print("DISPLAY: ");
-        Serial.println(buf);
-      } else if (kind == KIND_INT) {
-        snprintf(displayBuffer, sizeof(displayBuffer), "%d", value.intVal);
-        Serial.print("DISPLAY: ");
-        Serial.println(value.intVal);
-      } else if (kind == KIND_UINT) {
-        snprintf(displayBuffer, sizeof(displayBuffer), "%u", value.uintVal);
-        Serial.print("DISPLAY: ");
-        Serial.println(value.uintVal);
-      } else if (kind == KIND_FLOAT) {
-        snprintf(displayBuffer, sizeof(displayBuffer), "%.2f", value.floatVal);
-        Serial.print("DISPLAY: ");
-        Serial.println(value.floatVal);
-      }
-      return true;
-    } else {
-      if (kind == KIND_STRING) {
-        value.stringVal.data = (uint8_t*)displayBuffer;
-        value.stringVal.len = strlen(displayBuffer);
-      } else if (kind == KIND_INT) {
-        value.intVal = atoi(displayBuffer);
-      } else if (kind == KIND_UINT) {
-        value.uintVal = (uint32_t)atoi(displayBuffer);
-      } else if (kind == KIND_FLOAT) {
-        value.floatVal = atof(displayBuffer);
-      }
-      return true;
-    }
-  }
-  return false;
-}
 
 bool inputHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
   if (paramCount != 1) return false;
@@ -235,7 +267,7 @@ bool outputHandler(uint8_t paramCount, const Value* params, Value& result, void*
       setOutput();
     }
     result.type = VAL_UINT;
-    result.intVal = bitRead(device.output, pin);
+    result.intVal = bitRead(device.output, pin - 1);
     return true;
   }
   return false;
@@ -249,17 +281,23 @@ bool outputHandler(uint8_t paramCount, const Value* params, Value& result, void*
 // }
 
 void setupDevice() {
-  scriptRunner.setDataProvider(dataProvider);
   scriptRunner.registerFunction("input", inputHandler);
   scriptRunner.registerFunction("output", outputHandler);
 
   Wire.begin(GPIO_SDA, GPIO_SCL);
-
+  Wire.setClock(400000);
   // setModbusSetup();
   setOutput();
   getDate();
   getOutput();
   getGPIO();
+  for (uint8_t i = 0; i < PORTS_LEN; i++) {
+    uint8_t valueNew = (device.input & (1 << i)) != 0;
+    portsDevice[i].value = valueNew;
+    portsDevice[i].valueOld = valueNew;
+    portsDevice[i].count = 0;
+    portsDevice[i].isPressed = 0;
+  }
 }
 
 void setupFirstDevice() {
@@ -268,6 +306,11 @@ void setupFirstDevice() {
 }
 
 void loopDevice(uint32_t now) {
+  if (now - lastLoopInput > REPEAT_INTERVAL) {
+    lastLoopInput = now;
+    loopInput(now);
+  }
+
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     getData();
