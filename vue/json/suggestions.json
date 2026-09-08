@@ -1,5 +1,4 @@
 [
-  { "label": "pass", "type": "event", "detail": "my event" },
-  { "label": "$test", "type": "var", "detail": "my test var" },
-  { "label": "test", "type": "func", "insert": "test(${0})", "detail": "my func test(id:number, text?:string)" }
+  { "label": "output", "type": "func", "insert": "output(${0},${0})", "detail": "output(pin:num, value?:num) => value:num" },
+  { "label": "input", "type": "func", "insert": "input(${0},${0})", "detail": "input(pin:num) => value:num" }
 ]

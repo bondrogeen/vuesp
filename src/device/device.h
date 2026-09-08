@@ -28,6 +28,8 @@
 #define ADDRESS_OUTPUT 0x24
 #define ADDRESS_INPUT 0x22
 
+#define PORTS_LEN 6
+
 void setupDevice();
 void setupFirstDevice();
 void deviceGPIO(Port* port, uint8_t type);
