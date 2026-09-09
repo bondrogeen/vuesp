@@ -10,81 +10,75 @@
     "getTo": "v ? 'ON' : 'OFF'"
   },
   {
-    "id": "ports.5",
-    "name": "ports.5",
-    "type": "button",
+    "id": "device.voltage",
+    "name": "voltage",
+    "type": "info",
     "icon": "plug",
-    "opts": { "disabled": 1 },
-    "args": ["ports.5.value", "ports.5"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "args": ["device.voltage"],
+    "get": "v/10",
+    "getTo": "`${v} V`"
   },
   {
-    "id": "ports.12",
-    "name": "ports.12",
-    "type": "button",
-    "icon": "bulb",
-    "args": ["ports.12.value", "ports.12"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "id": "device.current",
+    "name": "current",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.current"],
+    "get": "v/100",
+    "getTo": "`${v} A`"
   },
   {
-    "id": "ports.13",
-    "name": "ports.13",
-    "type": "button",
-    "icon": "bulb",
-    "args": ["ports.13.value", "ports.13"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "id": "device.power",
+    "name": "power",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.power"],
+    "get": "v",
+    "getTo": "`${v} W`"
   },
   {
-    "id": "ports.14",
-    "name": "ports.14",
-    "type": "dimmer",
-    "icon": "windy",
-    "args": ["ports.14.value", "ports.14"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v"
-  },
-  { "id": "ports.17", "name": "ports.17", "type": "info", "icon": "snow", "args": ["ports.17.value"], "getTo": "`${v} ℃`" },
-  {
-    "id": "device.now",
-    "name": "now",
-    "type": "date",
-    "icon": "timer",
-    "args": ["device.now", "device"],
-    "set": "({ ...a, now: v, command: 1})",
-    "getTo": "new Date(v * 1000).toLocaleDateString()"
+    "id": "device.frequency",
+    "name": "frequency",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.frequency"],
+    "get": "v/100",
+    "getTo": "`${v} Hz`"
   },
   {
-    "id": "device.list",
-    "name": "List",
-    "type": "list",
-    "icon": "store",
-    "opts": {
-      "items": [
-        { "name": "Item1", "value": "1" },
-        { "name": "Item2", "value": "2" },
-        { "name": "Item3", "value": "3" }
-      ]
-    },
-    "args": ["device.list", "device"],
-    "set": "({ ...a, list: v, command: 1})"
+    "id": "device.activeEnergy",
+    "name": "activeEnergy",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.activeEnergy"],
+    "get": "v/100",
+    "getTo": "`${v} KW/H`"
   },
   {
-    "id": "device.message",
-    "name": "Message",
-    "type": "input",
-    "icon": "noti",
-    "args": ["device.message", "device"],
-    "set": "({ ...a, message: `${v}`, command: 1})"
+    "id": "device.positiveActiveEnergy",
+    "name": "positiveActiveEnergy",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.positiveActiveEnergy"],
+    "get": "v/100",
+    "getTo": "`${v} KW/H`"
   },
   {
-    "id": "buffer.head",
-    "name": "Chart",
-    "type": "chart",
-    "icon": "chart",
-    "args": ["buffer.head", "buffer"],
-    "get": "a"
+    "id": "device.reverseActiveEnergy",
+    "name": "reverseActiveEnergy",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.reverseActiveEnergy"],
+    "get": "v/100",
+    "getTo": "`${v} KW/H`"
+  },
+  {
+    "id": "device.reactiveEnergy",
+    "name": "reactiveEnergy",
+    "type": "info",
+    "icon": "plug",
+    "args": ["device.reactiveEnergy"],
+    "get": "v/100",
+    "getTo": "`${v} KW/H`"
   }
 ]
