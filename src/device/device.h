@@ -6,6 +6,7 @@
 #include "../libs/UnixTime.h"
 #include "./gpio/gpio.h"
 #include "./runner/runner.h"
+#include "./modbus/modbus.h"
 
 
 void setupDevice();
