@@ -6,10 +6,18 @@ export interface IMessageDevice {
   key?: number;
   command: number;
   analog: number;
-  pwm: number;
-  now: number;
-  list: number;
-  message: string;
+  voltage?: number;
+  current?: number;
+  power?: number;
+  cos?: number;
+  frequency?: number;
+  address?: number;
+  baud?: number;
+  format?: number;
+  activeEnergy?: number;
+  positiveActiveEnergy?: number;
+  reverseActiveEnergy?: number;
+  reactiveEnergy?: number;
 }
 
 interface IKeyMessageDevice {

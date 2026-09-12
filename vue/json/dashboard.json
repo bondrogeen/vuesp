@@ -1,13 +1,11 @@
 [
   {
-    "id": "ports.4",
-    "name": "ports.4",
-    "type": "button",
-    "icon": "socket",
-    "opts": { "disabled": 1 },
-    "args": ["ports.4.value", "ports.4"],
-    "set": "({ ...a, value: v, command: 2})",
-    "getTo": "v ? 'ON' : 'OFF'"
+    "id": "dallas.28823149f6783c21",
+    "name": "temp",
+    "type": "info",
+    "icon": "therm",
+    "args": ["dallas.28823149f6783c21.temp"],
+    "getTo": "`${v} °C`"
   },
   {
     "id": "device.voltage",
