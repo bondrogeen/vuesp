@@ -8,7 +8,7 @@ const initialState = (): IWebSocketStore => ({
   main: {
     ports: {},
     info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '', board: 0 },
-    device: { command: 0, analog: 0, pwm: 0, now: 0, list: 0, message: '' },
+    device: { command: 0, analog: 0 },
     dallas: {},
     discovery: {},
     slots: {},
