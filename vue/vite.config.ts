@@ -76,6 +76,9 @@ export default defineConfig(({ mode }) => {
         '/update': {
           target: `http://${url}`,
         },
+        '/stream': {
+          target: `http://${url}`,
+        },
       },
     },
     define: {

@@ -116,9 +116,45 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
 //   wsSendAll((uint8_t*)&message, sizeof(message));
 // }
 
+camera_config_t config;
+
+void setupCamera() {
+  config.ledc_channel = LEDC_CHANNEL_0;
+  config.ledc_timer = LEDC_TIMER_0;
+  config.pin_d0 = Y2_GPIO_NUM;
+  config.pin_d1 = Y3_GPIO_NUM;
+  config.pin_d2 = Y4_GPIO_NUM;
+  config.pin_d3 = Y5_GPIO_NUM;
+  config.pin_d4 = Y6_GPIO_NUM;
+  config.pin_d5 = Y7_GPIO_NUM;
+  config.pin_d6 = Y8_GPIO_NUM;
+  config.pin_d7 = Y9_GPIO_NUM;
+  config.pin_xclk = XCLK_GPIO_NUM;
+  config.pin_pclk = PCLK_GPIO_NUM;
+  config.pin_vsync = VSYNC_GPIO_NUM;
+  config.pin_href = HREF_GPIO_NUM;
+  config.pin_sccb_sda = SIOD_GPIO_NUM;
+  config.pin_sccb_scl = SIOC_GPIO_NUM;
+  config.pin_pwdn = PWDN_GPIO_NUM;
+  config.pin_reset = RESET_GPIO_NUM;
+  config.xclk_freq_hz = 20000000;
+  config.pixel_format = PIXFORMAT_JPEG;
+  config.frame_size = FRAMESIZE_VGA;
+  config.jpeg_quality = 12;
+  config.fb_location = CAMERA_FB_IN_PSRAM;
+  config.fb_count = 3;
+
+  esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    Serial.printf("Ошибка инициализации камеры: 0x%x", err);
+    return;
+  }
+}
+
 void setupDevice() {
   scriptRunner.setDataProvider(dataProvider);
   scriptRunner.registerFunction("http", httpHandler);
+  setupCamera();
 }
 
 void setupFirstDevice() {
@@ -129,7 +165,6 @@ void loopDevice(uint32_t now) {
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     onSendDevice();
-    // sendNotification("Test");
   }
 
   if (tasks[KEY_BUFFER]) {
@@ -145,33 +180,3 @@ void loopDevice(uint32_t now) {
     onSendDevice();
   };
 }
-
-// // внешняя функция получения текущего значения и управление состоянием шим 
-// bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
-//   switch (action) {
-//     case PORT_READ:
-//       return getValue(gpio, value);
-//     case PORT_WRITE:
-//       setValue(gpio, value);
-//       return true;
-//   }
-//   return false;
-// }
-
-// // внешняя функция которая обновляет значение перемененой (срабатывает только при старте (fabe.start(...)) и завершении )
-// void stateChangeProvider(uint8_t gpio, uint16_t value) {
-//   updatePort(gpio, value);
-// }
-
-// void setup() {
-//   fabe.init(5); // 5 независимых каналов 
-//   fabe.setDataProvider(dataProvider); 
-//   fabe.setStateChangeProvider(stateChangeProvider);
-
-//   fabe.start(13, 255, 2000); // 13-gpio, 255 value, 2000 = 2сек время за которое поменяется от текущего значения до 255
-//   fabe.start(13, 0, 1000); // 13-gpio, 0 value, 1000 = 1сек время за которое поменяется от текущего значения до 0
-// }
-
-// void loop() {
-//   fabe.loop();
-// }
