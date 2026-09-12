@@ -253,6 +253,67 @@ void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
+void onCapture(AsyncWebServerRequest* request) {
+  camera_fb_t* fb = esp_camera_fb_get();
+  if (!fb) {
+    request->send(500, "text/plain", "Camera Capture Failed");
+    return;
+  }
+
+  uint8_t* buf = (uint8_t*)ps_malloc(fb->len);
+  if (!buf) {
+    esp_camera_fb_return(fb);
+    request->send(500, "text/plain", "Out of memory");
+    return;
+  }
+  memcpy(buf, fb->buf, fb->len);
+  size_t len = fb->len;
+  esp_camera_fb_return(fb);
+
+  AsyncWebServerResponse* response = request->beginResponse(200, "image/jpeg", buf, len);
+  response->addHeader("Connection", "close");
+  response->addHeader("Cache-Control", "no-store");
+  request->onDisconnect([buf]() { free(buf); });
+  request->send(response);
+}
+
+void onStream(AsyncWebServerRequest* request) {
+  AsyncWebServerResponse* response = request->beginChunkedResponse(
+      "multipart/x-mixed-replace; boundary=frame",
+      [](uint8_t* buffer, size_t maxLen, size_t index) -> size_t {
+        static camera_fb_t* fb = nullptr;
+        static size_t fbOffset = 0;
+        static char headerBuf[128];
+        static size_t headerLen = 0;
+        static size_t headerOffset = 0;
+
+        if (fb == nullptr) {
+          fb = esp_camera_fb_get();
+          if (!fb) return 0;
+          headerLen = snprintf(headerBuf, sizeof(headerBuf),
+                               "\r\n--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n",
+                               fb->len);
+          headerOffset = 0;
+          fbOffset = 0;
+        }
+
+        size_t written = 0;
+        while (headerOffset < headerLen && written < maxLen) {
+          buffer[written++] = headerBuf[headerOffset++];
+        }
+        while (fbOffset < fb->len && written < maxLen) {
+          buffer[written++] = fb->buf[fbOffset++];
+        }
+        if (fbOffset >= fb->len) {
+          esp_camera_fb_return(fb);
+          fb = nullptr;
+        }
+        return written;
+      });
+
+  request->send(response);
+}
+
 void setupServer() {
   // cors.setOrigin("*");
   // cors.setMethods("POST, GET, OPTIONS, DELETE");
@@ -269,6 +330,9 @@ void setupServer() {
   server.on("/cmd", HTTP_GET, onCmd);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
+  server.on("/capture", HTTP_GET, onCapture);
+  server.on("/stream", HTTP_GET, onStream);
+
   server.on("/", HTTP_GET, onRoot);
   server.on("*", HTTP_ANY, onRoot);
 
