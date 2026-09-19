@@ -6,7 +6,7 @@ import { KEYS } from '@/utils/const';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 
-import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs, VTooltip } from 'vuesp-components';
+import { VButton, VLoader, VCheckbox, VDropdown, VExpansion, VList, VSelect, VTextField, VTable, VDialog, VTabs, VTooltip } from 'vuesp-components/components';
 import { computed, ref } from 'vue';
 import { dateUtcToString, timeUtcToString } from 'vuesp-components/helpers';
 
