@@ -187,7 +187,7 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onRecovery(AsyncWebServerRequest* request) {
-  if (LittleFS.exists("/www/index.html")) {
+  if (LittleFS.exists("/www/index.html") && !request->hasParam("force")) {
     request->redirect("/");
   } else {
     AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
