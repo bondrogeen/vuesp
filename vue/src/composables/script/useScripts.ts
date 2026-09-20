@@ -10,7 +10,7 @@ interface IScript {
 }
 
 export const useScripts = () => {
-  const PATH = '/scripts.txt';
+  const PATH = '/www/scripts.txt';
   const idScript = ref(0);
   const scripts = ref<IScript[]>([]);
   const selectedScript = ref<IScript | null>(null);
