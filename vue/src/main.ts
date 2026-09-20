@@ -24,7 +24,7 @@ const customRules: Record<string, I18nPluralRule> = {
 
 const pluralize = i18nPluralizer(customRules);
 
-import 'vuesp-components/dist/style.css';
+import 'vuesp-components/style.css';
 
 import '@/assets/tailwind.css';
 

@@ -11,7 +11,7 @@ import { useFetch } from '@vueuse/core';
 import { PATH_FS, pathGPIO } from '@/utils/const';
 import { useLocale } from '@/composables/useLocale';
 import { computed } from 'vue';
-import { VCheckbox, VTooltip } from 'vuesp-components';
+import { VCheckbox, VTooltip } from 'vuesp-components/components';
 
 const { $t } = useLocale();
 const { main, onSend, onDialog } = useConnection((send) => {
