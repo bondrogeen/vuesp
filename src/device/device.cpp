@@ -176,7 +176,7 @@ void loopInput(uint32_t now) {
         portsDevice[i].count = 0;
       }
     }
-    if (time > 400) {
+    if (time > CLICK_WINDOW) {
       if (!portsDevice[i].isPressed && portsDevice[i].count) {
         scriptRunner.emitEvent("port_c", 3, i, portsDevice[i].value, portsDevice[i].count);
         portsDevice[i].count = 0;
@@ -226,19 +226,18 @@ bool outputHandler(uint8_t paramCount, const Value* params, Value& result, void*
   if (paramCount < 1) return false;
   const uint32_t pin = params[0].uintVal;
   const uint32_t value = params[1].uintVal;
-  Serial.println(pin);
-  Serial.println(value);
-  if (pin >= 1 && pin < 7) {
+  if (pin >= 0 && pin < 6) {
     if (paramCount == 2) {
       if (value) {
-        bitSet(device.output, pin - 1);
+        bitSet(device.output, pin);
       } else {
-        bitClear(device.output, pin - 1);
+        bitClear(device.output, pin);
       }
       setOutput();
+      onSendDevice();
     }
     result.type = VAL_UINT;
-    result.intVal = bitRead(device.output, pin - 1);
+    result.intVal = bitRead(device.output, pin);
     return true;
   }
   return false;
@@ -256,7 +255,6 @@ void setupDevice() {
   scriptRunner.registerFunction("output", outputHandler);
 
   Wire.begin(GPIO_SDA, GPIO_SCL);
-  Wire.setClock(400000);
   // setModbusSetup();
   setOutput();
   getDate();

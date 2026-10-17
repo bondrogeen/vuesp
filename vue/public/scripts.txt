@@ -1,2 +1,2 @@
 0:boot:call(1);
-1:test1:$p13=255;wait(1s);$p13=0;wait(1s);
+1:test1:on('port_c');$u0=output($e0);log('log:',$u0);$u0=!$u0;output($e0,$u0);end;
