@@ -20,6 +20,7 @@ Dallas ht1 = {KEY_DALLAS};
 int ports_len = sizeof(ports) / sizeof(ports[0]);
 
 volatile uint8_t btnStatus = 0;
+uint8_t timeDebounce = 0;
 uint32_t debounce = 0;
 uint32_t lastLoopInterrupt = 0;
 uint32_t lastTimeGPIO = 0;
@@ -265,7 +266,7 @@ void loopGPIO(uint32_t now) {
     btnStatus = 2;
     debounce = now;
   }
-  if (btnStatus == 2 && now - debounce > 50) {
+  if (btnStatus == 2 && now - debounce > timeDebounce) {
     btnStatus = 0;
     checkInterrupt(now);
   }
