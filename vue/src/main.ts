@@ -65,6 +65,9 @@ const app = createApp(App);
           <button onclick="location.reload()" style="padding: 0.5rem 1rem; margin-top: 1rem; cursor: pointer;">
             Reload Page
           </button>
+          <a href="/recovery?force=1" style="padding: 0.5rem 1rem; margin-top: 1rem; cursor: pointer;">
+            Recovery
+          </a>
         </div>
       `;
     }

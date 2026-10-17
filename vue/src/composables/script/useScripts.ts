@@ -81,6 +81,7 @@ export const useScripts = () => {
 
   useKeys({ format: onFormat, save: onSaveScript });
   return {
+    PATH,
     ids,
     content,
     scripts,

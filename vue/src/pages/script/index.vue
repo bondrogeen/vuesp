@@ -23,7 +23,7 @@ const { suggestions, message, main, onSend } = useConnection((send) => {
 
 const { logs, onHover } = useLogs(message);
 const { slotInfo, currentSlot, onSlot, getColorSlot } = useSlots(main);
-const { ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave, onExample, onLoad } = useScripts();
+const { PATH, ids, content, scripts, idScript, selectedScript, addScript, onRemove, onSelect, onSaveScript, isScriptSave, onExample, onLoad } = useScripts();
 const fullPath = computed(() => '/');
 const onUpdate = () => {
   onLoad();
@@ -82,7 +82,7 @@ const onRemoveScript = () => {
         <card-main :title="$t('list')" class="order-2 md:order-1 [grid-area:list]">
           <template #header>
             <div class="flex gap-3">
-              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('export')" :disabled="false" @click="createLink('scripts.txt')">
+              <v-button color="transparent" class="size-6 text-gray-500" :title="$t('export')" :disabled="false" @click="createLink(PATH)">
                 <icon-ri-upload-2-line></icon-ri-upload-2-line>
               </v-button>
 
@@ -93,7 +93,7 @@ const onRemoveScript = () => {
               <v-button color="transparent" class="size-6 text-gray-500" :title="$t('add')" :disabled="false" @click="onAddScriptDialog()">
                 <icon-ri-sticky-note-add-line class=""></icon-ri-sticky-note-add-line>
               </v-button>
-              <VFile accept=".txt" @change="onUpload($event, '/scripts.txt')"></VFile>
+              <VFile accept=".txt" @change="onUpload($event, PATH)"></VFile>
             </div>
           </template>
 

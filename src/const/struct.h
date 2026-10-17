@@ -49,7 +49,7 @@ struct Info {
   uint32_t totalBytes;
   uint32_t usedBytes;
   uint32_t id;
-  uint32_t uptime;
+  uint64_t uptime;
   char name[20];
   uint32_t board;
 };
