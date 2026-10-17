@@ -162,24 +162,22 @@ void getData() {
 void loopInput(uint32_t now) {
   for (int i = 0; i < PORTS_LEN; i++) {
     uint32_t time = now - portsDevice[i].pressStart;
-    // Serial.println(time);
-    // if (time > REPEAT_START_TIME) {
-    //   if (portsDevice[i].isPressed && portsDevice[i].count == 1) {
-    //     scriptRunner.emitEvent("port_r", 2, i, portsDevice[i].value);
-    //   } else {
-    //     portsDevice[i].count = 0;
-    //   }
-    // }
-    // if (time > LONG_PRESS_TIME && time < REPEAT_START_TIME) {
-    //   if (!portsDevice[i].isPressed && portsDevice[i].count == 1) {
-    //     scriptRunner.emitEvent("port_l", 2, i, portsDevice[i].value);
-    //     portsDevice[i].count = 0;
-    //   }
-    // }
+
+    if (time > REPEAT_START_TIME) {
+      if (portsDevice[i].isPressed && portsDevice[i].count == 1) {
+        scriptRunner.emitEvent("port_r", 2, i, portsDevice[i].value);
+      } else {
+        portsDevice[i].count = 0;
+      }
+    }
+    if (time > LONG_PRESS_TIME && time < REPEAT_START_TIME) {
+      if (!portsDevice[i].isPressed && portsDevice[i].count == 1) {
+        scriptRunner.emitEvent("port_l", 2, i, portsDevice[i].value);
+        portsDevice[i].count = 0;
+      }
+    }
     if (time > 400) {
       if (!portsDevice[i].isPressed && portsDevice[i].count) {
-        Serial.println(time);
-        Serial.println(portsDevice[i].count);
         scriptRunner.emitEvent("port_c", 3, i, portsDevice[i].value, portsDevice[i].count);
         portsDevice[i].count = 0;
       }
@@ -191,20 +189,11 @@ void findPort() {
   for (uint8_t i = 0; i < PORTS_LEN; i++) {
     uint8_t valueNew = (device.input & (1 << i)) != 0;
     if (portsDevice[i].value != valueNew) {
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(valueNew);
       portsDevice[i].isPressed = portsDevice[i].valueOld != valueNew;
       if (portsDevice[i].isPressed) {
-        Serial.print("isPressed");
         portsDevice[i].count++;
-        Serial.print(": ");
-        Serial.println(portsDevice[i].count);
-
-        // Serial.println(portsDevice[i].valueOld);
-        // Serial.println(valueNew);
+        portsDevice[i].pressStart = millis();
       }
-      portsDevice[i].pressStart = millis();
       portsDevice[i].value = valueNew;
       // scriptRunner.emitEvent("port", 2, i, portsDevice[i].value);
     }
@@ -215,27 +204,9 @@ void findPort() {
 void deviceGPIO(Port* port, uint8_t type) {
   if (port->gpio == 13 && port->value == 0) {
     getInput();
-    delay(50);
-    if(digitalRead(13) == 0) {
-      getInput();
-    }
-    // findPort();
-    // onSendDevice();
+    findPort();
+    onSendDevice();
   }
-
-  Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
-  
-  Serial.println(digitalRead(13));
-  // if (type == EVENT_LONG_PRESS) {
-  //   Serial.print(", type:long");
-  // } else if (type == EVENT_REPEAT) {
-  //   Serial.print(", type:repeat");
-  // } else if (type == EVENT_CLICK) {
-  //   Serial.printf(", type:click, count:%d", port->count);
-  // } else {
-  //   // Serial.print(port->gpio);
-  // }
-  Serial.println("");
 }
 
 static char displayBuffer[64] = "5";
@@ -337,33 +308,3 @@ void loopDevice(uint32_t now) {
     onSendDevice();
   };
 }
-
-// // внешняя функция получения текущего значения и управление состоянием шим
-// bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
-//   switch (action) {
-//     case PORT_READ:
-//       return getValue(gpio, value);
-//     case PORT_WRITE:
-//       setValue(gpio, value);
-//       return true;
-//   }
-//   return false;
-// }
-
-// // внешняя функция которая обновляет значение перемененой (срабатывает только при старте (fabe.start(...)) и завершении )
-// void stateChangeProvider(uint8_t gpio, uint16_t value) {
-//   updatePort(gpio, value);
-// }
-
-// void setup() {
-//   fabe.init(5); // 5 независимых каналов
-//   fabe.setDataProvider(dataProvider);
-//   fabe.setStateChangeProvider(stateChangeProvider);
-
-//   fabe.start(13, 255, 2000); // 13-gpio, 255 value, 2000 = 2сек время за которое поменяется от текущего значения до 255
-//   fabe.start(13, 0, 1000); // 13-gpio, 0 value, 1000 = 1сек время за которое поменяется от текущего значения до 0
-// }
-
-// void loop() {
-//   fabe.loop();
-// }
