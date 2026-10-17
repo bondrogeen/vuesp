@@ -300,7 +300,7 @@ void loopDevice(uint32_t now) {
     } else {
       getData();
     }
-    // if (device.command == COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+    if (device.command == COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
 
     device.command = 0;
     onSendDevice();
