@@ -277,7 +277,9 @@ void setupGPIO() {
 }
 
 void setupFirstGPIO() {
-  getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+  if (!loadConfigBlock(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports))) {
+    saveConfigBlock(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+  }
   initGPIO();
 }
 
@@ -311,7 +313,7 @@ void loopGPIO(uint32_t now) {
   }
 
   if (tasks[KEY_PORT]) {
-    if (port.command == GPIO_COMMAND_SAVE) writeFile(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+    if (port.command == GPIO_COMMAND_SAVE) saveConfigBlock(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
     if (port.command == GPIO_COMMAND_SET) setValueUpdate();
 
     if (port.command == GPIO_COMMAND_GET_ALL) getAll();

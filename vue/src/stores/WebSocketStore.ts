@@ -58,8 +58,8 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       // if(data.status) appStore.setNotification({text: `new${}`})
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
-      const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
-      if (['ping', 'files', 'progress', 'scan'].includes(name)) return;
+      const name = key.toLowerCase() as keyof IStateMain;
+      if (!(name in this.main)) return;
       this.main[name] = object;
     },
     SET_MESSAGE(message: IMessageMessage) {
