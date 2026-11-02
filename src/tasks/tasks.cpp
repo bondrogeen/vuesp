@@ -8,25 +8,44 @@ Files files = {KEY_FILES, 0, 0, 0, 0, ""};
 Port port = {KEY_PORT, 0, 0, 0};
 Message message = {KEY_MESSAGE, MESSAGE_TYPE_LOG};
 
+static void copyString(char* dst, size_t size, const char* src) {
+  if (!dst || size == 0) return;
+  if (!src) {
+    dst[0] = '\0';
+    return;
+  }
+  strncpy(dst, src, size - 1);
+  dst[size - 1] = '\0';
+}
+
 void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
+  if (!arg || !data || len == 0 || task >= KEY_END) return;
+
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
   tasks[task] = true;
+
   if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
     memcpy(&settings, data, sizeof(settings));
+    settings.wifiSsid[sizeof(settings.wifiSsid) - 1] = '\0';
+    settings.wifiPass[sizeof(settings.wifiPass) - 1] = '\0';
+    settings.authLogin[sizeof(settings.authLogin) - 1] = '\0';
+    settings.authPass[sizeof(settings.authPass) - 1] = '\0';
+
     if (strcmp(settings.wifiPass, DEF_HIDE_PASS) == 0) {
-      memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
-      strcpy(settings.wifiPass, safePass);
+      copyString(settings.wifiPass, sizeof(settings.wifiPass), safePass);
     }
     saveSettings(settings);
   }
   if (task == KEY_FILES && info->len == sizeof(files)) {
     memcpy(&files, data, sizeof(files));
+    files.name[sizeof(files.name) - 1] = '\0';
   }
   if (task == KEY_PORT && info->len == sizeof(port)) {
     memcpy(&port, data, sizeof(port));
   }
   if (task == KEY_MESSAGE && info->len == sizeof(message)) {
     memcpy(&message, data, sizeof(message));
+    message.text[sizeof(message.text) - 1] = '\0';
   }
   if (task == KEY_DISCOVERY && info->len == sizeof(discovery)) {
     memcpy(&discovery, data, sizeof(discovery));
@@ -54,7 +73,7 @@ void getFile(char* name) {
   String str = "";
   while (file) {
     memset(files.name, 0, sizeof(files.name));
-    strcpy(files.name, file.name());
+    copyString(files.name, sizeof(files.name), file.name());
     files.size = file.size();
     files.isFile = !file.isDirectory();
     files.isDir = file.isDirectory();
@@ -81,7 +100,7 @@ void scanWiFi() {
 void sendLog(const char* text) {
   message.type = MESSAGE_TYPE_LOG;
   memset(message.text, 0, sizeof(message.text));
-  strcpy(message.text, text);
+  copyString(message.text, sizeof(message.text), text);
   wsSendAll((uint8_t*)&message, sizeof(message));
 }
 
@@ -89,9 +108,9 @@ void loopTask(uint32_t now) {
   if (tasks[KEY_SETTINGS]) {
     if (strcmp(settings.wifiPass, DEF_HIDE_PASS) != 0) {
       memset(safePass, 0, sizeof(safePass));
-      strcpy(safePass, settings.wifiPass);
+      copyString(safePass, sizeof(safePass), settings.wifiPass);
       memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
-      strcpy(settings.wifiPass, DEF_HIDE_PASS);
+      copyString(settings.wifiPass, sizeof(settings.wifiPass), DEF_HIDE_PASS);
     }
     wsSend((uint8_t*)&settings, sizeof(settings));
     tasks[KEY_SETTINGS] = false;

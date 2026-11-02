@@ -20,13 +20,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const authLogin = env.VITE_AUTH_LOGIN;
   const authPassword = env.VITE_AUTH_PASSWORD;
-  const ip = env.VITE_IP;
+  const ip = env.VITE_IP || '127.0.0.1';
   const url = authLogin && authPassword ? `${authLogin}:${authPassword}@${ip}` : ip;
-  console.log(url);
 
   return {
     build: {
-      outDir: env.VITE_OUTPUT_DIR,
+      outDir: env.VITE_OUTPUT_DIR || '../data/www/',
       emptyOutDir: true,
       cssCodeSplit: false,
       rollupOptions: {

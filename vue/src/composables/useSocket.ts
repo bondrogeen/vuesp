@@ -8,30 +8,68 @@ export const useSocket = () => {
   const { socket, isConnect } = storeToRefs(webSocket);
 
   let ping: ReturnType<typeof setInterval> | null = null;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let reconnectAttempt = 0;
+  let stopped = false;
+  let generation = 0;
+
+  const clearReconnect = () => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  };
 
   const connect = () => {
+    if (stopped) return;
+
+    const current = ++generation;
     const instance: WebSocket = new WebSocket(`/esp`);
     instance.binaryType = 'arraybuffer';
-    instance.onopen = webSocket.onopen;
-    instance.onmessage = webSocket.onmessage;
-    instance.onclose = (e: CloseEvent) => {
-      webSocket.onclose(e);
-      if (e.code !== 1000) {
-        setTimeout(connect, 2000);
-      }
+
+    instance.onopen = () => {
+      if (current !== generation || stopped) return;
+      reconnectAttempt = 0;
+      webSocket.onopen();
     };
-    instance.onerror = webSocket.onerror;
+
+    instance.onmessage = (e: MessageEvent) => {
+      if (current === generation) webSocket.onmessage(e);
+    };
+
+    instance.onclose = (e: CloseEvent) => {
+      if (current !== generation) return;
+      webSocket.onclose(e);
+
+      if (stopped || e.code === 1000) return;
+
+      const delay = Math.min(30000, 1000 * 2 ** reconnectAttempt);
+      reconnectAttempt += 1;
+      clearReconnect();
+      reconnectTimer = setTimeout(connect, delay);
+    };
+
+    instance.onerror = (e: Event) => {
+      if (current === generation) webSocket.onerror(e);
+    };
+
     socket.value = instance;
   };
 
-  onMounted(async () => {
+  onMounted(() => {
+    stopped = false;
     ping = setInterval(webSocket.onPing, 1000);
-    setTimeout(connect, 100);
+    reconnectTimer = setTimeout(connect, 100);
   });
 
   onUnmounted(() => {
+    stopped = true;
+    generation += 1;
+    clearReconnect();
     if (ping) clearInterval(ping);
     if (socket.value) socket.value.close(1000);
+    socket.value = null;
   });
+
   return { isConnect };
 };

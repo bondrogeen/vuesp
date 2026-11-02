@@ -20,6 +20,13 @@ String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
+static bool isSafeFsPath(const String& path) {
+  if (path.length() == 0 || path.length() > 128) return false;
+  if (path.indexOf("..") >= 0) return false;
+  if (path.indexOf('\\') >= 0) return false;
+  return true;
+}
+
 void wsSend(uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
   if (clientID && ws.hasClient(clientID)) {
@@ -35,7 +42,8 @@ void wsSendAll(uint8_t* message, size_t len) {
 void emitEvent(char* message) {
   if (message == nullptr) return;
   memset(event.name, 0, sizeof(event.name));
-  strcpy(event.name, message);
+  strncpy(event.name, message, sizeof(event.name) - 1);
+  event.name[sizeof(event.name) - 1] = '\0';
   wsSendAll((uint8_t*)&event, sizeof(event));
   scriptRunner.emitEvent(message);
 }
@@ -60,11 +68,13 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
       clientID = 0;
     }
   } else if (type == WS_EVT_DATA) {
+    if (arg == nullptr || data == nullptr || len == 0) return;
+
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (info->opcode == WS_BINARY) {
       if (info->final && info->index == 0 && info->len == len) {
         uint8_t task = data[0];
-        if (task > KEY_END) return;
+        if (task >= KEY_END) return;
         onWsEventTasks(arg, data, len, clientID, task);
         onWsEventDevice(arg, data, len, clientID, task);
       }
@@ -76,6 +86,10 @@ void onReqUpload(AsyncWebServerRequest* request) {
   uint8_t method = request->method();
   if (request->hasParam("file")) {
     const AsyncWebParameter* p = request->getParam("file");
+    if (!isSafeFsPath(p->value())) {
+      request->send(400, RES_TYPE_JSON, status(0));
+      return;
+    }
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
@@ -95,6 +109,11 @@ void onReqUpload(AsyncWebServerRequest* request) {
 
 void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
   const uint32_t MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5MB
+
+  if (!isSafeFsPath(filename)) {
+    if (!index) request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
 
   progress.size += len;
   progress.status = !index ? 1 : 2;
