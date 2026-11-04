@@ -35,6 +35,8 @@ Port ports[10] = {
 OneWire* ds = nullptr;
 Fade fade;
 Dallas ht1 = {KEY_DALLAS};
+Dallas dallasList[MAX_DALLAS_SENSORS];
+uint8_t dallasCount = 0;
 
 int ports_len = sizeof(ports) / sizeof(ports[0]);
 
@@ -233,11 +235,32 @@ float getTemperature(uint8_t* address1) {
   return (float)temp / 16.0;
 }
 
-void findDallas() {
+static void scanDallas(bool broadcast) {
   if (!ds) return;
+
+  dallasCount = 0;
   while (ds->search(ht1.address) == 1) {
     ht1.temp = getTemperature(ht1.address);
-    wsSendAll((uint8_t*)&ht1, sizeof(ht1));
+    if (dallasCount < MAX_DALLAS_SENSORS) {
+      dallasList[dallasCount++] = ht1;
+    }
+    if (broadcast) wsSendAll((uint8_t*)&ht1, sizeof(ht1));
+  }
+}
+
+void findDallas() {
+  scanDallas(true);
+}
+
+void sendPortSnapshot(uint32_t clientId) {
+  for (int i = 0; i < ports_len; i++) {
+    wsSendTo(clientId, (uint8_t*)&ports[i], sizeof(ports[i]));
+  }
+}
+
+void sendDallasSnapshot(uint32_t clientId) {
+  for (uint8_t i = 0; i < dallasCount; i++) {
+    wsSendTo(clientId, (uint8_t*)&dallasList[i], sizeof(dallasList[i]));
   }
 }
 
@@ -281,6 +304,7 @@ void setupFirstGPIO() {
     saveConfigBlock(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
   }
   initGPIO();
+  scanDallas(false);
 }
 
 void loopGPIO(uint32_t now) {
