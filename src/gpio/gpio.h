@@ -50,6 +50,8 @@
 #define EVENT_REPEAT 2
 #define EVENT_CLICK 3
 
+#define MAX_DALLAS_SENSORS 8
+
 #include <OneWire.h>
 
 #include "../init/init.h"
@@ -63,5 +65,7 @@ uint16_t getValue(uint8_t gpio, uint16_t& value);
 void setValue(uint8_t gpio, uint16_t value);
 void setValue(uint8_t gpio, uint16_t value, uint8_t mode);
 void updatePort(uint8_t gpio, uint16_t value);
+void sendPortSnapshot(uint32_t clientId);
+void sendDallasSnapshot(uint32_t clientId);
 
 #endif
