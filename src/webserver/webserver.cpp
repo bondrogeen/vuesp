@@ -7,7 +7,6 @@ AsyncWebSocket ws("/esp");
 Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
-uint32_t clientID = 0;
 uint8_t hold = 255;
 uint32_t lastTime = 0;
 uint8_t progressSendCount = 0;
@@ -27,16 +26,23 @@ static bool isSafeFsPath(const String& path) {
   return true;
 }
 
-void wsSend(uint8_t* message, size_t len) {
+void wsSendTo(uint32_t clientId, uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
-  if (clientID && ws.hasClient(clientID)) {
-    ws.binary(clientID, message, len);
+  if (clientId && ws.hasClient(clientId)) {
+    ws.binary(clientId, message, len);
   }
 }
 
 void wsSendAll(uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
   ws.binaryAll(message, len);
+}
+
+static void sendSnapshotTo(uint32_t clientId) {
+  wsSendTo(clientId, (uint8_t*)&infoFS, sizeof(infoFS));
+  sendDeviceTo(clientId);
+  sendPortSnapshot(clientId);
+  sendDallasSnapshot(clientId);
 }
 
 void emitEvent(char* message) {
@@ -62,11 +68,8 @@ void sendProgress() {
 }
 
 void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
-  clientID = client->id();
-  if (type == WS_EVT_DISCONNECT) {
-    if (clientID && !ws.hasClient(clientID)) {
-      clientID = 0;
-    }
+  if (type == WS_EVT_CONNECT) {
+    sendSnapshotTo(client->id());
   } else if (type == WS_EVT_DATA) {
     if (arg == nullptr || data == nullptr || len == 0) return;
 
@@ -75,8 +78,8 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
       if (info->final && info->index == 0 && info->len == len) {
         uint8_t task = data[0];
         if (task >= KEY_END) return;
-        onWsEventTasks(arg, data, len, clientID, task);
-        onWsEventDevice(arg, data, len, clientID, task);
+        onWsEventTasks(arg, data, len, client->id(), task);
+        onWsEventDevice(arg, data, len, client->id(), task);
       }
     }
   }

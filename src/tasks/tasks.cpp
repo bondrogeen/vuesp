@@ -1,6 +1,43 @@
 #include "./tasks.h"
 
+#define MAX_TASK_CLIENTS 4
+
 uint8_t tasks[KEY_END];
+
+// Requests are handled asynchronously, so remember every client that is waiting
+// for a response instead of only the last one.
+static uint32_t taskClients[KEY_END][MAX_TASK_CLIENTS];
+static uint8_t taskClientCount[KEY_END];
+
+static bool isTargetedTask(uint8_t task) {
+  return task == KEY_SETTINGS || task == KEY_INFO || task == KEY_FILES || task == KEY_SCAN;
+}
+
+static void addTaskClient(uint8_t task, uint32_t clientId) {
+  if (!clientId || !isTargetedTask(task)) return;
+
+  for (uint8_t i = 0; i < taskClientCount[task]; i++) {
+    if (taskClients[task][i] == clientId) return;
+  }
+
+  if (taskClientCount[task] >= MAX_TASK_CLIENTS) {
+    // Drop the oldest waiter so a new client is not silently ignored.
+    memmove(&taskClients[task][0], &taskClients[task][1], sizeof(taskClients[task][0]) * (MAX_TASK_CLIENTS - 1));
+    taskClientCount[task] = MAX_TASK_CLIENTS - 1;
+  }
+
+  taskClients[task][taskClientCount[task]++] = clientId;
+}
+
+static void sendToTaskClients(uint8_t task, uint8_t* message, size_t len) {
+  for (uint8_t i = 0; i < taskClientCount[task]; i++) {
+    wsSendTo(taskClients[task][i], message, len);
+  }
+}
+
+static void clearTaskClients(uint8_t task) {
+  taskClientCount[task] = 0;
+}
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
 char safePass[32];
@@ -23,6 +60,7 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
 
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
   tasks[task] = true;
+  addTaskClient(task, clientId);
 
   if (task == KEY_SETTINGS && info->len == sizeof(settings)) {
     memcpy(&settings, data, sizeof(settings));
@@ -53,7 +91,7 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
 }
 
 #if defined(ESP8266)
-void getFile(char* name) {
+void getFile(char* name, uint8_t task) {
   Dir dir = LittleFS.openDir(name);
   while (dir.next()) {
     memset(files.name, 0, sizeof(files.name));
@@ -61,13 +99,13 @@ void getFile(char* name) {
     files.size = dir.fileSize();
     files.isFile = dir.isFile();
     files.isDir = dir.isDirectory();
-    wsSend((uint8_t*)&files, sizeof(files));
+    sendToTaskClients(task, (uint8_t*)&files, sizeof(files));
   }
 }
 
 #elif defined(ESP32)
 
-void getFile(char* name) {
+void getFile(char* name, uint8_t task) {
   File root = LittleFS.open(name);
   File file = root.openNextFile();
   String str = "";
@@ -77,13 +115,13 @@ void getFile(char* name) {
     files.size = file.size();
     files.isFile = !file.isDirectory();
     files.isDir = file.isDirectory();
-    wsSend((uint8_t*)&files, sizeof(files));
+    sendToTaskClients(task, (uint8_t*)&files, sizeof(files));
     file = root.openNextFile();
   }
 }
 #endif
 
-void scanWiFi() {
+void scanWiFi(uint8_t task) {
   int n = WiFi.scanNetworks();
   for (int i = 0; i < n; i++) {
     scan.id = i;
@@ -93,7 +131,7 @@ void scanWiFi() {
     scan.rssi = WiFi.RSSI(i);
     scan.encryptionType = WiFi.encryptionType(i);
     // scan.isHidden = WiFi.isHidden(i);
-    wsSend((uint8_t*)&scan, sizeof(scan));
+    sendToTaskClients(task, (uint8_t*)&scan, sizeof(scan));
   };
 }
 
@@ -112,23 +150,27 @@ void loopTask(uint32_t now) {
       memset(settings.wifiPass, 0, sizeof(settings.wifiPass));
       copyString(settings.wifiPass, sizeof(settings.wifiPass), DEF_HIDE_PASS);
     }
-    wsSend((uint8_t*)&settings, sizeof(settings));
+    sendToTaskClients(KEY_SETTINGS, (uint8_t*)&settings, sizeof(settings));
     tasks[KEY_SETTINGS] = false;
+    clearTaskClients(KEY_SETTINGS);
   };
   if (tasks[KEY_INFO]) {
     getInfo(&infoFS);
-    wsSend((uint8_t*)&infoFS, sizeof(infoFS));
+    sendToTaskClients(KEY_INFO, (uint8_t*)&infoFS, sizeof(infoFS));
     tasks[KEY_INFO] = false;
+    clearTaskClients(KEY_INFO);
   }
   if (tasks[KEY_FILES]) {
     tasks[KEY_FILES] = false;
-    getFile(files.name);
+    getFile(files.name, KEY_FILES);
+    clearTaskClients(KEY_FILES);
   }
   if (tasks[KEY_REBOOT]) reboot();
 
   if (tasks[KEY_SCAN]) {
     tasks[KEY_SCAN] = false;
-    scanWiFi();
+    scanWiFi(KEY_SCAN);
+    clearTaskClients(KEY_SCAN);
   }
   if (tasks[KEY_MESSAGE]) {
     tasks[KEY_MESSAGE] = false;

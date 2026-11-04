@@ -20,6 +20,10 @@ void onSendDevice() {
   wsSendAll((uint8_t*)&device, sizeof(device));
 }
 
+void sendDeviceTo(uint32_t clientId) {
+  wsSendTo(clientId, (uint8_t*)&device, sizeof(device));
+}
+
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port, uint8_t type) {
   Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
