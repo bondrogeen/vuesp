@@ -39,6 +39,8 @@ Buffer myBuffer = {KEY_BUFFER};
 // CircularBuffer<int8_t, 256> buffer(myBuffer);
 
 void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
+  if (!arg || !data || len != sizeof(device)) return;
+
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
   if (task == KEY_DEVICE && info->len == sizeof(device)) {
     memcpy(&device, data, sizeof(device));
@@ -200,6 +202,10 @@ void findPort() {
   }
 }
 
+void sendDeviceTo(uint32_t clientId) {
+  wsSendTo(clientId, (uint8_t*)&device, sizeof(device));
+}
+
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port, uint8_t type) {
   if (port->gpio == 13 && port->value == 0) {
@@ -209,7 +215,7 @@ void deviceGPIO(Port* port, uint8_t type) {
   }
 }
 
-static char displayBuffer[64] = "5";
+static char displayBuffer[65] = "5";
 
 bool inputHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
   if (paramCount != 1) return false;
@@ -270,8 +276,9 @@ void setupDevice() {
 }
 
 void setupFirstDevice() {
-  getLoadDef(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
-  // getLoadDef(DEF_PATH_MODBUS, (uint8_t *)&modbusSetting, sizeof(modbusSetting));
+  if (!loadConfigBlock(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device))) {
+    saveConfigBlock(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+  }
 }
 
 void loopDevice(uint32_t now) {

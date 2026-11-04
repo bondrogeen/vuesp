@@ -20,6 +20,13 @@ OutgoingPacket DeviceProtocol::preparePacket(uint32_t targetId, PacketType type,
   OutgoingPacket packet;
   packet.type = type;
 
+  if (payloadLength > TX_BUFFER_SIZE - PACKET_HEADER_SIZE) {
+    packet.data = nullptr;
+    packet.length = 0;
+    packet.targetAddress = 0;
+    return packet;
+  }
+
   _txBuffer[0] = static_cast<uint8_t>(type);
   _txBuffer[1] = (_myId >> 24) & 0xFF;
   _txBuffer[2] = (_myId >> 16) & 0xFF;
@@ -50,19 +57,24 @@ bool DeviceProtocol::sendAnnounce() {
 
 bool DeviceProtocol::sendText(uint32_t peerId, const String& text) {
   if (!_initialized || !_sendCallback) return false;
+  if (text.length() > TX_BUFFER_SIZE - PACKET_HEADER_SIZE) return false;
   return _sendCallback(preparePacket(peerId, PacketType::TEXT, (const uint8_t*)text.c_str(), text.length()));
 }
 
 bool DeviceProtocol::sendBinary(uint32_t peerId, const uint8_t* data, size_t length) {
   if (!_initialized || !_sendCallback) return false;
+  if (length > TX_BUFFER_SIZE - PACKET_HEADER_SIZE) return false;
+  if (length > 0 && data == nullptr) return false;
   return _sendCallback(preparePacket(peerId, PacketType::BINARY, data, length));
 }
 
 void DeviceProtocol::handleIncomingData(uint32_t senderAddress, const uint8_t* data, size_t length) {
   if (!_initialized) return;
-  if (length < PACKET_HEADER_SIZE) return;
+  if (!data || length < PACKET_HEADER_SIZE || length > TX_BUFFER_SIZE) return;
 
   PacketType type = static_cast<PacketType>(data[0]);
+  if (type != PacketType::TEXT && type != PacketType::BINARY) return;
+
   uint32_t senderId = ((uint32_t)data[1] << 24) | ((uint32_t)data[2] << 16) |
                       ((uint32_t)data[3] << 8) | data[4];
 
@@ -70,6 +82,7 @@ void DeviceProtocol::handleIncomingData(uint32_t senderAddress, const uint8_t* d
   size_t payloadLength = length - PACKET_HEADER_SIZE;
 
   bool isNew = (_peers.find(senderId) == _peers.end());
+  if (isNew && _peers.size() >= MAX_PEERS) return;
   _peers[senderId] = PeerInfo(senderId, senderAddress);
   _peers[senderId].lastSeen = millis();
 
