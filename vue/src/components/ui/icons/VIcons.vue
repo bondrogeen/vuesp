@@ -1,4 +1,12 @@
+<script setup lang="ts">
+const { name } = defineProps<{ name: string }>();
+</script>
+
 <template>
+  <icon-ri-shut-down-line v-if="name === 'shut'" class="size-full" />
+  <icon-ri-battery-2-line v-if="name === 'battery-2'" class="size-full" />
+  <icon-ri-restart-line v-if="name === 'restart'" class="size-full" />
+  <icon-ri-plant-line v-if="name === 'plant'" class="size-full" />
   <icon-ri-lightbulb-line v-if="name === 'bulb'" class="size-full" />
   <icon-ri-video-on-line v-if="name === 'video'" class="size-full" />
   <icon-ri-windy-line v-if="name === 'windy'" class="size-full" />
@@ -21,7 +29,3 @@
   <icon-ri-blaze-fill v-if="name === 'blaze'" class="size-full" />
   <icon-ri-door-line v-if="name === 'door'" class="size-full" />
 </template>
-
-<script setup lang="ts">
-const { name } = defineProps<{ name: string }>();
-</script>

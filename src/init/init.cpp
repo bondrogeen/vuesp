@@ -7,6 +7,7 @@
 uint8_t isFirstWifi = 0;
 
 Info infoFS = {KEY_INFO, DEF_DEVICE_FIRMWARE, 0, 0, 0};
+Event event = {KEY_EVENT, 0, 0, 0, 0, ""};
 
 Settings settings = {
     KEY_SETTINGS,

@@ -31,7 +31,7 @@ Template for your arduino projects with a web interface.
 ## Supported Platforms
 
 - ESP32
-- ESP32-C3-DevKitM-1
+- ESP32-C3
 - ESP8266
 
 ## Quick Start
@@ -51,7 +51,7 @@ Template for your arduino projects with a web interface.
    cd vue
    npm install
    cp .env.example .env
-   # Edit .env to set VITE_PROXY to your device IP
+   # Edit .env to set VITE_IP to your device IP
    ```
 
 3. **Start development**
@@ -86,12 +86,12 @@ vuesp/
 ├── vue/              # Vue 3 web frontend
 │   ├── src/          # Vue components and pages
 │   └── public/       # Static assets
+│   └── vite.config.ts    # Vite build configuration
 ├── data/             # LittleFS data
 │   └── www/          # Built web UI
 ├── firmware/         # Compiled firmware binaries
 ├── scripts/          # Build and utility scripts
 ├── platformio.ini    # PlatformIO configuration
-└── vite.config.ts    # Vite build configuration
 ```
 
 ## Development
@@ -104,14 +104,14 @@ npm install
 Next in [.env](./vue/.env.example) file change proxy to your ip device
 
 ```bash
-VITE_PROXY=192.168.1.100  # Change to your ESP device IP
+VITE_IP=192.168.1.100  # Change to your ESP device IP
 ```
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:5173/ in your browser.
+Open http://localhost:3000/ in your browser.
 
 ### Available npm Scripts
 
@@ -177,12 +177,21 @@ Binary WebSocket messages at `/esp` endpoint:
 - Remaining bytes: Struct data
 - All platform-specific
 
+## Документация / Documentation ScriptRunner
+
+| Язык / Language | Ссылка / Link |
+|-----------------|---------------|
+| 🇷🇺 Русский | [Документация на русском для  ScriptRunner](./github/docs/scriptrunner/ru.md) |
+| 🇬🇧 English | [Documentation in English from ScriptRunner](./github/docs/scriptrunner/en.md) |
+
+
 ## Version History
 
 ### 3.4.0 (2026-07-24)
 
 - Update Web
 - Add example components
+- Update ESPAsyncWebServer
 
 ### 3.2.0 (2025-07-03)
 

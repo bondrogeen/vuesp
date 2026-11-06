@@ -24,7 +24,7 @@ const customRules: Record<string, I18nPluralRule> = {
 
 const pluralize = i18nPluralizer(customRules);
 
-import 'vuesp-components/dist/style.css';
+import 'vuesp-components/style.css';
 
 import '@/assets/tailwind.css';
 
@@ -48,9 +48,9 @@ const app = createApp(App);
         store.$patch({ pkg: __APP__ });
       }
     });
-    app.use(i18nPlugin as any, { locales, pluralize });
+    app.use(i18nPlugin, { locales, pluralize });
     app.use(pinia);
-    app.use(vuesp as any);
+    app.use(vuesp);
     app.use(router);
     app.mount('#appVuesp');
   } catch (error) {
@@ -65,6 +65,9 @@ const app = createApp(App);
           <button onclick="location.reload()" style="padding: 0.5rem 1rem; margin-top: 1rem; cursor: pointer;">
             Reload Page
           </button>
+          <a href="/recovery?force=1" style="padding: 0.5rem 1rem; margin-top: 1rem; cursor: pointer;">
+            Recovery
+          </a>
         </div>
       `;
     }
