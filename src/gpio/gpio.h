@@ -41,14 +41,16 @@
 #define GPIO_BIT_ALL_NOT_DAC_AND_ADC (GPIO_BIT_INPUT | GPIO_BIT_INPUT_PULLUP | GPIO_BIT_OUTPUT | GPIO_BIT_OUTPUT_OPEN_DRAIN | GPIO_BIT_PWM | GPIO_BIT_ONEWIRE)         // 0b0000000001111111
 
 #define LONG_PRESS_TIME 1000
-#define REPEAT_START_TIME 3000
-#define REPEAT_INTERVAL 200
+#define REPEAT_START_TIME 2000
+#define REPEAT_INTERVAL 100
 #define CLICK_WINDOW 200
 
 #define EVENT_NONE 0
 #define EVENT_LONG_PRESS 1
 #define EVENT_REPEAT 2
 #define EVENT_CLICK 3
+
+#define MAX_DALLAS_SENSORS 8
 
 #include <OneWire.h>
 
@@ -63,6 +65,8 @@ uint16_t getValue(uint8_t gpio, uint16_t& value);
 void setValue(uint8_t gpio, uint16_t value);
 void setValue(uint8_t gpio, uint16_t value, uint8_t mode);
 void updatePort(uint8_t gpio, uint16_t value);
+void sendPortSnapshot(uint32_t clientId);
+void sendDallasSnapshot(uint32_t clientId);
 
 extern Port ports[];
 extern int ports_len;

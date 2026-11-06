@@ -22,6 +22,8 @@ dist/
 /firmware/*.bin
 /firmware/*.elf
 /data/
+/mklittlefs
+src/tests/test_runner
 
 # OS
 .DS_Store

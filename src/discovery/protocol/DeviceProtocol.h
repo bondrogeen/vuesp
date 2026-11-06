@@ -15,6 +15,7 @@ const uint32_t DEFAULT_ANNOUNCE_JITTER = 500;
 
 const size_t PACKET_HEADER_SIZE = 5;
 const size_t TX_BUFFER_SIZE = 1500;
+const size_t MAX_PEERS = 32;
 
 enum class PacketType : uint8_t {
   TEXT = 0x00,

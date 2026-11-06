@@ -73,7 +73,7 @@ npm run typecheck
 **ESLint**:
 ```bash
 npm run lint        # Show violations
-npm run lint        # Fix automatically
+npm run lint:fix    # Fix automatically
 ```
 
 **Prettier formatting**:
