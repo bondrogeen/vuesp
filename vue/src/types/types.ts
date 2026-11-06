@@ -11,9 +11,10 @@ import type {
   IDialog,
   IPackage,
   ISuggestion,
+  IMessageDevice,
 } from 'vuesp-components/types';
 
-import type { TypeMessage, IMyMessageSettings, IMessageDevice } from './custom';
+import type { TypeMessage, IMyMessageSettings } from './custom';
 
 export type * from './custom';
 
