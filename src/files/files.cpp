@@ -1,7 +1,22 @@
 #include "./files.h"
 
+static_assert(sizeof(ConfigBlockHeader) == 12, "Unexpected ConfigBlockHeader layout");
+
+static uint32_t crc32(const uint8_t* data, size_t size) {
+  uint32_t crc = 0xFFFFFFFFUL;
+  for (size_t i = 0; i < size; i++) {
+    crc ^= data[i];
+    for (uint8_t bit = 0; bit < 8; bit++) {
+      crc = (crc >> 1) ^ (0xEDB88320UL & (uint32_t)(-(int32_t)(crc & 1)));
+    }
+  }
+  return ~crc;
+}
+
 void initFS() {
-  if (!LittleFS.begin() && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
+  if (!LittleFS.begin()) {
+    Serial.println(F("LittleFS mount failed; recovery mode"));
+  }
 }
 
 void getInfo(Info* infoFS) {
@@ -22,19 +37,28 @@ bool createDir(const char* path) {
 }
 
 uint8_t readFile(const char* path, uint8_t* buf, size_t size) {
+  if (!path || !buf || size == 0) return 0;
+
   File file = LittleFS.open(path, "r");
   if (!file || file.isDirectory()) {
     return 0;
-  } else {
-    while (file.available()) {
-      file.read(buf, size);
-    }
-    file.close();
-    return 1;
   }
+
+  // Do not touch buf unless the whole config is present.
+  if (file.size() != size) {
+    file.close();
+    return 0;
+  }
+
+  size_t read = file.read(buf, size);
+  file.close();
+
+  return read == size ? 1 : 0;
 }
 
-void writeFile(const char* path, const uint8_t* buf, size_t size) {
+bool writeFile(const char* path, const uint8_t* buf, size_t size) {
+  if (!path || !buf || size == 0) return false;
+
   if (!LittleFS.exists(path)) {
     if (strchr(path, '/')) {
       char* pathStr = strdup(path);
@@ -52,10 +76,11 @@ void writeFile(const char* path, const uint8_t* buf, size_t size) {
   }
 
   File file = LittleFS.open(path, "w");
-  if (!file) return;
-  file.write(buf, size);
+  if (!file) return false;
+  size_t written = file.write(buf, size);
   delay(1);
   file.close();
+  return written == size;
 }
 
 void getLoadDef(const char* path, uint8_t* buf, size_t size) {
@@ -63,6 +88,67 @@ void getLoadDef(const char* path, uint8_t* buf, size_t size) {
   if (!isOk) {
     writeFile(path, buf, size);
   }
+}
+
+bool loadConfigBlock(const char* path, uint8_t* buf, size_t size) {
+  if (!path || !buf || size == 0 || size > MAX_CONFIG_BLOCK_SIZE) return false;
+
+  File file = LittleFS.open(path, "r");
+  if (!file || file.isDirectory()) return false;
+
+  // Legacy raw configs (before the block format) are migrated in place.
+  if (file.size() == size) {
+    if (file.read(buf, size) != size) {
+      file.close();
+      return false;
+    }
+    file.close();
+    saveConfigBlock(path, buf, size);
+    return true;
+  }
+
+  ConfigBlockHeader header;
+  if (file.size() != sizeof(header) + size) {
+    file.close();
+    return false;
+  }
+  if (file.read((uint8_t*)&header, sizeof(header)) != sizeof(header)) {
+    file.close();
+    return false;
+  }
+  if (header.magic != CONFIG_BLOCK_MAGIC || header.version != CONFIG_BLOCK_VERSION || header.size != size) {
+    file.close();
+    return false;
+  }
+
+  uint8_t payload[MAX_CONFIG_BLOCK_SIZE];
+  if (file.read(payload, size) != size) {
+    file.close();
+    return false;
+  }
+  file.close();
+
+  if (crc32(payload, size) != header.crc) return false;
+
+  memcpy(buf, payload, size);
+  return true;
+}
+
+bool saveConfigBlock(const char* path, const uint8_t* buf, size_t size) {
+  if (!path || !buf || size == 0 || size > MAX_CONFIG_BLOCK_SIZE) return false;
+
+  uint8_t payload[sizeof(ConfigBlockHeader) + MAX_CONFIG_BLOCK_SIZE];
+  ConfigBlockHeader header = {
+      CONFIG_BLOCK_MAGIC,
+      CONFIG_BLOCK_VERSION,
+      (uint16_t)size,
+      crc32(buf, size),
+  };
+
+  memcpy(payload, &header, sizeof(header));
+  memcpy(payload + sizeof(header), buf, size);
+
+  return writeFile(path, payload, sizeof(header) + size);
 }
 
 bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
@@ -85,7 +171,14 @@ bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
     String script = rest.substring(secondColon + 1);
 
     if (fileId == id) {
-      strcpy(buffer, script.c_str());
+      const uint16_t maxLen = 255;
+      if (script.length() > maxLen) {
+        file.close();
+        return false;
+      }
+
+      strncpy(buffer, script.c_str(), maxLen);
+      buffer[maxLen] = '\0';
       len = script.length();
       file.close();
       return true;

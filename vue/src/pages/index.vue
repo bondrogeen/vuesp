@@ -24,6 +24,8 @@ interface IItemTable {
 
 const tabs = [{ title: 'Item 0' }, { title: 'Item 1' }, { title: 'Item 2' }];
 
+const accentColors = ['blue', 'indigo', 'violet', 'emerald', 'amber', 'rose', 'slate', 'green', 'red', 'gray'] as const;
+
 const isFormatting = ref(false);
 
 const dialogTable = ref(false);
@@ -188,6 +190,12 @@ const onMenu = ({ value }: IListItem<number>) => {
         </div>
 
         <div>
+          <h3 class="mb-5">Accent colors</h3>
+
+          <div class="mb-8 flex flex-wrap gap-3">
+            <v-button v-for="color in accentColors" :key="color" :color="color" size="sm">{{ color }}</v-button>
+          </div>
+
           <h3 class="mb-5">Form</h3>
 
           <div class="flex flex-col gap-3">
