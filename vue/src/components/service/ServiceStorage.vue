@@ -97,7 +97,7 @@ watchEffect(() => {
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2">
     <card-main :title="$t('fb')">
-      <div class="px-4 pb-2 flex items-center border-b border-gray-200 dark:border-gray-600">
+      <div class="px-4 pb-2 flex items-center">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
             v-for="(value, i) of path"
