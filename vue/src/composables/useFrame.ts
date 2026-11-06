@@ -1,10 +1,12 @@
 import { onMounted, ref, onUnmounted, watch, type WatchStopHandle } from 'vue';
 
 import { useAppStore } from '@/stores/AppStore';
+import { useLocale } from '@/composables/useLocale';
 import { useRouter, useRoute } from 'vue-router';
 
 export const useFrame = () => {
   const appStore = useAppStore();
+  const { setLocale } = useLocale();
 
   const route = useRoute();
   const router = useRouter();
@@ -27,6 +29,9 @@ export const useFrame = () => {
       messageListener = (event: MessageEvent) => {
         if (event?.data?.type === 'theme') {
           appStore.changeTheme(event.data.value);
+        }
+        if (event?.data?.type === 'locale' && typeof event.data.value === 'string') {
+          setLocale(event.data.value);
         }
         if (event?.data?.type === 'route') {
           const path = event.data.data?.path;
