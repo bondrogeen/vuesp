@@ -13,6 +13,11 @@ export const useLocale = () => {
   const setLocale = (locale: string) => {
     i18n.setLocale(locale);
     localSet('locale', i18n.getLocale());
+
+    // Inside the hub iframe keep the parent UI language in sync.
+    if (typeof window !== 'undefined' && window.parent !== window) {
+      window.parent.postMessage({ type: 'locale', value: i18n.getLocale() }, '*');
+    }
   };
 
   const getLocale = () => i18n.getLocale();

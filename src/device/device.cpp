@@ -26,6 +26,8 @@ uint8_t response[64];
 uint8_t dataBuffer[4];
 
 void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task) {
+  if (!arg || !data || len != sizeof(device)) return;
+
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
   if (task == KEY_DEVICE && info->len == sizeof(device)) {
     memcpy(&device, data, sizeof(device));
@@ -34,6 +36,10 @@ void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, ui
 
 void onSendDevice() {
   wsSendAll((uint8_t*)&device, sizeof(device));
+}
+
+void sendDeviceTo(uint32_t clientId) {
+  wsSendTo(clientId, (uint8_t*)&device, sizeof(device));
 }
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
@@ -51,8 +57,62 @@ void deviceGPIO(Port* port, uint8_t type) {
   Serial.println("");
 }
 
+static char displayBuffer[65] = "5";
+
+bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
+  Serial.print(id);
+  Serial.print(write ? "WRITE" : "READ");
+  Serial.print(" kind=");
+  Serial.println(kind);
+
+  if (strcmp(id, "$display") == 0) {
+    if (write) {
+      if (kind == KIND_STRING) {
+        if (!value.stringVal.data) return false;
+        char buf[65];
+        uint8_t len = value.stringVal.len;
+        if (len > 64) len = 64;
+        strncpy(buf, (char*)value.stringVal.data, len);
+        buf[len] = '\0';
+        strncpy(displayBuffer, buf, sizeof(displayBuffer) - 1);
+        displayBuffer[sizeof(displayBuffer) - 1] = '\0';
+        Serial.print("DISPLAY: ");
+        Serial.println(buf);
+      } else if (kind == KIND_INT) {
+        snprintf(displayBuffer, sizeof(displayBuffer), "%d", value.intVal);
+        Serial.print("DISPLAY: ");
+        Serial.println(value.intVal);
+      } else if (kind == KIND_UINT) {
+        snprintf(displayBuffer, sizeof(displayBuffer), "%u", value.uintVal);
+        Serial.print("DISPLAY: ");
+        Serial.println(value.uintVal);
+      } else if (kind == KIND_FLOAT) {
+        snprintf(displayBuffer, sizeof(displayBuffer), "%.2f", value.floatVal);
+        Serial.print("DISPLAY: ");
+        Serial.println(value.floatVal);
+      }
+      return true;
+    } else {
+      if (kind == KIND_STRING) {
+        value.stringVal.data = (uint8_t*)displayBuffer;
+        value.stringVal.len = strlen(displayBuffer);
+      } else if (kind == KIND_INT) {
+        value.intVal = atoi(displayBuffer);
+      } else if (kind == KIND_UINT) {
+        value.uintVal = (uint32_t)atoi(displayBuffer);
+      } else if (kind == KIND_FLOAT) {
+        value.floatVal = atof(displayBuffer);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
-  if (paramCount < 2) return false;
+  if (!params || paramCount < 5) return false;
+  if (!params[0].stringVal.data || !params[1].stringVal.data) return false;
+  if (params[4].arrayVal.len > 0 && !params[4].arrayVal.data) return false;
 
   const char* method = params[0].stringVal.data;
   const char* url = params[1].stringVal.data;
@@ -184,7 +244,9 @@ void setupDevice() {
 }
 
 void setupFirstDevice() {
-  getLoadDef(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+  if (!loadConfigBlock(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device))) {
+    saveConfigBlock(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+  }
 }
 
 void loopDevice(uint32_t now) {
@@ -206,7 +268,7 @@ void loopDevice(uint32_t now) {
   };
 
   if (tasks[KEY_DEVICE]) {
-    if (device.command == COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+    if (device.command == COMMAND_SAVE) saveConfigBlock(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;

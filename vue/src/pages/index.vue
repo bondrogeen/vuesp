@@ -30,18 +30,22 @@ const current = computed(() => main.value.device.current || 0);
 const power = computed(() => main.value.device.power || 0);
 const frequency = computed(() => main.value.device.frequency || 0);
 const activeEnergy = computed(() => Math.floor((main.value.device?.activeEnergy || 0) / 100));
-const activeEnergyDrob = computed(() => (main.value.device?.activeEnergy || 0) % 100);
-// const positiveActiveEnergy = computed(() => Math.floor(main.value.device.positiveActiveEnergy / 100));
-// const reverseActiveEnergy = computed(() => Math.floor(main.value.device.reverseActiveEnergy / 100));
-// const reactiveEnergy = computed(() => Math.floor(main.value.device.reactiveEnergy / 100));
+const activeEnergyDrob = computed(() => String((main.value.device?.activeEnergy || 0) % 100).padStart(2, '0'));
+
+const metrics = computed(() => [
+  { label: 'Напряжение', value: (voltage.value / 10).toFixed(1), unit: 'В', color: 'text-blue-500 dark:text-blue-400' },
+  { label: 'Ток', value: (current.value / 100).toFixed(2), unit: 'А', color: 'text-violet-500 dark:text-violet-400' },
+  { label: 'Мощность', value: power.value, unit: 'Вт', color: 'text-amber-500 dark:text-amber-400' },
+  { label: 'Частота', value: (frequency.value / 100).toFixed(2), unit: 'Гц', color: 'text-teal-500 dark:text-teal-400' },
+]);
 </script>
 
 <template>
-  <div class="container mx-auto pb-10">
+  <div class="container mx-auto">
     <section class="mb-6 flex items-center justify-between">
       <h1>{{ $t('home') }}</h1>
 
-      <v-select modelValue="2" :items="listMenu" @change="onMenu">
+      <v-select model-value="2" :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
           <v-button type="icon" @click="on.click">
             <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
@@ -50,57 +54,28 @@ const activeEnergyDrob = computed(() => (main.value.device?.activeEnergy || 0) %
       </v-select>
     </section>
 
-    <section>
-      <card-main title="DDS6619" class="p-7">
-        <div class="relative overflow-hidden rounded-lg px-5 py-6 text-center bg-gray-100 dark:bg-black/20">
-          <div class="text-[11px] tracking-[4px] uppercase text-slate-500 mb-3">Показания</div>
+    <card-main title="DDS6619" class="p-6 sm:p-7">
+      <div class="glass-panel relative overflow-hidden rounded-xl px-5 py-8 text-center">
+        <div class="mb-3 text-[11px] uppercase tracking-[0.3em] text-gray-500">Показания</div>
 
-          <div id="reading" class="font-mono text-2xl xl:text-5xl font-bold tracking-[4px] leading-none">
-            <span class="text-emerald-400 [text-shadow:0_0_20px_rgba(46,204,113,0.7),0_0_40px_rgba(46,204,113,0.3)]">{{ activeEnergy }}</span>
-            <span class="text-red-500 [text-shadow:0_0_20px_rgba(231,76,60,0.7)]">.{{ activeEnergyDrob }}</span>
-          </div>
-
-          <div class="text-sm tracking-[2px] text-slate-500 mt-3">кВт·ч</div>
+        <div class="font-mono text-3xl font-bold leading-none tracking-[0.2em] sm:text-5xl">
+          <span class="text-emerald-500 dark:text-emerald-400">{{ activeEnergy }}</span>
+          <span class="text-red-500 dark:text-red-400">.{{ activeEnergyDrob }}</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 mt-5">
-          <div class="rounded-lg p-3.5 text-center bg-gray-100 dark:bg-black/20 border border-white/[0.06]">
-            <div class="text-[10px] tracking-[2px] uppercase text-slate-400 mb-2">Напряжение</div>
+        <div class="mt-3 text-sm tracking-[0.2em] text-gray-500">кВт·ч</div>
+      </div>
 
-            <div id="voltage" class="font-mono text-2xl font-bold text-blue-400">
-              {{ voltage / 10 }}
-              <small class="text-xs text-slate-400 ml-0.5">В</small>
-            </div>
-          </div>
+      <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div v-for="metric in metrics" :key="metric.label" class="glass-panel rounded-xl px-4 py-4 text-center">
+          <div class="mb-2 text-[10px] uppercase tracking-[0.2em] text-gray-500">{{ metric.label }}</div>
 
-          <div class="rounded-lg p-3.5 text-center bg-gray-100 dark:bg-black/20 border border-white/[0.06]">
-            <div class="text-[10px] tracking-[2px] uppercase text-slate-400 mb-2">Ток</div>
-
-            <div id="current" class="font-mono text-2xl font-bold text-purple-400">
-              {{ current / 100 }}
-              <small class="text-xs text-slate-400 ml-0.5">А</small>
-            </div>
-          </div>
-
-          <div class="rounded-lg p-3.5 text-center bg-gray-100 dark:bg-black/20 border border-white/[0.06]">
-            <div class="text-[10px] tracking-[2px] uppercase text-slate-400 mb-2">Мощность</div>
-
-            <div id="power" class="font-mono text-2xl font-bold text-amber-400">
-              {{ power }}
-              <small class="text-xs text-slate-400 ml-0.5">Вт</small>
-            </div>
-          </div>
-
-          <div class="rounded-lg p-3.5 text-center bg-gray-100 dark:bg-black/20 border border-white/[0.06]">
-            <div class="text-[10px] tracking-[2px] uppercase text-slate-400 mb-2">Частота</div>
-
-            <div class="font-mono text-2xl font-bold text-teal-400">
-              {{ frequency / 100 }}
-              <small class="text-xs text-slate-400 ml-0.5">Hz</small>
-            </div>
+          <div class="font-mono text-2xl font-bold" :class="metric.color">
+            {{ metric.value }}
+            <small class="ml-1 text-xs font-normal text-gray-500">{{ metric.unit }}</small>
           </div>
         </div>
-      </card-main>
-    </section>
+      </div>
+    </card-main>
   </div>
 </template>

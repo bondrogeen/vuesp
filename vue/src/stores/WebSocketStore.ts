@@ -8,7 +8,7 @@ const initialState = (): IWebSocketStore => ({
   main: {
     ports: {},
     info: { id: 0, firmware: [], totalBytes: 0, usedBytes: 0, uptime: 0, name: '', board: 0 },
-    device: { command: 0, analog: 0 },
+    device: { command: 0, analog: 0, now: 0, list: 0, message: '' },
     dallas: {},
     discovery: {},
     slots: {},
@@ -58,8 +58,8 @@ export const useWebSocketStore = defineStore('webSocketStore', {
       // if(data.status) appStore.setNotification({text: `new${}`})
     },
     SET_MAIN({ object, key }: { object: any; key: string }) {
-      const name: keyof IStateMain = key.toLowerCase() as keyof IStateMain;
-      if (['ping', 'files', 'progress', 'scan'].includes(name)) return;
+      const name = key.toLowerCase() as keyof IStateMain;
+      if (!(name in this.main)) return;
       this.main[name] = object;
     },
     SET_MESSAGE(message: IMessageMessage) {

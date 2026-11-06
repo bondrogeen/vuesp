@@ -13,6 +13,7 @@ void setupDevice();
 void setupFirstDevice();
 void deviceGPIO(Port* port, uint8_t type);
 void loopDevice(uint32_t now);
+void sendDeviceTo(uint32_t clientId);
 void onWsEventDevice(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task);
 
 #endif

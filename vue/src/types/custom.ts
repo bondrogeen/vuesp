@@ -1,24 +1,23 @@
-import type { IMessageSettings, TypeConstMessage, TypeKEYS } from 'vuesp-components/types';
+import type { IMessageDevice, IMessageSettings, TypeConstMessage, TypeKEYS } from 'vuesp-components/types';
+
+declare module 'vuesp-components/types' {
+  interface IMessageDevice {
+    voltage?: number;
+    current?: number;
+    power?: number;
+    cos?: number;
+    frequency?: number;
+    address?: number;
+    baud?: number;
+    format?: number;
+    activeEnergy?: number;
+    positiveActiveEnergy?: number;
+    reverseActiveEnergy?: number;
+    reactiveEnergy?: number;
+  }
+}
 
 export type MyTypeKEYS = (TypeKEYS & {}) | 'DEVICE';
-
-export interface IMessageDevice {
-  key?: number;
-  command: number;
-  analog: number;
-  voltage?: number;
-  current?: number;
-  power?: number;
-  cos?: number;
-  frequency?: number;
-  address?: number;
-  baud?: number;
-  format?: number;
-  activeEnergy?: number;
-  positiveActiveEnergy?: number;
-  reverseActiveEnergy?: number;
-  reactiveEnergy?: number;
-}
 
 interface IKeyMessageDevice {
   key: Extract<MyTypeKEYS, 'DEVICE'>;
