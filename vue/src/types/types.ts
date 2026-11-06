@@ -13,7 +13,7 @@ import type {
   ISuggestion,
 } from 'vuesp-components/types';
 
-import type { TypeMessage, IMyMessageSettings, IMessageDevice } from './custom';
+import type { TypeMessage, IMyMessageSettings, IShinwaDevice } from './custom';
 
 export type * from './custom';
 
@@ -57,6 +57,6 @@ export interface IStateMain {
   discovery: Record<string, IMessageDiscovery>;
   info: IMessageInfo;
   ports: Record<string, IMessagePort>;
-  device: IMessageDevice;
+  device: IShinwaDevice;
   slots: Record<number, IMessageMessage>;
 }

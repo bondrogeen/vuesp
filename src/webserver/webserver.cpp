@@ -7,7 +7,6 @@ AsyncWebSocket ws("/esp");
 Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
-uint32_t clientID = 0;
 uint8_t hold = 255;
 uint32_t lastTime = 0;
 uint8_t progressSendCount = 0;
@@ -20,10 +19,17 @@ String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
-void wsSend(uint8_t* message, size_t len) {
+static bool isSafeFsPath(const String& path) {
+  if (path.length() == 0 || path.length() > 128) return false;
+  if (path.indexOf("..") >= 0) return false;
+  if (path.indexOf('\\') >= 0) return false;
+  return true;
+}
+
+void wsSendTo(uint32_t clientId, uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
-  if (clientID && ws.hasClient(clientID)) {
-    ws.binary(clientID, message, len);
+  if (clientId && ws.hasClient(clientId)) {
+    ws.binary(clientId, message, len);
   }
 }
 
@@ -32,10 +38,18 @@ void wsSendAll(uint8_t* message, size_t len) {
   ws.binaryAll(message, len);
 }
 
+static void sendSnapshotTo(uint32_t clientId) {
+  wsSendTo(clientId, (uint8_t*)&infoFS, sizeof(infoFS));
+  sendDeviceTo(clientId);
+  sendPortSnapshot(clientId);
+  sendDallasSnapshot(clientId);
+}
+
 void emitEvent(char* message) {
   if (message == nullptr) return;
   memset(event.name, 0, sizeof(event.name));
-  strcpy(event.name, message);
+  strncpy(event.name, message, sizeof(event.name) - 1);
+  event.name[sizeof(event.name) - 1] = '\0';
   wsSendAll((uint8_t*)&event, sizeof(event));
   scriptRunner.emitEvent(message);
 }
@@ -54,19 +68,18 @@ void sendProgress() {
 }
 
 void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
-  clientID = client->id();
-  if (type == WS_EVT_DISCONNECT) {
-    if (clientID && !ws.hasClient(clientID)) {
-      clientID = 0;
-    }
+  if (type == WS_EVT_CONNECT) {
+    sendSnapshotTo(client->id());
   } else if (type == WS_EVT_DATA) {
+    if (arg == nullptr || data == nullptr || len == 0) return;
+
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (info->opcode == WS_BINARY) {
       if (info->final && info->index == 0 && info->len == len) {
         uint8_t task = data[0];
-        if (task > KEY_END) return;
-        onWsEventTasks(arg, data, len, clientID, task);
-        onWsEventDevice(arg, data, len, clientID, task);
+        if (task >= KEY_END) return;
+        onWsEventTasks(arg, data, len, client->id(), task);
+        onWsEventDevice(arg, data, len, client->id(), task);
       }
     }
   }
@@ -76,6 +89,10 @@ void onReqUpload(AsyncWebServerRequest* request) {
   uint8_t method = request->method();
   if (request->hasParam("file")) {
     const AsyncWebParameter* p = request->getParam("file");
+    if (!isSafeFsPath(p->value())) {
+      request->send(400, RES_TYPE_JSON, status(0));
+      return;
+    }
     if (method == HTTP_GET)
       if (LittleFS.exists(p->value())) return request->send(LittleFS, p->value(), String(), true);
     if (method == HTTP_DELETE)
@@ -95,6 +112,11 @@ void onReqUpload(AsyncWebServerRequest* request) {
 
 void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
   const uint32_t MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5MB
+
+  if (!isSafeFsPath(filename)) {
+    if (!index) request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
 
   progress.size += len;
   progress.status = !index ? 1 : 2;
@@ -187,7 +209,7 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onRecovery(AsyncWebServerRequest* request) {
-  if (LittleFS.exists("/www/index.html")) {
+  if (LittleFS.exists("/www/index.html") && !request->hasParam("force")) {
     request->redirect("/");
   } else {
     AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));

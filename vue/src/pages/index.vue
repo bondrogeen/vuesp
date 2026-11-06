@@ -29,7 +29,7 @@
 
           <div class="flex">
             <span
-              class="flex justify-center flex-[0_0_110px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03]"
+              class="flex justify-center flex-[0_0_110px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full glass-panel"
               :class="{ 'animate-shake text-green-500': device.current > 0, 'animate-shake text-red-500/80': device.current < 0 }"
             >
               {{ getStatus(device.current) }}
@@ -67,7 +67,7 @@
               <span class="text-sm">ChgMos:</span>
 
               <span
-                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03]"
+                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full glass-panel"
                 :class="{ 'animate-shake text-green-500': device.status3 & 2 }"
               >
                 {{ device.status3 & 2 ? 'ON' : 'OFF' }}
@@ -77,7 +77,7 @@
               <span class="text-sm">DisMos:</span>
 
               <span
-                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03]"
+                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-2 py-1 rounded-full glass-panel"
                 :class="{ 'animate-shake text-green-500': device.status3 & 4 }"
               >
                 {{ device.status3 & 4 ? 'ON' : 'OFF' }}
@@ -90,7 +90,7 @@
               <span class="text-sm">Balance:</span>
 
               <span
-                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-5 py-1 rounded-full border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03]"
+                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-5 py-1 rounded-full glass-panel"
                 :class="{ 'animate-shake text-green-500': device.balanceStatus }"
               >
                 {{ device.balanceStatus ? 'ON' : 'OFF' }}
@@ -101,7 +101,7 @@
               <span class="text-sm">Protection:</span>
 
               <span
-                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-5 py-1 rounded-full border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03]"
+                class="flex justify-center flex-[0_0_60px] min-w-12 text-sm font-semibold px-5 py-1 rounded-full glass-panel"
                 :class="{ 'animate-shake text-red-500': device.protectionStatus }"
               >
                 {{ device.protectionStatus ? 'ON' : 'OFF' }}
@@ -218,7 +218,7 @@
 
         <div class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-2">
           <div v-for="i of device.cellCount" :key="i" class="relative">
-            <div class="text-center py-1.5 border border-gray-200 dark:border-gray-800 dark:bg-white/[0.03] rounded-xl relative overflow-hidden">
+            <div class="text-center py-1.5 glass-panel rounded-xl relative overflow-hidden">
               <div class="text-sm text-gray-500">{{ `#${i}` }}</div>
 
               <div class="font-bold text-base">
@@ -248,6 +248,8 @@
 </template>
 
 <script setup lang="ts">
+import type { IShinwaDevice } from '@/types';
+
 import { KEYS } from '@/utils/const';
 
 import { useConnection } from '@/composables/useConnection';
@@ -260,7 +262,7 @@ const { main } = useConnection((send) => {
   send(KEYS.DEVICE);
 });
 
-const device = computed(() => main.value.device);
+const device = computed(() => main.value.device as IShinwaDevice);
 
 const toFixed = (num: number, i = 2) => num.toFixed(i);
 

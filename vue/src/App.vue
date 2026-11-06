@@ -32,7 +32,7 @@
         <BlockStatus
           v-bind="info"
           :pkg="pkg"
-          class="mb-4 w-full rounded-md border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-white/[0.03] px-4 py-4 text-center"
+          class="glass-panel mb-4 w-full px-4 py-4 text-center"
           :class="isSidebar ? 'lg:hidden' : ''"
         >
           <template #name="{ item }">
@@ -65,7 +65,7 @@
 
         <AppNotification :value="isSidebarRight" :notifications="notifications" @close="isSidebarRight = false" @remove="appStore.removeNotification" @read="appStore.readNotification">
           <template #header="{ isNew }">
-            <div class="flex items-center justify-between py-4 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 px-2">
+            <div class="flex items-center justify-between py-4 sticky top-0 z-20 px-2">
               <h5>{{ $t('noti') }}</h5>
 
               <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="appStore.readAllNotification">{{ $t('mark') }}</VButton>
@@ -116,10 +116,13 @@ import { useLocale } from '@/composables/useLocale';
 
 import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus } from 'vuesp-components/components';
 
+const route = useRoute();
 const { $t, setLocale } = useLocale();
 console.log(localGet('locale'));
 
-setLocale(localGet('locale') || navigator?.language);
+// The hub passes its current language to the embedded device UI via ?locale.
+const queryLocale = Array.isArray(route.query.locale) ? route.query.locale[0] : route.query.locale;
+setLocale(typeof queryLocale === 'string' && queryLocale ? queryLocale : localGet('locale') || navigator?.language);
 
 const { isIframe } = useFrame();
 const { isConnect } = useSocket();
@@ -130,8 +133,6 @@ const appStore = useAppStore();
 
 const isSidebar = ref(false);
 const isSidebarRight = ref(false);
-
-const route = useRoute();
 
 const getMenu = computed(() => menu.value.map((i) => ({ ...i, name: $t(i.name) })));
 const info = computed(() => main.value.info);

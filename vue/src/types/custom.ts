@@ -1,8 +1,8 @@
-import type { IMessageSettings, TypeConstMessage, TypeKEYS } from 'vuesp-components/types';
+import type { IMessageDevice, IMessageSettings, TypeConstMessage, TypeKEYS } from 'vuesp-components/types';
 
 export type MyTypeKEYS = (TypeKEYS & {}) | 'DEVICE';
 
-export interface IMessageDevice {
+export interface IShinwaDevice extends IMessageDevice {
   key: number;
   command: number;
   voltage: number;

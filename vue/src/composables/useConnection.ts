@@ -1,4 +1,4 @@
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { event } from '@/assets/js/';
 import Queue from '@/assets/js/queue';
 
@@ -17,18 +17,24 @@ export const useConnection = (init?: (send: TypeSend) => void, messages?: (messa
     queue.add({ key, object });
   };
 
-  event.on('init', () => {
+  const onInit = () => {
     if (!store.isInit.value && init) init(onSend);
-  });
+  };
 
-  if (messages) {
-    event.on('messages', (message: TypeMessage) => {
-      messages(message);
-    });
-  }
+  const onMessages = (message: TypeMessage) => {
+    messages?.(message);
+  };
+
+  event.on('init', onInit);
+  if (messages) event.on('messages', onMessages);
 
   onMounted(() => {
     if (store.isInit.value && init) init(onSend);
+  });
+
+  onUnmounted(() => {
+    event.off('init', onInit);
+    if (messages) event.off('messages', onMessages);
   });
 
   return { ...store, onSend };
