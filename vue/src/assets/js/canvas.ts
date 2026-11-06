@@ -13,7 +13,7 @@ const defColors = [
   [255, 255, 255, 255],
 ];
 
-import { int32ToBytes, objCopy } from '@/utils/helpers';
+import { int32ToBytes, objCopy } from '@/utils/paint';
 
 const rotateRight90 = (matrix: any) => {
   let result = [];

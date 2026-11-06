@@ -1,80 +1,45 @@
-export const mask = {
-  GPIO_VALUE: 0b00000001,
-  GPIO_STATUS: 0b00000010,
-  GPIO_EMPTY: 0b00001100,
-  GPIO_MODE: 0b01110000,
-  GPIO_INIT: 0b10000000,
+export const MODE_BOARD_1 = {
+  INPUT: 0,
+  OUTPUT: 1,
+  INPUT_PULLUP: 2,
+  OUTPUT_OPEN_DRAIN: 3,
+  PWM: 128,
+  ONEWIRE: 129,
+  ADC: 130,
+  DAC: 131,
+};
+export const MODE_BOARD_2 = {
+  INPUT: 1,
+  OUTPUT: 3,
+  INPUT_PULLUP: 5,
+  OUTPUT_OPEN_DRAIN: 13,
+  PWM: 128,
+  ONEWIRE: 129,
+  ADC: 130,
+  DAC: 131,
 };
 
-export const command = {
-  GPIO_COMMAND_GET: 0,
-  GPIO_COMMAND_SET: 1,
-  GPIO_COMMAND_GET_ALL: 2,
+export const COMMAND = {
+  GPIO_COMMAND_SAVE: 254,
+  GPIO_COMMAND_GET: 1,
+  GPIO_COMMAND_SET: 2,
+  GPIO_COMMAND_GET_ALL: 3,
+  GPIO_COMMAND_CHANGE: 4,
+  GPIO_COMMAND_RESTORE: 5,
 };
 
-export const parseDateGPIO = (array: any): any => {
-  const arr = [];
-  for (let i = 0; i < array.length; i += 2) {
-    arr.push({ gpio: array[i], data: array[i + 1] });
-  }
-  return arr;
-};
-
-export const stringifyDateGPIO = (object: any) => {
-  const arr = [];
-
-  for (const key in object) {
-    arr.push(object[key].gpio);
-    arr.push(object[key].data);
-  }
-  return arr;
+export const LIST = {
+  GPIO_BIT_INPUT: 1 << 0,
+  GPIO_BIT_INPUT_PULLUP: 1 << 1,
+  GPIO_BIT_OUTPUT: 1 << 2,
+  GPIO_BIT_OUTPUT_OPEN_DRAIN: 1 << 3,
+  GPIO_BIT_PWM: 1 << 4,
+  GPIO_BIT_ONEWIRE: 1 << 5,
+  GPIO_BIT_ADC: 1 << 6,
+  GPIO_BIT_DAC: 1 << 7,
 };
 
 export const getBit = (byte: number, mask: number) => (byte & mask ? 1 : 0);
-
 export const setBit = (byte: number, mask: number) => (byte |= mask);
-
 export const clearBit = (byte: number, mask: number) => (byte &= ~mask);
-
 export const toggleBit = (byte: number, mask: number) => (byte ^= mask);
-
-export const getData = (byte: number): any => {
-  return {
-    init: (byte & mask.GPIO_INIT) >> 7,
-    mode: (byte & mask.GPIO_MODE) >> 4,
-    empty: (byte & mask.GPIO_EMPTY) >> 2,
-    status: (byte & mask.GPIO_STATUS) >> 1,
-    value: (byte & mask.GPIO_VALUE) >> 0,
-  };
-};
-
-export const setData = (obj: any) => {
-  let data = 0;
-  data = obj.value ? setBit(data, mask.GPIO_VALUE) : clearBit(data, mask.GPIO_VALUE);
-  data = obj.init ? setBit(data, mask.GPIO_INIT) : clearBit(data, mask.GPIO_INIT);
-  data = obj.status ? setBit(data, mask.GPIO_STATUS) : clearBit(data, mask.GPIO_STATUS);
-  data = clearBit(data, mask.GPIO_MODE);
-  data |= (obj.mode & 0b111) << 4;
-  return data;
-};
-
-export const getKey = (byte: number, key: string) => {
-  return getData(byte)?.[key];
-};
-
-// export const setData = byte => {
-//   return {
-//     value: getBit(byte, mask.GPIO_VALUE),
-//     mode: getBit(byte, mask.GPIO_MODE),
-//     init: getBit(byte, mask.GPIO_INIT),
-//     status: getBit(byte, mask.GPIO_STATUS),
-//   };
-// };
-
-export const getValue = (data: number) => {
-  return Boolean(data | mask.GPIO_VALUE);
-};
-
-// export const getValue = () => {
-
-// }

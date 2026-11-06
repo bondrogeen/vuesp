@@ -3,7 +3,7 @@
 
 #include <Adafruit_NeoPixel.h>
 
-#include "./include/device.h"
+#include "../const/index.h"
 
 #define NUMPIXELS 256
 #define GPIO_LED 14  // D5

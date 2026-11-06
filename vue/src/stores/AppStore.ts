@@ -1,47 +1,52 @@
 import { defineStore } from 'pinia';
-import { changeTheme, localGet } from '@/utils/helpers.ts';
+import { changeTheme, localGet, localSet, isNewVersion } from 'vuesp-components/helpers';
+import { useFetch } from '@vueuse/core';
+import { pathList } from '@/utils/const';
 
-import type { TypeNotificationItem, TypeStateApp, TypeDialog } from '@/types/types.ts';
+import type { IDialog, IAppStore, INotification } from '@/types';
 
-const state: TypeStateApp = {
+const initialState = (): IAppStore => ({
+  theme: localGet('theme') || 'dark',
+  dialog: { value: false },
+  suggestions: [],
   menu: [],
-  isLoading: false,
-  theme: 'dark',
-  dialog: {
-    value: false,
-  },
-  notifications: [],
-  struct: {},
-};
+  dashboard: [],
+  dialogInfo: isNewVersion(),
+  pkg: { name: '', version: '' },
+  notifications: localGet('notifications', true) || [],
+});
 
 export const useAppStore = defineStore('app', {
-  state: () => state,
+  state: initialState,
   actions: {
-    async init({ theme }: any) {
-      this.theme = localGet('theme') || 'dark';
-      if (['light', 'dark'].includes(theme)) {
-        this.theme = theme;
-      }
+    async init({ theme }: { theme?: string }) {
+      if (theme && ['light', 'dark'].includes(theme)) this.theme = theme;
       changeTheme(this.theme);
-      this.menu = await (await fetch(`/menu.json`, { method: 'GET' })).json();
+      const { data } = await useFetch(`/fs?file=${pathList}`).json();
+      if (data.value) this.dashboard = data.value;
     },
     changeTheme(value?: string) {
-      this.theme = this.theme === 'light' ? 'dark' : 'light';
-      changeTheme(value || this.theme);
+      this.theme = value || (this.theme === 'light' ? 'dark' : 'light');
+      changeTheme(this.theme);
     },
-    setDialog(data: TypeDialog) {
+    setDialog(data: IDialog) {
       this.dialog = data;
     },
-    setNotification(notification: TypeNotificationItem) {
-      const id = notification?.id || Date.now();
-      const timeout = notification?.timeout || 10;
-      const item = this.notifications.find((i) => i.id === id);
-
-      if (item) {
-        this.notifications = this.notifications.map((i) => (i.id === item.id ? notification : i));
-      } else {
-        this.notifications = [...this.notifications, { ...notification, id, timeout }];
-      }
+    setNotification({ color = 1, isNew = 1, timeout = 0, text = '', date = 0 }: Partial<INotification>) {
+      this.notifications = [...this.notifications, { color, isNew, timeout, text, date: date || Date.now() }];
+      localSet('notifications', this.notifications);
+    },
+    readNotification(notification: INotification) {
+      this.notifications = this.notifications.map((i) => (notification.date === i.date ? { ...i, isNew: 0 } : i));
+      localSet('notifications', this.notifications);
+    },
+    readAllNotification() {
+      this.notifications = this.notifications.map((i) => ({ ...i, isNew: 0 }));
+      localSet('notifications', this.notifications);
+    },
+    removeNotification(notification: INotification) {
+      this.notifications = this.notifications.filter((i) => i.date !== notification.date);
+      localSet('notifications', this.notifications);
     },
   },
 });

@@ -1,5 +1,9 @@
+interface IEventFunction {
+  (arg: any): any;
+}
+
 interface TypeEvent {
-  [key: string]: any;
+  [key: string]: IEventFunction[];
 }
 
 class Event {
@@ -8,14 +12,14 @@ class Event {
     this.events = {};
   }
 
-  on(name: string, fn: () => void) {
+  on(name: string, fn: IEventFunction) {
     this.events[name] = this.events[name] || [];
     this.events[name].push(fn);
   }
 
-  off(name: string, fn: () => void) {
+  off(name: string, fn: IEventFunction) {
     if (this.events[name]) {
-      for (var i = 0; i < this.events[name].length; i++) {
+      for (let i = 0; i < this.events[name].length; i++) {
         if (this.events[name][i] === fn) {
           this.events[name].splice(i, 1);
           break;
@@ -24,13 +28,13 @@ class Event {
     }
   }
 
-  emit(name: string, data?: any) {
+  emit(name: string, data?: unknown) {
     if (this.events[name]) {
-      this.events[name].forEach(function (fn: any) {
+      this.events[name].forEach((fn: IEventFunction) => {
         fn(data);
       });
     }
   }
 }
 
-export default new Event();
+export default Event;

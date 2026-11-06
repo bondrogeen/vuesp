@@ -1,30 +1,31 @@
-<template>
-  <div class="container">
-    <div class="row">
-      <h1 class="col sm12 text-h2 mb-6">Main</h1>
-      <div class="col sm12 lg8 xl7">
-        <MainPaint :draw="main.draw" class="col sm12" @send="onSend" />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useWebSocketStore } from '@/stores/WebSocketStore';
+import { computed } from 'vue';
+
+import { KEYS } from '@/utils/const';
+import { useConnection } from '@/composables/useConnection';
+import { useLocale } from '@/composables/useLocale';
 
 import MainPaint from '@/components/pages/main/MainPaint.vue';
 
-// import event from '@/assets/js/event';
+const { $t } = useLocale();
 
-const webSocketStore = useWebSocketStore();
-const { main } = storeToRefs(webSocketStore);
-
-onMounted(() => {
-  webSocketStore.onSend('DRAW');
+const { main, onSend } = useConnection((send) => {
+  send(KEYS.DRAW);
 });
-const onSend = (data: any) => {
-  webSocketStore.onSend('DRAW', data);
+
+const draw = computed(() => main.value.draw);
+
+const onSendDraw = (data: Record<string, unknown>) => {
+  onSend(KEYS.DRAW, data);
 };
 </script>
+
+<template>
+  <div class="container mx-auto">
+    <section class="mb-6 flex items-center justify-between">
+      <h1>{{ $t('menu.draw') }}</h1>
+    </section>
+
+    <MainPaint :draw="draw" @send="onSendDraw" />
+  </div>
+</template>

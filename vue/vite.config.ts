@@ -4,24 +4,36 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import VueRouter from 'unplugin-vue-router/vite';
 import { compression } from 'vite-plugin-compression2';
+import pkg from '../vue/package.json';
+
+import Icons from 'unplugin-icons/vite';
+import IconsResolver from 'unplugin-icons/resolver';
+import Components from 'unplugin-vue-components/vite';
 
 const path = fileURLToPath(new URL('./src', import.meta.url));
+
+const { name, version, author, description, repository, license, homepage, bugs } = pkg;
+const info = { name, version, author, description, repository, license, homepage, bugs };
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  console.log(env);
+  const authLogin = env.VITE_AUTH_LOGIN;
+  const authPassword = env.VITE_AUTH_PASSWORD;
+  const ip = env.VITE_IP || '127.0.0.1';
+  const url = authLogin && authPassword ? `${authLogin}:${authPassword}@${ip}` : ip;
+
   return {
     build: {
-      outDir: env.VITE_OUTPUT_DIR,
-      filenameHashing: false,
+      outDir: env.VITE_OUTPUT_DIR || '../data/www/',
+      emptyOutDir: true,
       cssCodeSplit: false,
       rollupOptions: {
         output: {
           inlineDynamicImports: true,
-          entryFileNames: `assets/[name].js`,
-          chunkFileNames: `assets/[name].js`,
-          assetFileNames: `assets/[name].[ext]`,
+          entryFileNames: `assets/[name][hash].js`,
+          chunkFileNames: `assets/[name][hash].js`,
+          assetFileNames: `assets/[name][hash].[ext]`,
         },
       },
     },
@@ -36,6 +48,8 @@ export default defineConfig(({ mode }) => {
         include: /\.(js|css|svg|ttf|woff|eot|json)$/i,
         threshold: 0,
       }),
+      Icons({ autoInstall: true }),
+      Components({ resolvers: [IconsResolver({ prefix: 'icon', enabledCollections: ['ri'] })] }),
     ],
     resolve: {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
@@ -44,27 +58,27 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      allowedHosts: ['vuesp.ru', 'test.vuesp.ru', 'test.vuesp.ru'],
+      allowedHosts: ['test.vuesp.ru'],
       host: '0.0.0.0',
       port: 3000,
       proxy: {
         '/esp': {
-          target: `ws://${env.VITE_PROXY}`,
+          target: `ws://${url}`,
           ws: true,
         },
-        '/get': {
-          target: `http://${env.VITE_PROXY}`,
-        },
         '/fs': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${url}`,
         },
-        '/upload': {
-          target: `http://${env.VITE_PROXY}`,
+        '/cmd': {
+          target: `http://${url}`,
         },
         '/update': {
-          target: `http://${env.VITE_PROXY}`,
+          target: `http://${url}`,
         },
       },
+    },
+    define: {
+      __APP__: info,
     },
   };
 });
