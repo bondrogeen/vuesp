@@ -24,8 +24,6 @@ const customRules: Record<string, I18nPluralRule> = {
 
 const pluralize = i18nPluralizer(customRules);
 
-import 'vuesp-components/style.css';
-
 import '@/assets/tailwind.css';
 
 const pinia = createPinia();

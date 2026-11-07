@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
+import { Buffer } from 'node:buffer';
 import VueRouter from 'unplugin-vue-router/vite';
 import { compression } from 'vite-plugin-compression2';
 import pkg from '../vue/package.json';
@@ -22,6 +23,7 @@ export default defineConfig(({ mode }) => {
   const authPassword = env.VITE_AUTH_PASSWORD;
   const ip = env.VITE_IP;
   const url = authLogin && authPassword ? `${authLogin}:${authPassword}@${ip}` : ip;
+  const authHeader = authLogin && authPassword ? `Basic ${Buffer.from(`${authLogin}:${authPassword}`).toString('base64')}` : undefined;
   console.log(url);
 
   return {
@@ -64,17 +66,25 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/esp': {
-          target: `ws://${url}`,
+          target: `ws://${ip}`,
           ws: true,
+          changeOrigin: true,
+          headers: authHeader ? { Authorization: authHeader } : undefined,
         },
         '/fs': {
-          target: `http://${url}`,
+          target: `http://${ip}`,
+          changeOrigin: true,
+          headers: authHeader ? { Authorization: authHeader } : undefined,
         },
         '/cmd': {
-          target: `http://${url}`,
+          target: `http://${ip}`,
+          changeOrigin: true,
+          headers: authHeader ? { Authorization: authHeader } : undefined,
         },
         '/update': {
-          target: `http://${url}`,
+          target: `http://${ip}`,
+          changeOrigin: true,
+          headers: authHeader ? { Authorization: authHeader } : undefined,
         },
       },
     },

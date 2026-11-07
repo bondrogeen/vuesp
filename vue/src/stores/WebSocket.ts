@@ -13,15 +13,22 @@ const initialState = (): IWebSocket => ({
   pingClient: 5000,
   pingDevice: 0,
   isInit: false,
+  infoLoaded: false,
 });
 
 export const useWebSocket = defineStore('webSocket', {
   state: initialState,
   actions: {
     init() {
+      this.infoLoaded = false;
       this.onSend(KEYS.INFO);
       event.emit('init');
       this.isInit = true;
+    },
+    requestInfo() {
+      if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+      const buffer = struct.set(KEYS.INFO);
+      if (buffer) this.socket.send(buffer);
     },
     onopen() {
       this.pingDevice = Date.now();
@@ -37,6 +44,7 @@ export const useWebSocket = defineStore('webSocket', {
         if (data) {
           const { object, key } = data;
           if (key !== KEYS.PING) log(object, key);
+          if (key === KEYS.INFO) this.infoLoaded = true;
           const store = useWebSocketStore();
           const isStoreMethod = (key: string): key is keyof typeof store => key in store && typeof store[key as keyof typeof store] === 'function';
           if (isStoreMethod(`SET_${key}`)) {
@@ -67,6 +75,6 @@ export const useWebSocket = defineStore('webSocket', {
     },
   },
   getters: {
-    isConnect: (state) => state.pingClient - state.pingDevice < 10000,
+    isConnect: (state) => state.pingClient - state.pingDevice < 30000,
   },
 });
