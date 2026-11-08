@@ -16,6 +16,16 @@ Template for your arduino projects with a web interface.
 ![Vuesp storage](./github/images/screen/storage.png)
 ![Vuesp gpio](./github/images/screen/gpio.png)
 
+## Create a new project
+
+The fastest way to start your own device project:
+
+```bash
+npx vuesp-create@latest my-project
+```
+
+The CLI downloads this template, keeps the selected board, sets the project name and optionally installs dependencies. See [docs.vuesp.ru/vuesp-create](https://docs.vuesp.ru/vuesp-create) for details.
+
 ## Features
 
 - 🚀 Full-stack Arduino projects with web UI
@@ -121,6 +131,8 @@ Open http://localhost:3000/ in your browser.
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
 - `npm run check` - Run all code quality checks
+- `npm run screen` - Regenerate README screenshots (mock device, no hardware)
+- `npm run dev:mock` - Run the UI without a real device
 - `npm run firmware` - Build and flash firmware
 - `npm run build` - Full build (web + firmware)
 
@@ -186,6 +198,12 @@ Binary WebSocket messages at `/esp` endpoint:
 
 
 ## Version History
+
+### 4.0.1 (2026-11-08)
+
+- V4.0 web UI: glass theme, light/dark modes, updated components.
+- Web package bumped to 4.0.0; firmware build 4.0.1.
+- Added browser flashing support through `esptool-js` to the project site.
 
 ### 3.4.0 (2026-07-24)
 
@@ -290,7 +308,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 
 The MIT License (MIT)
 
-Copyright (c) 2021-2025, bondrogeen <bondrogeen@users.noreply.github.com>
+Copyright (c) 2021-2025, bondrogeen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 
