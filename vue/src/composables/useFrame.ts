@@ -16,7 +16,7 @@ export const useFrame = () => {
   onMounted(async () => {
     appStore.init(route.query);
 
-    if (window.self !== window.top) {
+    if (window.self !== window.top && import.meta.env.MODE !== 'demo') {
       isIframe.value = true;
       const html = document.querySelector('html');
       if (html) {

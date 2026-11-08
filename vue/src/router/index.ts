@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 // @ts-ignore
 import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 
@@ -25,7 +25,7 @@ import { routes, handleHotUpdate } from 'vue-router/auto-routes';
 const router = createRouter({
   linkActiveClass: '',
   linkExactActiveClass: '',
-  history: createWebHistory('/'),
+  history: import.meta.env.MODE === 'demo' ? createWebHashHistory(import.meta.env.BASE_URL) : createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior() {
     //to, from, savedPosition

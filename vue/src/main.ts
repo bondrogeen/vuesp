@@ -30,6 +30,11 @@ const pinia = createPinia();
 const app = createApp(App);
 
 (async () => {
+  if (import.meta.env.MODE === 'demo') {
+    const { installDemoRuntime } = await import('@/demo/runtime');
+    installDemoRuntime();
+  }
+
   try {
     const res = await useFetch(`/default.json`).get().json();
 

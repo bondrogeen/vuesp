@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
 import { Buffer } from 'node:buffer';
+import { readFileSync } from 'node:fs';
 import VueRouter from 'unplugin-vue-router/vite';
 import { compression } from 'vite-plugin-compression2';
 import pkg from '../vue/package.json';
@@ -16,9 +17,22 @@ const path = fileURLToPath(new URL('./src', import.meta.url));
 const { name, version, author, description, repository, license, homepage, bugs } = pkg;
 const info = { name, version, author, description, repository, license, homepage, bugs };
 
+const parseFirmwareVersion = (text: string): [number, number, number] => {
+  const match = /firmware_version\s*=\s*'\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}'/.exec(text);
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : [4, 0, 0];
+};
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const demoData = mode === 'demo'
+    ? {
+        defaultJson: readFileSync('public/default.json', 'utf8'),
+        dashboardJson: readFileSync('json/dashboard.json', 'utf8'),
+        scriptsTxt: readFileSync('public/scripts.txt', 'utf8'),
+        firmwareVersion: parseFirmwareVersion(readFileSync('../platformio.ini', 'utf8')),
+      }
+    : null;
   const authLogin = env.VITE_AUTH_LOGIN;
   const authPassword = env.VITE_AUTH_PASSWORD;
   const ip = env.VITE_IP;
@@ -27,8 +41,9 @@ export default defineConfig(({ mode }) => {
   console.log(url);
 
   return {
+    base: mode === 'demo' ? '/demo-app/' : '/',
     build: {
-      outDir: env.VITE_OUTPUT_DIR,
+      outDir: mode === 'demo' ? '../demo-dist' : env.VITE_OUTPUT_DIR,
       emptyOutDir: true,
       cssCodeSplit: false,
       rollupOptions: {
@@ -47,7 +62,7 @@ export default defineConfig(({ mode }) => {
       compression({
         filename: '[path][base].gz',
         algorithm: 'gzip',
-        deleteOriginalAssets: true,
+        deleteOriginalAssets: mode !== 'demo',
         include: /\.(js|css|svg|ttf|woff|eot|json)$/i,
         threshold: 0,
       }),
@@ -90,6 +105,8 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __APP__: info,
+      __DEMO_DATA__: JSON.stringify(demoData),
+      __DEMO__: mode === 'demo',
     },
   };
 });

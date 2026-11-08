@@ -29,14 +29,16 @@ The CLI downloads this template, keeps the selected board, sets the project name
 ## Features
 
 - 🚀 Full-stack Arduino projects with web UI
-- 🎨 Modern Vue 3 + TypeScript frontend
+- 🎨 V4.0 glass UI with light/dark themes and shared `vuesp-components`
+- 🧠 ScriptRunner editor with syntax highlighting and autocomplete
+- 🖥️ Browser demo with a mock device — no hardware required
 - 🔒 Optional HTTP Basic Authentication
 - ⚡ Binary WebSocket for efficient communication
 - 💾 LittleFS file system support
 - 📱 Responsive design with Tailwind CSS
-- 🔌 Support for multiple ESP platforms (ESP32, ESP8266)
-- 🛠️ Development server with hot reload
-- 🏗️ Automated GitHub Actions CI/CD
+- 🔌 Support for ESP32, ESP32-C3 and ESP8266
+- 🛠️ Development server with hot reload and mock device
+- 🏗️ Automated GitHub Actions CI/CD and firmware releases
 
 ## Supported Platforms
 
@@ -81,6 +83,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) for complete setup and development workfl
 
 ## Documentation
 
+- **[DOCS.md](./DOCS.md)** - Detailed project documentation for the catalog
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Complete development guide
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
 - **[SECURITY.md](./SECURITY.md)** - Security policies and best practices
@@ -132,6 +135,7 @@ Open http://localhost:3000/ in your browser.
 - `npm run format` - Format code with Prettier
 - `npm run check` - Run all code quality checks
 - `npm run screen` - Regenerate README screenshots (mock device, no hardware)
+- `npm run demo` - Build the public browser demo with mock device data
 - `npm run dev:mock` - Run the UI without a real device
 - `npm run firmware` - Build and flash firmware
 - `npm run build` - Full build (web + firmware)
@@ -201,9 +205,42 @@ Binary WebSocket messages at `/esp` endpoint:
 
 ### 4.0.1 (2026-11-08)
 
-- V4.0 web UI: glass theme, light/dark modes, updated components.
-- Web package bumped to 4.0.0; firmware build 4.0.1.
-- Added browser flashing support through `esptool-js` to the project site.
+- Текущая сборка прошивки V4.0; web-пакет — 4.0.0.
+- Стабильный релиз нового интерфейса и общей дизайн-системы.
+- Добавлены browser demo, mock-устройство, вложенная файловая система и периодический keepalive.
+- Скриптовый редактор и mock-сценарии используют общую логику `vuesp-components`.
+
+### 4.0.0 (2026-11-08)
+
+Крупное обновление Vuesp: новый встроенный web-интерфейс, общая дизайн-система и обновлённый ScriptRunner.
+
+**Web UI**
+- Полностью обновлён интерфейс: glass-панели, мягкие градиенты, светлая и тёмная темы, сетчатый фон.
+- Новый app shell: сайдбар, шапка, навигация, уведомления, progress и мобильное меню.
+- Dashboard, Script, Settings, Files и GPIO переведены на общие компоненты и адаптивную вёрстку.
+- Единые радиусы, акценты, типографика и состояния контролов во всех экранах.
+- Интерфейс использует `vuesp-components`; тема и примитивы общие с сайтом, документацией, ЛК и hub.
+
+**ScriptRunner**
+- Новый редактор сценариев с подсветкой синтаксиса, автодополнением, историей, автоточкой с запятой и сохранением отступов.
+- Подсветка ScriptRunner используется и в редакторе, и в примерах документации.
+- Добавлены mock-слоты и логи для browser demo, поэтому сценарии можно запускать без реальной платы.
+
+**Прошивка**
+- Поддержка ESP32, ESP32-C3 и ESP8266.
+- Бинарный WebSocket, LittleFS, `default.json`, `dashboard.json` и `scripts.txt`.
+- Обновлены зависимости, PlatformIO-сборка, CI и release-артефакты.
+- Добавлена сборка demo-бандла из актуальных данных прошивки.
+
+**Документация и демо**
+- Документация перестроена по проектам: Vuesp, Vuesp Hub и UI-библиотека.
+- Добавлена витрина компонентов с живыми примерами кнопок, полей, карточек, табов и диалогов.
+- Добавлена подсветка кода и кнопки копирования терминальных команд.
+- Browser demo показывает реальный web UI прошивки без подключения к устройству.
+
+**Совместимость**
+- Сохранены бинарный протокол, структуры и существующие device-проекты.
+- Web-пакет обновлён до `4.0.0`, прошивка — до `4.0.1`.
 
 ### 3.4.0 (2026-07-24)
 

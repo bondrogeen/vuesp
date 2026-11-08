@@ -49,3 +49,6 @@ yarn-error.log*
 
 # Local-only files
 vue/.env.screen
+
+# Public demo build output
+/demo-dist/

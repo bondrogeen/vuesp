@@ -4,6 +4,7 @@
 #include "./gpio/gpio.h"
 #include "./init/init.h"
 #include "./runner/runner.h"
+#include "./setup/serialSetup.h"
 #include "./tasks/tasks.h"
 #include "./webserver/webserver.h"
 
@@ -71,6 +72,7 @@ void loop() {
     loopDevice(now);
     loopWiFi(now);
     loopRunner(now);
+    loopSerialSetup();
   }
 
   if (now - lastTimeMain > 1000) {

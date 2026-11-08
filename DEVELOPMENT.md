@@ -148,6 +148,20 @@ npm run screen:mock   # only the mock device
 npm run dev:mock      # mock device + Vite dev server, no hardware needed
 ```
 
+### Public demo
+
+The site demo is a static build of this UI with a browser-side device mock:
+
+```bash
+npm run demo
+```
+
+The command regenerates `public/default.json` from `src/const/struct.h`, builds
+with `--mode demo`, and copies the result to
+`../vuesp.ru/public/demo-app`. It reads the dashboard, scripts and firmware
+version from the current repository, so rebuild the demo after changing the
+firmware struct or dashboard.
+
 ## Backend Development
 
 ### PlatformIO Setup
