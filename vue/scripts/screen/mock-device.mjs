@@ -197,22 +197,26 @@ export const startMockDevice = async ({ port = 4173, silent = false, root = DEFA
     ]),
   };
 
+  // Mirrors the real LittleFS layout: /www for the web UI and /tmp for runtime data.
   const files = {
     '/': [
       { isDir: 1, isFile: 0, size: 0, name: 'www' },
       { isDir: 1, isFile: 0, size: 0, name: 'tmp' },
-      { isDir: 1, isFile: 0, size: 0, name: 'docs' },
-      { isDir: 0, isFile: 1, size: 2048, name: 'config.json' },
-      { isDir: 0, isFile: 1, size: 65536, name: 'scripts.txt' },
-      { isDir: 1, isFile: 0, size: 0, name: 'css' },
-      { isDir: 0, isFile: 1, size: 512214, name: 'index.js' },
-      { isDir: 0, isFile: 1, size: 18432, name: 'index.css' },
     ],
     '/www': [
-      { isDir: 0, isFile: 1, size: 512214, name: 'index.js' },
-      { isDir: 0, isFile: 1, size: 18432, name: 'index.css' },
-      { isDir: 0, isFile: 1, size: 1352, name: 'index.html' },
-      { isDir: 0, isFile: 1, size: 65536, name: 'scripts.txt' },
+      { isDir: 0, isFile: 1, size: 3600, name: 'index.html' },
+      { isDir: 1, isFile: 0, size: 0, name: 'assets' },
+      { isDir: 0, isFile: 1, size: 6640, name: 'default.json' },
+      { isDir: 0, isFile: 1, size: 1280, name: 'scripts.txt' },
+    ],
+    '/www/assets': [
+      { isDir: 0, isFile: 1, size: 114560, name: 'index.js' },
+      { isDir: 0, isFile: 1, size: 13550, name: 'style.css' },
+    ],
+    '/tmp': [
+      { isDir: 0, isFile: 1, size: 2140, name: 'dashboard.json' },
+      { isDir: 0, isFile: 1, size: 116, name: 'device.io' },
+      { isDir: 0, isFile: 1, size: 120, name: 'gpio.io' },
     ],
   };
 
@@ -347,7 +351,8 @@ export const startMockDevice = async ({ port = 4173, silent = false, root = DEFA
         case 'FILES': {
           const object = message.object ?? {};
           if ((object.command ?? 0) !== 0) break;
-          const list = files[object.name] ?? [];
+          const key = String(object.name ?? '').replace(/\/+$/, '') || '/';
+          const list = files[key] ?? [];
           for (const file of list) send(socket, 'FILES', { command: 0, ...file });
           break;
         }
