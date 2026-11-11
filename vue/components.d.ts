@@ -12,7 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     CardChart: typeof import('./src/components/dashboard/CardChart.vue')['default']
-    IconRiArrowRightLine: typeof import('~icons/ri/arrow-right-line')['default']
+    EnergyFlowBlock: typeof import('./src/components/energy/EnergyFlowBlock.vue')['default']
     IconRiArrowRightSLine: typeof import('~icons/ri/arrow-right-s-line')['default']
     IconRiBatteryLine: typeof import('~icons/ri/battery-line')['default']
     IconRiBlazeFill: typeof import('~icons/ri/blaze-fill')['default']

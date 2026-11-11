@@ -40,15 +40,15 @@
           </template>
           <template #default="{ repo, home }">
             <div class="flex gap-2 mt-4">
-              <v-button :to="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
+              <v-button :href="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
 
-              <v-button v-if="home" :to="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
+              <v-button v-if="home" :href="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
             </div>
           </template>
         </BlockStatus>
       </AppAside>
 
-      <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar">
+      <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar mobile-hide-scrollbar">
         <AppHeader v-if="!isIframe" :change-theme="changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isSidebarRight = !isSidebarRight"></AppHeader>
 
         <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
@@ -65,7 +65,7 @@
 
         <AppNotification :value="isSidebarRight" :notifications="notifications" @close="isSidebarRight = false" @remove="appStore.removeNotification" @read="appStore.readNotification">
           <template #header="{ isNew }">
-            <div class="flex items-center justify-between py-4 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 px-2">
+            <div class="flex items-center justify-between py-4 sticky top-0 z-20 px-2">
               <h5>{{ $t('noti') }}</h5>
 
               <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="appStore.readAllNotification">{{ $t('mark') }}</VButton>

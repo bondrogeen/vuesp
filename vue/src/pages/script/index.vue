@@ -97,7 +97,7 @@ const onRemoveScript = () => {
             </div>
           </template>
 
-          <ul class="overflow-y-auto flex flex-col rounded-md border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2 h-40 scrollbar">
+          <ul class="overflow-y-auto flex flex-col rounded-md border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2 h-36 scrollbar">
             <li v-for="script of scripts" :key="script.id" class="group text-sm cursor-pointer transition-all flex items-center justify-between hover:opacity-80 px-1" @click="onSelect(script)">
               <div class="flex items-center gap-2 min-w-0">
                 <span>#{{ script.id }}</span>

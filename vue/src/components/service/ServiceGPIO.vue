@@ -101,9 +101,8 @@ const onMenu = ({ value }: IListItem<number>) => {
 
 <template>
   <div>
-    <card-main :title="$t('ports')">
-      <div class="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-        <div v-for="port in main.ports" :key="port.gpio" class="p-4 bg-gray-100/40 dark:bg-gray-700/10 rounded-md border border-gray-200 dark:border-gray-700/40">
+    <div class="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        <div v-for="port in main.ports" :key="port.gpio" class="glass-panel relative p-4 has-[.z-30]:z-20">
           <div class="mb-2">
             <h5 class="text-sm">{{ `GPIO: ${port.gpio} ${port.disabled ? `(${$t('dis')})` : ''}` }}</h5>
           </div>
@@ -155,7 +154,6 @@ const onMenu = ({ value }: IListItem<number>) => {
           </div>
         </div>
       </div>
-    </card-main>
 
     <Teleport to="[data-slot='device']">
       <v-select :items="listMenu" @change="onMenu">
