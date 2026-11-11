@@ -1,0 +1,8 @@
+{
+  "name": "vuesp",
+  "private": true,
+  "scripts": {
+    "sync": "npx -y vuesp-create@latest sync . --apply",
+    "sync:check": "npx -y vuesp-create@latest sync ."
+  }
+}

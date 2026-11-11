@@ -20,7 +20,7 @@ export const useFrame = () => {
       isIframe.value = true;
       const html = document.querySelector('html');
       if (html) {
-        html.classList.add('no-scrollbar');
+        html.classList.add('no-scrollbar', 'is-iframe');
       }
 
       messageListener = (event: MessageEvent) => {
