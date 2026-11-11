@@ -24,7 +24,7 @@ The fastest way to start your own device project:
 npx vuesp-create@latest my-project
 ```
 
-The CLI downloads this template, keeps the selected board, sets the project name and optionally installs dependencies. See [docs.vuesp.ru/vuesp-create](https://docs.vuesp.ru/vuesp-create) for details.
+The CLI clones this template with its git history, keeps the selected board, sets the project name and optionally installs dependencies. Use `--no-fork` for an independent copy. See [docs.vuesp.ru/vuesp-create](https://docs.vuesp.ru/vuesp-create) for details.
 
 ## Features
 
