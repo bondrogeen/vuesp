@@ -1,30 +1,21 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
-import { CardMain, VButton } from 'vuesp-components/components';
-
-import EnergyFlowBlock from '@/components/energy/EnergyFlowBlock.vue';
+import { CardMain, EnergyFlowBlock, deviceBlockStorage, energyFlowDefinition, useBlock } from 'vuesp-components/components';
+import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
+import { KEYS } from '@/utils/const';
+import { COMMAND } from '@/utils/gpio';
 
 const { $t } = useLocale();
 
-type ScenarioKey = 'day' | 'night' | 'export';
+const { main } = useConnection((send) => {
+  send(KEYS.INFO);
+  send(KEYS.DEVICE);
+  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
+});
 
-const scenario = ref<ScenarioKey>('day');
-
-const scenarioItems: { key: ScenarioKey; label: string }[] = [
-  { key: 'day', label: 'День' },
-  { key: 'night', label: 'Ночь' },
-  { key: 'export', label: 'Экспорт' },
-];
-
-const scenarios = {
-  day: { solarPower: 2.6, gridPower: 0, batteryPower: 0.8, batterySoc: 78, loadPower: 1.8 },
-  night: { solarPower: 0, gridPower: 1.4, batteryPower: -0.6, batterySoc: 62, loadPower: 1.8 },
-  export: { solarPower: 4.8, gridPower: -1.6, batteryPower: 1.2, batterySoc: 86, loadPower: 2.0 },
-} satisfies Record<ScenarioKey, Record<string, number>>;
-
-const scenarioValues = computed(() => scenarios[scenario.value]);
+const block = useBlock(energyFlowDefinition, main, { storage: deviceBlockStorage });
 
 const resources = computed(() => [
   { href: 'https://docs.vuesp.ru/', icon: 'book', title: $t('homePage.docs'), text: $t('homePage.docsText') },
@@ -40,21 +31,12 @@ const resources = computed(() => [
       <h1>{{ $t('home') }}</h1>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-xs text-gray-500 dark:text-gray-400">Сценарий:</span>
-
-      <VButton
-        v-for="item of scenarioItems"
-        :key="item.key"
-        size="sm"
-        :variant="scenario === item.key ? 'primary' : 'ghost'"
-        @click="scenario = item.key"
-      >
-        {{ item.label }}
-      </VButton>
-    </div>
-
-    <EnergyFlowBlock v-bind="scenarioValues" />
+    <EnergyFlowBlock
+      v-bind="block.data"
+      :config="block.config"
+      :context="block.context"
+      @update:config="block.update"
+    />
 
     <CardMain :title="$t('homePage.docs')" :loading="false">
       <p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{{ $t('homePage.docsIntro') }}</p>

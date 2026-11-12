@@ -192,5 +192,10 @@
     "scriptsText": "Local scripts and automation.",
     "settingsText": "Wi-Fi, security and updates.",
     "storageText": "Files and configuration in LittleFS."
+  },
+  "dashboard": {
+    "newValue": "New value",
+    "getResult": "Result of Get",
+    "argument": "Argument"
   }
 }

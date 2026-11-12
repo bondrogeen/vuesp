@@ -192,5 +192,10 @@
     "scriptsText": "Локальные сценарии и автоматизация.",
     "settingsText": "Wi-Fi, безопасность и обновление.",
     "storageText": "Файлы и конфигурация в LittleFS."
+  },
+  "dashboard": {
+    "newValue": "Новое значение",
+    "getResult": "Результат Get",
+    "argument": "Аргумент"
   }
 }
