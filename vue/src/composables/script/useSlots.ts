@@ -23,7 +23,7 @@ export const useSlots = (main: Ref<IStateMain, IStateMain>) => {
   const getColorSlot = (slot: IMessageMessage) => {
     if (slot.active) return 'bg-violet-500';
     if (slot.handler) return 'bg-blue-500';
-    return 'bg-gray-200 dark:bg-gray-500 ';
+    return 'bg-gray-light-10 dark:bg-gray-dark-25 ';
   };
   return {
     slotInfo,

@@ -64,7 +64,7 @@ const app = createApp(App);
         <div style="padding: 2rem; text-align: center;">
           <h1>Failed to Load Application</h1>
           <p>${error instanceof Error ? error.message : 'Unknown error occurred'}</p>
-          <p style="color: #666; margin-top: 1rem;">Please check that the device is accessible and try refreshing the page.</p>
+          <p style="color: var(--color-slate-main); margin-top: 1rem;">Please check that the device is accessible and try refreshing the page.</p>
           <button onclick="location.reload()" style="padding: 0.5rem 1rem; margin-top: 1rem; cursor: pointer;">
             Reload Page
           </button>

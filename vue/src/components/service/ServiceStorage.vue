@@ -102,7 +102,7 @@ watchEffect(() => {
           <div
             v-for="(value, i) of path"
             :key="value"
-            class="flex items-center gap-2 cursor-pointer text-gray-600 last:cursor-default last:text-gray-900 dark:text-gray-200 dark:last:text-white"
+            class="flex items-center gap-2 cursor-pointer text-gray-dark-25 last:cursor-default last:text-gray-dark-40 dark:text-gray-light-10 dark:last:text-white"
             @click="onPrev(i)"
           >
             <div>{{ value }}</div>
@@ -115,11 +115,11 @@ watchEffect(() => {
       </div>
 
       <div class="relative min-h-[260px]">
-        <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-primary" />
+        <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-cyan-main" />
 
         <v-list v-slot="{ item: { name, size, isDir, isFile } }" :items="sortFiles" class="">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
-            <div class="mr-4 text-gray-400">
+            <div class="mr-4 text-gray-main">
               <icon-ri-folder-6-line v-if="isDir"></icon-ri-folder-6-line>
               <icon-ri-file-line v-else></icon-ri-file-line>
             </div>
@@ -127,7 +127,7 @@ watchEffect(() => {
             <div>
               <div class="text-sm">{{ isDir ? `${name}` : name }}</div>
 
-              <div v-if="isFile" class="text-sm text-[10px] text-gray-400">{{ toByte(size) }} ({{ size }})</div>
+              <div v-if="isFile" class="text-sm text-[10px] text-gray-main">{{ toByte(size) }} ({{ size }})</div>
             </div>
           </div>
 

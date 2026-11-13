@@ -62,7 +62,7 @@ const installBadge = (firmwareVersion: string): void => {
 		'background:rgba(6,11,40,.92)',
 		'box-shadow:0 18px 50px -24px rgba(0,0,0,.9)',
 		'backdrop-filter:blur(12px)',
-		'color:#e2e8f0',
+		'color:var(--color-gray-light-30)',
 		'font:12px/1.2 Roboto,system-ui,sans-serif',
 	].join(';');
 

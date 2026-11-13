@@ -4,14 +4,14 @@
       <div class="text-2xl font-bold mb-4">{{ $t('disconn') }}</div>
 
       <div class="flex justify-center">
-        <v-loader class="text-primary"></v-loader>
+        <v-loader class="text-cyan-main"></v-loader>
       </div>
     </AppOverlay>
 
     <div class="flex h-screen overflow-hidden">
       <AppAside v-if="!isIframe" :isSidebar="isSidebar" @sidebar="onSidebar">
         <h3 class="mb-4 text-xs h-5 uppercase flex items-center gap-2 justify-between" :class="isSidebar ? 'lg:hidden' : ''">
-          <span v-if="nameDevice" class="text-gray-400 text-nowrap">{{ nameDevice }}</span>
+          <span v-if="nameDevice" class="text-gray-main text-nowrap">{{ nameDevice }}</span>
         </h3>
 
         <AppNav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
@@ -32,7 +32,7 @@
         <BlockStatus
           v-bind="info"
           :pkg="pkg"
-          class="mb-4 w-full rounded-md border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-white/[0.03] px-4 py-4 text-center"
+          class="mb-4 w-full rounded-md border border-gray-light-10 dark:border-gray-dark-30 bg-gray-light-30 dark:bg-white/[0.03] px-4 py-4 text-center"
           :class="isSidebar ? 'lg:hidden' : ''"
         >
           <template #name="{ item }">
@@ -91,7 +91,7 @@
       <BlockInfo v-bind="main.info" :pkg="pkg" class="w-full">
         <template #links="{ links }">
           {{ $t('links') }}:
-          <div class="flex flex-wrap gap-2 text-gray-700 dark:text-gray-400">
+          <div class="flex flex-wrap gap-2 text-gray-dark-30 dark:text-gray-main">
             <a v-for="link of links" :key="link.name" :href="link.href" target="_blank" class="me-4">{{ $t(link.name) }}</a>
           </div>
         </template>

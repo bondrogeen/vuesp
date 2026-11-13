@@ -186,7 +186,7 @@ const onUpdate = (name: string, files: FormData) => {
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
           <div class="flex justify-between mb-4 md:col-span-2">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ $t('wifi') }}</h3>
+            <h3 class="text-lg font-semibold text-gray-dark-30 dark:text-white/90">{{ $t('wifi') }}</h3>
           </div>
 
           <div class="mb-6">
@@ -216,7 +216,7 @@ const onUpdate = (name: string, files: FormData) => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
           <div class="flex justify-between mb-4 md:col-span-2">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90 mb-0">{{ $t('ipSett') }}</h3>
+            <h3 class="text-lg font-semibold text-gray-dark-30 dark:text-white/90 mb-0">{{ $t('ipSett') }}</h3>
 
             <div>
               <VCheckbox v-model="settings.wifiDhcp">{{ $t('dhcp') }}</VCheckbox>
@@ -268,7 +268,7 @@ const onUpdate = (name: string, files: FormData) => {
 
     <card-main :title="$t('system')">
       <template #header>
-        <button class="text-gray-400 cursor-pointer" @click="dialogInfo = true">
+        <button class="text-gray-main cursor-pointer" @click="dialogInfo = true">
           <icon-ri-information-line class="size-5" />
         </button>
       </template>

@@ -39,7 +39,7 @@ const resources = computed(() => [
     />
 
     <CardMain :title="$t('homePage.docs')" :loading="false">
-      <p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{{ $t('homePage.docsIntro') }}</p>
+      <p class="text-sm leading-relaxed text-gray-dark-25 dark:text-gray-main">{{ $t('homePage.docsIntro') }}</p>
       <div class="mt-4 grid gap-2 sm:grid-cols-2">
         <a
           v-for="resource of resources"
@@ -49,15 +49,15 @@ const resources = computed(() => [
           rel="noreferrer"
           class="flex items-center gap-3 rounded-md bg-white/5 p-3 transition-colors hover:bg-white/10"
         >
-          <icon-ri-book-open-line v-if="resource.icon === 'book'" class="size-4 shrink-0 text-primary" />
-          <icon-ri-layout-grid-line v-else-if="resource.icon === 'grid'" class="size-4 shrink-0 text-primary" />
-          <icon-ri-code-s-slash-line v-else-if="resource.icon === 'code'" class="size-4 shrink-0 text-primary" />
-          <icon-ri-github-fill v-else-if="resource.icon === 'github'" class="size-4 shrink-0 text-primary" />
+          <icon-ri-book-open-line v-if="resource.icon === 'book'" class="size-4 shrink-0 text-cyan-main" />
+          <icon-ri-layout-grid-line v-else-if="resource.icon === 'grid'" class="size-4 shrink-0 text-cyan-main" />
+          <icon-ri-code-s-slash-line v-else-if="resource.icon === 'code'" class="size-4 shrink-0 text-cyan-main" />
+          <icon-ri-github-fill v-else-if="resource.icon === 'github'" class="size-4 shrink-0 text-cyan-main" />
           <span class="min-w-0 flex-1">
             <span class="block text-xs font-medium">{{ resource.title }}</span>
-            <span class="mt-0.5 block text-[10px] leading-snug text-gray-500 dark:text-gray-400">{{ resource.text }}</span>
+            <span class="mt-0.5 block text-[10px] leading-snug text-gray-dark-25 dark:text-gray-main">{{ resource.text }}</span>
           </span>
-          <icon-ri-external-link-line class="size-3.5 shrink-0 text-gray-400" />
+          <icon-ri-external-link-line class="size-3.5 shrink-0 text-gray-main" />
         </a>
       </div>
     </CardMain>

@@ -126,10 +126,10 @@ const onMenu = ({ value }: IListItem<number>) => {
 
                 <VTooltip>
                   <template #activator>
-                    <icon-ri-information-line class="size-4 text-gray-500" />
+                    <icon-ri-information-line class="size-4 text-gray-dark-25" />
                   </template>
                   <template #default="{ show }">
-                    <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-800">
+                    <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-dark-30">
                       <p>{{ $t('message.shortPress') }}</p>
                     </div>
                   </template>
