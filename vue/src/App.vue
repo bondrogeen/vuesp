@@ -16,14 +16,7 @@
 
         <AppNav :menu="getMenu" :isSidebar="isSidebar" :fullPath="fullPath" @sidebar="onSidebar">
           <template #icon="{ item }">
-            <icon-ri-home-line v-if="item.icon === 'home'" class="size-6" />
-            <icon-ri-dashboard-line v-else-if="item.icon === 'dashboard'" class="size-6" />
-            <icon-ri-file-code-line v-else-if="item.icon === 'script'" class="size-6" />
-            <icon-ri-equalizer-line v-else-if="item.icon === 'settings'" class="size-6" />
-            <icon-ri-database-2-line v-else-if="item.icon === 'storage'" class="size-6" />
-            <icon-ri-cpu-line v-else-if="item.icon === 'gpio'" class="size-6" />
-
-            <icon-ri-home-line v-else />
+            <VIcon :name="item.icon || 'home'" class="size-5" />
           </template>
         </AppNav>
 
@@ -42,7 +35,7 @@
             <div class="flex gap-2 mt-4">
               <v-button :href="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
 
-              <v-button v-if="home" :href="home" target="_blank" class="w-full" color="blue" outline>{{ $t('homepage') }}</v-button>
+              <v-button v-if="home" :href="home" target="_blank" class="w-full" color="blue" variant="outline">{{ $t('homepage') }}</v-button>
             </div>
           </template>
         </BlockStatus>
@@ -51,7 +44,7 @@
       <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar mobile-hide-scrollbar">
         <AppHeader v-if="!isIframe" :change-theme="changeTheme" :notifications="notifications" @sidebar="isSidebar = !isSidebar" @notif="isSidebarRight = !isSidebarRight"></AppHeader>
 
-        <main :class="isIframe ? 'no-scrollbar' : 'px-4 py-6 sm:px-6 lg:px-8 flex-auto'">
+        <main :class="isIframe ? 'no-scrollbar' : 'py-6 flex-auto'">
           <div :class="isIframe ? '' : 'container mx-auto h-full'">
             <router-view />
           </div>
@@ -82,7 +75,7 @@
       <div v-html="dialog.message" />
 
       <div v-if="dialog.callback" class="flex gap-3 mt-4 justify-end">
-        <v-button class="min-w-[100px]" outline color="blue" @click="(dialog.callback(), close())">{{ $t('yes') }}</v-button>
+        <v-button class="min-w-[100px]" variant="outline" color="blue" @click="(dialog.callback(), close())">{{ $t('yes') }}</v-button>
         <v-button class="min-w-[100px]" color="red" @click="close()">{{ $t('no') }}</v-button>
       </div>
     </v-dialog>
@@ -114,7 +107,7 @@ import { useSocket } from '@/composables/useSocket';
 import { useStore } from '@/composables/useStore';
 import { useLocale } from '@/composables/useLocale';
 
-import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus } from 'vuesp-components/components';
+import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus, VIcon } from 'vuesp-components/components';
 
 const { $t, setLocale } = useLocale();
 

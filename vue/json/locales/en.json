@@ -175,7 +175,7 @@
     "docsText": "Firmware, Web UI, structures and protocol.",
     "docsIntro": "If the documentation is unavailable, open the sources and examples directly.",
     "components": "Interface components",
-    "componentsText": "Live examples of VButton, VTextField, CardMain and others.",
+    "componentsText": "Live examples of VButton, VTextField, VCard and others.",
     "componentsSource": "Component sources and examples on GitHub.",
     "webUi": "How Web UI works",
     "webUiText": "Project structure, pages, data and types.",

@@ -10,7 +10,7 @@ import { useFiles } from '@/composables/useFiles';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 
-import { VFile } from 'vuesp-components/components';
+import { VIcon, VFile, VCard } from 'vuesp-components/components';
 
 const { $t } = useLocale();
 
@@ -96,7 +96,7 @@ watchEffect(() => {
 
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2">
-    <card-main :title="$t('fb')">
+    <VCard :title="$t('fb')" hover>
       <div class="px-4 pb-2 flex items-center">
         <div class="flex gap-2 items-center font-bold flex-auto">
           <div
@@ -107,7 +107,7 @@ watchEffect(() => {
           >
             <div>{{ value }}</div>
 
-            <icon-ri-arrow-right-s-line v-if="isLast(path, i)" class="h-5 w-4"></icon-ri-arrow-right-s-line>
+            <VIcon name="arrow-right" v-if="isLast(path, i)" class="h-5 w-4"></VIcon>
           </div>
         </div>
 
@@ -117,36 +117,36 @@ watchEffect(() => {
       <div class="relative min-h-[260px]">
         <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-cyan-main" />
 
-        <v-list v-slot="{ item: { name, size, isDir, isFile } }" :items="sortFiles" class="">
+        <v-list v-slot="{ item: { name, size, isDir, isFile } }" :items="sortFiles">
           <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
             <div class="mr-4 text-gray-main">
-              <icon-ri-folder-6-line v-if="isDir"></icon-ri-folder-6-line>
-              <icon-ri-file-line v-else></icon-ri-file-line>
+              <VIcon name="folder" v-if="isDir" class="size-4"></VIcon>
+              <VIcon name="file" v-else class="size-4"></VIcon>
             </div>
 
             <div>
               <div class="text-sm">{{ isDir ? `${name}` : name }}</div>
 
-              <div v-if="isFile" class="text-sm text-[10px] text-gray-main">{{ toByte(size) }} ({{ size }})</div>
+              <div v-if="isFile" class="text-sm text-xs text-gray-main">{{ toByte(size) }} ({{ size }})</div>
             </div>
           </div>
 
           <v-select :items="getListMenu(isDir)" @change="onEventList(name, $event)">
             <template #activator="{ on }">
               <v-button @click="on.click">
-                <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
+                <VIcon name="more" class="size-5 rotate-90"></VIcon>
               </v-button>
             </template>
           </v-select>
         </v-list>
       </div>
-    </card-main>
+    </VCard>
 
     <Teleport to="[data-slot='device']">
       <v-select :items="mainMenu" @change="onEventService">
         <template #activator="{ on }">
           <v-button type="icon" @click="on.click">
-            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
+            <VIcon name="more" class="size-5 rotate-90"></VIcon>
           </v-button>
         </template>
       </v-select>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-import { CardMain, EnergyFlowBlock, deviceBlockStorage, energyFlowDefinition, useBlock } from 'vuesp-components/components';
+import { VIcon, EnergyFlowBlock, deviceBlockStorage, energyFlowDefinition, useBlock, VCard } from 'vuesp-components/components';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 import { KEYS } from '@/utils/const';
@@ -26,7 +26,7 @@ const resources = computed(() => [
 </script>
 
 <template>
-  <div class="container mx-auto space-y-6 pb-10">
+  <div class="space-y-6 pb-10">
     <div class="mb-6 flex items-center justify-between">
       <h1>{{ $t('home') }}</h1>
     </div>
@@ -38,7 +38,7 @@ const resources = computed(() => [
       @update:config="block.update"
     />
 
-    <CardMain :title="$t('homePage.docs')" :loading="false">
+    <VCard :title="$t('homePage.docs')" hover>
       <p class="text-sm leading-relaxed text-gray-dark-25 dark:text-gray-main">{{ $t('homePage.docsIntro') }}</p>
       <div class="mt-4 grid gap-2 sm:grid-cols-2">
         <a
@@ -49,17 +49,17 @@ const resources = computed(() => [
           rel="noreferrer"
           class="flex items-center gap-3 rounded-md bg-white/5 p-3 transition-colors hover:bg-white/10"
         >
-          <icon-ri-book-open-line v-if="resource.icon === 'book'" class="size-4 shrink-0 text-cyan-main" />
-          <icon-ri-layout-grid-line v-else-if="resource.icon === 'grid'" class="size-4 shrink-0 text-cyan-main" />
-          <icon-ri-code-s-slash-line v-else-if="resource.icon === 'code'" class="size-4 shrink-0 text-cyan-main" />
-          <icon-ri-github-fill v-else-if="resource.icon === 'github'" class="size-4 shrink-0 text-cyan-main" />
+          <VIcon name="book-open" v-if="resource.icon === 'book'" class="size-4 shrink-0 text-cyan-main" />
+          <VIcon name="layout-grid" v-else-if="resource.icon === 'grid'" class="size-4 shrink-0 text-cyan-main" />
+          <VIcon name="code" v-else-if="resource.icon === 'code'" class="size-4 shrink-0 text-cyan-main" />
+          <VIcon name="github" v-else-if="resource.icon === 'github'" class="size-4 shrink-0 text-cyan-main" />
           <span class="min-w-0 flex-1">
             <span class="block text-xs font-medium">{{ resource.title }}</span>
-            <span class="mt-0.5 block text-[10px] leading-snug text-gray-dark-25 dark:text-gray-main">{{ resource.text }}</span>
+            <span class="mt-0.5 block text-xs leading-snug text-gray-dark-25 dark:text-gray-main">{{ resource.text }}</span>
           </span>
-          <icon-ri-external-link-line class="size-3.5 shrink-0 text-gray-main" />
+          <VIcon name="external" class="size-3.5 shrink-0 text-gray-main" />
         </a>
       </div>
-    </CardMain>
+    </VCard>
   </div>
 </template>

@@ -11,7 +11,7 @@ import { useFetch } from '@vueuse/core';
 import { PATH_FS, pathGPIO } from '@/utils/const';
 import { useLocale } from '@/composables/useLocale';
 import { computed } from 'vue';
-import { VCheckbox, VTooltip } from 'vuesp-components/components';
+import { VCard, VIcon, VCheckbox, VTooltip } from 'vuesp-components/components';
 
 const { $t } = useLocale();
 const { main, onSend, onDialog } = useConnection((send) => {
@@ -102,7 +102,7 @@ const onMenu = ({ value }: IListItem<number>) => {
 <template>
   <div>
     <div class="relative grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-        <div v-for="port in main.ports" :key="port.gpio" class="glass-panel relative p-4 has-[.z-30]:z-20">
+        <VCard v-for="port in main.ports" :key="port.gpio" hover variant="glass" padding="lg" class="relative has-[.z-30]:z-20">
           <div class="mb-2">
             <h5 class="text-sm">{{ `GPIO: ${port.gpio} ${port.disabled ? `(${$t('dis')})` : ''}` }}</h5>
           </div>
@@ -126,7 +126,7 @@ const onMenu = ({ value }: IListItem<number>) => {
 
                 <VTooltip>
                   <template #activator>
-                    <icon-ri-information-line class="size-4 text-gray-dark-25" />
+                    <VIcon name="info" class="size-4 text-gray-dark-25" />
                   </template>
                   <template #default="{ show }">
                     <div v-if="show" class="absolute top-0 right-0 bg-white-main px-3 py-2 rounded shadow-nav z-5 w-70 bg-white dark:bg-gray-dark-30">
@@ -152,14 +152,14 @@ const onMenu = ({ value }: IListItem<number>) => {
               ></v-text-field>
             </div>
           </div>
-        </div>
+        </VCard>
       </div>
 
     <Teleport to="[data-slot='device']">
       <v-select :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
           <v-button color="" type="icon" @click="on.click">
-            <icon-ri-more-line class="rotate-90"></icon-ri-more-line>
+            <VIcon name="more" class="size-5 rotate-90"></VIcon>
           </v-button>
         </template>
       </v-select>
