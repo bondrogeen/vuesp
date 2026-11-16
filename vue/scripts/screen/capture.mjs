@@ -1,17 +1,3 @@
-/**
- * Captures up-to-date screenshots of the main Vuesp screens.
- *
- * Usage (from the `vue` directory):
- *
- *   npm run screen                        # all screens, dark theme, English
- *   npm run screen -- dashboard gpio      # only selected screens
- *   npm run screen -- --theme=light       # light theme
- *   npm run screen -- --width=1440 --height=900 --scale=2
- *   npm run screen -- --base-url=http://192.168.1.100   # real device
- *
- * By default it starts the mock device and the Vite dev server, so no hardware
- * is required. Screenshots are written to `../github/images/screen`.
- */
 import { mkdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,9 +7,6 @@ import { createServer as createViteServer } from 'vite';
 
 import { startMockDevice } from './mock-device.mjs';
 
-// The tool lives in the core Vuesp repository, but the same script captures
-// screenshots for device repositories. `VUESP_SCREEN_ROOT` points at the
-// target `vue/` directory; without it, the script uses its own repository.
 const ROOT = process.env.VUESP_SCREEN_ROOT
   ? resolve(process.env.VUESP_SCREEN_ROOT)
   : fileURLToPath(new URL('../..', import.meta.url));
@@ -110,7 +93,6 @@ const waitForScreen = async (page, name) => {
   await page.waitForSelector('main h1', { timeout: 20_000 });
   await page.evaluate(() => document.fonts?.ready);
 
-  // Data arrives over the WebSocket right after the first render.
   if (['dashboard', 'script', 'settings', 'storage', 'gpio'].includes(name)) {
     await page.waitForTimeout(900);
   } else {
@@ -186,7 +168,6 @@ const main = async () => {
       ({ theme, language }) => {
         localStorage.setItem('theme', theme);
         localStorage.setItem('locale', language);
-        // Suppress the "new version" information dialog on the first visit.
         localStorage.setItem('isShow', 'true');
         document.documentElement?.classList.remove('light', 'dark');
         document.documentElement?.classList.add(theme);

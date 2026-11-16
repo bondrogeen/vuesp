@@ -74,7 +74,6 @@ const onUpdate = (e: Event) => {
 };
 
 const openDialog = async () => {
-  // https://www.chartjs.org/
   await loadScript('https://cdn.jsdelivr.net/npm/chart.js');
   createChart();
 };

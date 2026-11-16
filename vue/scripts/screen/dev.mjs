@@ -1,11 +1,3 @@
-/**
- * Starts the mock device and the Vite dev server without a real ESP board.
- *
- *   npm run dev:mock
- *
- * The UI behaves like it is connected to a device: dashboard data, GPIO ports,
- * file system and settings are served by scripts/screen/mock-device.mjs.
- */
 import { createServer as createViteServer } from 'vite';
 
 import { startMockDevice } from './mock-device.mjs';

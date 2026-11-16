@@ -1,6 +1,5 @@
 #define CONFIG_START 0
 
-// Default struct settings
 #define CONFIG_VERSION 0
 
 #define DEF_WIFI_DHCP 1
@@ -29,12 +28,8 @@
 
 #define DEF_DIR_DEVICE "/tmp"
 #define DEF_PATH_CONFIG DEF_DIR_DEVICE "/device.io"
-#define DEF_PATH_GPIO DEF_DIR_DEVICE "/gpio.io"
+#define DEF_PATH_GPIO DEF_DIR_DEVICE "/gpio.bin"
 
-#define COMMAND_GET 1
-#define COMMAND_SET 2
-#define COMMAND_TEXT 3
-#define COMMAND_SAVE 254
 
 #ifndef DEF_DEVICE_NAME
 #define DEF_DEVICE_NAME "VUESP-"

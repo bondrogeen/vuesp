@@ -1,16 +1,3 @@
-/**
- * Minimal mock of a Vuesp device for local UI work and screenshots.
- *
- * It speaks the same binary WebSocket protocol as the firmware
- * (`src/const/struct.h`) and serves the few HTTP endpoints the web UI uses:
- *
- *   GET /default.json            app config + struct definition
- *   GET /fs?file=/tmp/dashboard.json
- *   GET /fs?file=/www/scripts.txt
- *
- * The struct definition is read from `public/default.json`, so the mock stays
- * in sync with the firmware as long as `npm run struct-and-json` was run.
- */
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, join } from 'node:path';
@@ -29,8 +16,6 @@ const parseFirmwareVersion = async (root) => {
   return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : [4, 0, 0];
 };
 
-// Fill the device snapshot with plausible values so screenshots do not show
-// empty dashboards. The shape is taken from the project's own struct.
 const buildDeviceSample = (fields, now) => {
   const names = new Set(fields.map((field) => field.name));
   const isShinwa = names.has('cell1');
@@ -67,7 +52,6 @@ const buildDeviceSample = (fields, now) => {
   if (names.has('dateMonth')) sample.dateMonth = 7;
   if (names.has('dateYear')) sample.dateYear = 25;
 
-  // In the Shinwa dashboard `lastTime === 0` means the device is online.
   if (names.has('lastTime')) sample.lastTime = 0;
   if (names.has('status1')) sample.status1 = 0;
   if (names.has('status3')) sample.status3 = 6;
@@ -124,12 +108,6 @@ const buildPort = (gpio, overrides = {}) => ({
   ...overrides,
 });
 
-/**
- * Starts the mock device server.
- *
- * @param {{ port?: number, silent?: boolean, root?: string }} [options]
- * @returns {Promise<{ port: number, close: () => Promise<void> }>}
- */
 export const startMockDevice = async ({ port = 4173, silent = false, root = DEFAULT_ROOT } = {}) => {
   const defaultJsonText = await readFile(join(root, 'public/default.json'), 'utf8');
   const defaultJson = JSON.parse(defaultJsonText);
@@ -197,7 +175,6 @@ export const startMockDevice = async ({ port = 4173, silent = false, root = DEFA
     ]),
   };
 
-  // Mirrors the real LittleFS layout: /www for the web UI and /tmp for runtime data.
   const files = {
     '/': [
       { isDir: 1, isFile: 0, size: 0, name: 'www' },
@@ -284,8 +261,6 @@ export const startMockDevice = async ({ port = 4173, silent = false, root = DEFA
       return;
     }
 
-    // The Vite dev server serves the SPA itself; this is only a fallback for
-    // direct requests (for example, a favicon probe from the browser).
     if (url.pathname === '/' || extname(url.pathname) === '') {
       response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
       response.end('Vuesp mock device');
@@ -396,7 +371,6 @@ export const startMockDevice = async ({ port = 4173, silent = false, root = DEFA
   };
 };
 
-// Allow running the mock standalone: node scripts/screen/mock-device.mjs
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const port = Number(process.env.MOCK_PORT ?? 4173);
   await startMockDevice({ port });

@@ -1,10 +1,10 @@
-import type { I18nInstance } from 'vuesp-components/types';
+import type { II18nInstance } from 'vuesp-components/types';
 import { inject } from 'vue';
 
 import { localSet } from 'vuesp-components/helpers';
 
 export const useLocale = () => {
-  const i18n = inject<I18nInstance>('i18n');
+  const i18n = inject<II18nInstance>('i18n');
 
   if (!i18n) {
     throw new Error('i18n not provided');

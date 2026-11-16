@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { Ref } from 'vue';
-import type { TypeMessage, IMessageScan, IListItem, TypeSend } from '@/types';
+import type { TMessage, IScan, IListItem, TSend } from '@/types';
 
-import { computed, ref, nextTick, watch } from 'vue';
+import { computed, ref, nextTick, watch, onUnmounted } from 'vue';
 import { required, maxLen, minLen, sameAs, ip, minVal, maxVal } from 'vuesp-components/validate';
 
-import { KEYS } from '@/utils/const';
+import { KEY } from '@/generated/protocol';
 
 import { useForm } from 'vuesp-components/composables';
-import type { ValidationSchema } from 'vuesp-components/types';
+import type { TValidationSchema } from 'vuesp-components/types';
 
 import { useConnection } from '@/composables/useConnection';
 import { arrToStr, strToArr } from 'vuesp-components/helpers';
@@ -28,15 +28,31 @@ const isPass = ref(false);
 const isAuthPass = ref(false);
 const isDialog = ref(false);
 
-const scanList: Ref<Partial<IMessageScan>[]> = ref([]);
+const scanList: Ref<Partial<IScan>[]> = ref([]);
 
-const onMessage = ({ key, object }: TypeMessage) => {
-  if (key === KEYS.SCAN && object) scanList.value.push(object);
+let settingsTimer: ReturnType<typeof setInterval> | null = null;
+const stopSettingsRequest = () => {
+  if (settingsTimer) clearInterval(settingsTimer);
+  settingsTimer = null;
 };
 
-const onInit = (send: TypeSend) => {
-  send(KEYS.SETTINGS);
+const onMessage = ({ key, object }: TMessage) => {
+  if (key === KEY.SETTINGS) stopSettingsRequest();
+  if (key === KEY.SCAN && object) scanList.value.push(object);
 };
+
+const onInit = (send: TSend) => {
+  send(KEY.SETTINGS);
+  if (settingsTimer) return;
+  let attempts = 0;
+  settingsTimer = setInterval(() => {
+    attempts += 1;
+    if (attempts > 5) return stopSettingsRequest();
+    send(KEY.SETTINGS);
+  }, 2000);
+};
+
+onUnmounted(stopSettingsRequest);
 
 const { settings, dialogInfo, onSend, onDialog } = useConnection(onInit, onMessage);
 
@@ -55,7 +71,7 @@ const { defineField, handleSubmit } = useForm({
       reAuthPassword: settings.value.authMode ? [required, maxLen(12), sameAs('authPass')] : [],
       discoveryInterval: settings.value.discovery ? [required, minVal(5), maxVal(255)] : [],
       discoveryPort: settings.value.discovery ? [required, minVal(1000), maxVal(65535)] : [],
-    }) as ValidationSchema,
+    }) as TValidationSchema,
 });
 
 const [wifiSsid, wifiSsidProps] = defineField<string>('wifiSsid');
@@ -86,7 +102,8 @@ watch(
     reAuthPassword.value = settings.value.authPass;
     discoveryPort.value = `${settings.value.discoveryPort}`;
     discoveryInterval.value = `${settings.value.discoveryInterval}`;
-  }
+  },
+  { immediate: true }
 );
 
 const onSubmit = handleSubmit((values) => {
@@ -98,8 +115,8 @@ const onSubmit = handleSubmit((values) => {
   settings.value.wifiDns = strToArr(values.wifiDns as string);
   settings.value.authLogin = values.authLogin as string;
   settings.value.authPass = values.authPass as string;
-  settings.value.discoveryPort = values.discoveryPort as number;
-  settings.value.discoveryInterval = values.discoveryInterval as number;
+  settings.value.discoveryPort = Number(values.discoveryPort);
+  settings.value.discoveryInterval = Number(values.discoveryInterval);
   onSave();
 });
 
@@ -107,7 +124,6 @@ const listWiFi: IListItem<number>[] = [
   { name: $t('off'), value: 0 },
   { name: $t('sta'), value: 1 },
   { name: $t('ap'), value: 2 },
-  // { name: 'STA + AP', value: 3 },
 ];
 
 const getValueListWiFi = (mode: number) => listWiFi.find((i) => i.value === mode)?.name;
@@ -117,11 +133,11 @@ const isWifi = computed(() => Boolean(!settings.value.wifiMode));
 const isAuth = computed(() => Boolean(!settings.value.authMode));
 
 const onReboot = () => {
-  onSend(KEYS.REBOOT);
+  onSend(KEY.REBOOT);
 };
 
 const onSave = () => {
-  onSend(KEYS.SETTINGS, settings.value);
+  onSend(KEY.SETTINGS, settings.value);
   onSureReboot();
 };
 
@@ -140,7 +156,7 @@ const onMenu = () => {
   onSubmit();
 };
 
-const onSelectSsid = ({ ssid }: IMessageScan) => {
+const onSelectSsid = ({ ssid = '' }: Partial<IScan>) => {
   settings.value.wifiMode = 1;
   settings.value.wifiSsid = ssid;
   wifiSsid.value = ssid;
@@ -156,7 +172,7 @@ const onClose = () => (isDialog.value = false);
 const onScan = () => {
   isDialog.value = true;
   scanList.value = [];
-  onSend(KEYS.SCAN);
+  onSend(KEY.SCAN);
 };
 
 const onChange = (value: number) => (settings.value.wifiMode = value);

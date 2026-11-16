@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Ref } from 'vue';
-import type { IListItem, IMessageFile, TypeMessage } from '@/types';
-import { KEYS } from '@/utils/const';
+import type { IListItem, IFiles, TMessage } from '@/types';
+import { KEY, CMD } from '@/generated/protocol';
 
 import { watchEffect, ref, computed, nextTick } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
@@ -26,26 +26,26 @@ const listMenu: IListItem<number>[] = [
 
 const isLoading = ref(false);
 const path = ref(['root']);
-const files: Ref<IMessageFile[]> = ref([]);
+const files: Ref<IFiles[]> = ref([]);
 const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
-const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IMessageFile, b: IMessageFile) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
+const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IFiles, b: IFiles) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
 
 const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.value !== 1 : true));
 const isLast = (path: string[], i: number) => path.length > i + 1;
 
-const onMessage = ({ key, object }: TypeMessage) => {
-  if (key === 'FILES' && object) files.value.push(object);
+const onMessage = ({ key, object }: TMessage) => {
+  if (key === KEY.FILES && object) files.value.push(object);
 };
 
 const { onSend, onDialog } = useConnection((send) => {
-  send(KEYS.FILES, { command: 0, name: fullPath.value });
+  send(KEY.FILES, { command: CMD.GET, name: fullPath.value });
 }, onMessage);
 
 const onUpdate = () => {
   isLoading.value = true;
   files.value = [];
-  onSend(KEYS.FILES, { command: 0, name: fullPath.value });
-  onSend(KEYS.INFO);
+  onSend(KEY.FILES, { command: CMD.GET, name: fullPath.value });
+  onSend(KEY.INFO);
 };
 
 const { fileName, createLink, onDelete, onUpload, onFormat, onClickUpload } = useFiles(fullPath, onUpdate);
@@ -85,7 +85,7 @@ const onSureDelete = (name: string) => {
   }
 };
 
-const onLoad = useDebounceFn((_?: IMessageFile[]) => {
+const onLoad = useDebounceFn((_?: IFiles[]) => {
   isLoading.value = false;
 }, 300);
 

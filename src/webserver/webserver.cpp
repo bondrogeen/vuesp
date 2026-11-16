@@ -2,7 +2,6 @@
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
-// AsyncWebSocketClient *client;
 
 Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
@@ -94,7 +93,7 @@ void onReqUpload(AsyncWebServerRequest* request) {
 }
 
 void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uint8_t* data, size_t len, bool final) {
-  const uint32_t MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5MB
+  const uint32_t MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   progress.size += len;
   progress.status = !index ? 1 : 2;
@@ -105,7 +104,7 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
       LittleFS.remove(filename);
     }
     progress.status = 0;
-    request->send(413, RES_TYPE_JSON, status(0));  // 413 Payload Too Large
+    request->send(413, RES_TYPE_JSON, status(0));
     return;
   }
 
@@ -123,7 +122,6 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
       request->send(500, RES_TYPE_JSON, status(0));
       return;
     }
-    // Serial.println(filename);
   }
   if (len && request->_tempFile) {
     if (progress.size <= MAX_FILE_SIZE) request->_tempFile.write(data, len);
@@ -187,7 +185,8 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
 }
 
 void onRecovery(AsyncWebServerRequest* request) {
-  if (LittleFS.exists("/www/index.html") && !request->hasParam("force")) {
+  const bool hasIndex = LittleFS.exists("/www/index.html") || LittleFS.exists("/www/index.html.gz");
+  if (hasIndex && !request->hasParam("force")) {
     request->redirect("/");
   } else {
     AsyncWebServerResponse* response = request->beginResponse_P(200, "text/html", recovery, sizeof(recovery));
@@ -212,7 +211,6 @@ void onCmd(AsyncWebServerRequest* request) {
   String idStr = request->getParam("id")->value();
   String script = request->getParam("script")->value();
 
-  // Serial.print(script.c_str());
   uint8_t id = idStr.toInt();
 
   script.replace("%2C", ",");
@@ -242,11 +240,16 @@ void onCmd(AsyncWebServerRequest* request) {
 }
 
 void onRoot(AsyncWebServerRequest* request) {
-  if (LittleFS.exists("/www/index.html")) {
-    request->send(LittleFS, "/www/index.html", "text/html");
-  } else {
+  if (!LittleFS.exists("/www/index.html") && !LittleFS.exists("/www/index.html.gz")) {
     request->redirect("/recovery");
+    return;
   }
+
+  AsyncWebServerResponse* response = request->beginResponse(LittleFS, "/www/index.html", "text/html");
+  response->addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  response->addHeader("Pragma", "no-cache");
+  response->addHeader("Expires", "0");
+  request->send(response);
 }
 
 void onRedirectHome(AsyncWebServerRequest* request) {
@@ -254,22 +257,18 @@ void onRedirectHome(AsyncWebServerRequest* request) {
 }
 
 void setupServer() {
-  // cors.setOrigin("*");
-  // cors.setMethods("POST, GET, OPTIONS, DELETE");
-  // cors.setHeaders("X-Custom-Header");
-  // cors.setAllowCredentials(true);
-  // cors.setMaxAge(600);
-  // server.addMiddleware(&cors);
 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
-  server.serveStatic("/", LittleFS, "/www/").setCacheControl("max-age=600").setDefaultFile("index.html");
+
+  server.on("/", HTTP_GET, onRoot);
+  server.serveStatic("/assets/", LittleFS, "/www/assets/").setCacheControl("public, max-age=31536000, immutable");
+  server.serveStatic("/", LittleFS, "/www/").setCacheControl("no-store");
 
   server.on("/fs", HTTP_ANY, onReqUpload, onUpload);
   server.on("/cmd", HTTP_GET, onCmd);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
-  server.on("/", HTTP_GET, onRoot);
   server.on("*", HTTP_ANY, onRoot);
 
   if (settings.authMode) {

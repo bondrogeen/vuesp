@@ -1,4 +1,5 @@
 import VuespStructModule from 'vuesp-struct';
+import { CMD, ENUMS, KEY, PORT, STRUCTS } from '@/generated/protocol';
 
 const VuespStruct = (VuespStructModule as unknown as { default?: typeof VuespStructModule }).default ?? VuespStructModule;
 
@@ -6,20 +7,13 @@ type MessageHandler = ((event: MessageEvent) => void) | null;
 type EventHandler = ((event: Event) => void) | null;
 type CloseHandler = ((event: CloseEvent) => void) | null;
 
-const COMMAND = {
-	GPIO_GET: 1,
-	GPIO_SET: 2,
-	GPIO_GET_ALL: 3,
-	GPIO_CHANGE: 4,
-	GPIO_SAVE: 254,
-};
 
 const LIST_ALL = 0xff;
 
 const buildPort = (gpio: number, overrides: Record<string, unknown> = {}) => ({
 	gpio,
 	value: 0,
-	mode: 1,
+	mode: PORT.OUTPUT,
 	interrupt: 0,
 	list: LIST_ALL,
 	disabled: 0,
@@ -85,11 +79,9 @@ export const installDemoRuntime = (): void => {
 		if (!localStorage.getItem('theme')) localStorage.setItem('theme', 'dark');
 		if (!localStorage.getItem('locale')) localStorage.setItem('locale', 'ru');
 	} catch {
-		// Private mode can block localStorage; the demo still works.
 	}
 
 	const data = __DEMO_DATA__;
-	const defaultJson = JSON.parse(data.defaultJson);
 	const dashboardJson = data.dashboardJson;
 	let blocksJson = sessionStorage.getItem('vuesp.demo.blocks') ?? JSON.stringify({ v: 1, b: [] });
 	const scriptsTxt = data.scriptsTxt;
@@ -150,15 +142,14 @@ export const installDemoRuntime = (): void => {
 		}
 
 		removeEventListener(): void {
-			// The firmware UI uses property handlers only.
 		}
 	}
 
 	const struct = new VuespStruct();
-	struct.init(defaultJson.struct);
+	struct.init({ enums: ENUMS, structs: STRUCTS });
 
 	const now = Math.floor(Date.now() / 1000);
-	const deviceFields: Array<{ name: string }> = defaultJson?.struct?.structs?.Device ?? [];
+	const deviceFields: ReadonlyArray<{ name: string }> = STRUCTS.Device;
 	const names = new Set(deviceFields.map((field) => field.name));
 
 	const deviceState = {
@@ -206,21 +197,21 @@ export const installDemoRuntime = (): void => {
 			data: Array.from({ length: 256 }, (_, index) => Math.round(24 + 4 * Math.sin(index / 9))),
 		},
 		dallas: [
-			{ comm: 0, comm2: 0, address: [0x28, 0xaa, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66], temp: 23.4 },
-			{ comm: 1, comm2: 0, address: [0x28, 0xbb, 0x11, 0x22, 0x33, 0x44, 0x55, 0x77], temp: 18.7 },
+			{ command: 0, subCommand: 0, address: [0x28, 0xaa, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66], temp: 23.4 },
+			{ command: 1, subCommand: 0, address: [0x28, 0xbb, 0x11, 0x22, 0x33, 0x44, 0x55, 0x77], temp: 18.7 },
 		],
 		ports: new Map<number, Record<string, unknown>>([
-			[2, buildPort(2, { mode: 2, value: 1, interrupt: 2, isButton: 1 })],
+			[2, buildPort(2, { mode: PORT.INPUT_PULLUP, value: 1, interrupt: 2, isButton: 1 })],
 			[4, buildPort(4, { value: 1 })],
 			[5, buildPort(5, { value: 1 })],
 			[12, buildPort(12, { value: 0 })],
 			[13, buildPort(13, { value: 0 })],
-			[14, buildPort(14, { mode: 128, value: 128 })],
-			[15, buildPort(15, { mode: 0, value: 1, interrupt: 3, isButton: 1 })],
-			[16, buildPort(16, { mode: 130, value: 512 })],
-			[17, buildPort(17, { mode: 130, value: 23 })],
-			[18, buildPort(18, { mode: 131, value: 128 })],
-			[19, buildPort(19, { mode: 129, value: 0 })],
+			[14, buildPort(14, { mode: PORT.PWM, value: 128 })],
+			[15, buildPort(15, { mode: PORT.INPUT, value: 1, interrupt: 3, isButton: 1 })],
+			[16, buildPort(16, { mode: PORT.ADC, value: 512 })],
+			[17, buildPort(17, { mode: PORT.ADC, value: 23 })],
+			[18, buildPort(18, { mode: PORT.DAC, value: 128 })],
+			[19, buildPort(19, { mode: PORT.ONEWIRE, value: 0 })],
 		]),
 		files: {
 			'/': [
@@ -245,7 +236,7 @@ export const installDemoRuntime = (): void => {
 			'/tmp': [
 				{ isDir: 1, isFile: 0, size: 0, name: 'logs' },
 				{ isDir: 0, isFile: 1, size: 2196, name: 'dashboard.json' },
-				{ isDir: 0, isFile: 1, size: 128, name: 'gpio.io' },
+				{ isDir: 0, isFile: 1, size: 128, name: 'gpio.bin' },
 			],
 			'/tmp/logs': [
 				{ isDir: 0, isFile: 1, size: 4096, name: 'boot.log' },
@@ -296,31 +287,39 @@ export const installDemoRuntime = (): void => {
 		socket.keepAlive = setInterval(() => send(socket, 'PING'), 2000);
 	};
 
+	const decodeFrame = (bytes: Uint8Array): { key?: number; object?: Record<string, unknown> } | null => {
+		try {
+			return struct.get(bytes.buffer as ArrayBuffer) as { key?: number; object?: Record<string, unknown> } | null;
+		} catch {
+			return typeof bytes[0] === 'number' ? { key: bytes[0], object: {} } : null;
+		}
+	};
+
 	const handleFrame = (socket: DemoWebSocket, bytes: Uint8Array) => {
-		const message = struct.get(bytes.buffer as ArrayBuffer) as { key?: string; object?: Record<string, unknown> } | null;
-		if (!message?.key) return;
+		const message = decodeFrame(bytes);
+		if (!message || typeof message.key !== 'number') return;
 
 		switch (message.key) {
-			case 'INFO':
+			case KEY.INFO:
 				send(socket, 'INFO', deviceState.info);
 				break;
-			case 'SETTINGS':
+			case KEY.SETTINGS:
 				send(socket, 'SETTINGS', deviceState.settings);
 				break;
-			case 'DEVICE':
+			case KEY.DEVICE:
 				deviceState.device.now = Math.floor(Date.now() / 1000);
 				send(socket, 'DEVICE', deviceState.device);
 				break;
-			case 'PORT': {
+			case KEY.PORT: {
 				const object = (message.object ?? {}) as { command?: number; gpio?: number; value?: number; mode?: number; interrupt?: number; isButton?: number };
 				const command = object.command ?? 0;
-				if (command === COMMAND.GPIO_GET_ALL) {
+				if (command === CMD.GET_ALL) {
 					sendPorts(socket, [...deviceState.ports.values()]);
 					break;
 				}
 				const port = deviceState.ports.get(object.gpio ?? -1);
 				if (!port) break;
-				if (command === COMMAND.GPIO_SET || command === COMMAND.GPIO_CHANGE) {
+				if (command === CMD.SET || command === CMD.CHANGE) {
 					Object.assign(port, {
 						value: object.value ?? port.value,
 						mode: object.mode ?? port.mode,
@@ -328,31 +327,31 @@ export const installDemoRuntime = (): void => {
 						isButton: object.isButton ?? port.isButton,
 					});
 				}
-				if (command !== COMMAND.GPIO_SAVE) send(socket, 'PORT', port);
+				if (command !== CMD.SAVE) send(socket, 'PORT', port);
 				break;
 			}
-			case 'BUFFER':
+			case KEY.BUFFER:
 				send(socket, 'BUFFER', deviceState.buffer);
 				break;
-			case 'DALLAS':
+			case KEY.DALLAS:
 				for (const sensor of deviceState.dallas) send(socket, 'DALLAS', sensor);
 				break;
-			case 'DISCOVERY':
+			case KEY.DISCOVERY:
 				break;
-			case 'FILES': {
+			case KEY.FILES: {
 				const object = (message.object ?? {}) as { command?: number; name?: string };
 				if ((object.command ?? 0) !== 0) break;
 				const request = object.name ?? '/';
 				const key = request !== '/' && request.endsWith('/') ? request.slice(0, -1) : request;
-				for (const file of deviceState.files[key] ?? []) send(socket, 'FILES', { command: 0, ...file });
+				for (const file of deviceState.files[key] ?? []) send(socket, 'FILES', { command: CMD.NONE, ...file });
 				break;
 			}
-			case 'SCAN':
+			case KEY.SCAN:
 				for (const network of deviceState.scanList) send(socket, 'SCAN', network);
 				break;
-			case 'REBOOT':
+			case KEY.REBOOT:
 				break;
-			case 'PING':
+			case KEY.PING:
 				send(socket, 'PING');
 				break;
 			default:
@@ -384,7 +383,7 @@ export const installDemoRuntime = (): void => {
 			if (file === '/tmp/dashboard.json') return textResponse(dashboardJson, 'application/json; charset=utf-8');
 			if (file === '/tmp/blocks.json') return textResponse(blocksJson, 'application/json; charset=utf-8');
 			if (file === '/www/scripts.txt') return textResponse(scriptsTxt);
-			if (file === '/tmp/gpio.io') return textResponse('');
+			if (file === '/tmp/gpio.bin') return textResponse('');
 			return new Response('Not found', { status: 404 });
 		}
 		if (path.endsWith('/cmd') || path.endsWith('/update')) return jsonResponse({ state: 1 });

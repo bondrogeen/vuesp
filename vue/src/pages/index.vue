@@ -4,15 +4,15 @@ import { computed } from 'vue';
 import { VIcon, EnergyFlowBlock, deviceBlockStorage, energyFlowDefinition, useBlock, VCard } from 'vuesp-components/components';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
-import { KEYS } from '@/utils/const';
-import { COMMAND } from '@/utils/gpio';
+import { KEY } from '@/utils/const';
+import { CMD } from '@/generated/protocol';
 
 const { $t } = useLocale();
 
 const { main } = useConnection((send) => {
-  send(KEYS.INFO);
-  send(KEYS.DEVICE);
-  send(KEYS.PORT, { gpio: 0, command: COMMAND.GPIO_COMMAND_GET_ALL });
+  send(KEY.INFO);
+  send(KEY.DEVICE);
+  send(KEY.PORT, { gpio: 0, command: CMD.GET_ALL });
 });
 
 const block = useBlock(energyFlowDefinition, main, { storage: deviceBlockStorage });

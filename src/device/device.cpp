@@ -138,7 +138,7 @@ void loopDevice(uint32_t now) {
   };
 
   if (tasks[KEY_DEVICE]) {
-    if (device.command == COMMAND_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+    if (device.command == CMD_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;

@@ -84,7 +84,7 @@ void setupDiscovery() {
 }
 
 void commDiscovery() {
-  if (discovery.comm == COMMAND_GET) {
+  if (discovery.command == CMD_GET) {
     total = protocol.getPeerCount();
   }
 }

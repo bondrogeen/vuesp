@@ -1,21 +1,53 @@
-enum keys {
-  KEY_INIT,
-  KEY_SETTINGS,
-  KEY_INFO,
-  KEY_PING,
-  KEY_SCAN,
-  KEY_PROGRESS,
-  KEY_FILES,
-  KEY_REBOOT,
-  KEY_EVENT,
-  KEY_PORT,
-  KEY_MESSAGE,
-  KEY_DALLAS,
-  KEY_BUFFER,
-  KEY_DEVICE,
-  KEY_DISCOVERY,
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
+
+#include <stdint.h>
+
+enum key : uint8_t {
+  KEY_INIT = 0,
+  KEY_SETTINGS = 1,
+  KEY_INFO = 2,
+  KEY_PING = 3,
+  KEY_SCAN = 4,
+  KEY_PROGRESS = 5,
+  KEY_FILES = 6,
+  KEY_REBOOT = 7,
+  KEY_EVENT = 8,
+  KEY_PORT = 9,
+  KEY_MESSAGE = 10,
+  KEY_DALLAS = 11,
+  KEY_BUFFER = 12,
+  KEY_DEVICE = 13,
+  KEY_DISCOVERY = 14,
   KEY_END
 };
+
+enum cmd : uint8_t {
+  CMD_NONE = 0,
+  CMD_GET = 1,
+  CMD_SET = 2,
+  CMD_GET_ALL = 3,
+  CMD_CHANGE = 4,
+  CMD_RESTORE = 5,
+  CMD_READ = 6,
+  CMD_WRITE = 7,
+  CMD_SAVE = 254,
+  CMD_END
+};
+
+enum portMode : uint16_t {
+  PORT_NONE = 0,
+  PORT_INPUT = 1 << 0,
+  PORT_INPUT_PULLUP = 1 << 1,
+  PORT_OUTPUT = 1 << 2,
+  PORT_OUTPUT_OPEN_DRAIN = 1 << 3,
+  PORT_PWM = 1 << 4,
+  PORT_ONEWIRE = 1 << 5,
+  PORT_ADC = 1 << 6,
+  PORT_DAC = 1 << 7
+};
+
+#pragma pack(push, 1)
 
 struct Init {
   uint8_t key;
@@ -87,8 +119,8 @@ struct Files {
 
 struct Event {
   uint8_t key;
-  uint8_t comm;
-  uint16_t comm2;
+  uint8_t command;
+  uint16_t subCommand;
   uint32_t value1;
   uint32_t value2;
   char name[32];
@@ -125,8 +157,8 @@ struct Message {
 
 struct Dallas {
   uint8_t key;
-  uint8_t comm;
-  uint16_t comm2;
+  uint8_t command;
+  uint16_t subCommand;
   uint8_t address[8];
   float temp;
 };
@@ -141,7 +173,7 @@ struct Buffer {
 };
 struct Discovery {
   uint8_t key;
-  uint8_t comm;
+  uint8_t command;
   uint8_t status;
   uint8_t empty;
   uint32_t id;
@@ -157,3 +189,8 @@ struct Device {
   uint32_t list;
   char message[32];
 };
+#pragma pack(pop)
+
+#include "protocol.generated.h"
+
+#endif

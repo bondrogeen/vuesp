@@ -9,9 +9,10 @@ import router from '@/router/index.ts';
 
 import vuesp from 'vuesp-components';
 import { i18nPlugin, i18nPluralizer } from 'vuesp-components/plugins';
-import type { I18nPluralRule } from 'vuesp-components/types';
+import type { TI18nPluralRule } from 'vuesp-components/types';
+import { ENUMS, STRUCTS } from '@/generated/protocol';
 
-const customRules: Record<string, I18nPluralRule> = {
+const customRules: Record<string, TI18nPluralRule> = {
   ru: (count, forms) => {
     if (count === 1) return forms[0];
     if (count >= 2 && count <= 4) return forms[1];
@@ -42,8 +43,8 @@ const app = createApp(App);
       throw new Error('Failed to load configuration from device');
     }
 
-    const { struct: structData, locales, ...resDefault } = res.data.value;
-    struct.init(structData);
+    const { locales, ...resDefault } = res.data.value;
+    struct.init({ enums: ENUMS, structs: STRUCTS });
     pinia.use(({ store }) => {
       if (resDefault && store.$id === 'app') {
         store.$patch(resDefault);

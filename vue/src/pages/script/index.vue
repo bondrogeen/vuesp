@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core';
-import { KEYS } from '@/utils/const';
+import { KEY } from '@/utils/const';
 import { computed, ref } from 'vue';
 
 import { ScriptType, examples } from '@/assets/js/script';
@@ -18,7 +18,7 @@ import { VIcon, VFile, ScriptEditor, ScriptViewDocs, VTooltip, ScriptDialog, VCa
 const { $t } = useLocale();
 
 const { suggestions, message, main, onSend } = useConnection((send) => {
-  send(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT });
+  send(KEY.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT });
 });
 
 const { logs, onHover } = useLogs(message);
@@ -39,26 +39,26 @@ const onAddScriptDialog = () => {
 
 const dialogViewDocs = ref(false);
 
-const onUpdateScript = useDebounceFn(() => onSend(KEYS.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT }), 1000);
+const onUpdateScript = useDebounceFn(() => onSend(KEY.MESSAGE, { ...message.value, id: 0, type: ScriptType.SCRIPT_GET_ALL_SLOT }), 1000);
 
 const onRunScript = () => {
   const id = selectedScript.value?.id || 0;
-  onSend(KEYS.MESSAGE, { ...message.value, id, type: ScriptType.SCRIPT_START, text: content.value });
+  onSend(KEY.MESSAGE, { ...message.value, id, type: ScriptType.SCRIPT_START, text: content.value });
   onUpdateScript();
 };
 
 const onStopScript = () => {
-  onSend(KEYS.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_STOP, text: '' });
+  onSend(KEY.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_STOP, text: '' });
   onUpdateScript();
 };
 
 const onStopScriptAll = () => {
-  onSend(KEYS.MESSAGE, { ...message.value, type: ScriptType.SCRIPT_STOP_ALL, text: '' });
+  onSend(KEY.MESSAGE, { ...message.value, type: ScriptType.SCRIPT_STOP_ALL, text: '' });
   onUpdateScript();
 };
 
 const onRemoveScript = () => {
-  onSend(KEYS.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_REMOVE, text: '' });
+  onSend(KEY.MESSAGE, { ...currentSlot.value, type: ScriptType.SCRIPT_REMOVE, text: '' });
   onUpdateScript();
 };
 </script>

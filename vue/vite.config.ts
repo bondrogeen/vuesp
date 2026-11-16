@@ -75,7 +75,6 @@ const parseFirmwareVersion = (text: string): [number, number, number] => {
   return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : [4, 0, 0];
 };
 
-// https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const demoData = mode === 'demo'

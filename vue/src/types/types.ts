@@ -1,28 +1,10 @@
-import type {
-  IMessageInfo,
-  IMessageProgress,
-  IMessagePort,
-  IMessageMessage,
-  IMessageDallas,
-  IMessageDiscovery,
-  INotification,
-  IDashboardItem,
-  IMenuItem,
-  IDialog,
-  IPackage,
-  ISuggestion,
-  IMessageDevice,
-} from 'vuesp-components/types';
+import type { IDashboardItem, IDialog, IMenuItem, INotification, IPackage, ISuggestion } from 'vuesp-components/types';
+import type { IDallas, IDevice, IDiscovery, IEvent, IInfo, IBuffer, IMessage, IPort, IProgress, ISettings, TKey } from '@/generated/protocol';
 
-import type { TypeMessage, IMyMessageSettings } from './custom';
+export type { TMessage } from '@/generated/protocol';
 
-export type * from './custom';
+export type TSend = (key: TKey | number, object?: object) => void;
 
-type TypeMessageMap = { [K in TypeMessage['key']]: Extract<TypeMessage, { key: K }>['object'] };
-
-export type TypeSend = <K extends keyof TypeMessageMap>(key: K, object?: TypeMessageMap[K]) => void;
-
-// ======== IWebSocketStore ===========
 
 export interface IAppStore {
   menu: IMenuItem[];
@@ -35,7 +17,6 @@ export interface IAppStore {
   notifications: INotification[];
 }
 
-// ======== IWebSocket ===========
 
 export interface IWebSocket {
   socket: WebSocket | null;
@@ -45,20 +26,21 @@ export interface IWebSocket {
   infoLoaded: boolean;
 }
 
-// ======== IWebSocketStore ===========
 
 export interface IWebSocketStore {
-  settings: IMyMessageSettings;
+  settings: ISettings;
   main: IStateMain;
-  progress: IMessageProgress;
-  message: IMessageMessage;
+  progress: IProgress;
+  message: IMessage;
 }
 
 export interface IStateMain {
-  dallas: Record<string, IMessageDallas>;
-  discovery: Record<string, IMessageDiscovery>;
-  info: IMessageInfo;
-  ports: Record<string, IMessagePort>;
-  device: IMessageDevice;
-  slots: Record<number, IMessageMessage>;
+  dallas: Record<string, IDallas>;
+  discovery: Record<string, IDiscovery>;
+  info: IInfo;
+  ports: Record<string, IPort>;
+  device: IDevice;
+  buffer: IBuffer;
+  event: IEvent;
+  slots: Record<number, IMessage>;
 }

@@ -192,7 +192,6 @@ class ScriptRunner {
   uint16_t getSlotLen(uint8_t slot) const;
   uint8_t getTotalSlots() const;
 
-  // Возвращённые для тестов
   bool isBusy() const;
   uint32_t getUintVar(uint8_t idx) const;
   int32_t getIntVar(uint8_t idx) const;
