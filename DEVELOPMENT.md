@@ -24,7 +24,7 @@ vuesp/
 │   │   ├── stores/   # Pinia state management
 │   │   ├── composables/
 │   │   └── assets/
-│   └── public/       # Static assets (struct.json, default.json)
+│   └── public/       # Static assets (default.json with struct)
 ├── data/
 │   └── www/          # Built web files (LittleFS)
 ├── firmware/         # Compiled firmware binaries

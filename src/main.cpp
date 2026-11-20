@@ -35,9 +35,10 @@ void setupFirst() {
 void setupDelay() {
   infoFS.id = id;
   infoFS.board = DEF_BOARD;
-  char nameDevice[20];
-  sprintf(nameDevice, "%s%02X", DEF_DEVICE_NAME, id);
-  strcpy(infoFS.name, nameDevice);
+  char nameDevice[40];
+  snprintf(nameDevice, sizeof(nameDevice), "%s%02X", DEF_DEVICE_NAME, id);
+  strncpy(infoFS.name, nameDevice, sizeof(infoFS.name) - 1);
+  infoFS.name[sizeof(infoFS.name) - 1] = 0;
 
   getInfo(&infoFS);
   loadConfig(settings, id);

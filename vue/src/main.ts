@@ -43,7 +43,7 @@ const app = createApp(App);
       throw new Error('Failed to load configuration from device');
     }
 
-    const { locales, ...resDefault } = res.data.value;
+    const { locales, struct: _struct, ...resDefault } = res.data.value;
     struct.init({ enums: ENUMS, structs: STRUCTS });
     pinia.use(({ store }) => {
       if (resDefault && store.$id === 'app') {
