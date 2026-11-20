@@ -1535,8 +1535,16 @@ void ScriptRunner::processScript(uint8_t idx, uint32_t now) {
 }
 
 void ScriptRunner::update() {
-  uint32_t now = millis();
-  for (uint8_t i = 0; i < MAX_SCRIPTS; i++) processScript(i, now);
+  const uint32_t now = millis();
+  const uint32_t started = micros();
+
+  for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+    processScript(i, now);
+
+    // Cap the time spent in user scripts per loop; the remaining slots run on
+    // the next iteration. A single token cannot be interrupted.
+    if ((i & 3) == 3 && (uint32_t)(micros() - started) >= SCRIPT_UPDATE_BUDGET_US) break;
+  }
 }
 
 bool ScriptRunner::registerFunction(const char* name, ExternalFunction func, void* userData) {

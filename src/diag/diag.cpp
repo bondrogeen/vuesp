@@ -84,7 +84,7 @@ void diagLoopEnd() {
   if (!enabled) return;
 
   const uint32_t elapsed = (uint32_t)(micros() - loopStartedAt);
-  if (elapsed > 1000000UL) return;
+  if (elapsed > 60000UL) return;  // 60 s: scans/OTA can legitimately be long
 
   loopCount++;
   loopLastUs = elapsed;
