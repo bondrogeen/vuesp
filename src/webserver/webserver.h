@@ -14,6 +14,7 @@
 #define RES_TYPE_JSON "application/json"
 
 String status(uint8_t state);
+uint8_t wsClientCount();
 void setupServer();
 void loopServer(uint32_t now);
 void wsSend(uint8_t* message, size_t len);

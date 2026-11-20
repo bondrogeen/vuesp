@@ -1,3 +1,4 @@
+#include "./diag/diag.h"
 #include "./device/device.h"
 #include "./discovery/discovery.h"
 #include "./files/files.h"
@@ -23,6 +24,7 @@ uint8_t isFirst = false;
 
 void setup() {
   Serial.begin(115200);
+  diagInit();
   initFS();
   initEEprom();
 }
@@ -52,6 +54,7 @@ void setupDelay() {
 }
 
 void loop() {
+  diagLoopBegin();
   now = millis();
   if (!isFirst) {
     setupFirst();
@@ -78,4 +81,5 @@ void loop() {
     lastTimeMain = now;
     infoFS.uptime++;
   }
+  diagLoopEnd();
 }

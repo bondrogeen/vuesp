@@ -161,6 +161,20 @@ export const installDemoRuntime = (): void => {
 			uptime: 4 * 3600 + 45 * 60 + 19,
 			name: 'VUESP-DEMO',
 			board: 1,
+			freeHeap: 148 * 1024,
+			minFreeHeap: 96 * 1024,
+			maxBlock: 110 * 1024,
+			stackFree: 2560,
+			fragmentation: 3,
+			loopLastUs: 850,
+			loopMaxUs: 12400,
+			loopP95Us: 2100,
+			loopCount: 128400,
+			clients: 1,
+			scripts: 2,
+			peers: 1,
+			wifi: 1,
+			diagnostics: 0,
 		},
 		settings: {
 			wifiDhcp: 1,
@@ -301,6 +315,7 @@ export const installDemoRuntime = (): void => {
 
 		switch (message.key) {
 			case KEY.INFO:
+				deviceState.info.diagnostics = (message.object as { diagnostics?: number } | undefined)?.diagnostics ? 1 : 0;
 				send(socket, 'INFO', deviceState.info);
 				break;
 			case KEY.SETTINGS:

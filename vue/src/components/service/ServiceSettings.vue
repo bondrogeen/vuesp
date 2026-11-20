@@ -12,10 +12,11 @@ import type { TValidationSchema } from 'vuesp-components/types';
 
 import { useConnection } from '@/composables/useConnection';
 import { arrToStr, strToArr } from 'vuesp-components/helpers';
-
-import { VIcon, VCheckbox, BlockScan, BlockService, BlockUpdate, VCard } from 'vuesp-components/components';
 import { useLocale } from '@/composables/useLocale';
 import { useFetch } from '@vueuse/core';
+
+import { VIcon, VCheckbox, BlockScan, BlockService, BlockUpdate, VCard } from 'vuesp-components/components';
+import BlockDiagnostics from './BlockDiagnostics.vue';
 
 const { $t, getLocale, setLocale, list } = useLocale();
 
@@ -302,6 +303,10 @@ const onUpdate = (name: string, files: FormData) => {
       <v-text-field v-model="discoveryPort" v-bind="discoveryPortProps" :label="$t('port')" :disabled="!settings.discovery" />
 
       <v-text-field v-model="discoveryInterval" v-bind="discoveryIntervalProps" :label="$t('interval')" :disabled="!settings.discovery" />
+    </VCard>
+
+    <VCard :title="$t('diag.title')" class="xl:col-span-2 2xl:col-span-2" hover>
+      <BlockDiagnostics />
     </VCard>
 
     <teleport to="[data-slot='device']">

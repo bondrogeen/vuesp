@@ -197,5 +197,23 @@
     "newValue": "New value",
     "getResult": "Result of Get",
     "argument": "Argument"
+  },
+  "diag": {
+    "title": "Diagnostics",
+    "enable": "Enable",
+    "hint": "Metrics are collected from the moment they are enabled. Collection stops automatically 60 seconds after the last request.",
+    "heap": "Free heap",
+    "heapMin": "Min heap",
+    "maxBlock": "Max block",
+    "stack": "Stack free",
+    "loop": "Loop",
+    "loopP95": "Loop p95",
+    "loopMax": "Loop max",
+    "loopCount": "Iterations",
+    "clients": "WS clients",
+    "scripts": "Scripts",
+    "peers": "Peers",
+    "wifi": "Wi-Fi",
+    "fragmentation": "Fragmentation"
   }
 }

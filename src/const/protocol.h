@@ -84,6 +84,21 @@ struct Info {
   uint64_t uptime;
   char name[20];
   uint32_t board;
+
+  uint32_t freeHeap;
+  uint32_t minFreeHeap;
+  uint32_t maxBlock;
+  uint32_t stackFree;
+  uint32_t loopLastUs;
+  uint32_t loopMaxUs;
+  uint32_t loopP95Us;
+  uint32_t loopCount;
+  uint16_t fragmentation;
+  uint8_t clients;
+  uint8_t scripts;
+  uint8_t peers;
+  uint8_t wifi;
+  uint8_t diagnostics;
 };
 
 struct Ping {

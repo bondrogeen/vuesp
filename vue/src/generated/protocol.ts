@@ -48,6 +48,20 @@ export const STRUCTS = {
     { name: 'uptime', type: 'uint64_t' },
     { name: 'name', type: 'char', dimensions: [20] },
     { name: 'board', type: 'uint32_t' },
+    { name: 'freeHeap', type: 'uint32_t' },
+    { name: 'minFreeHeap', type: 'uint32_t' },
+    { name: 'maxBlock', type: 'uint32_t' },
+    { name: 'stackFree', type: 'uint32_t' },
+    { name: 'loopLastUs', type: 'uint32_t' },
+    { name: 'loopMaxUs', type: 'uint32_t' },
+    { name: 'loopP95Us', type: 'uint32_t' },
+    { name: 'loopCount', type: 'uint32_t' },
+    { name: 'fragmentation', type: 'uint16_t' },
+    { name: 'clients', type: 'uint8_t' },
+    { name: 'scripts', type: 'uint8_t' },
+    { name: 'peers', type: 'uint8_t' },
+    { name: 'wifi', type: 'uint8_t' },
+    { name: 'diagnostics', type: 'uint8_t' },
   ],
   Ping: [
     { name: 'key', type: 'uint8_t' },
@@ -178,6 +192,20 @@ export interface IInfo {
   uptime: number;
   name: string;
   board: number;
+  freeHeap: number;
+  minFreeHeap: number;
+  maxBlock: number;
+  stackFree: number;
+  loopLastUs: number;
+  loopMaxUs: number;
+  loopP95Us: number;
+  loopCount: number;
+  fragmentation: number;
+  clients: number;
+  scripts: number;
+  peers: number;
+  wifi: number;
+  diagnostics: number;
 }
 
 export interface IPing {

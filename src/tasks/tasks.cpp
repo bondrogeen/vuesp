@@ -1,5 +1,9 @@
 #include "./tasks.h"
 
+#include <stddef.h>
+
+#include "../diag/diag.h"
+
 uint8_t tasks[KEY_END];
 
 Scan scan = {KEY_SCAN, 0, 0, 0, 0, 0, ""};
@@ -30,6 +34,9 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
   }
   if (task == KEY_DISCOVERY && info->len == sizeof(discovery)) {
     memcpy(&discovery, data, sizeof(discovery));
+  }
+  if (task == KEY_INFO && info->len == sizeof(infoFS)) {
+    diagSetDiagnostics(data[offsetof(Info, diagnostics)]);
   }
 }
 
@@ -98,6 +105,7 @@ void loopTask(uint32_t now) {
   };
   if (tasks[KEY_INFO]) {
     getInfo(&infoFS);
+    diagFillInfo(infoFS);
     wsSend((uint8_t*)&infoFS, sizeof(infoFS));
     tasks[KEY_INFO] = false;
   }

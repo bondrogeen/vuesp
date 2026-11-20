@@ -19,6 +19,10 @@ String status(uint8_t state) {
   return (state) ? "{\"state\":true}" : "{\"state\":false}";
 }
 
+uint8_t wsClientCount() {
+  return (uint8_t)ws.count();
+}
+
 void wsSend(uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
   if (clientID && ws.hasClient(clientID)) {
