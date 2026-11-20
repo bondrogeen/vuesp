@@ -69,35 +69,83 @@ void getLoadDef(const char* path, uint8_t* buf, size_t size) {
   }
 }
 
+#define SCRIPT_LINE_MAX 384
+#define SCRIPT_TEXT_MAX 256
+
+static bool matchScriptLine(char* line, uint8_t id, char* buffer, uint16_t& len) {
+  char* start = line;
+  while (*start == ' ' || *start == '\t') start++;
+
+  char* end = start + strlen(start);
+  while (end > start && (end[-1] == ' ' || end[-1] == '\t' || end[-1] == '\r')) end--;
+  *end = '\0';
+  if (!*start) return false;
+
+  char* firstColon = strchr(start, ':');
+  if (!firstColon) return false;
+  *firstColon = '\0';
+  const int fileId = atoi(start);
+
+  char* rest = firstColon + 1;
+  char* secondColon = strchr(rest, ':');
+  if (!secondColon) return false;
+
+  const char* script = secondColon + 1;
+  if (fileId != id) return false;
+
+  const size_t scriptLen = strlen(script);
+  if (scriptLen >= SCRIPT_TEXT_MAX) return false;
+
+  memcpy(buffer, script, scriptLen + 1);
+  len = (uint16_t)scriptLen;
+  return true;
+}
+
 bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
 #if VUESP_LOG_LEVEL >= 3
   Serial.println("loadScriptFromFS");
   Serial.println(id);
 #endif
-  File file = LittleFS.open("/scripts.txt", "r");
+  File file = LittleFS.open("/www/scripts.txt", "r");
   if (!file) {
     return false;
   }
-  while (file.available()) {
-    String line = file.readStringUntil('\n');
-    line.trim();
-    if (line.length() == 0) continue;
-    int firstColon = line.indexOf(':');
-    if (firstColon == -1) continue;
-    int fileId = line.substring(0, firstColon).toInt();
-    String rest = line.substring(firstColon + 1);
-    int secondColon = rest.indexOf(':');
-    if (secondColon == -1) continue;
-    String script = rest.substring(secondColon + 1);
 
-    if (fileId == id) {
-      strcpy(buffer, script.c_str());
-      len = script.length();
-      file.close();
-      return true;
+  static char line[SCRIPT_LINE_MAX];
+  uint16_t pos = 0;
+  bool overflow = false;
+  bool found = false;
+
+  while (file.available()) {
+    const int ch = file.read();
+    if (ch < 0) break;
+
+    if (ch == '\n') {
+      if (!overflow && pos > 0) {
+        line[pos] = '\0';
+        if (matchScriptLine(line, id, buffer, len)) {
+          found = true;
+          break;
+        }
+      }
+      pos = 0;
+      overflow = false;
+      continue;
+    }
+
+    if (ch == '\r') continue;
+    if (pos < sizeof(line) - 1) {
+      line[pos++] = (char)ch;
+    } else {
+      overflow = true;
     }
   }
 
+  if (!found && !overflow && pos > 0) {
+    line[pos] = '\0';
+    found = matchScriptLine(line, id, buffer, len);
+  }
+
   file.close();
-  return false;
+  return found;
 }

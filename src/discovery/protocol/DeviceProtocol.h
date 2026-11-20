@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include <functional>
-#include <map>
 
 const uint32_t BROADCAST_ADDRESS = 0xFFFFFFFF;
 
@@ -18,6 +17,18 @@ const size_t PACKET_HEADER_SIZE = 5;
 // 576 B — минимальный буфер сборки IPv4. Хватает на announce и текст скрипта
 // (строка до 255 байт), при этом не держим 1500 B на стеке ESP8266.
 const size_t PACKET_BUFFER_SIZE = 576;
+
+// Размер таблицы пиров discovery. Переопределяется при сборке:
+//   -D VUESP_MAX_PEERS=8
+#ifndef VUESP_MAX_PEERS
+#define VUESP_MAX_PEERS 20
+#endif
+#if VUESP_MAX_PEERS < 1
+#error "VUESP_MAX_PEERS must be at least 1"
+#elif VUESP_MAX_PEERS > 255
+#error "VUESP_MAX_PEERS must be at most 255"
+#endif
+constexpr uint8_t MAX_PEERS = VUESP_MAX_PEERS;
 
 enum class PacketType : uint8_t {
   TEXT = 0x00,
@@ -91,7 +102,11 @@ class DeviceProtocol {
   TextReceivedCallback _textReceivedCallback;
   BinaryReceivedCallback _binaryReceivedCallback;
 
-  std::map<uint32_t, PeerInfo> _peers;
+  PeerInfo _peers[MAX_PEERS];
+  uint8_t _peerCount;
+
+  PeerInfo* findPeer(uint32_t id);
+  const PeerInfo* findPeer(uint32_t id) const;
 
   uint32_t _announceInterval = DEFAULT_ANNOUNCE_INTERVAL;
   uint32_t _peerTimeout = DEFAULT_PEER_TIMEOUT;

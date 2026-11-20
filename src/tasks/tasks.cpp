@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #include "../diag/diag.h"
+#include "../utils/text.h"
 
 uint8_t tasks[KEY_END];
 
@@ -58,7 +59,6 @@ void getFile(char* name) {
 void getFile(char* name) {
   File root = LittleFS.open(name);
   File file = root.openNextFile();
-  String str = "";
   while (file) {
     memset(files.name, 0, sizeof(files.name));
     strcpy(files.name, file.name());
@@ -77,6 +77,7 @@ void scanWiFi() {
     scan.id = i;
     memset(scan.ssid, 0, sizeof(scan.ssid));
     WiFi.SSID(i).toCharArray(scan.ssid, 32);
+    textSanitizeSsid(scan.ssid);
     scan.channel = WiFi.channel(i);
     scan.rssi = WiFi.RSSI(i);
     scan.encryptionType = WiFi.encryptionType(i);

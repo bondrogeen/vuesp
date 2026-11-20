@@ -217,34 +217,24 @@ void onCmd(AsyncWebServerRequest* request) {
     return;
   }
 
-  String idStr = request->getParam("id")->value();
-  String script = request->getParam("script")->value();
+  const String& idValue = request->getParam("id")->value();
+  const String& scriptValue = request->getParam("script")->value();
 
-  uint8_t id = idStr.toInt();
+  const uint8_t id = (uint8_t)atoi(idValue.c_str());
+  const size_t scriptLen = scriptValue.length();
 
-  script.replace("%2C", ",");
-  script.replace("%3A", ":");
-  script.replace("%2A", "*");
-  script.replace("%2F", "/");
-  script.replace("%3C", "<");
-  script.replace("%3E", ">");
-  script.replace("%3D", "=");
-  script.replace("%21", "!");
-
-  if (id == 0) {
+  if (id == 0 || scriptLen >= 255) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
 
-  if (script.length() >= 255) {
-    request->send(400, RES_TYPE_JSON, status(0));
-    return;
-  }
-
-  strncpy(cmdScriptBuffer, script.c_str(), 255);
+  // AsyncWebServer already URL-decodes query/form parameters; do not decode
+  // them a second time.
+  strncpy(cmdScriptBuffer, scriptValue.c_str(), 255);
   cmdScriptBuffer[255] = '\0';
 
-  bool result = scriptRunner.registerScript(id, cmdScriptBuffer) && scriptRunner.runScript(id);
+  bool result = scriptRunner.registerScript(id, cmdScriptBuffer);
+  if (result) result = scriptRunner.runScript(id) >= 0;
   request->send(200, RES_TYPE_JSON, status(result));
 }
 
