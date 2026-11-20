@@ -113,7 +113,16 @@ void loopTask(uint32_t now) {
     tasks[KEY_FILES] = false;
     getFile(files.name);
   }
-  if (tasks[KEY_REBOOT]) reboot();
+  if (tasks[KEY_REBOOT]) {
+#if VUESP_LOG_LEVEL >= 1
+    Serial.println("[boot] restart requested");
+#endif
+    // Give the async web task time to flush the OTA/reboot HTTP response
+    // before restarting. On ESP32 the handler runs in a separate task, so an
+    // immediate reboot loses the reply.
+    delay(1000);
+    reboot();
+  }
 
   if (tasks[KEY_SCAN]) {
     tasks[KEY_SCAN] = false;

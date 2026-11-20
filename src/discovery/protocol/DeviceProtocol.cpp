@@ -19,6 +19,12 @@ OutgoingPacket DeviceProtocol::preparePacket(uint32_t targetId, PacketType type,
                                              const uint8_t* payload, size_t payloadLength) {
   OutgoingPacket packet;
   packet.type = type;
+  packet.data = nullptr;
+  packet.length = 0;
+  packet.targetAddress = BROADCAST_ADDRESS;
+
+  // Reject payloads that do not fit instead of overflowing _txBuffer.
+  if (payloadLength > PACKET_BUFFER_SIZE - PACKET_HEADER_SIZE) return packet;
 
   _txBuffer[0] = static_cast<uint8_t>(type);
   _txBuffer[1] = (_myId >> 24) & 0xFF;
@@ -45,17 +51,21 @@ OutgoingPacket DeviceProtocol::preparePacket(uint32_t targetId, PacketType type,
 
 bool DeviceProtocol::sendAnnounce() {
   if (!_initialized || !_sendCallback) return false;
-  return _sendCallback(preparePacket(0, PacketType::BINARY, nullptr, 0));
+  const OutgoingPacket packet = preparePacket(0, PacketType::BINARY, nullptr, 0);
+  return packet.data && packet.length ? _sendCallback(packet) : false;
 }
 
 bool DeviceProtocol::sendText(uint32_t peerId, const String& text) {
   if (!_initialized || !_sendCallback) return false;
-  return _sendCallback(preparePacket(peerId, PacketType::TEXT, (const uint8_t*)text.c_str(), text.length()));
+  const OutgoingPacket packet =
+      preparePacket(peerId, PacketType::TEXT, (const uint8_t*)text.c_str(), text.length());
+  return packet.data && packet.length ? _sendCallback(packet) : false;
 }
 
 bool DeviceProtocol::sendBinary(uint32_t peerId, const uint8_t* data, size_t length) {
   if (!_initialized || !_sendCallback) return false;
-  return _sendCallback(preparePacket(peerId, PacketType::BINARY, data, length));
+  const OutgoingPacket packet = preparePacket(peerId, PacketType::BINARY, data, length);
+  return packet.data && packet.length ? _sendCallback(packet) : false;
 }
 
 void DeviceProtocol::handleIncomingData(uint32_t senderAddress, const uint8_t* data, size_t length) {

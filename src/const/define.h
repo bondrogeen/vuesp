@@ -2,6 +2,13 @@
 
 #define CONFIG_VERSION 0
 
+// Logging: 0 — silent, 1 — errors/boot, 2 — events and script lifecycle,
+// 3 — per-port and per-data debug (hot path).
+// Local builds default to full logging; CI passes -DVUESP_LOG_LEVEL=0.
+#ifndef VUESP_LOG_LEVEL
+#define VUESP_LOG_LEVEL 3
+#endif
+
 #define DEF_WIFI_DHCP 1
 #define DEF_WIFI_IP \
   {192, 168, 1, 12}

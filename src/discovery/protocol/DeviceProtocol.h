@@ -14,7 +14,10 @@ const uint32_t DEFAULT_PEER_TIMEOUT = 15000;
 const uint32_t DEFAULT_ANNOUNCE_JITTER = 500;
 
 const size_t PACKET_HEADER_SIZE = 5;
-const size_t TX_BUFFER_SIZE = 1500;
+
+// 576 B — минимальный буфер сборки IPv4. Хватает на announce и текст скрипта
+// (строка до 255 байт), при этом не держим 1500 B на стеке ESP8266.
+const size_t PACKET_BUFFER_SIZE = 576;
 
 enum class PacketType : uint8_t {
   TEXT = 0x00,
@@ -100,7 +103,7 @@ class DeviceProtocol {
   OutgoingPacket preparePacket(uint32_t targetId, PacketType type,
                                const uint8_t* payload, size_t payloadLength);
 
-  uint8_t _txBuffer[TX_BUFFER_SIZE];
+  uint8_t _txBuffer[PACKET_BUFFER_SIZE];
 };
 
 #endif

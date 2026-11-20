@@ -7,10 +7,14 @@ Ping ping = {KEY_PING};
 Progress progress = {KEY_PROGRESS, 5, 0, 0, 0};
 
 uint32_t clientID = 0;
-uint8_t hold = 255;
 uint32_t lastTime = 0;
-uint8_t progressSendCount = 0;
-const uint8_t MAX_PROGRESS_SENDS = 10;
+uint32_t lastCleanup = 0;
+uint32_t lastProgress = 0;
+
+// Upload progress is throttled: a large file must not flood every client with
+// a frame per chunk. PING stays at 1 s as the liveness heartbeat.
+#define PROGRESS_MIN_INTERVAL_MS 250
+#define CLEANUP_INTERVAL_MS 1000
 
 static AsyncAuthenticationMiddleware basicAuth;
 static AsyncCorsMiddleware cors;
@@ -43,17 +47,14 @@ void emitEvent(char* message) {
   scriptRunner.emitEvent(message);
 }
 
-void sendProgress() {
-  if (progress.status == 1 || progress.status == 0 || hold > 15) {
-    if (ws.count() > 0) {
-      ws.binaryAll((uint8_t*)&progress, sizeof(progress));
-      hold = 0;
-    }
-    if (progress.status == 0 || progress.status == 5) {
-      progressSendCount = 0;
-    }
-  }
-  hold++;
+void sendProgress(bool force = false) {
+  if (ws.count() == 0) return;
+
+  const uint32_t now = millis();
+  if (!force && progress.status == 2 && now - lastProgress < PROGRESS_MIN_INTERVAL_MS) return;
+
+  ws.binaryAll((uint8_t*)&progress, sizeof(progress));
+  lastProgress = now;
 }
 
 void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
@@ -90,7 +91,6 @@ void onReqUpload(AsyncWebServerRequest* request) {
   if (method == HTTP_POST) {
     progress.size = 0;
     progress.status = 0;
-    progressSendCount = 0;
     return request->send(200, RES_TYPE_JSON, status(1));
   }
   request->send(404, RES_TYPE_JSON, status(0));
@@ -132,17 +132,18 @@ void onUpload(AsyncWebServerRequest* request, String filename, size_t index, uin
   }
   if (final) {
     if (request->_tempFile) request->_tempFile.close();
-    progressSendCount = 0;
   }
-  sendProgress();
+  sendProgress(final);
 }
 
 void onReqUpdate(AsyncWebServerRequest* request) {
   uint8_t isReboot = !Update.hasError();
+#if VUESP_LOG_LEVEL >= 1
+  Serial.printf("[ota] result: %s, bytes=%u\n", isReboot ? "ok" : "error", (unsigned)progress.size);
+#endif
   AsyncWebServerResponse* response = request->beginResponse(200, RES_TYPE_JSON, status(isReboot));
   response->addHeader("Connection", "close");
   request->send(response);
-  delay(100);
   tasks[KEY_REBOOT] = true;
 }
 
@@ -163,6 +164,10 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
       request->send(400, RES_TYPE_JSON, status(0));
       return;
     }
+#if VUESP_LOG_LEVEL >= 1
+    Serial.printf("[ota] begin: %s, contentLength=%u\n", (cmd == 100) ? "littlefs" : "firmware",
+                  (unsigned)request->contentLength());
+#endif
   }
 
   if (!Update.hasError()) {
@@ -185,7 +190,7 @@ void onUpdate(AsyncWebServerRequest* request, String filename, size_t index, uin
     }
   }
 
-  sendProgress();
+  sendProgress(final);
 }
 
 void onRecovery(AsyncWebServerRequest* request) {
@@ -289,16 +294,22 @@ void setupServer() {
 }
 
 void loopServer(uint32_t now) {
-  ws.cleanupClients();
-  if (ws.count()) {
-    if (now - lastTime > 1000) {
-      lastTime = now;
-      if (progress.status == 0) {
-        sendProgress();
-        progress.status = 5;
-      } else {
-        ws.binaryAll((uint8_t*)&ping, sizeof(ping));
-      }
+  // Scanning clients every millisecond is wasteful; once per second is enough
+  // to release disconnected sockets.
+  if (now - lastCleanup >= CLEANUP_INTERVAL_MS) {
+    lastCleanup = now;
+    ws.cleanupClients();
+  }
+
+  if (!ws.count()) return;
+
+  if (now - lastTime > 1000) {
+    lastTime = now;
+    if (progress.status == 0) {
+      sendProgress();
+      progress.status = 5;
+    } else {
+      ws.binaryAll((uint8_t*)&ping, sizeof(ping));
     }
   }
 }

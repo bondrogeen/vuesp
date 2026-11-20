@@ -1,7 +1,11 @@
 #include "./files.h"
 
 void initFS() {
-  if (!LittleFS.begin() && LittleFS.format()) Serial.println(F("Filesystem formatted!"));
+  if (!LittleFS.begin() && LittleFS.format()) {
+#if VUESP_LOG_LEVEL >= 1
+    Serial.println(F("Filesystem formatted!"));
+#endif
+  }
 }
 
 void getInfo(Info* infoFS) {
@@ -66,8 +70,10 @@ void getLoadDef(const char* path, uint8_t* buf, size_t size) {
 }
 
 bool loadScriptFromFS(uint8_t id, char* buffer, uint16_t& len) {
+#if VUESP_LOG_LEVEL >= 3
   Serial.println("loadScriptFromFS");
   Serial.println(id);
+#endif
   File file = LittleFS.open("/scripts.txt", "r");
   if (!file) {
     return false;

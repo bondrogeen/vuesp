@@ -36,13 +36,19 @@ void reboot() {
 }
 
 void WiFiEvent(WiFiEvent_t event) {
+#if VUESP_LOG_LEVEL >= 2
   Serial.printf("[WiFi-event] event: %d\n", event);
+#endif
   if (event == 7 || event == 3 || event == 115) {
+#if VUESP_LOG_LEVEL >= 1
     Serial.println(WiFi.localIP());
+#endif
     isConnected = 1;
   }
   if (event == 8 || event == 5 || event == 116) {
+#if VUESP_LOG_LEVEL >= 1
     Serial.println("WiFi disconnected");
+#endif
     isConnected = 0;
   }
 }

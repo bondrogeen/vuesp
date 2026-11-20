@@ -1,3 +1,4 @@
+#include "./diag/bootlog.h"
 #include "./diag/diag.h"
 #include "./device/device.h"
 #include "./discovery/discovery.h"
@@ -24,6 +25,7 @@ uint8_t isFirst = false;
 
 void setup() {
   Serial.begin(115200);
+  bootLog();
   diagInit();
   initFS();
   initEEprom();
@@ -82,4 +84,8 @@ void loop() {
     infoFS.uptime++;
   }
   diagLoopEnd();
+
+  // Yield the rest of the slot to Wi-Fi and system tasks. All timers here are
+  // 10 ms or slower, so 1 ms does not change behaviour but stops the busy loop.
+  delay(1);
 }

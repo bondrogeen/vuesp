@@ -20,6 +20,7 @@ void onSendDevice() {
 
 // only port.interrupt == GPIO_INTERRUPT_CHANGE
 void deviceGPIO(Port* port, uint8_t type) {
+#if VUESP_LOG_LEVEL >= 2
   Serial.printf("gpio:%d, value:%d", port->gpio, port->value);
   if (type == EVENT_LONG_PRESS) {
     Serial.print(", type:long");
@@ -31,15 +32,21 @@ void deviceGPIO(Port* port, uint8_t type) {
     // Serial.print(port->gpio);
   }
   Serial.println("");
+#else
+  (void)port;
+  (void)type;
+#endif
 }
 
 static char displayBuffer[64] = "5";
 
 bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
+#if VUESP_LOG_LEVEL >= 3
   Serial.print(id);
   Serial.print(write ? "WRITE" : "READ");
   Serial.print(" kind=");
   Serial.println(kind);
+#endif
 
   if (strcmp(id, "$display") == 0) {
     if (write) {
@@ -50,20 +57,28 @@ bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
         strncpy(buf, (char*)value.stringVal.data, len);
         buf[len] = '\0';
         strcpy(displayBuffer, buf);
+#if VUESP_LOG_LEVEL >= 3
         Serial.print("DISPLAY: ");
         Serial.println(buf);
+#endif
       } else if (kind == KIND_INT) {
         snprintf(displayBuffer, sizeof(displayBuffer), "%d", value.intVal);
+#if VUESP_LOG_LEVEL >= 3
         Serial.print("DISPLAY: ");
         Serial.println(value.intVal);
+#endif
       } else if (kind == KIND_UINT) {
         snprintf(displayBuffer, sizeof(displayBuffer), "%u", value.uintVal);
+#if VUESP_LOG_LEVEL >= 3
         Serial.print("DISPLAY: ");
         Serial.println(value.uintVal);
+#endif
       } else if (kind == KIND_FLOAT) {
         snprintf(displayBuffer, sizeof(displayBuffer), "%.2f", value.floatVal);
+#if VUESP_LOG_LEVEL >= 3
         Serial.print("DISPLAY: ");
         Serial.println(value.floatVal);
+#endif
       }
       return true;
     } else {
@@ -94,6 +109,7 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
   const uint8_t* data = params[4].arrayVal.data;
   uint8_t len = params[4].arrayVal.len;
 
+#if VUESP_LOG_LEVEL >= 3
   for (uint8_t i = 0; i < len; i++) {
     Serial.print(data[i]);
   }
@@ -103,6 +119,14 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
   Serial.println(url);
   Serial.println(count);
   Serial.println(num);
+#else
+  (void)data;
+  (void)len;
+  (void)method;
+  (void)url;
+  (void)count;
+  (void)num;
+#endif
 
   result.type = VAL_INT;
   result.intVal = 200;
@@ -126,10 +150,10 @@ void setupFirstDevice() {
 }
 
 void loopDevice(uint32_t now) {
+  // Periodic push is a template: it shows how a user can stream device state.
   if (now - lastTimeDevice > 10000) {
     lastTimeDevice = now;
     onSendDevice();
-    // sendNotification("Test");
   }
 
   if (tasks[KEY_BUFFER]) {
