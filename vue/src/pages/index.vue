@@ -6,6 +6,7 @@ import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 import { KEY } from '@/utils/const';
 import { CMD } from '@/generated/protocol';
+import PageHeader from '@/components/ui/PageHeader.vue';
 
 const { $t } = useLocale();
 
@@ -27,9 +28,7 @@ const resources = computed(() => [
 
 <template>
   <div class="space-y-6 pb-10">
-    <div class="mb-6 flex items-center justify-between">
-      <h1>{{ $t('home') }}</h1>
-    </div>
+    <PageHeader :title="$t('home')" />
 
     <EnergyFlowBlock
       v-bind="block.data"

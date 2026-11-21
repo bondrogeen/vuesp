@@ -28,7 +28,7 @@ const isLoading = ref(false);
 const path = ref(['root']);
 const files: Ref<IFiles[]> = ref([]);
 const fullPath = computed(() => `${path.value.join('/').replace('root', '')}/`);
-const sortFiles = computed(() => JSON.parse(JSON.stringify(files.value)).sort((a: IFiles, b: IFiles) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
+const sortFiles = computed<IFiles[]>(() => JSON.parse(JSON.stringify(files.value)).sort((a: IFiles, b: IFiles) => ((a.isFile || 0) > (b.isFile || 0) ? 1 : -1)));
 
 const getListMenu = (isDir: boolean) => listMenu.filter((i) => (isDir ? i.value !== 1 : true));
 const isLast = (path: string[], i: number) => path.length > i + 1;
@@ -118,7 +118,7 @@ watchEffect(() => {
         <v-loader v-if="isLoading" class="absolute top-1/2 left-1/2 text-cyan-main" />
 
         <v-list v-slot="{ item: { name, size, isDir, isFile } }" :items="sortFiles">
-          <div class="flex items-center flex-auto" @click="onNext(isDir, name)">
+          <div class="flex items-center flex-auto" @click="onNext(Boolean(isDir), name)">
             <div class="mr-4 text-gray-main">
               <VIcon name="folder" v-if="isDir" class="size-4"></VIcon>
               <VIcon name="file" v-else class="size-4"></VIcon>
@@ -131,9 +131,9 @@ watchEffect(() => {
             </div>
           </div>
 
-          <v-select :items="getListMenu(isDir)" @change="onEventList(name, $event)">
+          <v-select :items="getListMenu(Boolean(isDir))" @change="onEventList(name, $event)">
             <template #activator="{ on }">
-              <v-button @click="on.click">
+              <v-button @click="on.click" variant="ghost">
                 <VIcon name="more" class="size-5 rotate-90"></VIcon>
               </v-button>
             </template>
@@ -142,7 +142,7 @@ watchEffect(() => {
       </div>
     </VCard>
 
-    <Teleport to="[data-slot='device']">
+    <Teleport to="#device-slot">
       <v-select :items="mainMenu" @change="onEventService">
         <template #activator="{ on }">
           <v-button type="icon" @click="on.click">

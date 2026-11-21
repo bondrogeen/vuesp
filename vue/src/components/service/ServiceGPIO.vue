@@ -36,8 +36,8 @@ const modes: Array<{ name: string; value: number }> = [
 const getListMode = (port: IPort): IListItem<number>[] =>
   modes.filter((mode) => ((port?.list || 0) & mode.value) !== 0).map(({ name, value }) => ({ name, value }));
 
-const getNameList = (port: IPort) => getListMode(port).find((i) => i.value === port.mode)?.name;
-const getNameListInterrupt = (port: IPort) => listInterrupt.find((i) => i.value === port.interrupt)?.name;
+const getNameList = (port: IPort) => getListMode(port).find((i) => i.value === port.mode)?.name ?? '';
+const getNameListInterrupt = (port: IPort) => listInterrupt.find((i) => i.value === port.interrupt)?.name ?? '';
 
 const listInterrupt: IListItem<number>[] = [
   { name: 'OFF', value: 0 },
@@ -98,11 +98,10 @@ const onMenu = ({ value }: IListItem<number>) => {
 
           <div class="flex flex-col gap-4">
             <div class="grid gap-4 flex-auto grid-cols-1">
-              <v-select :model-value="getNameList(port)" :label="$t('mode')" :disabled="Boolean(port.disabled)" hideMessage :items="getListMode(port)" @change="onMode(port, $event)" />
+              <v-select :model-value="getNameList(port)" :label="$t('mode')" :disabled="Boolean(port.disabled)" :items="getListMode(port)" @change="onMode(port, $event)" />
 
               <v-select
                 v-if="isInput(port)"
-                hideMessage
                 :model-value="getNameListInterrupt(port)"
                 :disabled="Boolean(port.disabled)"
                 :label="$t('interrupt')"
@@ -111,7 +110,7 @@ const onMenu = ({ value }: IListItem<number>) => {
               />
 
               <div v-if="isInput(port) && getNameListInterrupt(port) === 'CHANGE'" class="flex items-center justify-between">
-                <VCheckbox v-model="port.isButton" @update:model-value="onIsButton(port, $event)">{{ $t('isButton') }}</VCheckbox>
+                <VCheckbox :model-value="Boolean(port.isButton)" @update:model-value="onIsButton(port, $event)">{{ $t('isButton') }}</VCheckbox>
 
                 <VTooltip>
                   <template #activator>
@@ -144,10 +143,10 @@ const onMenu = ({ value }: IListItem<number>) => {
         </VCard>
       </div>
 
-    <Teleport to="[data-slot='device']">
+    <Teleport to="#device-slot">
       <v-select :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
+          <v-button type="icon" @click="on.click">
             <VIcon name="more" class="size-5 rotate-90"></VIcon>
           </v-button>
         </template>

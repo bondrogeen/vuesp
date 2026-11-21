@@ -71,6 +71,9 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     SET_PROGRESS(value: IProgress) {
       this.progress = value;
     },
+    CLEAR_PROGRESS() {
+      this.progress = { status: 0, empty: 0, size: 0, length: 0 };
+    },
     SET_PORT(port: IPort) {
       const gpio = port.gpio.toString();
       this.main.ports[gpio] = port;

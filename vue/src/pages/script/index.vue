@@ -70,7 +70,7 @@ const onRemoveScript = () => {
         <h1>{{ $t('menu.script') }}</h1>
 
         <div>
-          <v-button icon @click="dialogViewDocs = true">
+          <v-button @click="dialogViewDocs = true" variant="ghost">
             <VIcon name="document" class="size-5" />
           </v-button>
         </div>
@@ -82,15 +82,15 @@ const onRemoveScript = () => {
         <VCard :title="$t('list')" class="order-2 md:order-1 [grid-area:list]" hover>
           <template #header>
             <div class="flex gap-3">
-              <v-button color="transparent" class="size-6" size="none" variant="soft" invert :title="$t('export')" :disabled="false" @click="createLink(PATH)">
+              <v-button class="size-6" size="none" variant="ghost" :title="$t('export')" :disabled="false" @click="createLink(PATH)">
                 <VIcon name="upload" class="size-4"></VIcon>
               </v-button>
 
-              <v-button color="transparent" class="size-6" size="none" variant="soft" invert :title="$t('import')" :disabled="false" @click="onClickUpload()">
+              <v-button class="size-6" size="none" variant="ghost" :title="$t('import')" :disabled="false" @click="onClickUpload()">
                 <VIcon name="download" class="size-4"></VIcon>
               </v-button>
 
-              <v-button color="transparent" class="size-6" size="none" variant="soft" invert :title="$t('add')" :disabled="false" @click="onAddScriptDialog()">
+              <v-button class="size-6" size="none" variant="ghost" :title="$t('add')" :disabled="false" @click="onAddScriptDialog()">
                 <VIcon name="add" class="size-5"></VIcon>
               </v-button>
               <VFile accept=".txt" @change="onUpload($event, PATH)"></VFile>
@@ -106,17 +106,17 @@ const onRemoveScript = () => {
 
               <div class="group flex items-center gap-1">
                 <v-button
-                  color="transparent"
                   class="size-6"
                   size="none"
                   :class="isScriptSave(script) ? 'text-gray-dark-25' : 'text-blue-500 animate-shake'"
                   :title="$t('save')"
                   :disabled="isScriptSave(script)"
                   @click="onSaveScript"
+                  variant="ghost"
                 >
                   <VIcon name="save" class="size-4"></VIcon>
                 </v-button>
-                <v-button color="transparent" class="size-6" size="none" :title="$t('remove')" @click.stop="onRemove(script)">
+                <v-button class="size-6" size="none" :title="$t('remove')" @click.stop="onRemove(script)" variant="ghost">
                   <VIcon name="trash" class="size-4 transition-all"></VIcon>
                 </v-button>
               </div>
@@ -134,19 +134,19 @@ const onRemoveScript = () => {
               <h3 class="text-lg font-semibold text-gray-dark-30 dark:text-white/90 mb-2">{{ $t('slots') }}</h3>
 
               <div class="flex gap-2">
-                <v-button color="transparent" class="size-6" variant="soft" invert size="none" :disabled="!currentSlot?.active" @click="onStopScript">
+                <v-button class="size-6" variant="ghost" size="none" :disabled="!currentSlot?.active" @click="onStopScript">
                   <VIcon name="stop-circle" class="size-5"></VIcon>
                 </v-button>
 
-                <v-button color="transparent" class="size-6" variant="soft" invert size="none" :disabled="!currentSlot?.text" @click="onRemoveScript">
+                <v-button class="size-6" variant="ghost" size="none" :disabled="!currentSlot?.text" @click="onRemoveScript">
                   <VIcon name="close" class="size-5"></VIcon>
                 </v-button>
 
-                <v-button color="transparent" class="size-6" variant="soft" invert size="none" :title="$t('update')" @click="onUpdateScript">
+                <v-button class="size-6" variant="ghost" size="none" :title="$t('update')" @click="onUpdateScript">
                   <VIcon name="refresh" class="size-5"></VIcon>
                 </v-button>
 
-                <v-button color="transparent" class="size-6" variant="soft" invert size="none" :title="$t('stop')" :disabled="!slotInfo.used" @click="onStopScriptAll">
+                <v-button class="size-6" variant="ghost" size="none" :title="$t('stop')" :disabled="!slotInfo.used" @click="onStopScriptAll">
                   <VIcon name="stop-circle" class="size-5"></VIcon>
                 </v-button>
               </div>
@@ -156,7 +156,7 @@ const onRemoveScript = () => {
               <li v-for="slot in main.slots" :key="slot.index" class="group text-sm transition-all flex items-center rounded">
                 <VTooltip>
                   <template #activator>
-                    <v-button class="px-0! rounded-none" :class="getColorSlot(slot)" color="" size="none" @click="onSlot(slot)">
+                    <v-button class="px-0! rounded-none" :class="getColorSlot(slot)" size="none" @click="onSlot(slot)" variant="none">
                       <div class="flex-[0_0_8px] h-4 w-2"></div>
                     </v-button>
                   </template>
@@ -181,7 +181,7 @@ const onRemoveScript = () => {
           <template #header>
             <div class="flex gap-3">
               <v-button
-                :color="!Boolean(content.trim()) ? 'green' : 'green'"
+                color="green"
                 variant="soft"
                 class="size-6"
                 size="none"
@@ -194,7 +194,7 @@ const onRemoveScript = () => {
 
               <v-select :items="examples" @change="onExample">
                 <template #activator="{ on }">
-                  <v-button color="transparent" class="size-6" size="none" :disabled="!selectedScript" @click="on.click">
+                  <v-button class="size-6" size="none" :disabled="!selectedScript" @click="on.click" variant="ghost">
                     <VIcon name="file-list" class="size-4"></VIcon>
                   </v-button>
                 </template>
@@ -217,7 +217,7 @@ const onRemoveScript = () => {
 
         <VCard :title="$t('logs')" class="order-1 [grid-area:logs]" hover>
           <template #header>
-            <v-button color="transparent" class="size-6 opacity-60 hover:opacity-100" size="icon" @click="logs = []">
+            <v-button class="size-6 opacity-60 hover:opacity-100" size="none" @click="logs = []" variant="ghost">
               <VIcon name="eraser" class="size-5 text-gray-dark-25"></VIcon>
             </v-button>
           </template>

@@ -127,7 +127,7 @@ const listWiFi: IListItem<number>[] = [
   { name: $t('ap'), value: 2 },
 ];
 
-const getValueListWiFi = (mode: number) => listWiFi.find((i) => i.value === mode)?.name;
+const getValueListWiFi = (mode: number) => listWiFi.find((i) => i.value === mode)?.name ?? '';
 
 const isWifiDHCP = computed(() => Boolean(settings.value.wifiDhcp || !settings.value.wifiMode));
 const isWifi = computed(() => Boolean(!settings.value.wifiMode));
@@ -210,7 +210,7 @@ const onUpdate = (name: string, files: FormData) => {
             <v-select :model-value="getValueListWiFi(settings.wifiMode)" :label="$t('mode')" :items="listWiFi" @change="onSureOffWifi" />
           </div>
 
-          <v-text-field v-model="wifiSsid" v-bind="wifiSsidProps" :label="$t('ssid')" :disabled="isWifi" :append-button="!isWifi" @on-icon="onScan">
+          <v-text-field v-model="wifiSsid" v-bind="wifiSsidProps" :label="$t('ssid')" :disabled="isWifi" @on-icon="onScan">
             <template #icon>
               <VIcon name="search" class="size-4"></VIcon>
             </template>
@@ -236,7 +236,7 @@ const onUpdate = (name: string, files: FormData) => {
             <h3 class="text-lg font-semibold text-gray-dark-30 dark:text-white/90 mb-0">{{ $t('ipSett') }}</h3>
 
             <div>
-              <VCheckbox v-model="settings.wifiDhcp">{{ $t('dhcp') }}</VCheckbox>
+              <VCheckbox :model-value="Boolean(settings.wifiDhcp)" @update:model-value="settings.wifiDhcp = $event ? 1 : 0">{{ $t('dhcp') }}</VCheckbox>
             </div>
           </div>
 
@@ -254,7 +254,7 @@ const onUpdate = (name: string, files: FormData) => {
     <VCard :title="$t('security')" hover>
       <template #header>
         <div class="col-span-full">
-          <VCheckbox v-model="settings.authMode">{{ $t('auth') }}</VCheckbox>
+          <VCheckbox :model-value="Boolean(settings.authMode)" @update:model-value="settings.authMode = $event ? 1 : 0">{{ $t('auth') }}</VCheckbox>
         </div>
       </template>
 
@@ -296,7 +296,7 @@ const onUpdate = (name: string, files: FormData) => {
     <VCard :title="`${$t('discovery')} (UDP)`" hover>
       <template #header>
         <div class="col-span-full">
-          <VCheckbox v-model="settings.discovery">{{ $t('discovery') }}</VCheckbox>
+          <VCheckbox :model-value="Boolean(settings.discovery)" @update:model-value="settings.discovery = $event ? 1 : 0">{{ $t('discovery') }}</VCheckbox>
         </div>
       </template>
 
@@ -309,10 +309,10 @@ const onUpdate = (name: string, files: FormData) => {
       <BlockDiagnostics />
     </VCard>
 
-    <teleport to="[data-slot='device']">
+    <teleport to="#device-slot">
       <v-select :items="listMenu" @change="onMenu">
         <template #activator="{ on }">
-          <v-button color="" type="icon" @click="on.click">
+          <v-button type="icon" @click="on.click">
             <VIcon name="more" class="size-5 rotate-90"></VIcon>
           </v-button>
         </template>

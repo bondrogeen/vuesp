@@ -35,7 +35,7 @@ onMounted(() => {
     <div class="mb-6 flex items-center justify-between">
       <h1>{{ $t(title || '') }}</h1>
 
-      <div data-slot="device"></div>
+      <div id="device-slot"></div>
     </div>
 
     <template v-if="show">

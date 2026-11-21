@@ -1,5 +1,7 @@
 <template>
   <div class="h-[100dvh] min-h-full flex flex-col">
+    <PageBackdrop />
+
     <AppOverlay v-if="!isConnect">
       <div class="text-2xl font-bold mb-4">{{ $t('disconn') }}</div>
 
@@ -8,7 +10,7 @@
       </div>
     </AppOverlay>
 
-    <div class="flex h-screen overflow-hidden">
+    <div class="relative z-10 flex h-screen overflow-hidden">
       <AppAside v-if="!isIframe" :isSidebar="isSidebar" @sidebar="onSidebar">
         <h3 class="mb-4 text-xs h-5 uppercase flex items-center gap-2 justify-between" :class="isSidebar ? 'lg:hidden' : ''">
           <span v-if="nameDevice" class="text-gray-main text-nowrap">{{ nameDevice }}</span>
@@ -32,10 +34,10 @@
             {{ $t(item.name) }}
           </template>
           <template #default="{ repo, home }">
-            <div class="flex gap-2 mt-4">
-              <v-button :href="repo" target="_blank" class="w-full text-white" color="blue">Github</v-button>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+              <v-button :href="repo" target="_blank" color="gray" variant="soft">Github</v-button>
 
-              <v-button v-if="home" :href="home" target="_blank" class="w-full" color="blue" variant="outline">{{ $t('homepage') }}</v-button>
+              <v-button v-if="home" :href="home" target="_blank" color="blue" variant="outline">{{ $t('homepage') }}</v-button>
             </div>
           </template>
         </BlockStatus>
@@ -50,7 +52,7 @@
           </div>
         </main>
 
-        <AppProgress v-slot="{ isDone }" v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.SET_PROGRESS">
+        <AppProgress v-slot="{ isDone }" v-bind="progress" :timeout="2000" class="fixed right-4 md:right-10 lg:right-20 top-20 z-20" @close="webSocketStore.CLEAR_PROGRESS">
           <div class="flex-auto">{{ $t('prog') }}</div>
 
           <span v-if="isDone" class="text-green-600">{{ $t('done') }}</span>
@@ -61,7 +63,7 @@
             <div class="flex items-center justify-between py-4 sticky top-0 z-20 px-2">
               <h5>{{ $t('noti') }}</h5>
 
-              <VButton size="sm" color="gray" class="text-sm" :disabled="!isNew" @click="appStore.readAllNotification">{{ $t('mark') }}</VButton>
+              <VButton size="sm" color="gray" :disabled="!isNew" @click="appStore.readAllNotification">{{ $t('mark') }}</VButton>
             </div>
           </template>
           <template #empty>
@@ -75,8 +77,8 @@
       <div v-html="dialog.message" />
 
       <div v-if="dialog.callback" class="flex gap-3 mt-4 justify-end">
-        <v-button class="min-w-[100px]" variant="outline" color="blue" @click="(dialog.callback(), close())">{{ $t('yes') }}</v-button>
-        <v-button class="min-w-[100px]" color="red" @click="close()">{{ $t('no') }}</v-button>
+        <v-button class="min-w-[100px]" color="blue" variant="soft" @click="(dialog.callback(), close())">{{ $t('yes') }}</v-button>
+        <v-button class="min-w-[100px]" color="red" variant="soft" @click="close()">{{ $t('no') }}</v-button>
       </div>
     </v-dialog>
 
@@ -108,6 +110,7 @@ import { useStore } from '@/composables/useStore';
 import { useLocale } from '@/composables/useLocale';
 
 import { AppHeader, AppNotification, AppOverlay, AppAside, AppNav, AppProgress, BlockInfo, BlockStatus, VIcon } from 'vuesp-components/components';
+import PageBackdrop from '@/components/ui/PageBackdrop.vue';
 
 const { $t, setLocale } = useLocale();
 

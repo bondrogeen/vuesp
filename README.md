@@ -29,7 +29,7 @@ The CLI clones this template with its git history, keeps the selected board, set
 ## Features
 
 - 🚀 Full-stack Arduino projects with web UI
-- 🎨 V4.0 glass UI with light/dark themes and shared `vuesp-components`
+- 🎨 Glass UI with light/dark themes and shared `vuesp-components@5`
 - 🧠 ScriptRunner editor with syntax highlighting and autocomplete
 - 🖥️ Browser demo with a mock device — no hardware required
 - 🔒 Optional HTTP Basic Authentication
@@ -172,7 +172,7 @@ For production deployment, please read [SECURITY.md](./SECURITY.md) for:
 
 ### Frontend (Vue 3)
 
-- **Type-safe** with TypeScript 5.7
+- **Type-safe** with TypeScript 5.9
 - **Reactive state** with Pinia
 - **Routing** with Vue Router
 - **UI components** from vuesp-components
@@ -202,6 +202,24 @@ Binary WebSocket messages at `/esp` endpoint:
 
 
 ## Version History
+
+### 5.0.12 (2026-11-21)
+
+**Web UI**
+- `vuesp-components@5.0.0`: новый API `VButton` — `solid`, `soft`, `outline`, `ghost`, `muted`, `none`; добавлен размер `xs`; удалены `invert`, `variant="default"`, `variant="white"` и `color="transparent"`.
+- Для глобальных компонентов кита включены типы и `strictTemplates`: `vue-tsc` проверяет props прямо в шаблонах.
+- Лёгкий анимированный фон в общем layout (CSS, без JS и изображений).
+
+**Прошивка**
+- `ConfigStore` для Device и Ports (`/tmp/config.bin`): атомарная запись через temp+rename, CRC, статусы и троттлинг.
+- Асинхронный скан Wi-Fi и батчи результатов; бюджет обновления скриптов.
+- Уровень логов `VUESP_LOG_LEVEL`, boot/OTA-логи и отложенный рестарт.
+- UDP-буферы 576 B, тюнинг WebSocket, пиры discovery в статической таблице.
+
+**Совместимость**
+- Бинарный протокол не изменялся.
+- Web-пакет `4.1.0`, прошивка `5.0.12`.
+- Приложения и все device-проекты переведены на `vuesp-components@5.0.0`.
 
 ### 4.0.1 (2026-11-08)
 

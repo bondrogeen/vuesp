@@ -13,6 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     BlockDiagnostics: typeof import('./src/components/service/BlockDiagnostics.vue')['default']
     CardChart: typeof import('./src/components/dashboard/CardChart.vue')['default']
+    PageBackdrop: typeof import('./src/components/ui/PageBackdrop.vue')['default']
+    PageHeader: typeof import('./src/components/ui/PageHeader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ServiceGPIO: typeof import('./src/components/service/ServiceGPIO.vue')['default']
