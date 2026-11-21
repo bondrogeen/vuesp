@@ -1,3 +1,4 @@
+#include "./config/ConfigStore.h"
 #include "./diag/bootlog.h"
 #include "./diag/diag.h"
 #include "./device/device.h"
@@ -32,6 +33,7 @@ void setup() {
 }
 
 void setupFirst() {
+  configStore.begin();
   setupFirstDevice();
   setupFirstGPIO();
 }
@@ -77,6 +79,15 @@ void loop() {
     loopWiFi(now);
     loopRunner(now);
     loopSerialSetup();
+  }
+
+  if (configStore.dirty()) {
+    const TConfigStatus status = configStore.flush();
+    if (status != TConfigStatus::Ok && status != TConfigStatus::Deferred) {
+#if VUESP_LOG_LEVEL >= 1
+      Serial.printf("[config] flush: %d\n", (int)status);
+#endif
+    }
   }
 
   if (now - lastTimeMain > 1000) {

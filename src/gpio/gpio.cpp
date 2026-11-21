@@ -1,5 +1,7 @@
 #include "./gpio.h"
 
+#include "../config/ConfigStore.h"
+
 #if defined(ESP8266)
 Port ports[6] = {
     {KEY_PORT, 4, 0, PORT_INPUT_PULLUP, GPIO_INTERRUPT_CHANGE, PORT_ALL_NOT_DAC_AND_ADC, GPIO_DISABLED_OFF, GPIO_EVENT_ON},
@@ -37,6 +39,24 @@ Fade fade;
 Dallas ht1 = {KEY_DALLAS};
 
 int ports_len = sizeof(ports) / sizeof(ports[0]);
+
+static constexpr size_t PORTS_MAX = sizeof(ports) / sizeof(ports[0]);
+
+struct PortsBlob {
+  uint8_t count;
+  Port ports[PORTS_MAX];
+} __attribute__((packed));
+
+static PortsBlob portsBlob;
+
+static void sanitizePort(Port& port) {
+  port.command = 0;
+  port.isPressed = 0;
+  port.count = 0;
+  port.empty = 0;
+  port.valueOld = 0;
+  port.pressStart = 0;
+}
 
 volatile uint8_t btnStatus = 0;
 uint8_t timeDebounce = 0;
@@ -294,7 +314,26 @@ void setupGPIO() {
 }
 
 void setupFirstGPIO() {
-  getLoadDef(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+  const TConfigStatus status =
+      configStore.read("ports", &portsBlob, sizeof(portsBlob), CONFIG_PORTS_VERSION);
+  if (status == TConfigStatus::Ok && portsBlob.count <= PORTS_MAX) {
+    for (uint8_t i = 0; i < portsBlob.count; i++) {
+      Port saved = portsBlob.ports[i];
+      sanitizePort(saved);
+
+      for (int j = 0; j < ports_len; j++) {
+        if (ports[j].gpio == saved.gpio) {
+          ports[j] = saved;
+          break;
+        }
+      }
+    }
+  }
+#if VUESP_LOG_LEVEL >= 1
+  else if (status != TConfigStatus::NotFound) {
+    Serial.printf("[config] ports read: %d\n", (int)status);
+  }
+#endif
   initGPIO();
 }
 
@@ -328,7 +367,21 @@ void loopGPIO(uint32_t now) {
   }
 
   if (tasks[KEY_PORT]) {
-    if (port.command == CMD_SAVE) writeFile(DEF_PATH_GPIO, (uint8_t*)ports, sizeof(ports));
+    if (port.command == CMD_SAVE) {
+      portsBlob.count = (uint8_t)ports_len;
+      for (int i = 0; i < ports_len; i++) {
+        portsBlob.ports[i] = ports[i];
+        sanitizePort(portsBlob.ports[i]);
+      }
+      const TConfigStatus status =
+          configStore.write("ports", &portsBlob, 1 + (size_t)ports_len * sizeof(Port),
+                            CONFIG_PORTS_VERSION);
+#if VUESP_LOG_LEVEL >= 1
+      if (status != TConfigStatus::Ok) {
+        Serial.printf("[config] ports write: %d\n", (int)status);
+      }
+#endif
+    }
     if (port.command == CMD_SET) setValueUpdate();
 
     if (port.command == CMD_GET_ALL) getAll();

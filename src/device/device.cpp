@@ -1,5 +1,7 @@
 #include "./device.h"
 
+#include "../config/ConfigStore.h"
+
 Buffer myBuffer = {KEY_BUFFER};
 
 Device device = {KEY_DEVICE, 0, 100, 1760640900, 2, "text"};
@@ -146,7 +148,16 @@ void setupDevice() {
 }
 
 void setupFirstDevice() {
-  getLoadDef(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+  const TConfigStatus status =
+      configStore.read("device", &device, sizeof(device), CONFIG_DEVICE_VERSION);
+  if (status == TConfigStatus::Ok) {
+    device.command = 0;
+  }
+#if VUESP_LOG_LEVEL >= 1
+  else if (status != TConfigStatus::NotFound) {
+    Serial.printf("[config] device read: %d\n", (int)status);
+  }
+#endif
 }
 
 void loopDevice(uint32_t now) {
@@ -162,7 +173,16 @@ void loopDevice(uint32_t now) {
   };
 
   if (tasks[KEY_DEVICE]) {
-    if (device.command == CMD_SAVE) writeFile(DEF_PATH_CONFIG, (uint8_t*)&device, sizeof(device));
+    if (device.command == CMD_SAVE) {
+      device.command = 0;
+      const TConfigStatus status =
+          configStore.write("device", &device, sizeof(device), CONFIG_DEVICE_VERSION);
+#if VUESP_LOG_LEVEL >= 1
+      if (status != TConfigStatus::Ok) {
+        Serial.printf("[config] device write: %d\n", (int)status);
+      }
+#endif
+    }
 
     device.command = 0;
     tasks[KEY_DEVICE] = 0;
