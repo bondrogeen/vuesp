@@ -207,6 +207,7 @@ Binary WebSocket messages at `/esp` endpoint:
 
 **Web UI**
 - `vuesp-components@5.0.0`: новый API `VButton` — `solid`, `soft`, `outline`, `ghost`, `muted`, `none`; добавлен размер `xs`; удалены `invert`, `variant="default"`, `variant="white"` и `color="transparent"`.
+- `vuesp-components@5.0.1`: исправлена реактивность dashboard-карточек, если данные (порты, поля устройства) приходят после первого рендера.
 - Для глобальных компонентов кита включены типы и `strictTemplates`: `vue-tsc` проверяет props прямо в шаблонах.
 - Лёгкий анимированный фон в общем layout (CSS, без JS и изображений).
 
@@ -219,7 +220,7 @@ Binary WebSocket messages at `/esp` endpoint:
 **Совместимость**
 - Бинарный протокол не изменялся.
 - Web-пакет `4.1.0`, прошивка `5.0.12`.
-- Приложения и все device-проекты переведены на `vuesp-components@5.0.0`.
+- Приложения и все device-проекты переведены на `vuesp-components@5.0.1`.
 
 ### 4.0.1 (2026-11-08)
 
