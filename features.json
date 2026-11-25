@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-25",
+  "base": {
+    "label": "Vuesp base",
+    "always": true,
+    "firmware": [
+      "src/main.cpp",
+      "src/config",
+      "src/const",
+      "src/device",
+      "src/diag",
+      "src/discovery",
+      "src/eeprom",
+      "src/files",
+      "src/gpio",
+      "src/init",
+      "src/libs",
+      "src/setup",
+      "src/tasks",
+      "src/utils",
+      "src/webserver"
+    ],
+    "web": [
+      "vue/src/App.vue",
+      "vue/src/main.ts",
+      "vue/src/assets",
+      "vue/src/components",
+      "vue/src/composables",
+      "vue/src/generated",
+      "vue/src/icons",
+      "vue/src/pages/index.vue",
+      "vue/src/pages/dashboard",
+      "vue/src/pages/device",
+      "vue/src/pages/[...path].vue",
+      "vue/src/router",
+      "vue/src/stores",
+      "vue/src/types",
+      "vue/src/utils",
+      "vue/json/dashboard.json",
+      "vue/json/locales",
+      "vue/json/suggestions.json"
+    ]
+  },
+  "features": {
+    "script": {
+      "label": "ScriptRunner",
+      "summary": "Local scripting: editor, slots, logs and script execution.",
+      "firmware": [
+        "src/runner"
+      ],
+      "web": [
+        "vue/src/pages/script",
+        "vue/src/composables/script",
+        "vue/src/assets/js/script"
+      ],
+      "menu": [
+        "menu.script"
+      ],
+      "locales": [
+        "script",
+        "editor",
+        "logs",
+        "slots",
+        "examples",
+        "noScripts",
+        "noLogs",
+        "selectScript"
+      ],
+      "protocol": [],
+      "wiring": [
+        "src/main.cpp: include ./runner/runner.h, setupRunner(), loopRunner(now)",
+        "src/webserver/webserver.cpp: scriptRunner.emitEvent(), registerScript(), runScript()"
+      ],
+      "remove": [
+        "delete src/runner, vue/src/pages/script, vue/src/composables/script, vue/src/assets/js/script",
+        "remove menu.script from vue/json/menu.json",
+        "remove the runner include and setupRunner()/loopRunner() calls from src/main.cpp",
+        "remove scriptRunner calls from src/webserver/webserver.cpp",
+        "keep protocol keys: the script feature uses KEY.MESSAGE from the base"
+      ]
+    },
+    "serial": {
+      "label": "SERIAL example",
+      "summary": "Example console page built on SerialConsole with a demo transport.",
+      "firmware": [],
+      "web": [
+        "vue/src/pages/serial"
+      ],
+      "menu": [
+        "menu.serial"
+      ],
+      "locales": [
+        "serial.demoPort",
+        "serial.demoHint"
+      ],
+      "protocol": [],
+      "wiring": [
+        "No firmware wiring: the page uses the demo transport."
+      ],
+      "remove": [
+        "delete vue/src/pages/serial",
+        "remove menu.serial from vue/json/menu.json",
+        "remove serial.* from vue/json/locales/ru.json and en.json"
+      ]
+    },
+    "modbus": {
+      "label": "Modbus RTU (firmware)",
+      "summary": "Modbus RTU master/slave module available in the template.",
+      "firmware": [
+        "src/modbus"
+      ],
+      "web": [],
+      "menu": [],
+      "locales": [],
+      "protocol": [],
+      "wired": false,
+      "wiring": [
+        "Not wired: src/main.cpp, src/webserver and src/const/protocol.h do not reference the module yet."
+      ],
+      "remove": [
+        "delete src/modbus"
+      ],
+      "notes": [
+        "Decide before the next release: wire the module as a full example (WS key, menu page, settings) or drop it from the template."
+      ]
+    }
+  }
+}
