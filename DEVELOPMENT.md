@@ -2,6 +2,9 @@
 
 Complete guide for developing and contributing to the Vuesp project.
 
+For creating a new device project, porting a board to the current template and
+documenting hardware, see [CREATING_PROJECTS.md](./CREATING_PROJECTS.md).
+
 ## Prerequisites
 
 - Node.js >= 20 and npm >= 10

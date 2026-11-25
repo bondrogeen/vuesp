@@ -31,6 +31,7 @@ The CLI clones this template with its git history, keeps the selected board, set
 - 🚀 Full-stack Arduino projects with web UI
 - 🎨 Glass UI with light/dark themes and shared `vuesp-components@5`
 - 🧠 ScriptRunner editor with syntax highlighting and autocomplete
+- 📜 Starter scripts for variables, loops, arrays and button events
 - 🖥️ Browser demo with a mock device — no hardware required
 - 🔒 Optional HTTP Basic Authentication
 - ⚡ Binary WebSocket for efficient communication
@@ -84,6 +85,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) for complete setup and development workfl
 ## Documentation
 
 - **[DOCS.md](./DOCS.md)** - Detailed project documentation for the catalog
+- **[CREATING_PROJECTS.md](./CREATING_PROJECTS.md)** - How to create and maintain a device project based on Vuesp
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Complete development guide
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines
 - **[SECURITY.md](./SECURITY.md)** - Security policies and best practices
@@ -192,6 +194,19 @@ Binary WebSocket messages at `/esp` endpoint:
 - First byte: Command ID (1-255)
 - Remaining bytes: Struct data
 - All platform-specific
+
+## Starter scripts
+
+The template ships ready-to-run examples in [`vue/public/scripts.txt`](./vue/public/scripts.txt). After `build-web` the file is copied to LittleFS as `/www/scripts.txt` and appears in the **Scripts** page:
+
+- `boot` — logs a message and registers the button handler;
+- `hello` — `log()` and `wait()`;
+- `counter` — `while` loop;
+- `button` — `on('btn_c')` with `$e0/$e1/$e2`;
+- `expressions` — arithmetic, strings and `len()`;
+- `array` — `len()`, `get()` and `set()`.
+
+Device projects replace these with board-specific examples: relays, MOSFET outputs, ADC, Modbus or display screens. Global suggestions such as `fade()` and `udp()` come from `vuesp-components`; project `vue/json/suggestions.json` contains only board-specific functions and events.
 
 ## Документация / Documentation ScriptRunner
 

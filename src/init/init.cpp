@@ -29,6 +29,8 @@ Settings settings = {
     DEF_AUTH_PASS};
 
 uint32_t lastTimeInit = 0;
+uint32_t lastWifiAttempt = 0;
+uint8_t wifiAttempts = 0;
 uint8_t isConnected = 0;
 
 void reboot() {
@@ -97,7 +99,26 @@ void loopWiFi(uint32_t now) {
   if (now - lastTimeInit > 10000) {
     lastTimeInit = now;
   }
-  if (isConnected) {
+  if (isConnected || WiFi.status() == WL_CONNECTED) {
     updateIp();
+    wifiAttempts = 0;
+    return;
+  }
+
+  if (settings.wifiMode != WIFI_STA || !settings.wifiSsid[0]) return;
+  if (now - lastWifiAttempt < 15000) return;
+
+  lastWifiAttempt = now;
+  if (WiFi.status() == WL_CONNECTED) {
+    wifiAttempts = 0;
+    return;
+  }
+
+  wifiAttempts++;
+  if (wifiAttempts <= 3) {
+    WiFi.reconnect();
+  } else {
+    WiFi.begin(settings.wifiSsid, settings.wifiPass);
+    if (wifiAttempts >= 12) wifiAttempts = 1;
   }
 }

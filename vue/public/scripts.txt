@@ -1,4 +1,6 @@
-0:boot:call(1);
-1:test1:$p13=255;wait(1s);$p13=0;wait(1s);
-2:test2:$p13=0;
-3:test3:$p13=255;
+0:boot:log('Vuesp ready');call(3);
+1:hello:log('Hello from Vuesp');wait(1s);log('Script finished');
+2:counter:$u0=1;while:$u0<=5;log('counter',$u0);$u0=$u0+1;wait(1s);end;log('done');
+3:button:on('btn_c');log('button gpio',$e0,'value',$e1,'count',$e2);end;
+4:expressions:$u0=7;$u1=3;log('sum',$u0+$u1,'mul',$u0*$u1,'mod',$u0%$u1);$s0='Vuesp';log('text',$s0,'len',len($s0));
+5:array:$a0={1,2,3};log('len',len($a0),'first',get($a0,0));set($a0,0,10);log('new',get($a0,0));

@@ -56,6 +56,8 @@ Comments are not supported.
 | String | `$sN` | `$s0='Hello'` |
 | Array | `$aN` | `$a0={1,2,3}` |
 | Port (pin) | `$pN` | `$p14=255` |
+| Event parameter | `$eN` | `$e0` |
+| Call parameter | `$cN` | `$c0` |
 
 `N` — variable number from 0 to 9.
 
@@ -125,6 +127,29 @@ Events are automatically generated when the state of INPUT ports changes:
       wait(200ms);
       $p2=0;
     end;
+
+### Event and Call Parameters
+
+The last event is available in `$e0…$e3`. For `btn_c` these are GPIO, value and count:
+
+    on('btn_c');
+      log('gpio',$e0,'value',$e1,'count',$e2);
+    end;
+
+The parameters of project events (`port_c`, `modbus`, `touch`, `swipe`, etc.) are documented in the project's `vue/json/suggestions.json` and `DOCS.md`.
+
+`call(id, a, b)` starts another script and passes up to four arguments in `$c0…$c3`:
+
+    call(1, 10, 20);
+
+### Global Functions
+
+`fade()` and `udp()` are available on every Vuesp device; their descriptions come from `vuesp-components`:
+
+    fade(14,255,2000);          // smoothly change a PWM/DAC port
+    udp(2,'call(1)');           // send text to a discovered device
+
+`udp()` requires Discovery to be enabled. Board-specific functions (`input`, `output`, `modbus`, `sshow`, etc.) are documented in the device project.
 
 
 ## Control Structures
@@ -361,6 +386,7 @@ Logical NOT. Applies to a number, variable, string, or array. Result is an integ
 | Strings | `'text'` |
 | Spaces | allowed inside expressions |
 | Variables | `$u0`, `$i0`, `$f0`, `$s0`, `$a0` |
+| Event / call | `$e0…$e3`, `$c0…$c3` |
 | Delay | `wait(100ms)`, `wait(1s)`, `wait(1m)`, `wait(1h)` |
 | Loop | `while:condition; ... end;` |
 | Condition | `if:condition; ... else; ... end;` |

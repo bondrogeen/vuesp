@@ -98,7 +98,8 @@
     "settings": "Settings",
     "fs": "File system",
     "gpio": "GPIO",
-    "script": "Script"
+    "script": "Script",
+    "serial": "SERIAL"
   },
   "dialog": {
     "doRestart": "Do you want to restart your device?",
@@ -215,5 +216,9 @@
     "peers": "Peers",
     "wifi": "Wi-Fi",
     "fragmentation": "Fragmentation"
+  },
+  "serial": {
+    "demoPort": "Demo port",
+    "demoHint": "Example page: replace the demo transport with your device transport (WebSocket or Web Serial). Delete this page and the menu item if you do not need a serial console."
   }
 }
