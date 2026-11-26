@@ -35,7 +35,7 @@
 
 - [x] 5.1 Add the script studio tab with editor, compile diagnostics, hex and disassembly; verify `npm run typecheck`, `npm run lint` and a browser smoke test.
 - [x] 5.2 Add decompile-on-open, save/upload/run and `.vbc` download; verify the full round-trip against the device.
-- [ ] 5.3 Add capability-aware suggestions from `/script/capabilities`; verify unknown symbols are not suggested and known symbols compile.
+- [x] 5.3 Add capability-aware suggestions from `/script/capabilities`; verify unknown symbols are not suggested and known symbols compile.
 
 ## 6. Integration and release
 

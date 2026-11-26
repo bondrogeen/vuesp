@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { useLocale } from '@/composables/useLocale';
 import { compile, decompile, disassemble, DEFAULT_MANIFEST } from '@/lib/script';
-import type { CapabilityManifest, CompileResult } from '@/lib/script';
+import type { CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
 
 const { $t } = useLocale();
 
@@ -22,6 +22,7 @@ const message = ref('');
 const busy = ref(false);
 const status = ref<Record<string, unknown> | null>(null);
 const scripts = ref<Array<{ id: number; size: number }>>([]);
+const sourceEl = ref<HTMLTextAreaElement | null>(null);
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.length);
@@ -170,6 +171,29 @@ function selectScript(scriptId: number) {
   id.value = scriptId;
 }
 
+async function insertAtCursor(text: string) {
+  const element = sourceEl.value;
+  if (!element) {
+    source.value += text;
+    return;
+  }
+  const start = element.selectionStart ?? source.value.length;
+  const end = element.selectionEnd ?? start;
+  source.value = source.value.slice(0, start) + text + source.value.slice(end);
+  await nextTick();
+  const position = start + text.length;
+  element.focus();
+  element.setSelectionRange(position, position);
+}
+
+function insertFunction(fn: FunctionSpec) {
+  insertAtCursor(`${fn.name}()`);
+}
+
+function insertEvent(event: EventSpec) {
+  insertAtCursor(`\non('${event.name}') {\n  \n}\n`);
+}
+
 onMounted(async () => {
   await loadCapabilities();
   await refresh();
@@ -224,7 +248,7 @@ onMounted(async () => {
               {{ $t('scriptStudio.stop') }}
             </button>
             <button class="rounded-md border border-red-400 px-3 py-2 text-sm text-red-500 hover:opacity-80" :disabled="busy" @click="stopAll">
-              {{ $t('scriptStudio.stop') }} all
+              {{ $t('scriptStudio.stopAll') }}
             </button>
             <button class="rounded-md border border-gray-light-10 dark:border-gray-dark-30 px-3 py-2 text-sm hover:opacity-80" :disabled="busy" @click="run">
               {{ $t('scriptStudio.run') }}
@@ -233,6 +257,7 @@ onMounted(async () => {
         </div>
 
         <textarea
+          ref="sourceEl"
           v-model="source"
           spellcheck="false"
           class="h-[420px] w-full resize-y rounded-md border border-gray-light-10 dark:border-gray-dark-30 bg-gray-light-30 dark:bg-gray-dark-30 p-3 font-mono text-xs leading-5 outline-none focus:border-blue-500"
@@ -260,6 +285,40 @@ onMounted(async () => {
         </section>
 
         <section class="rounded-lg border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 p-4">
+          <h2 class="text-lg font-semibold mb-2">{{ $t('scriptStudio.suggestions') }}</h2>
+
+          <div class="mb-3">
+            <div class="text-[11px] uppercase tracking-wide text-gray-dark-30 dark:text-white/50">{{ $t('scriptStudio.functions') }}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <button
+                v-for="fn in manifest.functions"
+                :key="`fn-${fn.id}`"
+                class="rounded-md border border-gray-light-10 dark:border-gray-dark-30 px-2 py-1 text-xs hover:bg-gray-light-30 dark:hover:bg-gray-dark-30"
+                :title="`${fn.name}(${fn.min}..${fn.max}) => ${fn.ret}`"
+                @click="insertFunction(fn)"
+              >
+                {{ fn.name }}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] uppercase tracking-wide text-gray-dark-30 dark:text-white/50">{{ $t('scriptStudio.events') }}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <button
+                v-for="event in manifest.events"
+                :key="`ev-${event.id}`"
+                class="rounded-md border border-gray-light-10 dark:border-gray-dark-30 px-2 py-1 text-xs hover:bg-gray-light-30 dark:hover:bg-gray-dark-30"
+                :title="`${event.name}: ${event.params} params`"
+                @click="insertEvent(event)"
+              >
+                {{ event.name }}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 p-4">
           <h2 class="text-lg font-semibold mb-2">{{ $t('scriptStudio.scripts') }}</h2>
           <ul class="space-y-1">
             <li v-for="script in scripts" :key="script.id">
@@ -271,7 +330,7 @@ onMounted(async () => {
                 <span class="text-xs text-gray-dark-30 dark:text-white/60">{{ script.size }} {{ $t('scriptStudio.bytes') }}</span>
               </button>
             </li>
-            <li v-if="scripts.length === 0" class="text-xs text-gray-dark-30 dark:text-white/60">{{ $t('scriptStudio.empty') }}</li>
+            <li v-if="scripts.length === 0" class="text-xs text-gray-dark-30 dark:text-white/60">{{ $t('noScripts') }}</li>
           </ul>
         </section>
       </aside>
