@@ -13,7 +13,7 @@
 - [x] 2.2 Add semantic checks for blocks, slot bounds, arity, known functions/events and code/stack limits; verify each error has a stable code and `line:column`.
 - [x] 2.3 Add codegen, container serializer and CRC; verify deterministic byte-identical output and golden bytecode vectors.
 - [x] 2.4 Add disassembler and decompiler with canonical printing; verify compile→decompile→compile and decompile→compile→decompile round-trips.
-- [ ] 2.5 Add capability-manifest client and profile-aware compilation; verify unknown functions/events are rejected and ids match the manifest.
+- [x] 2.5 Add capability-manifest client and profile-aware compilation; verify unknown functions/events are rejected and ids match the manifest.
 - [x] 2.6 Add `npm run test:script` using Node's TypeScript support; verify all compiler tests pass with `node --test`.
 
 ## 3. C++ format, verifier and VM
@@ -33,8 +33,8 @@
 
 ## 5. Web studio
 
-- [ ] 5.1 Add the script studio tab with editor, compile diagnostics, hex and disassembly; verify `npm run typecheck`, `npm run lint` and a browser smoke test.
-- [ ] 5.2 Add decompile-on-open, save/upload/run and `.vbc` download; verify the full round-trip against the device.
+- [x] 5.1 Add the script studio tab with editor, compile diagnostics, hex and disassembly; verify `npm run typecheck`, `npm run lint` and a browser smoke test.
+- [x] 5.2 Add decompile-on-open, save/upload/run and `.vbc` download; verify the full round-trip against the device.
 - [ ] 5.3 Add capability-aware suggestions from `/script/capabilities`; verify unknown symbols are not suggested and known symbols compile.
 
 ## 6. Integration and release

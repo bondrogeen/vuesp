@@ -23,6 +23,7 @@ declare module 'vue-router/auto-routes' {
     '/dashboard/': RouteRecordInfo<'/dashboard/', '/dashboard', Record<never, never>, Record<never, never>>,
     '/device/[page]': RouteRecordInfo<'/device/[page]', '/device/:page', { page: ParamValue<true> }, { page: ParamValue<false> }>,
     '/script/': RouteRecordInfo<'/script/', '/script', Record<never, never>, Record<never, never>>,
+    '/script-studio/': RouteRecordInfo<'/script-studio/', '/script-studio', Record<never, never>, Record<never, never>>,
     '/serial/': RouteRecordInfo<'/serial/', '/serial', Record<never, never>, Record<never, never>>,
   }
 }
