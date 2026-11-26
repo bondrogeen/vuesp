@@ -62,10 +62,7 @@ vuesp-create my-device --board esp32 --without serial,script
 and records the choice in `.vuesp.json` (`features`), so `sync` can re-apply the
 removal after a template update.
 
-## Known issues before the next stage
+## Known issues
 
-- The template web is a **Vite + Vue Router** app, not Nuxt. Nuxt layers cannot be
-  used here; feature folders plus a small registry (and thin page wrappers) are the
-  equivalent. See the stage plan in the workspace discussion.
 - `src/modbus` is present but not wired into `main.cpp`, `webserver` or the
   protocol. Decide whether to turn it into a full example or drop it.
