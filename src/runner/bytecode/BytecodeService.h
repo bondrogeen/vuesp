@@ -9,6 +9,9 @@
 
 #include "./BytecodeVM.h"
 
+static_assert(VBC_CACHE_SLOTS >= 1 && VBC_CACHE_SLOTS <= 15,
+              "VBC_CACHE_SLOTS must be between 1 and 15");
+
 class BytecodeService {
  public:
   void begin();
@@ -29,7 +32,7 @@ class BytecodeService {
   String statusJson() const;
 
  private:
-  static constexpr uint8_t kCacheSlots = 4;
+  static constexpr uint8_t kCacheSlots = VBC_CACHE_SLOTS;
 
   struct Slot {
     bool used;

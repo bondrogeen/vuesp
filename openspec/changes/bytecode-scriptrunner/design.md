@@ -62,8 +62,8 @@ existing `DataProvider`; `$pN` through `PortProvider`.
 String and array storage stays in the shared global context. Expression
 temporaries use a small scratch arena (4 × 64 B) reset at statement boundaries.
 Per-context state is about 16 B; 15 contexts cost about 240 B. Code is loaded
-into a bounded RAM cache (default 4 KB) from flash on run/event; inactive
-entries are evicted. Estimated total is about 5.5 KB, below the current 7.4 KB.
+into a bounded RAM cache (default 2 slots × 1 KB, `VBC_CACHE_SLOTS`, range
+1..15) from flash on run/event; inactive entries are evicted.
 
 ### 3. Instruction encoding
 

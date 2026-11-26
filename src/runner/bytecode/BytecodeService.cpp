@@ -234,12 +234,13 @@ String BytecodeService::listJson() const {
 }
 
 String BytecodeService::statusJson() const {
-  char buffer[160];
+  char buffer[192];
   snprintf(buffer, sizeof(buffer),
-           "{\"active\":%u,\"scripts\":%u,\"error\":%u,\"errorScript\":%u,\"errorPc\":%u}",
+           "{\"active\":%u,\"scripts\":%u,\"cacheSlots\":%u,\"error\":%u,"
+           "\"errorScript\":%u,\"errorPc\":%u}",
            (unsigned)_vm.activeContexts(), (unsigned)_vm.scriptCount(),
-           (unsigned)_vm.lastError(), (unsigned)_vm.lastErrorScript(),
-           (unsigned)_vm.lastErrorPc());
+           (unsigned)kCacheSlots, (unsigned)_vm.lastError(),
+           (unsigned)_vm.lastErrorScript(), (unsigned)_vm.lastErrorPc());
   return String(buffer);
 }
 
