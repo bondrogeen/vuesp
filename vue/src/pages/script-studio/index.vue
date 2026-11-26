@@ -181,7 +181,14 @@ function scrollActiveTab() {
     const container = tabsScroll.value;
     if (!container) return;
     const active = container.querySelector<HTMLElement>(`#tab-${name.value}`);
-    active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (!active) return;
+    const left = active.offsetLeft;
+    const right = left + active.offsetWidth;
+    if (left < container.scrollLeft) {
+      container.scrollLeft = Math.max(0, left - 8);
+    } else if (right > container.scrollLeft + container.clientWidth) {
+      container.scrollLeft = right - container.clientWidth + 8;
+    }
   });
 }
 
@@ -681,7 +688,7 @@ onBeforeUnmount(() => {
         <div
           class="flex items-stretch gap-1 border-b border-gray-light-10/70 bg-black/[0.02] px-2 pt-2 dark:border-white/10 dark:bg-white/[0.02]"
         >
-          <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto scrollbar">
+          <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto overflow-y-hidden scrollbar">
             <div class="flex min-w-max items-end gap-1">
               <div
                 v-for="script in scripts"
