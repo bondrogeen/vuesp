@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     BlockDiagnostics: typeof import('./src/components/service/BlockDiagnostics.vue')['default']
+    BytecodeEditor: typeof import('./src/components/BytecodeEditor.vue')['default']
     CardChart: typeof import('./src/components/dashboard/CardChart.vue')['default']
     PageBackdrop: typeof import('./src/components/ui/PageBackdrop.vue')['default']
     PageHeader: typeof import('./src/components/ui/PageHeader.vue')['default']

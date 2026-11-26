@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
+import BytecodeEditor from '@/components/BytecodeEditor.vue';
 import { useLocale } from '@/composables/useLocale';
 import { BYTECODE_EXAMPLES, compile, decompile, disassemble, DEFAULT_MANIFEST } from '@/lib/script';
 import type { BytecodeExample, CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
@@ -23,7 +24,10 @@ const message = ref('');
 const busy = ref(false);
 const status = ref<Record<string, unknown> | null>(null);
 const scripts = ref<Array<{ name: string; size: number; boot: number }>>([]);
-const sourceEl = ref<HTMLTextAreaElement | null>(null);
+const editor = ref<{
+  insertAtCursor: (text: string, caretOffset?: number) => void;
+  focus: () => void;
+} | null>(null);
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.length);
@@ -179,27 +183,17 @@ function loadExample(example: BytecodeExample) {
   message.value = '';
 }
 
-async function insertAtCursor(text: string) {
-  const element = sourceEl.value;
-  if (!element) {
-    source.value += text;
-    return;
-  }
-  const start = element.selectionStart ?? source.value.length;
-  const end = element.selectionEnd ?? start;
-  source.value = source.value.slice(0, start) + text + source.value.slice(end);
-  await nextTick();
-  const position = start + text.length;
-  element.focus();
-  element.setSelectionRange(position, position);
+function insertAtCursor(text: string, caretOffset?: number) {
+  editor.value?.insertAtCursor(text, caretOffset);
 }
 
 function insertFunction(fn: FunctionSpec) {
-  insertAtCursor(`${fn.name}()`);
+  insertAtCursor(`${fn.name}()`, fn.name.length + 1);
 }
 
 function insertEvent(event: EventSpec) {
-  insertAtCursor(`\non('${event.name}') {\n  \n}\n`);
+  const snippet = `on('${event.name}') {\n  \n}\n`;
+  insertAtCursor(snippet, snippet.indexOf('\n') + 3);
 }
 
 onMounted(async () => {
@@ -263,12 +257,13 @@ onMounted(async () => {
           </div>
         </div>
 
-        <textarea
-          ref="sourceEl"
+        <BytecodeEditor
+          ref="editor"
           v-model="source"
-          spellcheck="false"
-          class="h-[420px] w-full resize-y rounded-md border border-gray-light-10 dark:border-gray-dark-30 bg-gray-light-30 dark:bg-gray-dark-30 p-3 font-mono text-xs leading-5 outline-none focus:border-blue-500"
-        ></textarea>
+          :manifest="manifest"
+          :script-names="scripts.map((script) => script.name)"
+          :error-lines="diagnostics.map((error) => error.pos.line)"
+        />
 
         <pre v-if="message" class="mt-3 whitespace-pre-wrap rounded-md bg-gray-light-30 dark:bg-gray-dark-30 p-3 text-xs text-gray-dark-30 dark:text-white/70">{{ message }}</pre>
 

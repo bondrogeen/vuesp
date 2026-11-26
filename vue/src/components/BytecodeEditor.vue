@@ -1,0 +1,356 @@
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+
+import type { CapabilityManifest } from '@/lib/script';
+import { getCompletions, highlightBytecode } from '@/lib/script/editor';
+import type { CompletionItem } from '@/lib/script/editor';
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: string;
+    manifest: CapabilityManifest;
+    scriptNames?: readonly string[];
+    errorLines?: readonly number[];
+  }>(),
+  {
+    scriptNames: () => [],
+    errorLines: () => [],
+  },
+);
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+}>();
+
+const root = ref<HTMLDivElement | null>(null);
+const content = ref<HTMLDivElement | null>(null);
+const textarea = ref<HTMLTextAreaElement | null>(null);
+const highlight = ref<HTMLPreElement | null>(null);
+const gutter = ref<HTMLPreElement | null>(null);
+const measure = ref<HTMLSpanElement | null>(null);
+
+const suggestions = ref<readonly CompletionItem[]>([]);
+const suggestOpen = ref(false);
+const suggestStart = ref(0);
+const selected = ref(0);
+const menuLeft = ref(0);
+const menuTop = ref(0);
+
+let charWidth = 7.2;
+let blurTimer: ReturnType<typeof setTimeout> | null = null;
+
+const highlighted = computed(() => highlightBytecode(props.modelValue, props.manifest));
+const lineCount = computed(() => props.modelValue.split('\n').length);
+const gutterHtml = computed(() => {
+  const errors = new Set(props.errorLines);
+  let html = '';
+  for (let line = 1; line <= lineCount.value; line++) {
+    const cls = errors.has(line)
+      ? 'text-red-500 font-semibold'
+      : 'text-gray-dark-25 dark:text-gray-main';
+    html += `<span class="${cls}">${line}</span>\n`;
+  }
+  return html;
+});
+
+function kindClass(kind: CompletionItem['kind']): string {
+  switch (kind) {
+    case 'function':
+      return 'text-blue-600 dark:text-blue-400';
+    case 'builtin':
+      return 'text-yellow-600 dark:text-yellow-400';
+    case 'event':
+      return 'text-amber-dark-75 dark:text-amber-light-45';
+    case 'slot':
+    case 'data':
+      return 'text-cyan-dark-30 dark:text-cyan-light-40';
+    case 'script':
+      return 'text-green-dark-55 dark:text-green-light-25';
+    case 'keyword':
+      return 'text-purple-main dark:text-purple-light-30';
+    default:
+      return 'text-gray-dark-30 dark:text-white/70';
+  }
+}
+
+function measureChar() {
+  const element = measure.value;
+  if (!element) return;
+  const width = element.getBoundingClientRect().width / 10;
+  if (width > 0) charWidth = width;
+}
+
+function syncScroll() {
+  const input = textarea.value;
+  if (!input) return;
+  if (gutter.value) gutter.value.scrollTop = input.scrollTop;
+  if (highlight.value) {
+    highlight.value.scrollTop = input.scrollTop;
+    highlight.value.scrollLeft = input.scrollLeft;
+  }
+}
+
+function closeSuggestions() {
+  suggestOpen.value = false;
+  suggestions.value = [];
+  selected.value = 0;
+}
+
+function updateMenuPosition() {
+  const input = textarea.value;
+  const contentEl = content.value;
+  const rootEl = root.value;
+  if (!input || !contentEl || !rootEl) return;
+
+  const caret = input.selectionStart;
+  const before = props.modelValue.slice(0, caret);
+  const line = (before.match(/\n/g) ?? []).length;
+  const lineStart = before.lastIndexOf('\n') + 1;
+  const column = caret - lineStart;
+
+  const style = getComputedStyle(input);
+  const lineHeight = parseFloat(style.lineHeight) || 20;
+  const paddingLeft = parseFloat(style.paddingLeft) || 12;
+  const paddingTop = parseFloat(style.paddingTop) || 12;
+  const contentRect = contentEl.getBoundingClientRect();
+  const rootRect = rootEl.getBoundingClientRect();
+
+  const x = contentRect.left - rootRect.left + paddingLeft + column * charWidth - input.scrollLeft;
+  const y =
+    contentRect.top - rootRect.top + paddingTop + line * lineHeight - input.scrollTop + lineHeight;
+
+  menuLeft.value = Math.max(4, Math.min(x, Math.max(4, rootEl.clientWidth - 324)));
+  menuTop.value = y + 4;
+}
+
+function updateSuggestions(force = false) {
+  const input = textarea.value;
+  if (!input) {
+    closeSuggestions();
+    return;
+  }
+  const result = getCompletions(
+    props.modelValue,
+    input.selectionStart,
+    props.manifest,
+    props.scriptNames,
+    force,
+  );
+  if (!result) {
+    closeSuggestions();
+    return;
+  }
+  suggestions.value = result.items;
+  suggestStart.value = result.start;
+  selected.value = 0;
+  suggestOpen.value = true;
+  void nextTick(updateMenuPosition);
+}
+
+function onInput(event: Event) {
+  const target = event.target as HTMLTextAreaElement;
+  emit('update:modelValue', target.value);
+  void nextTick(() => {
+    syncScroll();
+    updateSuggestions();
+  });
+}
+
+function insertRange(start: number, end: number, text: string, caretOffset?: number) {
+  const input = textarea.value;
+  if (!input) return;
+  const next = `${props.modelValue.slice(0, start)}${text}${props.modelValue.slice(end)}`;
+  emit('update:modelValue', next);
+  void nextTick(() => {
+    input.focus();
+    const position = start + (caretOffset ?? text.length);
+    input.setSelectionRange(position, position);
+    syncScroll();
+    updateSuggestions();
+  });
+}
+
+function insertAtCursor(text: string, caretOffset?: number) {
+  const input = textarea.value;
+  if (!input) return;
+  insertRange(input.selectionStart, input.selectionEnd, text, caretOffset);
+}
+
+function acceptSuggestion(index: number) {
+  const item = suggestions.value[index];
+  const input = textarea.value;
+  if (!item || !input) return;
+  insertRange(suggestStart.value, input.selectionStart, item.insert, item.caret);
+  closeSuggestions();
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.ctrlKey && event.key === ' ') {
+    event.preventDefault();
+    updateSuggestions(true);
+    return;
+  }
+
+  if (suggestOpen.value && suggestions.value.length > 0) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      selected.value = (selected.value + 1) % suggestions.value.length;
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      selected.value =
+        (selected.value - 1 + suggestions.value.length) % suggestions.value.length;
+      return;
+    }
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      event.preventDefault();
+      acceptSuggestion(selected.value);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSuggestions();
+      return;
+    }
+  }
+
+  if (event.key === 'Tab' && !event.shiftKey) {
+    event.preventDefault();
+    insertAtCursor('  ');
+  }
+}
+
+function onKeyup(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    closeSuggestions();
+    return;
+  }
+  if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    updateSuggestions();
+  }
+}
+
+function onScroll() {
+  syncScroll();
+  closeSuggestions();
+}
+
+function onBlur() {
+  if (blurTimer) clearTimeout(blurTimer);
+  blurTimer = setTimeout(closeSuggestions, 120);
+}
+
+function onFocus() {
+  void nextTick(measureChar);
+}
+
+onMounted(() => {
+  measureChar();
+  document.fonts?.ready.then(measureChar).catch(() => undefined);
+});
+
+onBeforeUnmount(() => {
+  if (blurTimer) clearTimeout(blurTimer);
+});
+
+defineExpose({
+  focus: () => textarea.value?.focus(),
+  insertAtCursor,
+});
+</script>
+
+<template>
+  <div ref="root" class="relative w-full">
+    <div
+      class="flex h-[420px] overflow-hidden rounded-md border border-gray-light-10 bg-gray-light-30 focus-within:border-blue-500 dark:border-gray-dark-30 dark:bg-gray-dark-30"
+    >
+      <div
+        class="relative w-12 shrink-0 border-r border-gray-light-10 bg-black/5 dark:border-gray-dark-30 dark:bg-black/20"
+      >
+        <pre
+          ref="gutter"
+          class="m-0 h-full overflow-hidden py-3 pl-1 pr-2 text-right font-mono text-xs leading-5"
+          v-html="gutterHtml"
+        ></pre>
+      </div>
+
+      <div ref="content" class="relative min-w-0 flex-1">
+        <pre
+          ref="highlight"
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-0 m-0 overflow-hidden whitespace-pre p-3 font-mono text-xs leading-5 text-gray-dark-30 dark:text-white/70"
+          style="tab-size: 2"
+          v-html="highlighted"
+        ></pre>
+        <textarea
+          ref="textarea"
+          :value="modelValue"
+          wrap="off"
+          spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
+          autocorrect="off"
+          class="editor-input absolute inset-0 h-full w-full resize-none overflow-auto whitespace-pre bg-transparent p-3 font-mono text-xs leading-5 outline-none"
+          style="tab-size: 2"
+          @input="onInput"
+          @keydown="onKeydown"
+          @keyup="onKeyup"
+          @click="updateSuggestions()"
+          @scroll="onScroll"
+          @blur="onBlur"
+          @focus="onFocus"
+        ></textarea>
+      </div>
+    </div>
+
+    <span
+      ref="measure"
+      aria-hidden="true"
+      class="invisible absolute left-0 top-0 font-mono text-xs"
+    >MMMMMMMMMM</span>
+
+    <div
+      v-if="suggestOpen && suggestions.length > 0"
+      class="editor-menu absolute z-50 max-h-60 w-80 overflow-y-auto rounded-lg border border-gray-light-10 bg-white p-1 text-xs shadow-lg dark:border-gray-dark-30 dark:bg-gray-dark-40"
+      :style="{ left: `${menuLeft}px`, top: `${menuTop}px` }"
+    >
+      <button
+        v-for="(item, index) in suggestions"
+        :key="`${item.kind}-${item.label}`"
+        type="button"
+        class="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left"
+        :class="
+          index === selected
+            ? 'bg-blue-50 dark:bg-blue-900/30'
+            : 'hover:bg-gray-light-30 dark:hover:bg-gray-dark-30'
+        "
+        @mousedown.prevent="acceptSuggestion(index)"
+        @mouseenter="selected = index"
+      >
+        <span class="truncate" :class="kindClass(item.kind)">{{ item.label }}</span>
+        <span class="shrink-0 text-[10px] text-gray-dark-25 dark:text-gray-main">{{ item.detail }}</span>
+      </button>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.editor-input {
+  color: transparent;
+  caret-color: #374151;
+  -webkit-text-fill-color: transparent;
+}
+
+:global(.dark) .editor-input {
+  caret-color: #f3f4f6;
+}
+
+.editor-input::selection {
+  background: rgb(59 130 246 / 0.3);
+}
+
+.editor-menu {
+  scrollbar-width: thin;
+}
+</style>
