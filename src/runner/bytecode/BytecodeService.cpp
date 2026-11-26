@@ -182,6 +182,16 @@ bool BytecodeService::stopScript(uint8_t id) { return _vm.stopScript(id); }
 
 void BytecodeService::stopAll() { _vm.stopAll(); }
 
+bool BytecodeService::emitEvent(const char* name, uint8_t count, const int32_t* params) {
+  if (!name) return false;
+  for (uint8_t i = 0; i < sizeof(kEvents) / sizeof(kEvents[0]); i++) {
+    if (strcmp(kEvents[i].name, name) == 0) {
+      return _vm.emitEvent(kEvents[i].id, count, params);
+    }
+  }
+  return false;
+}
+
 bool BytecodeService::readScript(uint8_t id, uint8_t* buffer, uint16_t maxLen, uint16_t& len) {
   const int8_t slot = findSlot(id);
   if (slot >= 0) {

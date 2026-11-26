@@ -361,6 +361,30 @@ static void onBytecodeList(AsyncWebServerRequest* request) {
 static void onBytecodeStatus(AsyncWebServerRequest* request) {
   request->send(200, RES_TYPE_JSON, bytecodeService.statusJson());
 }
+
+static void onBytecodeEvent(AsyncWebServerRequest* request) {
+  const AsyncWebParameter* name = request->getParam("name");
+  if (!name || name->value().length() == 0) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  static const char* const keys[4] = {"p0", "p1", "p2", "p3"};
+  int32_t params[4] = {0, 0, 0, 0};
+  for (uint8_t i = 0; i < 4; i++) {
+    const AsyncWebParameter* param = request->getParam(keys[i]);
+    if (param) params[i] = param->value().toInt();
+  }
+  uint8_t count = 4;
+  const AsyncWebParameter* countParam = request->getParam("count");
+  if (countParam) {
+    long value = countParam->value().toInt();
+    if (value < 0) value = 0;
+    if (value > 4) value = 4;
+    count = (uint8_t)value;
+  }
+  const bool ok = bytecodeService.emitEvent(name->value().c_str(), count, params);
+  request->send(ok ? 200 : 400, RES_TYPE_JSON, status(ok));
+}
 #endif
 
 void setupServer() {
@@ -387,6 +411,7 @@ void setupServer() {
   server.on("/script/capabilities", HTTP_GET, onBytecodeCapabilities);
   server.on("/script/list", HTTP_GET, onBytecodeList);
   server.on("/script/status", HTTP_GET, onBytecodeStatus);
+  server.on("/script/event", HTTP_POST, onBytecodeEvent);
 #endif
 
   server.on("*", HTTP_ANY, onRoot);

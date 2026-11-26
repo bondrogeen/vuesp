@@ -39,7 +39,7 @@
 
 ## 6. Integration and release
 
-- [ ] 6.1 Run an end-to-end ESP8266 scenario: upload, run, `wait`, event handler, external function, decompile; verify serial logs and HTTP responses.
+- [x] 6.1 Run an end-to-end ESP8266 scenario: upload, run, `wait`, event handler, external function, decompile; verify serial logs and HTTP responses.
 - [ ] 6.2 Run the same scenario on an ESP32 board (kc868-a16) when available; verify the same behavior and memory limits.
 - [ ] 6.3 Update `github/docs/scriptrunner/` and `vuesp-workspace/docs/decisions.md` if contracts change; verify documented commands run as written.
 - [ ] 6.4 Add CI jobs for C++ bytecode tests and TS compiler tests; verify GitHub Actions is green.

@@ -20,6 +20,7 @@ class BytecodeService {
   bool runScript(uint8_t id);
   bool stopScript(uint8_t id);
   void stopAll();
+  bool emitEvent(const char* name, uint8_t count, const int32_t* params);
   bool readScript(uint8_t id, uint8_t* buffer, uint16_t maxLen, uint16_t& len);
   uint8_t scriptCount() const;
 
