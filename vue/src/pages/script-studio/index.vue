@@ -78,6 +78,9 @@ const status = ref<ScriptStatus | null>(null);
 const scripts = ref<ScriptListItem[]>([]);
 const editor = ref<EditorApi | null>(null);
 const tabsScroll = ref<HTMLDivElement | null>(null);
+const nameInput = ref<HTMLInputElement | null>(null);
+const editingName = ref(false);
+let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 const snippetsOpen = ref(false);
 const examplesOpen = ref(false);
@@ -216,7 +219,6 @@ async function refresh() {
     ]);
     if (statusResponse.ok) status.value = (await statusResponse.json()) as ScriptStatus;
     if (listResponse.ok) scripts.value = (await listResponse.json()) as ScriptListItem[];
-    scrollActiveTab();
   } catch {
     /* keep the previous view */
   }
@@ -299,7 +301,7 @@ async function runNamed(scriptName: string) {
   busy.value = true;
   try {
     if (await post(`/script/run?name=${encodeURIComponent(scriptName)}`)) {
-      message.value = $t('scriptStudio.stateRunning');
+      message.value = '';
       await refresh();
     }
   } finally {
@@ -398,6 +400,19 @@ async function selectScript(script: ScriptListItem) {
 async function reloadCurrent() {
   if (!currentEntry.value) return;
   await loadScript(name.value);
+}
+
+function startEditName() {
+  editingName.value = true;
+  void nextTick(() => {
+    nameInput.value?.focus();
+    nameInput.value?.select();
+  });
+}
+
+function finishName() {
+  editingName.value = false;
+  scrollActiveTab();
 }
 
 function newScript() {
@@ -519,10 +534,17 @@ onMounted(async () => {
   const initial = scripts.value.find((script) => script.name === name.value) ?? scripts.value[0];
   if (initial) await loadScript(initial.name);
   else compileSource(true);
+  pollTimer = setInterval(() => {
+    if (!busy.value) void refresh();
+  }, 1500);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onWindowKeydown);
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
 });
 </script>
 
@@ -573,13 +595,38 @@ onBeforeUnmount(() => {
                     : 'bg-blue-main'
             "
           />
-          <input
-            v-model="name"
-            type="text"
-            maxlength="16"
-            class="w-44 min-w-0 bg-transparent font-mono text-sm font-semibold outline-none"
-            :aria-label="$t('scriptStudio.id')"
-          />
+          <template v-if="editingName">
+            <input
+              ref="nameInput"
+              v-model="name"
+              type="text"
+              maxlength="16"
+              class="w-44 min-w-0 rounded border border-gray-light-10 bg-transparent px-1 font-mono text-sm font-semibold outline-none focus:border-blue-main dark:border-white/10"
+              :aria-label="$t('scriptStudio.id')"
+              @keydown.enter="finishName"
+              @keydown.esc="finishName"
+              @blur="finishName"
+            />
+            <button
+              class="rounded p-1 text-gray-dark-30 hover:bg-black/5 dark:text-white/60 dark:hover:bg-white/5"
+              :title="$t('scriptStudio.editName')"
+              :aria-label="$t('scriptStudio.editName')"
+              @click="finishName"
+            >
+              <span class="text-sm leading-none">✓</span>
+            </button>
+          </template>
+          <template v-else>
+            <span class="max-w-44 truncate font-mono text-sm font-semibold">{{ name }}</span>
+            <button
+              class="rounded p-1 text-gray-dark-30 hover:bg-black/5 dark:text-white/60 dark:hover:bg-white/5"
+              :title="$t('scriptStudio.editName')"
+              :aria-label="$t('scriptStudio.editName')"
+              @click="startEditName"
+            >
+              <span class="text-sm leading-none">✎</span>
+            </button>
+          </template>
           <span
             v-if="dirty"
             class="size-1.5 rounded-full bg-amber-main"
@@ -712,17 +759,17 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex items-end gap-1 border-b border-gray-light-10/70 bg-black/[0.02] pt-2 dark:border-white/10 dark:bg-white/[0.02]"
+          class="flex items-end gap-1 border-b border-gray-light-10/70 bg-black/[0.02] pt-1 dark:border-white/10 dark:bg-white/[0.02]"
         >
           <button
-            class="mb-0 grid h-[31px] w-9 shrink-0 place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
+            class="mb-0 grid h-[31px] w-9 shrink-0 translate-y-0.5 place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
             :title="$t('scriptStudio.newScript')"
             :aria-label="$t('scriptStudio.newScript')"
             @click="newScript"
           >
             <VIcon name="add" class="size-3.5" />
           </button>
-          <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto overflow-y-hidden scrollbar">
+          <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto overflow-y-hidden py-1.5 scrollbar">
             <div class="flex min-w-max items-end gap-1">
               <div
                 v-for="script in scripts"
@@ -731,19 +778,13 @@ onBeforeUnmount(() => {
                 class="group flex items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1"
                 :class="
                   script.name === name
-                    ? '-mb-px border-gray-dark-40 bg-gray-dark-40 text-white dark:border-gray-dark-40 dark:bg-gray-dark-40 dark:text-white'
-                    : 'border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
+                    ? '-mb-px -translate-y-1 border-gray-dark-40 bg-gray-dark-40 text-white dark:border-gray-dark-40 dark:bg-gray-dark-40 dark:text-white'
+                    : 'translate-y-0.5 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
                 "
               >
                 <button class="flex min-w-0 items-center gap-1 text-left" @click="selectScript(script)">
                   <span class="size-1.5 shrink-0 rounded-full" :class="toneDot(scriptState(script).tone)" />
                   <span class="max-w-40 truncate font-mono text-[11px]">{{ script.name }}</span>
-                  <span
-                    v-if="script.boot"
-                    class="rounded bg-amber-main/10 px-1 text-[8px] uppercase text-amber-main"
-                  >
-                    boot
-                  </span>
                   <span
                     v-if="script.name === name && dirty"
                     class="size-1 shrink-0 rounded-full bg-amber-main"
