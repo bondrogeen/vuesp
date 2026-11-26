@@ -1,0 +1,8 @@
+#ifndef VUESP_CONST_BYTECODE_H
+#define VUESP_CONST_BYTECODE_H
+
+#ifndef ENABLE_BYTECODE_VM
+#define ENABLE_BYTECODE_VM 0
+#endif
+
+#endif

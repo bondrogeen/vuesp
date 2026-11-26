@@ -1,4 +1,5 @@
 #include "./config/ConfigStore.h"
+#include "./const/bytecode.h"
 #include "./diag/bootlog.h"
 #include "./diag/diag.h"
 #include "./device/device.h"
@@ -6,6 +7,7 @@
 #include "./files/files.h"
 #include "./gpio/gpio.h"
 #include "./init/init.h"
+#include "./runner/bytecode/BytecodeService.h"
 #include "./runner/runner.h"
 #include "./setup/serialSetup.h"
 #include "./tasks/tasks.h"
@@ -54,7 +56,9 @@ void setupDelay() {
   setupServer();
   setupDiscovery();
   setupRunner();
-
+#if ENABLE_BYTECODE_VM
+  bytecodeService.begin();
+#endif
 }
 
 void loop() {
@@ -78,6 +82,9 @@ void loop() {
     loopDevice(now);
     loopWiFi(now);
     loopRunner(now);
+#if ENABLE_BYTECODE_VM
+    bytecodeService.loop(now);
+#endif
     loopSerialSetup();
   }
 

@@ -60,6 +60,7 @@ class BytecodeVM {
 
   uint8_t activeContexts() const;
   uint8_t scriptCount() const;
+  bool isScriptActive(uint8_t id) const;
   uint32_t getUintVar(uint8_t index) const;
   int32_t getIntVar(uint8_t index) const;
   float getFloatVar(uint8_t index) const;

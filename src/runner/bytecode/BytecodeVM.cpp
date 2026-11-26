@@ -379,6 +379,16 @@ uint8_t BytecodeVM::scriptCount() const {
   return count;
 }
 
+bool BytecodeVM::isScriptActive(uint8_t id) const {
+  for (uint8_t i = 0; i < kMaxContexts; i++) {
+    const Context& ctx = _contexts[i];
+    if (!ctx.active || ctx.scriptIndex >= MAX_SCRIPTS) continue;
+    const ScriptEntry& script = _scripts[ctx.scriptIndex];
+    if (script.used && script.id == id) return true;
+  }
+  return false;
+}
+
 uint32_t BytecodeVM::getUintVar(uint8_t index) const {
   return index < MAX_UINT_VARS ? _ctx.uintVars[index] : 0;
 }

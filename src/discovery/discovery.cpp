@@ -1,5 +1,7 @@
 #include "./discovery.h"
 
+#include "../runner/bytecode/BytecodeService.h"
+
 #define UDP_PACKETS_PER_LOOP 4
 
 DeviceProtocol protocol;
@@ -97,6 +99,9 @@ void setupDiscovery() {
     // Serial.println();
   });
   scriptRunner.registerFunction("udp", udpHandler);
+#if ENABLE_BYTECODE_VM
+  bytecodeService.vm().registerFunction(2, udpHandler);
+#endif
 }
 
 void commDiscovery() {

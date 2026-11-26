@@ -1,5 +1,7 @@
 #include "./webserver.h"
 
+#include "../runner/bytecode/BytecodeService.h"
+
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
 
@@ -255,6 +257,112 @@ void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
+#if ENABLE_BYTECODE_VM
+static uint8_t g_bytecodeUpload[VBC_MAX_CODE_BYTES];
+static uint16_t g_bytecodeUploadLen = 0;
+static bool g_bytecodeUploadOverflow = false;
+
+static bool bytecodeIdFromRequest(AsyncWebServerRequest* request, uint8_t& id) {
+  const AsyncWebParameter* param = request->getParam("id");
+  if (!param) return false;
+  const long value = param->value().toInt();
+  if (value <= 0 || value > 254) return false;
+  id = (uint8_t)value;
+  return true;
+}
+
+static void onBytecodeBody(AsyncWebServerRequest* request, uint8_t* data, size_t len,
+                           size_t index, size_t total) {
+  (void)request;
+  if (index == 0) {
+    g_bytecodeUploadLen = 0;
+    g_bytecodeUploadOverflow = false;
+  }
+  if (total > sizeof(g_bytecodeUpload) ||
+      (uint32_t)g_bytecodeUploadLen + len > sizeof(g_bytecodeUpload)) {
+    g_bytecodeUploadOverflow = true;
+    return;
+  }
+  memcpy(g_bytecodeUpload + g_bytecodeUploadLen, data, len);
+  g_bytecodeUploadLen = (uint16_t)(g_bytecodeUploadLen + len);
+}
+
+static void onBytecodePost(AsyncWebServerRequest* request) {
+  uint8_t id = 0;
+  if (!bytecodeIdFromRequest(request, id) || g_bytecodeUploadOverflow ||
+      g_bytecodeUploadLen == 0) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  if (!bytecodeService.saveScript(id, g_bytecodeUpload, g_bytecodeUploadLen)) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  const AsyncWebParameter* run = request->getParam("run");
+  if (run && run->value() == "1") bytecodeService.runScript(id);
+  request->send(200, RES_TYPE_JSON, status(1));
+}
+
+static void onBytecodeGet(AsyncWebServerRequest* request) {
+  uint8_t id = 0;
+  if (!bytecodeIdFromRequest(request, id)) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  static uint8_t buffer[VBC_MAX_CODE_BYTES];
+  uint16_t len = 0;
+  if (!bytecodeService.readScript(id, buffer, sizeof(buffer), len)) {
+    request->send(404, RES_TYPE_JSON, status(0));
+    return;
+  }
+  request->send(200, "application/octet-stream", buffer, len);
+}
+
+static void onBytecodeDelete(AsyncWebServerRequest* request) {
+  uint8_t id = 0;
+  if (!bytecodeIdFromRequest(request, id)) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  request->send(200, RES_TYPE_JSON, status(bytecodeService.removeScript(id)));
+}
+
+static void onBytecodeRun(AsyncWebServerRequest* request) {
+  uint8_t id = 0;
+  if (!bytecodeIdFromRequest(request, id)) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  request->send(200, RES_TYPE_JSON, status(bytecodeService.runScript(id)));
+}
+
+static void onBytecodeStop(AsyncWebServerRequest* request) {
+  uint8_t id = 0;
+  if (!bytecodeIdFromRequest(request, id)) {
+    request->send(400, RES_TYPE_JSON, status(0));
+    return;
+  }
+  request->send(200, RES_TYPE_JSON, status(bytecodeService.stopScript(id)));
+}
+
+static void onBytecodeStopAll(AsyncWebServerRequest* request) {
+  bytecodeService.stopAll();
+  request->send(200, RES_TYPE_JSON, status(1));
+}
+
+static void onBytecodeCapabilities(AsyncWebServerRequest* request) {
+  request->send(200, RES_TYPE_JSON, bytecodeService.capabilitiesJson());
+}
+
+static void onBytecodeList(AsyncWebServerRequest* request) {
+  request->send(200, RES_TYPE_JSON, bytecodeService.listJson());
+}
+
+static void onBytecodeStatus(AsyncWebServerRequest* request) {
+  request->send(200, RES_TYPE_JSON, bytecodeService.statusJson());
+}
+#endif
+
 void setupServer() {
 
   ws.onEvent(onWsEvent);
@@ -268,6 +376,19 @@ void setupServer() {
   server.on("/cmd", HTTP_GET, onCmd);
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
+
+#if ENABLE_BYTECODE_VM
+  server.on("/script/bytecode", HTTP_POST, onBytecodePost, nullptr, onBytecodeBody);
+  server.on("/script/bytecode", HTTP_GET, onBytecodeGet);
+  server.on("/script/bytecode", HTTP_DELETE, onBytecodeDelete);
+  server.on("/script/run", HTTP_POST, onBytecodeRun);
+  server.on("/script/stop", HTTP_POST, onBytecodeStop);
+  server.on("/script/stop-all", HTTP_POST, onBytecodeStopAll);
+  server.on("/script/capabilities", HTTP_GET, onBytecodeCapabilities);
+  server.on("/script/list", HTTP_GET, onBytecodeList);
+  server.on("/script/status", HTTP_GET, onBytecodeStatus);
+#endif
+
   server.on("*", HTTP_ANY, onRoot);
 
   if (settings.authMode) {

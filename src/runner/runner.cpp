@@ -1,5 +1,8 @@
 #include "./runner.h"
 
+#include "../const/bytecode.h"
+#include "./bytecode/BytecodeService.h"
+
 uint32_t lastTimeRunner = 0;
 
 uint8_t indexSlot = 0;
@@ -59,6 +62,10 @@ void setupRunner() {
   scriptRunner.setLoadProvider(loadScriptFromFS);
   scriptRunner.setLogProvider(sendLog);
   scriptRunner.setScriptCompleteCallback(onScriptComplete);
+#if ENABLE_BYTECODE_VM
+  bytecodeService.vm().setLogProvider(sendLog);
+  bytecodeService.vm().setCompleteCallback(onScriptComplete);
+#endif
   scriptRunner.runScript(0);
   totalSlots = scriptRunner.getTotalSlots();
 }
