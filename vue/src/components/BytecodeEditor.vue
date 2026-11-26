@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
+import { useLocale } from '@/composables/useLocale';
 import type { CapabilityManifest } from '@/lib/script';
 import { getCompletions, highlightBytecode } from '@/lib/script/editor';
 import type { CompletionItem } from '@/lib/script/editor';
+
+const { $t } = useLocale();
+
+const MIN_HEIGHT = 240;
+const HEIGHT_STORAGE_KEY = 'vuesp:bytecode-editor:height';
 
 const props = withDefaults(
   defineProps<{
@@ -28,6 +34,8 @@ const textarea = ref<HTMLTextAreaElement | null>(null);
 const highlight = ref<HTMLPreElement | null>(null);
 const gutter = ref<HTMLPreElement | null>(null);
 const measure = ref<HTMLSpanElement | null>(null);
+const height = ref(MIN_HEIGHT);
+const resizing = ref(false);
 
 const suggestions = ref<readonly CompletionItem[]>([]);
 const suggestOpen = ref(false);
@@ -38,6 +46,8 @@ const menuTop = ref(0);
 
 let charWidth = 7.2;
 let blurTimer: ReturnType<typeof setTimeout> | null = null;
+let resizeStartY = 0;
+let resizeStartHeight = 0;
 
 const highlighted = computed(() => highlightBytecode(props.modelValue, props.manifest));
 const lineCount = computed(() => props.modelValue.split('\n').length);
@@ -245,13 +255,61 @@ function onFocus() {
   void nextTick(measureChar);
 }
 
+function maxEditorHeight(): number {
+  return Math.max(MIN_HEIGHT, window.innerHeight - 220);
+}
+
+function defaultEditorHeight(): number {
+  return Math.max(MIN_HEIGHT, Math.min(Math.round(window.innerHeight * 0.68), 736));
+}
+
+function loadEditorHeight(): number {
+  const stored = Number(localStorage.getItem(HEIGHT_STORAGE_KEY));
+  if (!Number.isFinite(stored) || stored < MIN_HEIGHT) return defaultEditorHeight();
+  return Math.min(stored, maxEditorHeight());
+}
+
+function onResizeMove(event: PointerEvent) {
+  if (!resizing.value) return;
+  height.value = Math.max(
+    MIN_HEIGHT,
+    Math.min(resizeStartHeight + event.clientY - resizeStartY, maxEditorHeight()),
+  );
+}
+
+function stopResize() {
+  if (!resizing.value) return;
+  resizing.value = false;
+  localStorage.setItem(HEIGHT_STORAGE_KEY, String(height.value));
+  window.removeEventListener('pointermove', onResizeMove);
+  window.removeEventListener('pointerup', stopResize);
+  window.removeEventListener('pointercancel', stopResize);
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+}
+
+function startResize(event: PointerEvent) {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  resizing.value = true;
+  resizeStartY = event.clientY;
+  resizeStartHeight = height.value;
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'ns-resize';
+  window.addEventListener('pointermove', onResizeMove);
+  window.addEventListener('pointerup', stopResize);
+  window.addEventListener('pointercancel', stopResize);
+}
+
 onMounted(() => {
+  height.value = loadEditorHeight();
   measureChar();
   document.fonts?.ready.then(measureChar).catch(() => undefined);
 });
 
 onBeforeUnmount(() => {
   if (blurTimer) clearTimeout(blurTimer);
+  stopResize();
 });
 
 defineExpose({
@@ -261,9 +319,10 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="root" class="relative w-full">
+  <div ref="root" class="relative w-full" :class="{ 'select-none': resizing }">
     <div
-      class="flex h-[min(68vh,46rem)] min-h-[24rem] overflow-hidden bg-gray-dark-40/[0.05] dark:bg-black/35"
+      class="flex overflow-hidden bg-gray-dark-40/[0.05] dark:bg-black/35"
+      :style="{ height: `${height}px` }"
     >
       <div
         class="relative w-12 shrink-0 border-r border-gray-light-10/70 bg-black/5 dark:border-white/10 dark:bg-white/5"
@@ -302,6 +361,21 @@ defineExpose({
           @focus="onFocus"
         ></textarea>
       </div>
+    </div>
+
+    <div
+      class="group flex h-4 cursor-ns-resize touch-none select-none items-center justify-center border-t border-gray-light-10/70 bg-black/[0.02] transition hover:bg-black/5 dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/5"
+      role="separator"
+      aria-orientation="horizontal"
+      :aria-label="$t('scriptStudio.resize')"
+      :title="$t('scriptStudio.resize')"
+      @pointerdown="startResize"
+    >
+      <span class="flex gap-1 opacity-50 transition group-hover:opacity-100">
+        <span class="size-1 rounded-full bg-gray-dark-25 dark:bg-white/40" />
+        <span class="size-1 rounded-full bg-gray-dark-25 dark:bg-white/40" />
+        <span class="size-1 rounded-full bg-gray-dark-25 dark:bg-white/40" />
+      </span>
     </div>
 
     <span
