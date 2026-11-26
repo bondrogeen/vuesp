@@ -5,10 +5,26 @@ import { VIcon } from 'vuesp-components/components';
 
 import BytecodeEditor from '@/components/BytecodeEditor.vue';
 import { useLocale } from '@/composables/useLocale';
+import { useStore } from '@/composables/useStore';
+import { useLogs } from '@/composables/script/useLogs';
 import { BYTECODE_EXAMPLES, compile, decompile, disassemble, DEFAULT_MANIFEST } from '@/lib/script';
 import type { BytecodeExample, CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
 
 const { $t } = useLocale();
+const { message: wsMessage } = useStore();
+const { logs, onHover } = useLogs(wsMessage);
+
+const logsOpen = ref(true);
+const logsPanel = ref<HTMLElement | null>(null);
+
+function clearLogs() {
+  logs.value = [];
+}
+
+function showLogs() {
+  logsOpen.value = true;
+  void nextTick(() => logsPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+}
 
 interface ScriptListItem {
   name: string;
@@ -677,6 +693,16 @@ onBeforeUnmount(() => {
             <VIcon name="list-check" class="size-3.5" />
             {{ $t('scriptStudio.details') }}
           </button>
+          <button
+            class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 transition hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
+            @click="showLogs"
+          >
+            <VIcon name="code" class="size-3.5" />
+            {{ $t('logs') }}
+            <span class="rounded bg-black/5 px-1.5 text-[10px] dark:bg-white/10">
+              {{ logs.length }}
+            </span>
+          </button>
 
           <span class="ml-auto font-mono text-[11px] text-gray-dark-25 dark:text-gray-main">
             {{ sourceLines }} {{ $t('scriptStudio.lines') }} · {{ result?.bytecode?.length ?? 0 }}
@@ -686,8 +712,16 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex items-stretch gap-1 border-b border-gray-light-10/70 bg-black/[0.02] px-2 pt-2 dark:border-white/10 dark:bg-white/[0.02]"
+          class="flex items-end gap-1 border-b border-gray-light-10/70 bg-black/[0.02] pt-2 dark:border-white/10 dark:bg-white/[0.02]"
         >
+          <button
+            class="mb-0 grid h-[31px] w-9 shrink-0 place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
+            :title="$t('scriptStudio.newScript')"
+            :aria-label="$t('scriptStudio.newScript')"
+            @click="newScript"
+          >
+            <VIcon name="add" class="size-3.5" />
+          </button>
           <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto overflow-y-hidden scrollbar">
             <div class="flex min-w-max items-end gap-1">
               <div
@@ -697,7 +731,7 @@ onBeforeUnmount(() => {
                 class="group flex items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1"
                 :class="
                   script.name === name
-                    ? '-mb-px border-blue-main/40 bg-white/70 text-gray-dark-40 dark:border-blue-main/40 dark:bg-white/10 dark:text-white'
+                    ? '-mb-px border-gray-dark-40 bg-gray-dark-40 text-white dark:border-gray-dark-40 dark:bg-gray-dark-40 dark:text-white'
                     : 'border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
                 "
               >
@@ -717,7 +751,7 @@ onBeforeUnmount(() => {
                   />
                 </button>
                 <button
-                  class="rounded p-0.5 text-gray-dark-30 transition hover:bg-black/5 disabled:opacity-40 dark:text-white/60 dark:hover:bg-white/5"
+                  class="rounded p-0.5 text-current opacity-70 transition hover:bg-black/5 hover:opacity-100 disabled:opacity-40 dark:hover:bg-white/5"
                   :disabled="busy"
                   :title="script.active ? $t('scriptStudio.stop') : $t('scriptStudio.run')"
                   :aria-label="script.active ? $t('scriptStudio.stop') : $t('scriptStudio.run')"
@@ -726,7 +760,7 @@ onBeforeUnmount(() => {
                   <VIcon :name="script.active ? 'stop-circle' : 'play-circle'" class="size-3" />
                 </button>
                 <button
-                  class="rounded p-0.5 text-gray-dark-30 transition hover:bg-red-main/10 hover:text-red-main dark:text-white/60"
+                  class="rounded p-0.5 text-current opacity-70 transition hover:bg-red-main/10 hover:text-red-main hover:opacity-100"
                   :title="$t('scriptStudio.delete')"
                   :aria-label="$t('scriptStudio.delete')"
                   @click.stop="askDelete(script.name)"
@@ -753,14 +787,6 @@ onBeforeUnmount(() => {
               </span>
             </div>
           </div>
-          <button
-            class="mb-1 ml-1 shrink-0 rounded-md border border-gray-light-10/70 p-1.5 text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/5"
-            :title="$t('scriptStudio.newScript')"
-            :aria-label="$t('scriptStudio.newScript')"
-            @click="newScript"
-          >
-            <VIcon name="add" class="size-3.5" />
-          </button>
         </div>
         <BytecodeEditor
           ref="editor"
@@ -800,6 +826,45 @@ onBeforeUnmount(() => {
               {{ error.pos.line }}:{{ error.pos.column }} — {{ error.message }}
             </li>
           </ul>
+        </div>
+
+        <div ref="logsPanel" class="border-t border-gray-light-10/70 dark:border-white/10">
+          <div class="flex items-center gap-2 px-4 py-2 text-xs">
+            <button class="flex items-center gap-2" @click="logsOpen = !logsOpen">
+              <VIcon name="code" class="size-3.5" />
+              <span>{{ $t('logs') }}</span>
+              <span class="rounded bg-black/5 px-1.5 text-[10px] dark:bg-white/10">
+                {{ logs.length }}
+              </span>
+              <span class="text-[10px] text-gray-dark-25 dark:text-gray-main">
+                {{ logsOpen ? '−' : '+' }}
+              </span>
+            </button>
+            <button
+              class="ml-auto text-[11px] text-blue-500 hover:underline disabled:opacity-50"
+              :disabled="logs.length === 0"
+              @click="clearLogs"
+            >
+              {{ $t('scriptStudio.clear') }}
+            </button>
+          </div>
+          <div
+            v-if="logsOpen"
+            ref="container"
+            class="h-48 overflow-auto border-t border-gray-light-10/70 bg-gray-dark-40/[0.05] p-3 font-mono text-xs leading-5 scrollbar dark:border-white/10 dark:bg-black/35"
+            @mouseenter="onHover(true)"
+            @mouseleave="onHover(false)"
+          >
+            <div v-for="(log, index) in logs" :key="index" class="flex gap-2">
+              <span class="shrink-0 text-gray-dark-25 dark:text-gray-main">{{ log.time }}</span>
+              <span class="whitespace-pre-wrap break-all text-gray-dark-30 dark:text-white/70">
+                {{ log.text }}
+              </span>
+            </div>
+            <div v-if="logs.length === 0" class="text-gray-dark-25 dark:text-gray-main">
+              {{ $t('noLogs') }}
+            </div>
+          </div>
         </div>
       </section>
 
