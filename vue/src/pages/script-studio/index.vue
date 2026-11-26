@@ -759,17 +759,17 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex items-end gap-1 border-b border-gray-light-10/70 bg-black/[0.02] pt-1 dark:border-white/10 dark:bg-white/[0.02]"
+          class="flex items-end gap-1 border-b border-gray-light-10/70 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02]"
         >
           <button
-            class="mb-0 grid h-[31px] w-9 shrink-0 translate-y-0.5 place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
+            class="mb-0 grid h-[31px] w-9 shrink-0 translate-y-px place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
             :title="$t('scriptStudio.newScript')"
             :aria-label="$t('scriptStudio.newScript')"
             @click="newScript"
           >
             <VIcon name="add" class="size-3.5" />
           </button>
-          <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto overflow-y-hidden py-1.5 scrollbar">
+          <div ref="tabsScroll" class="flex flex-1 gap-1 overflow-x-auto overflow-y-hidden pt-1.5 scrollbar">
             <div class="flex min-w-max items-end gap-1">
               <div
                 v-for="script in scripts"
@@ -778,8 +778,8 @@ onBeforeUnmount(() => {
                 class="group flex items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1"
                 :class="
                   script.name === name
-                    ? '-mb-px -translate-y-1 border-gray-dark-40 bg-gray-dark-40 text-white dark:border-gray-dark-40 dark:bg-gray-dark-40 dark:text-white'
-                    : 'translate-y-0.5 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
+                    ? '-translate-y-0.5 border-gray-light-10/70 bg-gray-dark-40/[0.05] text-gray-dark-40 dark:border-white/10 dark:bg-black/35 dark:text-white'
+                    : 'translate-y-px border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
                 "
               >
                 <button class="flex min-w-0 items-center gap-1 text-left" @click="selectScript(script)">
