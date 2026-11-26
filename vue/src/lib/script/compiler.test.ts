@@ -35,6 +35,13 @@ test('simple assignment round-trips', () => {
   assert.equal(result.source, '$u0 = 5;\n');
 });
 
+test('decompile keeps one line per top-level statement', () => {
+  const result = compile('$u0 = 1; $u1 = 2;');
+  const decoded = decompile(ok(result), { manifest: DEFAULT_MANIFEST });
+  assert.ok(decoded.ok, errorsText(decoded.errors));
+  assert.equal(decoded.source, '$u0 = 1;\n$u1 = 2;\n');
+});
+
 test('operator precedence round-trips', () => {
   const result = roundTrip('$u0 = 1 + 2 * 3;');
   assert.equal(result.source, '$u0 = 1 + 2 * 3;\n');

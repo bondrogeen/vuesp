@@ -201,5 +201,5 @@ export function printProgram(program: Program): string {
   for (const stmt of program.body) {
     parts.push(printStmt(stmt, 0).trimEnd());
   }
-  return `${parts.join('\n\n')}\n`;
+  return `${parts.join('\n')}\n`;
 }
