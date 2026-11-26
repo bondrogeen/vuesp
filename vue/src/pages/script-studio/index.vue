@@ -37,20 +37,6 @@ interface ScriptListItem {
   flags: number;
 }
 
-interface ScriptStatus {
-  active: number;
-  scripts: number;
-  saved: number;
-  cacheSlots: number;
-  packError: number;
-  packErrorName: string;
-  error: number;
-  errorName: string;
-  errorScript: number;
-  errorScriptName: string;
-  errorPc: number;
-}
-
 interface EditorApi {
   insertAtCursor: (text: string, caretOffset?: number) => void;
   focus: () => void;
@@ -74,7 +60,6 @@ const result = ref<CompileResult | null>(null);
 const manifest = ref<CapabilityManifest>(DEFAULT_MANIFEST);
 const message = ref('');
 const busy = ref(false);
-const status = ref<ScriptStatus | null>(null);
 const scripts = ref<ScriptListItem[]>([]);
 const editor = ref<EditorApi | null>(null);
 const tabsScroll = ref<HTMLDivElement | null>(null);
@@ -133,20 +118,6 @@ const buildText = computed(() => {
   return `${compiled.bytecode?.length ?? 0} ${$t('scriptStudio.bytes')} · ${$t('scriptStudio.stack')} ${
     compiled.stats?.stackMax ?? '—'
   }`;
-});
-
-const packText = computed(() => {
-  const current = status.value;
-  if (!current) return '—';
-  return current.packErrorName === 'none' ? 'OK' : current.packErrorName;
-});
-
-const lastErrorText = computed(() => {
-  const current = status.value;
-  if (!current || current.errorName === 'none') return '—';
-  return current.errorScriptName
-    ? `${current.errorName} · ${current.errorScriptName}`
-    : current.errorName;
 });
 
 function stateClass(tone: Tone): string {
@@ -213,12 +184,8 @@ function scrollActiveTab() {
 
 async function refresh() {
   try {
-    const [statusResponse, listResponse] = await Promise.all([
-      fetch('/script/status'),
-      fetch('/script/list'),
-    ]);
-    if (statusResponse.ok) status.value = (await statusResponse.json()) as ScriptStatus;
-    if (listResponse.ok) scripts.value = (await listResponse.json()) as ScriptListItem[];
+    const response = await fetch('/script/list');
+    if (response.ok) scripts.value = (await response.json()) as ScriptListItem[];
   } catch {
     /* keep the previous view */
   }
@@ -546,35 +513,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1>{{ $t('scriptStudio.title') }}</h1>
-        <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-dark-25 dark:text-gray-main">
-          <span
-            class="size-2 rounded-full"
-            :class="status?.packError ? 'bg-red-main' : 'bg-green-main'"
-          />
-          <span>{{ $t('scriptStudio.device') }}: {{ packText }}</span>
-          <span>· {{ status?.saved ?? 0 }} {{ $t('scriptStudio.stateSaved') }}</span>
-          <span>· {{ status?.scripts ?? 0 }} {{ $t('scriptStudio.stateLoaded') }}</span>
-          <span>· {{ status?.active ?? 0 }} {{ $t('scriptStudio.stateRunning') }}</span>
-          <span v-if="lastErrorText !== '—'" class="text-red-main">
-            · {{ $t('scriptStudio.lastError') }}: {{ lastErrorText }}
-          </span>
-        </div>
-      </div>
-
-      <button
-        class="glass-inset rounded-md p-2 text-gray-dark-30 transition hover:opacity-70 dark:text-white/70"
-        :disabled="busy"
-        :title="$t('scriptStudio.refresh')"
-        :aria-label="$t('scriptStudio.refresh')"
-        @click="refresh"
-      >
-        <VIcon name="refresh" class="size-4" />
-      </button>
-    </div>
-
       <section class="glass-inset flex min-w-0 flex-col rounded-xl">
         <div
           class="flex flex-wrap items-center gap-2 border-b border-gray-light-10/70 px-4 py-3 dark:border-white/10"
@@ -665,12 +603,13 @@ onBeforeUnmount(() => {
 
             <div class="relative">
               <button
-                class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 text-xs transition hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5"
+                class="inline-flex items-center justify-center rounded-md border border-gray-light-10/70 px-2 py-1.5 text-xs transition hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5"
                 :disabled="busy"
+                :title="$t('scriptStudio.more')"
+                :aria-label="$t('scriptStudio.more')"
                 @click="moreOpen = !moreOpen"
               >
                 <VIcon name="more" class="size-3.5" />
-                {{ $t('scriptStudio.more') }}
               </button>
               <div v-if="moreOpen" class="fixed inset-0 z-30" @click="moreOpen = false" />
               <div
