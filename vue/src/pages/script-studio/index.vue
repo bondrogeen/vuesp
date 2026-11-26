@@ -575,30 +575,33 @@ onBeforeUnmount(() => {
 
           <div class="ml-auto flex flex-wrap items-center gap-2">
             <button
-              class="inline-flex items-center gap-1 rounded-md bg-blue-main px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+              class="inline-flex items-center justify-center rounded-md bg-blue-main px-2.5 py-1.5 text-white transition hover:opacity-90 disabled:opacity-50"
               :disabled="busy"
+              :title="$t('save')"
+              :aria-label="$t('save')"
               @click="save(false)"
             >
-              <VIcon name="save" class="size-3.5" />
-              {{ $t('save') }}
+              <VIcon name="save" class="size-4" />
             </button>
             <button
               v-if="currentEntry?.active"
-              class="inline-flex items-center gap-1 rounded-md bg-red-main px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+              class="inline-flex items-center justify-center rounded-md bg-red-main px-2.5 py-1.5 text-white transition hover:opacity-90 disabled:opacity-50"
               :disabled="busy"
+              :title="$t('scriptStudio.stop')"
+              :aria-label="$t('scriptStudio.stop')"
               @click="stopCurrent"
             >
-              <VIcon name="stop-circle" class="size-3.5" />
-              {{ $t('scriptStudio.stop') }}
+              <VIcon name="stop-circle" class="size-4" />
             </button>
             <button
               v-else
-              class="inline-flex items-center gap-1 rounded-md bg-green-main px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+              class="inline-flex items-center justify-center rounded-md bg-green-main px-2.5 py-1.5 text-white transition hover:opacity-90 disabled:opacity-50"
               :disabled="busy"
+              :title="$t('scriptStudio.run')"
+              :aria-label="$t('scriptStudio.run')"
               @click="runCurrent"
             >
-              <VIcon name="play-circle" class="size-3.5" />
-              {{ $t('scriptStudio.run') }}
+              <VIcon name="play-circle" class="size-4" />
             </button>
 
             <div class="relative">
