@@ -695,14 +695,29 @@ String BytecodeService::listJson() const {
       char name[kPackNameLen + 1];
       if (!packNameToText(entry.name, name)) continue;
 
+      const int8_t ref = findRefByKey(entry.name);
+      const uint8_t id = ref >= 0 ? _refs[ref].id : 0;
+      const bool loaded = id != 0 && findSlot(id) >= 0;
+      const bool active = id != 0 && _vm.isScriptActive(id);
+      const bool error = id != 0 && _vm.lastError() != VmError::NONE &&
+                         _vm.lastErrorScript() == id;
+
       if (!first) json += ',';
       first = false;
       json += "{\"name\":\"";
       json += name;
-      json += "\",\"size\":";
+      json += "\",\"id\":";
+      json += id;
+      json += ",\"size\":";
       json += entry.codeLen;
       json += ",\"boot\":";
       json += strcmp(name, "boot") == 0 ? 1 : 0;
+      json += ",\"loaded\":";
+      json += loaded ? 1 : 0;
+      json += ",\"active\":";
+      json += active ? 1 : 0;
+      json += ",\"error\":";
+      json += error ? 1 : 0;
       json += ",\"flags\":";
       json += entry.flags;
       json += '}';
@@ -714,14 +729,25 @@ String BytecodeService::listJson() const {
 }
 
 String BytecodeService::statusJson() const {
-  char buffer[224];
+  char errorScriptName[kPackNameLen + 1];
+  errorScriptName[0] = '\0';
+  if (_vm.lastErrorScript() != 0) {
+    const int8_t ref = findRefById(_vm.lastErrorScript());
+    if (ref >= 0) packNameToText(_refs[ref].name, errorScriptName);
+  }
+
+  char buffer[384];
   snprintf(buffer, sizeof(buffer),
            "{\"active\":%u,\"scripts\":%u,\"saved\":%u,\"cacheSlots\":%u,"
-           "\"packError\":%u,\"error\":%u,\"errorScript\":%u,\"errorPc\":%u}",
+           "\"packError\":%u,\"packErrorName\":\"%s\",\"error\":%u,"
+           "\"errorName\":\"%s\",\"errorScript\":%u,\"errorScriptName\":\"%s\","
+           "\"errorPc\":%u}",
            (unsigned)_vm.activeContexts(), (unsigned)_vm.scriptCount(),
            (unsigned)_packCount, (unsigned)kCacheSlots,
-           (unsigned)_packError, (unsigned)_vm.lastError(),
-           (unsigned)_vm.lastErrorScript(), (unsigned)_vm.lastErrorPc());
+           (unsigned)_packError, packErrorName(_packError),
+           (unsigned)_vm.lastError(), vmErrorName(_vm.lastError()),
+           (unsigned)_vm.lastErrorScript(), errorScriptName,
+           (unsigned)_vm.lastErrorPc());
   return String(buffer);
 }
 

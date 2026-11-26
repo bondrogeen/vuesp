@@ -25,14 +25,14 @@ export interface CompletionResult {
 const KEYWORDS = ['if', 'else', 'while', 'break', 'continue', 'return', 'on', 'true', 'false'];
 
 const BUILTINS: ReadonlyArray<{ name: string; insert: string; caret?: number; detail: string }> = [
-  { name: 'log', insert: 'log()', caret: 4, detail: 'built-in function' },
-  { name: 'wait', insert: 'wait()', caret: 5, detail: 'built-in function' },
-  { name: 'call', insert: "call('')", caret: 6, detail: 'built-in function' },
-  { name: 'set', insert: 'set()', caret: 4, detail: 'built-in function' },
-  { name: 'get', insert: 'get()', caret: 4, detail: 'built-in function' },
-  { name: 'len', insert: 'len()', caret: 4, detail: 'built-in function' },
-  { name: 'chr', insert: 'chr()', caret: 4, detail: 'built-in function' },
-  { name: 'ord', insert: 'ord()', caret: 4, detail: 'built-in function' },
+  { name: 'log', insert: 'log()', caret: 4, detail: 'builtin' },
+  { name: 'wait', insert: 'wait()', caret: 5, detail: 'builtin' },
+  { name: 'call', insert: "call('')", caret: 6, detail: 'builtin' },
+  { name: 'set', insert: 'set()', caret: 4, detail: 'builtin' },
+  { name: 'get', insert: 'get()', caret: 4, detail: 'builtin' },
+  { name: 'len', insert: 'len()', caret: 4, detail: 'builtin' },
+  { name: 'chr', insert: 'chr()', caret: 4, detail: 'builtin' },
+  { name: 'ord', insert: 'ord()', caret: 4, detail: 'builtin' },
 ];
 
 const TOKEN_RE =
@@ -105,14 +105,14 @@ function slotItems(manifest: CapabilityManifest): CompletionItem[] {
       items.push({ label, detail, kind: 'slot', insert: label });
     }
   };
-  add('u', manifest.vars.u, 'uint slot');
-  add('i', manifest.vars.i, 'int slot');
-  add('f', manifest.vars.f, 'float slot');
-  add('s', manifest.vars.s, 'string slot');
-  add('a', manifest.vars.a, 'array slot');
+  add('u', manifest.vars.u, 'uint');
+  add('i', manifest.vars.i, 'int');
+  add('f', manifest.vars.f, 'float');
+  add('s', manifest.vars.s, 'string');
+  add('a', manifest.vars.a, 'array');
   add('p', manifest.vars.p, 'port');
-  add('e', manifest.vars.e, 'event parameter');
-  add('c', manifest.vars.c, 'call parameter');
+  add('e', manifest.vars.e, 'event');
+  add('c', manifest.vars.c, 'call');
   return items;
 }
 
@@ -173,7 +173,7 @@ export function getCompletions(
       .filter((name) => name.toLowerCase().startsWith(prefix.toLowerCase()))
       .map<CompletionItem>((name) => ({
         label: name,
-        detail: 'stored script',
+        detail: 'script',
         kind: 'script',
         insert: name,
       }));
@@ -215,7 +215,7 @@ export function getCompletions(
     for (const dataVar of manifest.dataVars ?? []) {
       items.push({
         label: dataVar.name,
-        detail: `${dataVar.kind} data`,
+        detail: dataVar.kind,
         kind: 'data',
         insert: dataVar.name,
       });
@@ -243,7 +243,7 @@ export function getCompletions(
     for (const fn of manifest.functions) {
       items.push({
         label: fn.name,
-        detail: `${fn.min}..${fn.max} args -> ${fn.ret}`,
+        detail: `${fn.min === fn.max ? fn.min : `${fn.min}..${fn.max}`} args -> ${fn.ret}`,
         kind: 'function',
         insert: `${fn.name}()`,
         caret: fn.name.length + 1,

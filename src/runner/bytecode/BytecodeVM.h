@@ -35,6 +35,8 @@ enum class VmError : uint8_t {
   DEPTH
 };
 
+const char* vmErrorName(VmError error);
+
 using ScriptResolver = bool (*)(void* userData, const char* name, uint8_t& id,
                                 const uint8_t*& data, uint16_t& size,
                                 VmError& error);

@@ -15,7 +15,7 @@ static_assert(kStackSize <= 64, "stack allocator uses a 64-bit mask");
 
 namespace {
 
-const char* vmErrorName(VmError error) {
+const char* vmErrorNameInternal(VmError error) {
   switch (error) {
     case VmError::NONE:
       return "none";
@@ -114,6 +114,8 @@ int compareStringsFull(const Value& left, const Value& right) {
 
 }  // namespace
 
+const char* vmErrorName(VmError error) { return vmErrorNameInternal(error); }
+
 static_assert(kMaxCallDepth >= 1 && kMaxCallDepth <= kMaxContexts,
               "VBC_MAX_CALL_DEPTH must fit the context table");
 
@@ -173,7 +175,7 @@ void BytecodeVM::setError(VmError error, uint8_t scriptId, uint16_t pc) {
   _lastErrorPc = pc;
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "ERR[%u:%u] %s", (unsigned)scriptId, (unsigned)pc,
-           vmErrorName(error));
+           vmErrorNameInternal(error));
   logError(buffer);
 }
 

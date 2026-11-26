@@ -263,14 +263,14 @@ defineExpose({
 <template>
   <div ref="root" class="relative w-full">
     <div
-      class="flex h-[420px] overflow-hidden rounded-md border border-gray-light-10 bg-gray-light-30 focus-within:border-blue-500 dark:border-gray-dark-30 dark:bg-gray-dark-30"
+      class="flex h-[min(68vh,46rem)] min-h-[24rem] overflow-hidden bg-gray-dark-40/[0.05] dark:bg-black/35"
     >
       <div
-        class="relative w-12 shrink-0 border-r border-gray-light-10 bg-black/5 dark:border-gray-dark-30 dark:bg-black/20"
+        class="relative w-12 shrink-0 border-r border-gray-light-10/70 bg-black/5 dark:border-white/10 dark:bg-white/5"
       >
         <pre
           ref="gutter"
-          class="m-0 h-full overflow-hidden py-3 pl-1 pr-2 text-right font-mono text-xs leading-5"
+          class="m-0 h-full overflow-hidden py-4 pl-2 pr-2 text-right font-mono text-xs leading-6"
           v-html="gutterHtml"
         ></pre>
       </div>
@@ -279,7 +279,7 @@ defineExpose({
         <pre
           ref="highlight"
           aria-hidden="true"
-          class="pointer-events-none absolute inset-0 m-0 overflow-hidden whitespace-pre p-3 font-mono text-xs leading-5 text-gray-dark-30 dark:text-white/70"
+          class="pointer-events-none absolute inset-0 m-0 overflow-hidden whitespace-pre p-4 font-mono text-xs leading-6 text-gray-dark-30 dark:text-white/70"
           style="tab-size: 2"
           v-html="highlighted"
         ></pre>
@@ -291,7 +291,7 @@ defineExpose({
           autocapitalize="off"
           autocomplete="off"
           autocorrect="off"
-          class="editor-input absolute inset-0 h-full w-full resize-none overflow-auto whitespace-pre bg-transparent p-3 font-mono text-xs leading-5 outline-none"
+          class="editor-input scrollbar absolute inset-0 h-full w-full resize-none overflow-auto whitespace-pre bg-transparent p-4 font-mono text-xs leading-6 outline-none"
           style="tab-size: 2"
           @input="onInput"
           @keydown="onKeydown"
@@ -312,7 +312,7 @@ defineExpose({
 
     <div
       v-if="suggestOpen && suggestions.length > 0"
-      class="editor-menu absolute z-50 max-h-60 w-80 overflow-y-auto rounded-lg border border-gray-light-10 bg-white p-1 text-xs shadow-lg dark:border-gray-dark-30 dark:bg-gray-dark-40"
+      class="editor-menu glass-popover scrollbar absolute z-50 max-h-60 overflow-y-auto rounded-lg p-1 text-xs"
       :style="{ left: `${menuLeft}px`, top: `${menuTop}px` }"
     >
       <button
@@ -328,8 +328,8 @@ defineExpose({
         @mousedown.prevent="acceptSuggestion(index)"
         @mouseenter="selected = index"
       >
-        <span class="truncate" :class="kindClass(item.kind)">{{ item.label }}</span>
-        <span class="shrink-0 text-[10px] text-gray-dark-25 dark:text-gray-main">{{ item.detail }}</span>
+        <span class="min-w-0 truncate" :class="kindClass(item.kind)">{{ item.label }}</span>
+        <span class="max-w-[45%] shrink-0 truncate text-[10px] text-gray-dark-25 dark:text-gray-main">{{ item.detail }}</span>
       </button>
     </div>
   </div>
@@ -351,6 +351,10 @@ defineExpose({
 }
 
 .editor-menu {
+  width: max-content;
+  min-width: 12rem;
+  max-width: min(20rem, 100%);
   scrollbar-width: thin;
+  scrollbar-color: var(--color-slate-main) transparent;
 }
 </style>
