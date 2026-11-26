@@ -65,8 +65,9 @@ void setupRunner() {
 #if ENABLE_BYTECODE_VM
   bytecodeService.vm().setLogProvider(sendLog);
   bytecodeService.vm().setCompleteCallback(onScriptComplete);
-#endif
+#else
   scriptRunner.runScript(0);
+#endif
   totalSlots = scriptRunner.getTotalSlots();
 }
 

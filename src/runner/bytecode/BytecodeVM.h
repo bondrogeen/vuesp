@@ -28,8 +28,16 @@ enum class VmError : uint8_t {
   NO_SCRIPT,
   NO_FUNCTION,
   ARGS,
-  NOT_READY
+  NOT_READY,
+  CODE_CRC,
+  NO_CACHE,
+  RECURSION,
+  DEPTH
 };
+
+using ScriptResolver = bool (*)(void* userData, const char* name, uint8_t& id,
+                                const uint8_t*& data, uint16_t& size,
+                                VmError& error);
 
 class BytecodeVM {
  public:
@@ -44,6 +52,10 @@ class BytecodeVM {
   void setPortProvider(PortProvider provider);
   void setStateChangeProvider(StateChangeProvider provider);
   void setCompleteCallback(ScriptCompleteCallback callback);
+  void setScriptResolver(ScriptResolver resolver, void* userData = nullptr);
+  void reportError(VmError error, uint8_t scriptId, uint16_t pc) {
+    setError(error, scriptId, pc);
+  }
 
   bool registerFunction(uint8_t id, ExternalFunction func, void* userData = nullptr);
 
@@ -98,6 +110,9 @@ class BytecodeVM {
     uint16_t stackSize;
     uint16_t sp;
     uint32_t waitUntil;
+    uint8_t ancestors[kMaxCallDepth];
+    uint8_t ancestorCount;
+    int32_t callParams[MAX_CALL_PARAMS];
   };
 
   Capabilities _caps;
@@ -107,7 +122,6 @@ class BytecodeVM {
   Value _stack[kStackSize];
   uint64_t _stackUsed;
   ScriptContext _ctx;
-  int32_t _callParams[MAX_CALL_PARAMS];
   char _scratch[kScratchBytes];
   uint16_t _scratchUsed;
   uint8_t _nextContext;
@@ -117,6 +131,8 @@ class BytecodeVM {
   PortProvider _portProvider;
   StateChangeProvider _stateChangeProvider;
   ScriptCompleteCallback _completeCallback;
+  ScriptResolver _scriptResolver;
+  void* _scriptResolverData;
 
   VmError _lastError;
   uint8_t _lastErrorScript;
@@ -130,7 +146,10 @@ class BytecodeVM {
   int8_t allocateStack(uint16_t size);
   void releaseStack(uint16_t base, uint16_t size);
   void releaseContext(Context& ctx);
-  bool startContext(int8_t scriptIndex, uint16_t entry, int8_t handlerIndex, int8_t& contextIndex);
+  bool startContext(int8_t scriptIndex, uint16_t entry, int8_t handlerIndex,
+                    int8_t& contextIndex, int8_t parentContext = -1);
+  uint8_t callDepth(const Context& ctx) const;
+  bool inCallChain(const Context& ctx, uint8_t scriptId) const;
 
   bool execute(Context& ctx, uint32_t now);
   bool pushValue(Context& ctx, const Value& value);
@@ -162,6 +181,9 @@ class BytecodeVM {
   bool unaryOp(Context& ctx, Opcode op);
   bool callExternal(Context& ctx, uint8_t functionId, uint8_t argc);
   bool callScript(Context& ctx, uint8_t scriptId, uint8_t argc);
+  bool callScriptByName(Context& ctx, uint16_t nameConst, uint8_t argc);
+  bool launchScript(Context& ctx, uint8_t scriptId, uint8_t argc,
+                    const int32_t* args);
   bool logValues(Context& ctx, uint8_t argc);
   bool wait(Context& ctx, uint32_t ms, uint32_t now);
   bool emitToHandler(int8_t scriptIndex, uint8_t handlerIndex, uint8_t paramCount,

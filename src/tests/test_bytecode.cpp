@@ -205,6 +205,36 @@ static void setupVm(BytecodeVM& vm) {
   vm.registerFunction(1, testFadeHandler);
 }
 
+struct ResolveEntry {
+  const char* name;
+  uint8_t id;
+  const fixtures::Vector* vec;
+};
+
+static const ResolveEntry* g_resolveEntries = nullptr;
+static uint8_t g_resolveCount = 0;
+
+static bool testScriptResolver(void*, const char* name, uint8_t& id,
+                               const uint8_t*& data, uint16_t& size,
+                               VmError& error) {
+  for (uint8_t i = 0; i < g_resolveCount; i++) {
+    if (strcmp(name, g_resolveEntries[i].name) == 0) {
+      id = g_resolveEntries[i].id;
+      data = g_resolveEntries[i].vec->data;
+      size = g_resolveEntries[i].vec->size;
+      error = VmError::NONE;
+      return true;
+    }
+  }
+  error = VmError::NO_SCRIPT;
+  return false;
+}
+
+static void setResolveEntries(const ResolveEntry* entries, uint8_t count) {
+  g_resolveEntries = entries;
+  g_resolveCount = count;
+}
+
 static const fixtures::Vector* findFixture(const char* name) {
   for (uint16_t i = 0; i < fixtures::kAllCount; i++) {
     if (strcmp(fixtures::kAll[i].name, name) == 0) return &fixtures::kAll[i];
@@ -359,6 +389,9 @@ static void testVmCallee() {
   const fixtures::Vector* callee = findFixture("callee");
   expect(call != nullptr && callee != nullptr, "callee fixtures");
   if (!call || !callee) return;
+  const ResolveEntry entries[] = {{"callee", 2, callee}};
+  setResolveEntries(entries, 1);
+  vm.setScriptResolver(testScriptResolver);
   expect(vm.loadScript(1, call->data, call->size), "caller loads");
   expect(vm.loadScript(2, callee->data, callee->size), "callee loads");
   vm.runScript(1);
@@ -420,15 +453,60 @@ static void testVmCall() {
   BytecodeVM vm;
   setupVm(vm);
   resetVmState();
-  const fixtures::Vector* call = findFixture("call");
-  const fixtures::Vector* simple = findFixture("simple");
-  expect(call != nullptr && simple != nullptr, "call fixtures");
-  if (!call || !simple) return;
-  expect(vm.loadScript(1, call->data, call->size), "caller loads");
-  expect(vm.loadScript(2, simple->data, simple->size), "callee loads");
+  const fixtures::Vector* call = findFixture("call_missing");
+  expect(call != nullptr, "call_missing fixture");
+  if (!call) return;
+  setResolveEntries(nullptr, 0);
+  vm.setScriptResolver(testScriptResolver);
+  expect(vm.loadScript(1, call->data, call->size), "call_missing loads");
+  vm.runScript(1);
+  for (uint8_t i = 0; i < 4; i++) vm.update(stub_millis);
+  expect(vm.lastError() == VmError::NO_SCRIPT, "missing script error");
+}
+
+static void testVmRecursion() {
+  BytecodeVM vm;
+  setupVm(vm);
+  resetVmState();
+  const fixtures::Vector* recursion = findFixture("recursion");
+  expect(recursion != nullptr, "recursion fixture");
+  if (!recursion) return;
+  const ResolveEntry entries[] = {{"recursion", 1, recursion}};
+  setResolveEntries(entries, 1);
+  vm.setScriptResolver(testScriptResolver);
+  expect(vm.loadScript(1, recursion->data, recursion->size), "recursion loads");
   vm.runScript(1);
   for (uint8_t i = 0; i < 6; i++) vm.update(stub_millis);
-  expect(vm.getUintVar(1) == 8, "callee ran");
+  expect(vm.lastError() == VmError::RECURSION, "recursion error");
+}
+
+static void testVmCallDepth() {
+  BytecodeVM vm;
+  setupVm(vm);
+  resetVmState();
+  const fixtures::Vector* d1 = findFixture("depth1");
+  const fixtures::Vector* d2 = findFixture("depth2");
+  const fixtures::Vector* d3 = findFixture("depth3");
+  const fixtures::Vector* d4 = findFixture("depth4");
+  const fixtures::Vector* d5 = findFixture("depth5");
+  expect(d1 != nullptr && d2 != nullptr && d3 != nullptr && d4 != nullptr &&
+             d5 != nullptr,
+         "depth fixtures");
+  if (!d1 || !d2 || !d3 || !d4 || !d5) return;
+  const ResolveEntry entries[] = {
+      {"depth1", 1, d1}, {"depth2", 2, d2}, {"depth3", 3, d3},
+      {"depth4", 4, d4}, {"depth5", 5, d5},
+  };
+  setResolveEntries(entries, 5);
+  vm.setScriptResolver(testScriptResolver);
+  expect(vm.loadScript(1, d1->data, d1->size), "depth1 loads");
+  expect(vm.loadScript(2, d2->data, d2->size), "depth2 loads");
+  expect(vm.loadScript(3, d3->data, d3->size), "depth3 loads");
+  expect(vm.loadScript(4, d4->data, d4->size), "depth4 loads");
+  expect(vm.loadScript(5, d5->data, d5->size), "depth5 loads");
+  vm.runScript(1);
+  for (uint8_t i = 0; i < 30; i++) vm.update(stub_millis);
+  expect(vm.lastError() == VmError::DEPTH, "call depth error");
 }
 
 static void testVmWait() {
@@ -532,6 +610,8 @@ int main() {
   testVmHandlerReturn();
   testVmHandler();
   testVmCall();
+  testVmRecursion();
+  testVmCallDepth();
   testVmWait();
   testVmDivZero();
   testVmBadContainer();

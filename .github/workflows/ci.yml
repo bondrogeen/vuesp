@@ -66,6 +66,7 @@ jobs:
           - esp32
           - esp32-c3-devkitm-1
           - esp8266
+          - esp8266-bytecode
           - pico32
 
     steps:

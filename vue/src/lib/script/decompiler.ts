@@ -311,6 +311,22 @@ class Decompiler {
             end: offset + size,
           };
         }
+        case 'CALL_SCRIPT_NAME': {
+          const name = constantAsString(this.container, operands[0]);
+          const argc = operands[1];
+          const stack = this.evalRange(cursor, offset);
+          if (stack.length !== argc) {
+            throw new ScriptError('E_DECOMPILE', 'CALL_SCRIPT_NAME argument count mismatch', this.pos(offset));
+          }
+          return {
+            stmt: {
+              kind: 'expr',
+              expr: this.call('call', [this.string(name, offset), ...stack], cursor),
+              pos: this.pos(cursor),
+            },
+            end: offset + size,
+          };
+        }
         case 'CALL_EXT': {
           const fn = this.functionById(operands[0], offset);
           if (fn.ret !== 'none') {

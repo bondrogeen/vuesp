@@ -62,6 +62,7 @@ enum class Opcode : uint8_t {
   ARRAY_GET = 0x4e,
   ARRAY_SET = 0x4f,
   ARRAY_LEN = 0x50,
+  CALL_SCRIPT_NAME = 0x51,
 };
 
 struct OpcodeInfo {
@@ -127,6 +128,7 @@ static const OpcodeInfo kOpcode_ORD = {Opcode::ORD, "ORD", 1, 1, 0, 0};
 static const OpcodeInfo kOpcode_ARRAY_GET = {Opcode::ARRAY_GET, "ARRAY_GET", 2, 1, 0, 0};
 static const OpcodeInfo kOpcode_ARRAY_SET = {Opcode::ARRAY_SET, "ARRAY_SET", 3, 0, 0, 0};
 static const OpcodeInfo kOpcode_ARRAY_LEN = {Opcode::ARRAY_LEN, "ARRAY_LEN", 1, 1, 0, 0};
+static const OpcodeInfo kOpcode_CALL_SCRIPT_NAME = {Opcode::CALL_SCRIPT_NAME, "CALL_SCRIPT_NAME", 0, 0, 2, 1};
 
 inline const OpcodeInfo* opcodeInfo(Opcode op) {
   switch (op) {
@@ -184,6 +186,7 @@ inline const OpcodeInfo* opcodeInfo(Opcode op) {
     case Opcode::ARRAY_GET: return &kOpcode_ARRAY_GET;
     case Opcode::ARRAY_SET: return &kOpcode_ARRAY_SET;
     case Opcode::ARRAY_LEN: return &kOpcode_ARRAY_LEN;
+    case Opcode::CALL_SCRIPT_NAME: return &kOpcode_CALL_SCRIPT_NAME;
     default: return nullptr;
   }
 }

@@ -146,6 +146,9 @@ bool stackEffect(const DecodedInstruction& inst, const Capabilities& caps, uint8
     case Opcode::CALL_SCRIPT:
       pop = (uint8_t)inst.operands[1];
       return true;
+    case Opcode::CALL_SCRIPT_NAME:
+      pop = (uint8_t)inst.operands[1];
+      return true;
     case Opcode::CALL_EXT: {
       const FunctionSpec* fn = findFunction(caps, (uint8_t)inst.operands[0]);
       if (!fn) return false;
@@ -269,6 +272,13 @@ bool verifyContainer(const ContainerView& view, const Capabilities& caps, Verify
       case Opcode::CALL_SCRIPT:
         if (inst.operands[0] < 1 || inst.operands[0] > 254 || inst.operands[1] > 4) {
           return fail(result, VerifyError::FUNC, offset);
+        }
+        break;
+      case Opcode::CALL_SCRIPT_NAME:
+        if (!constantOf(view, (uint16_t)inst.operands[0], ConstantTag::NAME,
+                        kMaxScriptNameLen) ||
+            inst.operands[1] > 4) {
+          return fail(result, VerifyError::CONST, offset);
         }
         break;
       case Opcode::CALL_EXT: {

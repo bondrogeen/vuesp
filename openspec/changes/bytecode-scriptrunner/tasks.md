@@ -26,7 +26,7 @@
 
 ## 4. Firmware storage and transport
 
-- [ ] 4.1 Add `/www/scripts.bc` store with TOC and atomic temp→rename writes; verify store/reload, failed-write preservation and untouched `scripts.txt`.
+- [x] 4.1 Add `/www/scripts.bc` store with TOC and atomic temp→rename writes; verify store/reload, failed-write preservation and untouched `scripts.txt`.
 - [x] 4.2 Add `/script/list`, `/script/bytecode`, `/script/run`, `/script/capabilities` and `/script/status`; verify with authenticated curl on the device.
 - [x] 4.3 Wire runtime errors and dropped events to status/log output; verify a failing script stops only its context and reports id/offset/line.
 - [x] 4.4 Add `ENABLE_BYTECODE_VM` and board configuration; verify the default build keeps the text engine and the flag-enabled build uses bytecode for bytecode ids.

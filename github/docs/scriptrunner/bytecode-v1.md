@@ -80,6 +80,21 @@ on('btn_c') {
 `wait()` нормализуется в миллисекунды: `wait(1s)` → `wait(1000ms)`.
 `&&`/`||` в v1 вычисляют оба операнда (без short-circuit).
 
+Вызов другого скрипта — по имени:
+
+```js
+call('blink');
+call('display', 1, 2);
+```
+
+- имя — строковый литерал, lowercase, 1–16 символов;
+- до 4 аргументов, они попадают в `$c0…$c3` целевого скрипта;
+- возврата нет, `call` — statement;
+- вызывающий продолжает работу;
+- цель загружается из пакета лениво;
+- рекурсия запрещена, глубина вызовов — `VBC_MAX_CALL_DEPTH` (default 4);
+- при нехватке слотов кэша — ошибка `NO_CACHE`.
+
 ## Компиляция и декомпиляция
 
 В вебе:
@@ -133,12 +148,27 @@ profile дают одинаковый контейнер. Декомпилято
 
 ## Хранение
 
-v1: `/www/scripts/<id>.vbc`, по файлу на скрипт. Запись идёт через `.tmp` →
-`remove` → `rename`. В RAM держится кэш из 4 контейнеров; неактивные скрипты
-вытесняются.
+v1: единый `/www/scripts.bc`.
 
-Единый `/www/scripts.bc` с TOC — запланированное развитие; текущий HTTP API
-от этого не зависит.
+```text
+Header 14 байт:
+  magic "VSP1" | version | count | flags | reserved | tocSize | tocCrc
+
+TOC: count × 25 байт:
+  name[16] | flags | codeOff u16 | codeLen u16 | codeCrc u32
+
+Code blobs
+```
+
+- имена lowercase, 1–16 символов, уникальные;
+- `boot` ищется по точному имени; если его нет — автозапуска нет;
+- запись идёт через `scripts.bc.tmp` → `rename`, с `.bak` для отката;
+- TOC и каждый code blob защищены CRC;
+- старые `/www/scripts/<id>.vbc` не мигрируются и не используются;
+- `/www/scripts.txt` не изменяется.
+
+В RAM держатся TOC, карта `name → внутренний id` и кэш контейнеров
+(`VBC_CACHE_SLOTS`, default 3). Неактивные скрипты вытесняются.
 
 ## HTTP API
 
@@ -147,13 +177,13 @@ v1: `/www/scripts/<id>.vbc`, по файлу на скрипт. Запись и�
 | Метод | Путь | Назначение |
 |---|---|---|
 | GET | `/script/capabilities` | capability manifest: VM, лимиты, функции, события, `dataVars` |
-| GET | `/script/list` | список сохранённых `.vbc` |
-| GET | `/script/status` | active, scripts, последняя ошибка |
-| GET | `/script/bytecode?id=N` | скачать контейнер |
-| POST | `/script/bytecode?id=N&run=1` | загрузить бинарный контейнер (тело запроса) |
-| DELETE | `/script/bytecode?id=N` | удалить скрипт |
-| POST | `/script/run?id=N` | запустить |
-| POST | `/script/stop?id=N` | остановить |
+| GET | `/script/list` | список сохранённых скриптов `{name,size,boot,flags}` |
+| GET | `/script/status` | active, scripts, saved, cacheSlots, packError, последняя ошибка |
+| GET | `/script/bytecode?name=boot` | скачать контейнер |
+| POST | `/script/bytecode?name=boot&run=1` | загрузить контейнер (тело запроса) |
+| DELETE | `/script/bytecode?name=boot` | удалить скрипт |
+| POST | `/script/run?name=boot` | запустить |
+| POST | `/script/stop?name=boot` | остановить |
 | POST | `/script/stop-all` | остановить все |
 | POST | `/script/event?name=btn_c&count=3&p0=4&p1=1&p2=2` | диагностически отправить событие |
 
@@ -163,20 +193,23 @@ v1: `/www/scripts/<id>.vbc`, по файлу на скрипт. Запись и�
 curl -u admin:admin \
   -H 'Content-Type: application/octet-stream' \
   --data-binary @out.vbc \
-  'http://<device>/script/bytecode?id=1&run=1'
+  'http://<device>/script/bytecode?name=boot&run=1'
 ```
 
 ## Лимиты v1
 
-- до 15 сохранённых скриптов; 2 в RAM-кэше по умолчанию
+- до 15 сохранённых скриптов; 3 в RAM-кэше по умолчанию
   (`VBC_CACHE_SLOTS`, переопределяется при сборке);
 - до 1024 байт кода на скрипт;
 - стек до 64 значений;
+- до 4 аргументов у `call('name', ...)`, без возврата;
+- глубина вызовов до 4 (`VBC_MAX_CALL_DEPTH`);
+- рекурсия запрещена;
 - 32 инструкции или 300 µs на контекст за проход, 3 ms общий бюджет;
 - `wait` не блокирует loop;
 - ошибка останавливает только свой контекст и попадает в `/script/status`.
 
-На ESP8266 сборка с флагом занимает около 71.3% RAM (58 444 / 81 920) и 42.7%
+На ESP8266 сборка с флагом занимает около 74.1% RAM (60 704 / 81 920) и 43.3%
 flash; обычная сборка не меняется (57.9% RAM).
 
 ## Тесты
@@ -207,7 +240,7 @@ g++ -std=c++11 -I src -I src/tests -o /tmp/test_bytecode_pack \
 ## Не входит в v1
 
 - пользовательские функции с локальными переменными (v1.5);
-- рекурсия и замыкания;
+- возврат значений из `call`;
+- замыкания;
 - short-circuit `&&`/`||`;
-- динамический индекс порта;
-- единый `/www/scripts.bc` с TOC.
+- динамический индекс порта.

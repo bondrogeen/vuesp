@@ -277,3 +277,8 @@ opcodes:
     operands: []
     pop: 1
     push: 1
+  - name: CALL_SCRIPT_NAME
+    code: 0x51
+    operands: [name16, argc8]
+    pop: 0
+    push: 0

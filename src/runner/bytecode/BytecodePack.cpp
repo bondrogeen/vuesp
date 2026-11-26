@@ -9,18 +9,6 @@ namespace {
 
 const uint8_t kPackMagic[4] = {'V', 'S', 'P', '1'};
 
-inline void writeU16(uint8_t* data, uint16_t value) {
-  data[0] = (uint8_t)(value & 0xff);
-  data[1] = (uint8_t)((value >> 8) & 0xff);
-}
-
-inline void writeU32(uint8_t* data, uint32_t value) {
-  data[0] = (uint8_t)(value & 0xff);
-  data[1] = (uint8_t)((value >> 8) & 0xff);
-  data[2] = (uint8_t)((value >> 16) & 0xff);
-  data[3] = (uint8_t)((value >> 24) & 0xff);
-}
-
 bool validNameChar(uint8_t c, bool first) {
   if (c >= (uint8_t)'A' && c <= (uint8_t)'Z') return false;
   if (c >= (uint8_t)'a' && c <= (uint8_t)'z') return true;
@@ -81,14 +69,16 @@ bool packNameToText(const uint8_t name[kPackNameLen], char out[kPackNameLen + 1]
   return true;
 }
 
-bool parsePack(const uint8_t* data, uint16_t size, PackView& out, PackError& error) {
+bool parsePackToc(const uint8_t* data, uint16_t size, uint32_t fileSize,
+                  PackView& out, PackError& error) {
   error = PackError::NONE;
   out.data = data;
   out.size = size;
+  out.fileSize = fileSize;
   out.toc = nullptr;
   memset(&out.header, 0, sizeof(out.header));
 
-  if (!data || size < kPackHeaderSize) {
+  if (!data || size < kPackHeaderSize || fileSize < size) {
     error = PackError::SHORT;
     return false;
   }
@@ -139,7 +129,6 @@ bool parsePack(const uint8_t* data, uint16_t size, PackView& out, PackError& err
     const uint8_t flags = entry[16];
     const uint16_t off = readU16(entry + 17);
     const uint16_t len = readU16(entry + 19);
-    const uint32_t crc = readU32(entry + 21);
 
     if (!packNameToText(entry, text)) {
       error = PackError::NAME;
@@ -153,7 +142,7 @@ bool parsePack(const uint8_t* data, uint16_t size, PackView& out, PackError& err
       error = PackError::CODE_LEN;
       return false;
     }
-    if (off < firstCode || (uint32_t)off + len > size) {
+    if (off < firstCode || (uint32_t)off + len > fileSize) {
       error = PackError::BOUNDS;
       return false;
     }
@@ -171,14 +160,35 @@ bool parsePack(const uint8_t* data, uint16_t size, PackView& out, PackError& err
         return false;
       }
     }
+  }
 
+  return true;
+}
+
+bool parsePack(const uint8_t* data, uint16_t size, PackView& out, PackError& error) {
+  if (!parsePackToc(data, size, size, out, error)) return false;
+
+  for (uint16_t i = 0; i < out.header.count; i++) {
+    const uint8_t* entry = entryPtr(out, i);
+    const uint16_t off = readU16(entry + 17);
+    const uint16_t len = readU16(entry + 19);
+    const uint32_t crc = readU32(entry + 21);
     if (crc32(data + off, len) != crc) {
       error = PackError::CODE_CRC;
       return false;
     }
   }
-
   return true;
+}
+
+bool verifyPackCode(const PackView& view, uint16_t index, const uint8_t* code,
+                    uint16_t len) {
+  if (!view.toc || index >= view.header.count || !code) return false;
+
+  const uint8_t* entry = entryPtr(view, index);
+  const uint16_t entryLen = readU16(entry + 19);
+  const uint32_t crc = readU32(entry + 21);
+  return len == entryLen && crc32(code, len) == crc;
 }
 
 bool findPackEntry(const PackView& view, const char* name, uint16_t& index) {
@@ -212,7 +222,10 @@ bool getPackCode(const PackView& view, uint16_t index, const uint8_t*& code, uin
   const uint8_t* entry = entryPtr(view, index);
   const uint16_t off = readU16(entry + 17);
   const uint16_t size = readU16(entry + 19);
-  if (off < codeStart(view) || (uint32_t)off + size > view.size) return false;
+  if (off < codeStart(view) || (uint32_t)off + size > view.fileSize ||
+      (uint32_t)off + size > view.size) {
+    return false;
+  }
 
   code = view.data + off;
   len = size;

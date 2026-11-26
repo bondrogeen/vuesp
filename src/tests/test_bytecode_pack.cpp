@@ -14,18 +14,6 @@ static void expect(bool condition, const char* message) {
   }
 }
 
-static void writeU16(uint8_t* data, uint16_t value) {
-  data[0] = (uint8_t)(value & 0xff);
-  data[1] = (uint8_t)((value >> 8) & 0xff);
-}
-
-static void writeU32(uint8_t* data, uint32_t value) {
-  data[0] = (uint8_t)(value & 0xff);
-  data[1] = (uint8_t)((value >> 8) & 0xff);
-  data[2] = (uint8_t)((value >> 16) & 0xff);
-  data[3] = (uint8_t)((value >> 24) & 0xff);
-}
-
 static void fixTocCrc(uint8_t* data) {
   const uint16_t tocSize = readU16(data + 8);
   writeU32(data + 10, crc32(data + kPackHeaderSize, tocSize));
@@ -145,6 +133,46 @@ static void testBuildParseLookup() {
   expect(codeLen == sizeof(kCodeBoot), "code 0 length");
   expect(memcmp(code, kCodeBoot, sizeof(kCodeBoot)) == 0, "code 0 bytes");
   expect(!getPackCode(view, 2, code, codeLen), "code index bounds");
+}
+
+static void testTocParseAndCodeVerify() {
+  uint8_t pack[20000];
+  PackError error = PackError::NONE;
+  uint16_t len = makeValid(pack, sizeof(pack));
+  expect(len > 0, "toc fixture built");
+
+  const uint16_t tocLen =
+      (uint16_t)(kPackHeaderSize + readU16(pack + 8));
+  PackView view;
+  expect(parsePackToc(pack, tocLen, len, view, error), "parse toc only");
+  expect(error == PackError::NONE, "parse toc error");
+  expect(view.header.count == 2, "toc count");
+  expect(view.fileSize == len, "toc file size");
+
+  uint16_t index = 0;
+  expect(findPackEntry(view, "boot", index), "toc find boot");
+  expect(index == 0, "toc boot index");
+
+  const uint8_t* code = nullptr;
+  uint16_t codeLen = 0;
+  expect(!getPackCode(view, 0, code, codeLen), "toc-only has no code pointer");
+
+  const uint16_t firstCode = readU16(pack + kPackHeaderSize + 17);
+  const uint16_t firstLen = readU16(pack + kPackHeaderSize + 19);
+  expect(verifyPackCode(view, 0, pack + firstCode, firstLen), "verify code blob");
+  expect(!verifyPackCode(view, 0, pack + firstCode, firstLen - 1),
+         "verify code length mismatch");
+
+  uint8_t bad[64];
+  memcpy(bad, pack + firstCode, firstLen);
+  bad[0] ^= 0xff;
+  expect(!verifyPackCode(view, 0, bad, firstLen), "verify code crc mismatch");
+
+  expect(!parsePackToc(pack, tocLen, tocLen - 1, view, error),
+         "toc file size too small");
+  expect(error == PackError::SHORT, "toc file size error");
+
+  expect(parsePack(pack, len, view, error), "full parse after toc");
 }
 
 static void testEmptyPack() {
@@ -403,6 +431,7 @@ static void testCapacity() {
 int main() {
   testNameNormalize();
   testBuildParseLookup();
+  testTocParseAndCodeVerify();
   testEmptyPack();
   testMaxEntries();
   testDuplicate();

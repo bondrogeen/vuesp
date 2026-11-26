@@ -62,7 +62,7 @@ existing `DataProvider`; `$pN` through `PortProvider`.
 String and array storage stays in the shared global context. Expression
 temporaries use a small scratch arena (4 × 64 B) reset at statement boundaries.
 Per-context state is about 16 B; 15 contexts cost about 240 B. Code is loaded
-into a bounded RAM cache (default 2 slots × 1 KB, `VBC_CACHE_SLOTS`, range
+into a bounded RAM cache (default 3 slots × 1 KB, `VBC_CACHE_SLOTS`, range
 1..15) from flash on run/event; inactive entries are evicted.
 
 ### 3. Instruction encoding
@@ -133,9 +133,10 @@ or events are compile errors. This removes the current drift between
 
 - Flash: `/www/scripts.bc`, a header plus TOC plus code blobs. Writes use
   `scripts.bc.tmp` → flush → rename; a failed write leaves the old file intact.
-- Flash is the source of truth; RAM holds only the active code cache.
-- HTTP: `GET /script/list`, `GET/POST/DELETE /script/bytecode?id=N`,
-  `POST /script/run?id=N`, `GET /script/capabilities`, `GET /script/status`.
+- Flash is the source of truth; RAM holds the TOC, a `name → id` map and the
+  active code cache (default 3 slots).
+- HTTP: `GET /script/list`, `GET/POST/DELETE /script/bytecode?name=N`,
+  `POST /script/run?name=N`, `GET /script/capabilities`, `GET /script/status`.
   Uploads and downloads are binary and bypass `Message.text[256]`.
 - Run/stop/status can also use existing WebSocket messages. Existing `/cmd`,
   `/fs`, `/update` and `/esp` are untouched.

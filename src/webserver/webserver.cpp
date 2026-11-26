@@ -262,12 +262,15 @@ static uint8_t g_bytecodeUpload[VBC_MAX_CODE_BYTES];
 static uint16_t g_bytecodeUploadLen = 0;
 static bool g_bytecodeUploadOverflow = false;
 
-static bool bytecodeIdFromRequest(AsyncWebServerRequest* request, uint8_t& id) {
-  const AsyncWebParameter* param = request->getParam("id");
+static bool bytecodeNameFromRequest(AsyncWebServerRequest* request, String& name) {
+  const AsyncWebParameter* param = request->getParam("name");
   if (!param) return false;
-  const long value = param->value().toInt();
-  if (value <= 0 || value > 254) return false;
-  id = (uint8_t)value;
+  const String& value = param->value();
+  if (value.length() == 0 ||
+      value.length() > vuesp::bytecode::kPackNameLen) {
+    return false;
+  }
+  name = value;
   return true;
 }
 
@@ -288,30 +291,31 @@ static void onBytecodeBody(AsyncWebServerRequest* request, uint8_t* data, size_t
 }
 
 static void onBytecodePost(AsyncWebServerRequest* request) {
-  uint8_t id = 0;
-  if (!bytecodeIdFromRequest(request, id) || g_bytecodeUploadOverflow ||
+  String name;
+  if (!bytecodeNameFromRequest(request, name) || g_bytecodeUploadOverflow ||
       g_bytecodeUploadLen == 0) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
-  if (!bytecodeService.saveScript(id, g_bytecodeUpload, g_bytecodeUploadLen)) {
+  if (!bytecodeService.saveScript(name.c_str(), g_bytecodeUpload,
+                                  g_bytecodeUploadLen)) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
   const AsyncWebParameter* run = request->getParam("run");
-  if (run && run->value() == "1") bytecodeService.runScript(id);
+  if (run && run->value() == "1") bytecodeService.runScript(name.c_str());
   request->send(200, RES_TYPE_JSON, status(1));
 }
 
 static void onBytecodeGet(AsyncWebServerRequest* request) {
-  uint8_t id = 0;
-  if (!bytecodeIdFromRequest(request, id)) {
+  String name;
+  if (!bytecodeNameFromRequest(request, name)) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
   static uint8_t buffer[VBC_MAX_CODE_BYTES];
   uint16_t len = 0;
-  if (!bytecodeService.readScript(id, buffer, sizeof(buffer), len)) {
+  if (!bytecodeService.readScript(name.c_str(), buffer, sizeof(buffer), len)) {
     request->send(404, RES_TYPE_JSON, status(0));
     return;
   }
@@ -319,30 +323,30 @@ static void onBytecodeGet(AsyncWebServerRequest* request) {
 }
 
 static void onBytecodeDelete(AsyncWebServerRequest* request) {
-  uint8_t id = 0;
-  if (!bytecodeIdFromRequest(request, id)) {
+  String name;
+  if (!bytecodeNameFromRequest(request, name)) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, RES_TYPE_JSON, status(bytecodeService.removeScript(id)));
+  request->send(200, RES_TYPE_JSON, status(bytecodeService.removeScript(name.c_str())));
 }
 
 static void onBytecodeRun(AsyncWebServerRequest* request) {
-  uint8_t id = 0;
-  if (!bytecodeIdFromRequest(request, id)) {
+  String name;
+  if (!bytecodeNameFromRequest(request, name)) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, RES_TYPE_JSON, status(bytecodeService.runScript(id)));
+  request->send(200, RES_TYPE_JSON, status(bytecodeService.runScript(name.c_str())));
 }
 
 static void onBytecodeStop(AsyncWebServerRequest* request) {
-  uint8_t id = 0;
-  if (!bytecodeIdFromRequest(request, id)) {
+  String name;
+  if (!bytecodeNameFromRequest(request, name)) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, RES_TYPE_JSON, status(bytecodeService.stopScript(id)));
+  request->send(200, RES_TYPE_JSON, status(bytecodeService.stopScript(name.c_str())));
 }
 
 static void onBytecodeStopAll(AsyncWebServerRequest* request) {

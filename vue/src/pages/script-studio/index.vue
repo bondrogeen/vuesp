@@ -2,12 +2,13 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { useLocale } from '@/composables/useLocale';
-import { compile, decompile, disassemble, DEFAULT_MANIFEST } from '@/lib/script';
-import type { CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
+import { BYTECODE_EXAMPLES, compile, decompile, disassemble, DEFAULT_MANIFEST } from '@/lib/script';
+import type { BytecodeExample, CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
 
 const { $t } = useLocale();
 
-const id = ref(1);
+const name = ref('boot');
+const examples = BYTECODE_EXAMPLES;
 const source = ref(`$u0 = 5;
 log('hello', $u0);
 $display = 'BC-OK';
@@ -21,7 +22,7 @@ const manifest = ref<CapabilityManifest>(DEFAULT_MANIFEST);
 const message = ref('');
 const busy = ref(false);
 const status = ref<Record<string, unknown> | null>(null);
-const scripts = ref<Array<{ id: number; size: number }>>([]);
+const scripts = ref<Array<{ name: string; size: number; boot: number }>>([]);
 const sourceEl = ref<HTMLTextAreaElement | null>(null);
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -61,7 +62,7 @@ async function refresh() {
       fetch('/script/list'),
     ]);
     if (statusResponse.ok) status.value = (await statusResponse.json()) as Record<string, unknown>;
-    if (listResponse.ok) scripts.value = (await listResponse.json()) as Array<{ id: number; size: number }>;
+    if (listResponse.ok) scripts.value = (await listResponse.json()) as Array<{ name: string; size: number; boot: number }>;
   } catch {
     /* keep the previous view */
   }
@@ -92,7 +93,7 @@ async function upload(run: boolean) {
   if (!bytes) return;
   busy.value = true;
   try {
-    const response = await fetch(`/script/bytecode?id=${id.value}&run=${run ? 1 : 0}`, {
+    const response = await fetch(`/script/bytecode?name=${encodeURIComponent(name.value)}&run=${run ? 1 : 0}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/octet-stream' },
       body: toArrayBuffer(bytes),
@@ -107,7 +108,7 @@ async function upload(run: boolean) {
 async function loadFromDevice() {
   busy.value = true;
   try {
-    const response = await fetch(`/script/bytecode?id=${id.value}`);
+    const response = await fetch(`/script/bytecode?name=${encodeURIComponent(name.value)}`);
     if (!response.ok) {
       message.value = `HTTP ${response.status}`;
       return;
@@ -134,13 +135,13 @@ async function loadFromDevice() {
 }
 
 async function run() {
-  const response = await fetch(`/script/run?id=${id.value}`, { method: 'POST' });
+  const response = await fetch(`/script/run?name=${encodeURIComponent(name.value)}`, { method: 'POST' });
   message.value = await response.text();
   await refresh();
 }
 
 async function stop() {
-  const response = await fetch(`/script/stop?id=${id.value}`, { method: 'POST' });
+  const response = await fetch(`/script/stop?name=${encodeURIComponent(name.value)}`, { method: 'POST' });
   message.value = await response.text();
   await refresh();
 }
@@ -158,7 +159,7 @@ function download() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `script-${id.value}.vbc`;
+  link.download = `script-${name.value || 'script'}.vbc`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -167,8 +168,15 @@ async function copyHex() {
   if (hex.value) await navigator.clipboard.writeText(hex.value);
 }
 
-function selectScript(scriptId: number) {
-  id.value = scriptId;
+function selectScript(scriptName: string) {
+  name.value = scriptName;
+}
+
+function loadExample(example: BytecodeExample) {
+  name.value = example.name;
+  source.value = example.source;
+  result.value = null;
+  message.value = '';
 }
 
 async function insertAtCursor(text: string) {
@@ -208,11 +216,10 @@ onMounted(async () => {
       <div class="flex items-center gap-2">
         <label class="text-sm text-gray-dark-30 dark:text-white/70">{{ $t('scriptStudio.id') }}</label>
         <input
-          v-model.number="id"
-          type="number"
-          min="1"
-          max="254"
-          class="w-24 rounded-md border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 px-3 py-2 text-sm"
+          v-model="name"
+          type="text"
+          maxlength="16"
+          class="w-40 rounded-md border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 px-3 py-2 text-sm"
         />
         <button
           class="rounded-md border border-gray-light-10 dark:border-gray-dark-30 px-3 py-2 text-sm hover:opacity-80"
@@ -277,6 +284,20 @@ onMounted(async () => {
 
       <aside class="flex flex-col gap-4">
         <section class="rounded-lg border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 p-4">
+          <h2 class="text-lg font-semibold mb-2">{{ $t('examples') }}</h2>
+          <div class="flex flex-wrap gap-1">
+            <button
+              v-for="example in examples"
+              :key="`example-${example.name}`"
+              class="rounded-md border border-gray-light-10 dark:border-gray-dark-30 px-2 py-1 text-xs hover:bg-gray-light-30 dark:hover:bg-gray-dark-30"
+              @click="loadExample(example)"
+            >
+              {{ example.name }}
+            </button>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 p-4">
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold">{{ $t('scriptStudio.status') }}</h2>
             <button class="text-xs text-blue-500 hover:underline" @click="refresh">{{ $t('scriptStudio.refresh') }}</button>
@@ -321,12 +342,12 @@ onMounted(async () => {
         <section class="rounded-lg border border-gray-light-10 dark:border-gray-dark-30 bg-white dark:bg-gray-dark-40 p-4">
           <h2 class="text-lg font-semibold mb-2">{{ $t('scriptStudio.scripts') }}</h2>
           <ul class="space-y-1">
-            <li v-for="script in scripts" :key="script.id">
+            <li v-for="script in scripts" :key="script.name">
               <button
                 class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm hover:bg-gray-light-30 dark:hover:bg-gray-dark-30"
-                @click="selectScript(script.id)"
+                @click="selectScript(script.name)"
               >
-                <span>#{{ script.id }}</span>
+                <span>{{ script.name }}</span>
                 <span class="text-xs text-gray-dark-30 dark:text-white/60">{{ script.size }} {{ $t('scriptStudio.bytes') }}</span>
               </button>
             </li>

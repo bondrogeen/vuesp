@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { compile } from './compiler.ts';
 import { decompile } from './decompiler.ts';
 import { readContainer } from './container.ts';
+import { BYTECODE_EXAMPLES } from './examples.ts';
 import { DEFAULT_MANIFEST } from './types.ts';
 import type { CompileError, CompileResult } from './types.ts';
 
@@ -195,4 +196,40 @@ test('explicit return stays in handler', () => {
 }`;
   const result = roundTrip(source);
   assert.match(result.source, /return;/);
+});
+
+test('studio examples compile', () => {
+  for (const example of BYTECODE_EXAMPLES) {
+    const result = compile(example.source);
+    assert.ok(result.ok, `${example.name}: ${errorsText(result.errors)}`);
+  }
+});
+
+test('call by name round-trips', () => {
+  const result = roundTrip("call('blink', 1, 2);");
+  assert.match(result.source, /call\('blink', 1, 2\);/);
+});
+
+test('call by name normalizes uppercase', () => {
+  const result = compile("call('Blink');");
+  assert.ok(result.ok, errorsText(result.errors));
+  assert.ok(result.bytecode);
+  const decoded = decompile(result.bytecode, { manifest: DEFAULT_MANIFEST });
+  assert.ok(decoded.ok, errorsText(decoded.errors));
+  assert.ok(decoded.source !== undefined);
+  assert.match(decoded.source, /call\('blink'\);/);
+});
+
+test('call requires a string name', () => {
+  const result = compile('call(1);');
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0].code, 'E_CALL_NAME');
+});
+
+test('call rejects invalid script names', () => {
+  for (const source of ["call('bad name');", "call('1abc');", "call('abcdefghijklmnopq');"]) {
+    const result = compile(source);
+    assert.equal(result.ok, false);
+    assert.equal(result.errors[0].code, 'E_CALL_NAME');
+  }
 });

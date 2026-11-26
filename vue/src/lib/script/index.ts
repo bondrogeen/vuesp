@@ -15,4 +15,6 @@ export type {
 export { parse } from './parser.ts';
 export { lex } from './lexer.ts';
 export { printProgram, printExpr } from './printer.ts';
+export { BYTECODE_EXAMPLES } from './examples.ts';
+export type { BytecodeExample } from './examples.ts';
 export { Opcode, OPCODES, opcodeName } from './opcodes.ts';

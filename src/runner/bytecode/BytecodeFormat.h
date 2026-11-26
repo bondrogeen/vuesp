@@ -27,6 +27,10 @@
 #define VBC_MAX_ARRAY_LEN 64
 #endif
 
+#ifndef VBC_MAX_CALL_DEPTH
+#define VBC_MAX_CALL_DEPTH 4
+#endif
+
 namespace vuesp {
 namespace bytecode {
 
@@ -38,6 +42,8 @@ static constexpr uint16_t kStackSize = VBC_STACK_SIZE;
 static constexpr uint16_t kScratchBytes = VBC_SCRATCH_BYTES;
 static constexpr uint8_t kMaxStringLen = VBC_MAX_STRING_LEN;
 static constexpr uint8_t kMaxArrayLen = VBC_MAX_ARRAY_LEN;
+static constexpr uint8_t kMaxCallDepth = VBC_MAX_CALL_DEPTH;
+static constexpr uint8_t kMaxScriptNameLen = 16;
 
 enum class ConstantTag : uint8_t {
   INT32 = 1,
@@ -128,6 +134,18 @@ inline int16_t readI16(const uint8_t* data) {
   return (int16_t)readU16(data);
 }
 
+inline void writeU16(uint8_t* data, uint16_t value) {
+  data[0] = (uint8_t)(value & 0xff);
+  data[1] = (uint8_t)((value >> 8) & 0xff);
+}
+
+inline void writeU32(uint8_t* data, uint32_t value) {
+  data[0] = (uint8_t)(value & 0xff);
+  data[1] = (uint8_t)((value >> 8) & 0xff);
+  data[2] = (uint8_t)((value >> 16) & 0xff);
+  data[3] = (uint8_t)((value >> 24) & 0xff);
+}
+
 inline int32_t readI32(const uint8_t* data) {
   return (int32_t)readU32(data);
 }
@@ -142,6 +160,8 @@ inline float readF32(const uint8_t* data) {
 }
 
 uint32_t crc32(const uint8_t* data, uint16_t size);
+// Streaming helper: start with 0xffffffff, then finalize with ^0xffffffff.
+uint32_t crc32Update(uint32_t crc, const uint8_t* data, uint16_t size);
 uint32_t crc32Container(const uint8_t* data, uint16_t size);
 bool parseContainer(const uint8_t* data, uint16_t size, ContainerView& out, ParseError& error);
 bool getConstant(const ContainerView& view, uint16_t index, ConstantRef& out);

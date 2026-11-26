@@ -49,6 +49,14 @@ const char* vmErrorName(VmError error) {
       return "argument error";
     case VmError::NOT_READY:
       return "not ready";
+    case VmError::CODE_CRC:
+      return "code crc mismatch";
+    case VmError::NO_CACHE:
+      return "no free code cache slot";
+    case VmError::RECURSION:
+      return "recursive script call";
+    case VmError::DEPTH:
+      return "call depth exceeded";
     default:
       return "unknown";
   }
@@ -85,6 +93,7 @@ bool resetsScratch(Opcode op) {
     case Opcode::LOG:
     case Opcode::WAIT:
     case Opcode::CALL_SCRIPT:
+    case Opcode::CALL_SCRIPT_NAME:
     case Opcode::RETURN:
     case Opcode::HALT:
       return true;
@@ -105,6 +114,9 @@ int compareStringsFull(const Value& left, const Value& right) {
 
 }  // namespace
 
+static_assert(kMaxCallDepth >= 1 && kMaxCallDepth <= kMaxContexts,
+              "VBC_MAX_CALL_DEPTH must fit the context table");
+
 BytecodeVM::BytecodeVM()
     : _stackUsed(0),
       _scratchUsed(0),
@@ -114,6 +126,8 @@ BytecodeVM::BytecodeVM()
       _portProvider(nullptr),
       _stateChangeProvider(nullptr),
       _completeCallback(nullptr),
+      _scriptResolver(nullptr),
+      _scriptResolverData(nullptr),
       _lastError(VmError::NONE),
       _lastErrorScript(0),
       _lastErrorPc(0) {
@@ -126,7 +140,6 @@ void BytecodeVM::reset() {
   memset(_externals, 0, sizeof(_externals));
   memset(_contexts, 0, sizeof(_contexts));
   memset(&_ctx, 0, sizeof(_ctx));
-  memset(_callParams, 0, sizeof(_callParams));
   memset(_stack, 0, sizeof(_stack));
   memset(_scratch, 0, sizeof(_scratch));
   _stackUsed = 0;
@@ -147,6 +160,11 @@ void BytecodeVM::setStateChangeProvider(StateChangeProvider provider) {
 }
 void BytecodeVM::setCompleteCallback(ScriptCompleteCallback callback) {
   _completeCallback = callback;
+}
+
+void BytecodeVM::setScriptResolver(ScriptResolver resolver, void* userData) {
+  _scriptResolver = resolver;
+  _scriptResolverData = userData;
 }
 
 void BytecodeVM::setError(VmError error, uint8_t scriptId, uint16_t pc) {
@@ -218,13 +236,16 @@ void BytecodeVM::releaseContext(Context& ctx) {
   ctx.waiting = false;
   ctx.handler = false;
   ctx.sp = 0;
+  ctx.ancestorCount = 0;
+  memset(ctx.ancestors, 0, sizeof(ctx.ancestors));
+  memset(ctx.callParams, 0, sizeof(ctx.callParams));
   if (!wasHandler && _completeCallback) {
     _completeCallback(contextIndex, scriptId);
   }
 }
 
 bool BytecodeVM::startContext(int8_t scriptIndex, uint16_t entry, int8_t handlerIndex,
-                              int8_t& contextIndex) {
+                              int8_t& contextIndex, int8_t parentContext) {
   if (scriptIndex < 0 || scriptIndex >= MAX_SCRIPTS || !_scripts[scriptIndex].used) {
     setError(VmError::NO_SCRIPT, 0, entry);
     return false;
@@ -251,8 +272,39 @@ bool BytecodeVM::startContext(int8_t scriptIndex, uint16_t entry, int8_t handler
   ctx.stackSize = stackSize;
   ctx.sp = 0;
   ctx.waitUntil = 0;
+  ctx.ancestorCount = 0;
+  memset(ctx.ancestors, 0, sizeof(ctx.ancestors));
+  if (parentContext >= 0 && parentContext < kMaxContexts &&
+      _contexts[parentContext].active) {
+    const Context& parent = _contexts[parentContext];
+    ctx.ancestorCount = parent.ancestorCount;
+    memcpy(ctx.ancestors, parent.ancestors, parent.ancestorCount);
+    if (ctx.ancestorCount < kMaxCallDepth) {
+      const uint8_t parentScriptId =
+          parent.scriptIndex < MAX_SCRIPTS && _scripts[parent.scriptIndex].used
+              ? _scripts[parent.scriptIndex].id
+              : 0;
+      ctx.ancestors[ctx.ancestorCount++] = parentScriptId;
+    }
+  }
+  memset(ctx.callParams, 0, sizeof(ctx.callParams));
   contextIndex = freeContext;
   return true;
+}
+
+uint8_t BytecodeVM::callDepth(const Context& ctx) const {
+  return (uint8_t)(ctx.ancestorCount + 1);
+}
+
+bool BytecodeVM::inCallChain(const Context& ctx, uint8_t scriptId) const {
+  if (ctx.scriptIndex < MAX_SCRIPTS && _scripts[ctx.scriptIndex].used &&
+      _scripts[ctx.scriptIndex].id == scriptId) {
+    return true;
+  }
+  for (uint8_t i = 0; i < ctx.ancestorCount; i++) {
+    if (ctx.ancestors[i] == scriptId) return true;
+  }
+  return false;
 }
 
 bool BytecodeVM::registerFunction(uint8_t id, ExternalFunction func, void* userData) {
@@ -662,7 +714,7 @@ bool BytecodeVM::readVar(Context& ctx, uint8_t varid, Value& out) {
       return true;
     case 7:
       if (index >= MAX_CALL_PARAMS) return false;
-      out = makeInt(_callParams[index]);
+      out = makeInt(ctx.callParams[index]);
       return true;
     default:
       setError(VmError::VAR, _scripts[ctx.scriptIndex].id, ctx.pc);
@@ -1086,8 +1138,19 @@ bool BytecodeVM::callScript(Context& ctx, uint8_t scriptId, uint8_t argc) {
     setError(VmError::ARGS, _scripts[ctx.scriptIndex].id, ctx.pc);
     return false;
   }
-  if (scriptId == _scripts[ctx.scriptIndex].id) {
-    setError(VmError::RUNTIME, _scripts[ctx.scriptIndex].id, ctx.pc);
+
+  int32_t args[MAX_CALL_PARAMS];
+  for (int i = argc - 1; i >= 0; i--) {
+    Value value;
+    if (!popValue(ctx, value)) return false;
+    args[i] = valueToInt(value);
+  }
+  return launchScript(ctx, scriptId, argc, args);
+}
+
+bool BytecodeVM::callScriptByName(Context& ctx, uint16_t nameConst, uint8_t argc) {
+  if (argc > MAX_CALL_PARAMS) {
+    setError(VmError::ARGS, _scripts[ctx.scriptIndex].id, ctx.pc);
     return false;
   }
 
@@ -1098,17 +1161,69 @@ bool BytecodeVM::callScript(Context& ctx, uint8_t scriptId, uint8_t argc) {
     args[i] = valueToInt(value);
   }
 
-  const int8_t target = findScriptIndex(scriptId);
-  if (target < 0) {
-    setError(VmError::NO_SCRIPT, scriptId, ctx.pc);
+  const ContainerView& view = _scripts[ctx.scriptIndex].view;
+  ConstantRef ref;
+  if (!getConstant(view, nameConst, ref) ||
+      (ref.tag != ConstantTag::NAME && ref.tag != ConstantTag::STRING) ||
+      ref.len == 0 || ref.len > kMaxScriptNameLen) {
+    setError(VmError::CONST, _scripts[ctx.scriptIndex].id, ctx.pc);
     return false;
   }
-  stopScript(scriptId);
-  for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) {
-    _callParams[i] = i < argc ? args[i] : 0;
+
+  char name[kMaxScriptNameLen + 1];
+  memcpy(name, ref.data, ref.len);
+  name[ref.len] = '\0';
+
+  uint8_t id = 0;
+  const uint8_t* code = nullptr;
+  uint16_t size = 0;
+  VmError resolveError = VmError::NO_SCRIPT;
+  if (!_scriptResolver || !_scriptResolver(_scriptResolverData, name, id, code, size,
+                                           resolveError)) {
+    setError(resolveError == VmError::NONE ? VmError::NO_SCRIPT : resolveError,
+             _scripts[ctx.scriptIndex].id, ctx.pc);
+    return false;
   }
+  if (!code || size == 0) {
+    setError(VmError::NO_SCRIPT, _scripts[ctx.scriptIndex].id, ctx.pc);
+    return false;
+  }
+  if (inCallChain(ctx, id)) {
+    setError(VmError::RECURSION, _scripts[ctx.scriptIndex].id, ctx.pc);
+    return false;
+  }
+  if (!loadScript(id, code, size)) return false;
+  return launchScript(ctx, id, argc, args);
+}
+
+bool BytecodeVM::launchScript(Context& ctx, uint8_t scriptId, uint8_t argc,
+                              const int32_t* args) {
+  const int8_t target = findScriptIndex(scriptId);
+  if (target < 0) {
+    setError(VmError::NO_SCRIPT, _scripts[ctx.scriptIndex].id, ctx.pc);
+    return false;
+  }
+
+  const uint8_t contextIndex = (uint8_t)(&ctx - &_contexts[0]);
+  if (inCallChain(ctx, scriptId)) {
+    setError(VmError::RECURSION, _scripts[ctx.scriptIndex].id, ctx.pc);
+    return false;
+  }
+  if (callDepth(ctx) >= kMaxCallDepth) {
+    setError(VmError::DEPTH, _scripts[ctx.scriptIndex].id, ctx.pc);
+    return false;
+  }
+
+  stopScript(scriptId);
   int8_t newContext = -1;
-  return startContext(target, _scripts[target].view.header.entryOffset, -1, newContext);
+  if (!startContext(target, _scripts[target].view.header.entryOffset, -1, newContext,
+                    (int8_t)contextIndex)) {
+    return false;
+  }
+  for (uint8_t i = 0; i < MAX_CALL_PARAMS; i++) {
+    _contexts[newContext].callParams[i] = i < argc ? args[i] : 0;
+  }
+  return true;
 }
 
 bool BytecodeVM::logValues(Context& ctx, uint8_t argc) {
@@ -1301,6 +1416,12 @@ bool BytecodeVM::execute(Context& ctx, uint32_t now) {
       break;
     case Opcode::CALL_SCRIPT:
       if (!callScript(ctx, (uint8_t)inst.operands[0], (uint8_t)inst.operands[1])) {
+        return abort();
+      }
+      break;
+    case Opcode::CALL_SCRIPT_NAME:
+      if (!callScriptByName(ctx, (uint16_t)inst.operands[0],
+                            (uint8_t)inst.operands[1])) {
         return abort();
       }
       break;

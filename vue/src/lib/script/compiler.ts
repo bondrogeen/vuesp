@@ -445,10 +445,7 @@ export class BytecodeCompiler {
         if (call.args.length < 1 || call.args.length > 5) {
           throw new ScriptError('E_ARITY', 'call() expects 1..5 arguments', call.pos);
         }
-        const id = this.scriptId(call.args[0], call.pos);
-        if (id < 1 || id > 254) {
-          throw new ScriptError('E_CALL_ID', 'call() script id must be 1..254', call.args[0].pos);
-        }
+        this.scriptName(call.args[0], call.pos);
         for (const arg of call.args.slice(1)) this.validateExpr(arg, true);
         return;
       }
@@ -584,11 +581,19 @@ export class BytecodeCompiler {
     return ms;
   }
 
-  private scriptId(expr: Expr, pos: SourcePos): number {
-    if (expr.kind !== 'number' || expr.isFloat || !Number.isInteger(expr.value)) {
-      throw new ScriptError('E_CALL_ID', 'call() id must be an integer literal', pos);
+  private scriptName(expr: Expr, pos: SourcePos): string {
+    if (expr.kind !== 'string') {
+      throw new ScriptError('E_CALL_NAME', 'call() name must be a string literal', pos);
     }
-    return expr.value;
+    const name = expr.value.toLowerCase();
+    if (!/^[a-z_][a-z0-9_-]{0,15}$/.test(name)) {
+      throw new ScriptError(
+        'E_CALL_NAME',
+        'call() name must match [a-z_][a-z0-9_-]{0,15}',
+        expr.pos,
+      );
+    }
+    return name;
   }
 
   // ---------------------------------------------------------------------------
@@ -841,10 +846,15 @@ export class BytecodeCompiler {
         return;
       }
       case 'call': {
-        const id = this.scriptId(call.args[0], call.pos);
+        const name = this.scriptName(call.args[0], call.pos);
         const args = call.args.slice(1);
         for (const arg of args) this.genExpr(arg, KIND_INT);
-        this.emitDynamic('CALL_SCRIPT', [id, args.length], args.length, 0);
+        this.emitDynamic(
+          'CALL_SCRIPT_NAME',
+          [this.constants.addName(name), args.length],
+          args.length,
+          0,
+        );
         return;
       }
       case 'set': {

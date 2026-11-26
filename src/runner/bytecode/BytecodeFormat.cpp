@@ -3,15 +3,18 @@
 namespace vuesp {
 namespace bytecode {
 
-uint32_t crc32(const uint8_t* data, uint16_t size) {
-  uint32_t crc = 0xffffffffu;
+uint32_t crc32Update(uint32_t crc, const uint8_t* data, uint16_t size) {
   for (uint16_t i = 0; i < size; i++) {
     crc ^= data[i];
     for (uint8_t bit = 0; bit < 8; bit++) {
       crc = (crc & 1u) ? ((crc >> 1) ^ 0xedb88320u) : (crc >> 1);
     }
   }
-  return crc ^ 0xffffffffu;
+  return crc;
+}
+
+uint32_t crc32(const uint8_t* data, uint16_t size) {
+  return crc32Update(0xffffffffu, data, size) ^ 0xffffffffu;
 }
 
 uint32_t crc32Container(const uint8_t* data, uint16_t size) {

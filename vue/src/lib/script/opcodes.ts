@@ -56,6 +56,7 @@ export const Opcode = {
   ARRAY_GET: 0x4e,
   ARRAY_SET: 0x4f,
   ARRAY_LEN: 0x50,
+  CALL_SCRIPT_NAME: 0x51,
 } as const;
 
 export type OpcodeName = keyof typeof Opcode;
@@ -122,6 +123,7 @@ export const OPCODES: Readonly<Record<OpcodeName, OpcodeInfo>> = {
   ARRAY_GET: { code: 0x4e, operands: [], pop: 2, push: 1 },
   ARRAY_SET: { code: 0x4f, operands: [], pop: 3, push: 0 },
   ARRAY_LEN: { code: 0x50, operands: [], pop: 1, push: 1 },
+  CALL_SCRIPT_NAME: { code: 0x51, operands: ['name16', 'argc8'], pop: 0, push: 0 },
 };
 
 export function opcodeName(code: number): string {

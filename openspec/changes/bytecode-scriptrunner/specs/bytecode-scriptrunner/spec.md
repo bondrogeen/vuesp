@@ -83,6 +83,17 @@ and `return`.
 - **WHEN** an event with parameters fires and a handler is registered
 - **THEN** the handler observes the parameters in `$e0…$e3`
 
+#### Scenario: Call by name
+
+- **WHEN** a script executes `call('blink', 1, 2)`
+- **THEN** `blink` is loaded from `/www/scripts.bc` on demand and observes
+  `$c0 == 1`, `$c1 == 2`; the caller does not wait for a return value
+
+#### Scenario: Recursive call is rejected
+
+- **WHEN** `a` calls `b` and `b` calls `a`
+- **THEN** the VM reports a recursion error and stops only the offending context
+
 #### Scenario: Non-blocking wait
 
 - **WHEN** a script executes `wait(100ms)`
@@ -185,13 +196,13 @@ content intact. The existing `/www/scripts.txt` SHALL remain untouched.
 ### Requirement: HTTP bytecode transport
 
 The device SHALL provide authenticated endpoints to list, download, upload,
-delete and run scripts by id. Upload and download SHALL use binary payloads and
-MUST NOT depend on `Message.text[256]`. Existing `/cmd`, `/fs`, `/update` and
-`/esp` SHALL keep their current behavior.
+delete and run scripts by name. Upload and download SHALL use binary payloads
+and MUST NOT depend on `Message.text[256]`. Existing `/cmd`, `/fs`, `/update`
+and `/esp` SHALL keep their current behavior.
 
 #### Scenario: Download returns exact bytes
 
-- **WHEN** the web downloads a stored script by id
+- **WHEN** the web downloads a stored script by name
 - **THEN** the response body is byte-identical to the uploaded container
 
 #### Scenario: Upload then run

@@ -43,6 +43,7 @@ struct PackEntry {
 struct PackView {
   const uint8_t* data;
   uint16_t size;
+  uint32_t fileSize;
   PackHeader header;
   const uint8_t* toc;
 };
@@ -81,6 +82,13 @@ bool packNormalizeName(const char* name, uint8_t out[kPackNameLen]);
 bool packNameToText(const uint8_t name[kPackNameLen], char out[kPackNameLen + 1]);
 
 bool parsePack(const uint8_t* data, uint16_t size, PackView& out, PackError& error);
+// Parses the header and TOC from a buffer that may contain only the TOC.
+// `fileSize` is the total pack size on disk and is used for code bounds.
+// Per-entry code CRC is not checked; use verifyPackCode for a code blob.
+bool parsePackToc(const uint8_t* data, uint16_t size, uint32_t fileSize,
+                  PackView& out, PackError& error);
+bool verifyPackCode(const PackView& view, uint16_t index, const uint8_t* code,
+                    uint16_t len);
 bool findPackEntry(const PackView& view, const char* name, uint16_t& index);
 bool getPackEntry(const PackView& view, uint16_t index, PackEntry& out);
 bool getPackCode(const PackView& view, uint16_t index, const uint8_t*& code, uint16_t& len);
