@@ -5,7 +5,7 @@
 - [x] 1.1 Create `feature/bytecode-scriptrunner` and the OpenSpec change; verify `openspec validate bytecode-scriptrunner --strict` passes.
 - [x] 1.2 Verify `/dev/ttyUSB0`, serial boot logs, `VUESP:PING` and HTTP `/cmd` on the ESP8266; verify the device returns `@VUESP:PONG` and `{"state":true}`.
 - [x] 1.3 Write proposal, spec and design; verify `openspec validate bytecode-scriptrunner --strict` and `openspec status --change bytecode-scriptrunner`.
-- [ ] 1.4 Write `docs/scriptrunner/bytecode-v1.md` and `opcodes.yaml`; verify the documented container and opcode table match the generated C++/TS constants.
+- [x] 1.4 Write `docs/scriptrunner/bytecode-v1.md` and `opcodes.yaml`; verify the documented container and opcode table match the generated C++/TS constants.
 
 ## 2. TypeScript compiler and decompiler
 
