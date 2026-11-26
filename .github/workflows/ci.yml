@@ -154,10 +154,66 @@ jobs:
         working-directory: src/tests
         run: ./test_runner
 
+  bytecode:
+    name: Bytecode ScriptRunner - Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, clang++]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install compilers
+        run: sudo apt-get install -y g++ clang
+
+      - name: Build tests (${{ matrix.compiler }})
+        working-directory: src/tests
+        run: >-
+          ${{ matrix.compiler }} -std=c++11 -DVUESP_LOG_LEVEL=3 -I../src -I.
+          -o test_bytecode test_bytecode.cpp arduino_stub.cpp
+          ../runner/bytecode/BytecodeFormat.cpp
+          ../runner/bytecode/BytecodeInstruction.cpp
+          ../runner/bytecode/BytecodeVerifier.cpp
+          ../runner/bytecode/BytecodeVM.cpp
+
+      - name: Run tests (${{ matrix.compiler }})
+        working-directory: src/tests
+        run: ./test_bytecode
+
+  script-compiler:
+    name: Script Compiler - TS Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: vue/package-lock.json
+
+      - name: Install dependencies
+        working-directory: vue
+        run: npm ci --no-audit --no-fund
+
+      - name: Run compiler tests
+        working-directory: vue
+        run: npm run test:script
+
+      - name: Check bytecode fixtures are up to date
+        run: |
+          node scripts/generate-bytecode-vectors.mjs
+          git diff --exit-code src/tests/fixtures/bytecode_vectors.h
+
   release:
     name: Release firmware
     runs-on: ubuntu-latest
-    needs: [backend, scriptrunner]
+    needs: [backend, scriptrunner, bytecode, script-compiler]
     permissions:
       contents: write
     if: |

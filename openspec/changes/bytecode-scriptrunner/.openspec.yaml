@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-26
+goal: Replace text parsing on the MCU with a verified stack bytecode VM while
+  the web compiles and decompiles a JavaScript-like source.

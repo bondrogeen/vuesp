@@ -1,0 +1,279 @@
+# Canonical bytecode opcode table for ScriptRunner VBC1.
+# `code` is the wire opcode. `operands` are encoded in order, little-endian.
+# `pop`/`push` describe the value-stack effect for the verifier.
+opcodes:
+  - name: PUSH_I8
+    code: 0x01
+    operands: [i8]
+    pop: 0
+    push: 1
+  - name: PUSH_I16
+    code: 0x02
+    operands: [i16]
+    pop: 0
+    push: 1
+  - name: PUSH_I32
+    code: 0x03
+    operands: [i32]
+    pop: 0
+    push: 1
+  - name: PUSH_U8
+    code: 0x04
+    operands: [u8]
+    pop: 0
+    push: 1
+  - name: PUSH_U16
+    code: 0x05
+    operands: [u16]
+    pop: 0
+    push: 1
+  - name: PUSH_U32
+    code: 0x06
+    operands: [u32]
+    pop: 0
+    push: 1
+  - name: PUSH_F32
+    code: 0x07
+    operands: [f32]
+    pop: 0
+    push: 1
+  - name: PUSH_STR
+    code: 0x08
+    operands: [const16]
+    pop: 0
+    push: 1
+  - name: PUSH_ARRAY
+    code: 0x09
+    operands: [const16]
+    pop: 0
+    push: 1
+  - name: DUP
+    code: 0x0A
+    operands: []
+    pop: 1
+    push: 2
+  - name: POP
+    code: 0x0B
+    operands: []
+    pop: 1
+    push: 0
+  - name: SWAP
+    code: 0x0C
+    operands: []
+    pop: 2
+    push: 2
+
+  - name: LOAD_VAR
+    code: 0x10
+    operands: [var8]
+    pop: 0
+    push: 1
+  - name: STORE_VAR
+    code: 0x11
+    operands: [var8]
+    pop: 1
+    push: 0
+  - name: LOAD_DATA
+    code: 0x12
+    operands: [name16, kind8]
+    pop: 0
+    push: 1
+  - name: STORE_DATA
+    code: 0x13
+    operands: [name16]
+    pop: 1
+    push: 0
+
+  - name: ADD
+    code: 0x20
+    operands: []
+    pop: 2
+    push: 1
+  - name: SUB
+    code: 0x21
+    operands: []
+    pop: 2
+    push: 1
+  - name: MUL
+    code: 0x22
+    operands: []
+    pop: 2
+    push: 1
+  - name: DIV
+    code: 0x23
+    operands: []
+    pop: 2
+    push: 1
+  - name: MOD
+    code: 0x24
+    operands: []
+    pop: 2
+    push: 1
+  - name: NEG
+    code: 0x25
+    operands: []
+    pop: 1
+    push: 1
+  - name: BIT_AND
+    code: 0x26
+    operands: []
+    pop: 2
+    push: 1
+  - name: BIT_OR
+    code: 0x27
+    operands: []
+    pop: 2
+    push: 1
+  - name: BIT_XOR
+    code: 0x28
+    operands: []
+    pop: 2
+    push: 1
+  - name: BIT_NOT
+    code: 0x29
+    operands: []
+    pop: 1
+    push: 1
+  - name: SHL
+    code: 0x2A
+    operands: []
+    pop: 2
+    push: 1
+  - name: SHR
+    code: 0x2B
+    operands: []
+    pop: 2
+    push: 1
+
+  - name: EQ
+    code: 0x30
+    operands: []
+    pop: 2
+    push: 1
+  - name: NE
+    code: 0x31
+    operands: []
+    pop: 2
+    push: 1
+  - name: LT
+    code: 0x32
+    operands: []
+    pop: 2
+    push: 1
+  - name: LE
+    code: 0x33
+    operands: []
+    pop: 2
+    push: 1
+  - name: GT
+    code: 0x34
+    operands: []
+    pop: 2
+    push: 1
+  - name: GE
+    code: 0x35
+    operands: []
+    pop: 2
+    push: 1
+  - name: NOT
+    code: 0x36
+    operands: []
+    pop: 1
+    push: 1
+  - name: AND
+    code: 0x37
+    operands: []
+    pop: 2
+    push: 1
+  - name: OR
+    code: 0x38
+    operands: []
+    pop: 2
+    push: 1
+
+  - name: JUMP
+    code: 0x40
+    operands: [u16]
+    pop: 0
+    push: 0
+  - name: JUMP_IF_FALSE
+    code: 0x41
+    operands: [u16]
+    pop: 1
+    push: 0
+  - name: JUMP_IF_TRUE
+    code: 0x42
+    operands: [u16]
+    pop: 1
+    push: 0
+  - name: HALT
+    code: 0x43
+    operands: []
+    pop: 0
+    push: 0
+  - name: RETURN
+    code: 0x44
+    operands: []
+    pop: 0
+    push: 0
+
+  - name: WAIT
+    code: 0x45
+    operands: [u32]
+    pop: 0
+    push: 0
+  - name: LOG
+    code: 0x46
+    operands: [argc8]
+    pop: 0
+    push: 0
+  - name: CALL_SCRIPT
+    code: 0x47
+    operands: [u8, argc8]
+    pop: 0
+    push: 0
+  - name: CALL_EXT
+    code: 0x48
+    operands: [func8, argc8]
+    pop: 0
+    push: 1
+  - name: SET
+    code: 0x49
+    operands: []
+    pop: 3
+    push: 0
+  - name: GET
+    code: 0x4A
+    operands: []
+    pop: 2
+    push: 1
+  - name: LEN
+    code: 0x4B
+    operands: []
+    pop: 1
+    push: 1
+  - name: CHR
+    code: 0x4C
+    operands: []
+    pop: 1
+    push: 1
+  - name: ORD
+    code: 0x4D
+    operands: []
+    pop: 1
+    push: 1
+  - name: ARRAY_GET
+    code: 0x4E
+    operands: []
+    pop: 2
+    push: 1
+  - name: ARRAY_SET
+    code: 0x4F
+    operands: []
+    pop: 3
+    push: 0
+  - name: ARRAY_LEN
+    code: 0x50
+    operands: []
+    pop: 1
+    push: 1
