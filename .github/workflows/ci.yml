@@ -182,6 +182,18 @@ jobs:
         working-directory: src/tests
         run: ./test_bytecode
 
+      - name: Build pack tests (${{ matrix.compiler }})
+        working-directory: src/tests
+        run: >-
+          ${{ matrix.compiler }} -std=c++11 -DVUESP_LOG_LEVEL=3 -I../src -I.
+          -o test_bytecode_pack test_bytecode_pack.cpp
+          ../runner/bytecode/BytecodeFormat.cpp
+          ../runner/bytecode/BytecodePack.cpp
+
+      - name: Run pack tests (${{ matrix.compiler }})
+        working-directory: src/tests
+        run: ./test_bytecode_pack
+
   script-compiler:
     name: Script Compiler - TS Tests
     runs-on: ubuntu-latest

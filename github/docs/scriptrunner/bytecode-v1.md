@@ -176,7 +176,7 @@ curl -u admin:admin \
 - `wait` не блокирует loop;
 - ошибка останавливает только свой контекст и попадает в `/script/status`.
 
-На ESP8266 сборка с флагом занимает около 73.8% RAM (60 440 / 81 920) и 42.7%
+На ESP8266 сборка с флагом занимает около 71.3% RAM (58 444 / 81 920) и 42.7%
 flash; обычная сборка не меняется (57.9% RAM).
 
 ## Тесты
@@ -195,6 +195,13 @@ g++ -std=c++11 -I src -I src/tests -o /tmp/test_bytecode \
   src/runner/bytecode/BytecodeVM.cpp \
   src/tests/arduino_stub.cpp
 /tmp/test_bytecode
+
+# C++ pack format
+g++ -std=c++11 -I src -I src/tests -o /tmp/test_bytecode_pack \
+  src/tests/test_bytecode_pack.cpp \
+  src/runner/bytecode/BytecodeFormat.cpp \
+  src/runner/bytecode/BytecodePack.cpp
+/tmp/test_bytecode_pack
 ```
 
 ## Не входит в v1
