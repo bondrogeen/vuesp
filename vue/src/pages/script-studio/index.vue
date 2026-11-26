@@ -232,9 +232,7 @@ function compileSource(silent = false) {
     ? `${$t('scriptStudio.compiled')}: ${compiled.bytecode?.length ?? 0} ${$t(
         'scriptStudio.bytes',
       )}, ${$t('scriptStudio.stack')} ${compiled.stats?.stackMax ?? '?'}`
-    : compiled.errors
-        .map((error) => `${error.pos.line}:${error.pos.column} ${error.message}`)
-        .join('\n');
+    : '';
 }
 
 const debouncedCompile = useDebounceFn(() => compileSource(true), 350);
@@ -267,9 +265,7 @@ async function save(runAfter: boolean) {
   compileSource(true);
   const compiled = result.value;
   if (!compiled?.ok || !compiled.bytecode) {
-    message.value =
-      compiled?.errors.map((error) => `${error.pos.line}:${error.pos.column} ${error.message}`).join('\n') ||
-      $t('scriptStudio.notCompiled');
+    message.value = '';
     return;
   }
 
@@ -762,7 +758,7 @@ onBeforeUnmount(() => {
           class="flex items-end gap-1 border-b border-gray-light-10/70 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02]"
         >
           <button
-            class="mb-0 grid h-[31px] w-9 shrink-0 translate-y-px place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
+            class="mb-0 grid h-[31px] w-10 shrink-0 translate-y-px place-items-center rounded-t-lg border border-b-0 border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 transition hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5"
             :title="$t('scriptStudio.newScript')"
             :aria-label="$t('scriptStudio.newScript')"
             @click="newScript"
@@ -834,7 +830,7 @@ onBeforeUnmount(() => {
           v-model="source"
           :manifest="manifest"
           :script-names="scripts.map((script) => script.name)"
-          :error-lines="diagnostics.map((error) => error.pos.line)"
+          :errors="diagnostics"
         />
 
         <div
@@ -851,23 +847,6 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <div
-          v-if="diagnostics.length"
-          class="border-t border-red-main/30 bg-red-main/5 px-4 py-2 dark:border-red-main/20"
-        >
-          <div class="mb-1 text-[11px] uppercase tracking-wide text-red-main">
-            {{ $t('scriptStudio.diagnostics') }}
-          </div>
-          <ul class="space-y-1">
-            <li
-              v-for="(error, index) in diagnostics"
-              :key="index"
-              class="font-mono text-xs text-red-main"
-            >
-              {{ error.pos.line }}:{{ error.pos.column }} — {{ error.message }}
-            </li>
-          </ul>
-        </div>
 
         <div ref="logsPanel" class="border-t border-gray-light-10/70 dark:border-white/10">
           <div class="flex items-center gap-2 px-4 py-2 text-xs">

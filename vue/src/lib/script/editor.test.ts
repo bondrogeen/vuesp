@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { DEFAULT_MANIFEST } from './types.ts';
-import { getCompletions, highlightBytecode } from './editor.ts';
+import { computeErrorRanges, getCompletions, highlightBytecode } from './editor.ts';
 
 const manifest = DEFAULT_MANIFEST;
 const scripts = ['boot', 'blink', 'display', 'chain'];
@@ -84,4 +84,36 @@ test('keyword while inserts block snippet', () => {
 test('empty prefix only opens when forced', () => {
   assert.equal(getCompletions('', 0, manifest, scripts), null);
   assert.ok(labels('', 0, true).length > 0);
+});
+
+test('error ranges underline the token at the position', () => {
+  const source = '$u0 = ;';
+  const ranges = computeErrorRanges(source, [
+    { code: 'E_SYNTAX', message: 'unexpected token', pos: { line: 1, column: 7, offset: 6 } },
+  ]);
+  assert.equal(ranges.length, 1);
+  assert.equal(source.slice(ranges[0].start, ranges[0].end), ';');
+  assert.equal(ranges[0].message, 'unexpected token');
+});
+
+test('error ranges underline a whole identifier and merge overlaps', () => {
+  const source = '$u0 = missing;';
+  const ranges = computeErrorRanges(source, [
+    { code: 'E_A', message: 'first', pos: { line: 1, column: 7, offset: 6 } },
+    { code: 'E_B', message: 'second', pos: { line: 1, column: 9, offset: 8 } },
+  ]);
+  assert.equal(ranges.length, 1);
+  assert.equal(source.slice(ranges[0].start, ranges[0].end), 'missing');
+  assert.match(ranges[0].message, /first/);
+  assert.match(ranges[0].message, /second/);
+});
+
+test('highlight adds editor-error spans for diagnostics', () => {
+  const source = '$u0 = ;';
+  const ranges = computeErrorRanges(source, [
+    { code: 'E_SYNTAX', message: 'unexpected token', pos: { line: 1, column: 7, offset: 6 } },
+  ]);
+  const html = highlightBytecode(source, manifest, ranges);
+  assert.match(html, /editor-error/);
+  assert.match(html, />;</);
 });

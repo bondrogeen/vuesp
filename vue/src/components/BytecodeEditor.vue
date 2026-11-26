@@ -2,9 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { useLocale } from '@/composables/useLocale';
-import type { CapabilityManifest } from '@/lib/script';
-import { getCompletions, highlightBytecode } from '@/lib/script/editor';
-import type { CompletionItem } from '@/lib/script/editor';
+import type { CapabilityManifest, CompileError } from '@/lib/script';
+import { computeErrorRanges, getCompletions, highlightBytecode } from '@/lib/script/editor';
+import type { CompletionItem, ErrorRange } from '@/lib/script/editor';
 
 const { $t } = useLocale();
 
@@ -16,11 +16,11 @@ const props = withDefaults(
     modelValue: string;
     manifest: CapabilityManifest;
     scriptNames?: readonly string[];
-    errorLines?: readonly number[];
+    errors?: readonly CompileError[];
   }>(),
   {
     scriptNames: () => [],
-    errorLines: () => [],
+    errors: () => [],
   },
 );
 
@@ -43,16 +43,38 @@ const suggestStart = ref(0);
 const selected = ref(0);
 const menuLeft = ref(0);
 const menuTop = ref(0);
+const hoverError = ref<{
+  message: string;
+  line: number;
+  column: number;
+  x: number;
+  y: number;
+} | null>(null);
 
 let charWidth = 7.2;
 let blurTimer: ReturnType<typeof setTimeout> | null = null;
 let resizeStartY = 0;
 let resizeStartHeight = 0;
+let editorLineHeight = 24;
+let editorPadLeft = 12;
+let editorPadTop = 12;
 
-const highlighted = computed(() => highlightBytecode(props.modelValue, props.manifest));
+const errorRanges = computed<ErrorRange[]>(() =>
+  computeErrorRanges(props.modelValue, props.errors),
+);
+const highlighted = computed(() =>
+  highlightBytecode(props.modelValue, props.manifest, errorRanges.value),
+);
+const lineStarts = computed(() => {
+  const starts = [0];
+  for (let i = 0; i < props.modelValue.length; i++) {
+    if (props.modelValue[i] === '\n') starts.push(i + 1);
+  }
+  return starts;
+});
 const lineCount = computed(() => props.modelValue.split('\n').length);
 const gutterHtml = computed(() => {
-  const errors = new Set(props.errorLines);
+  const errors = new Set(props.errors.map((error) => error.pos.line));
   let html = '';
   for (let line = 1; line <= lineCount.value; line++) {
     const cls = errors.has(line)
@@ -88,6 +110,63 @@ function measureChar() {
   if (!element) return;
   const width = element.getBoundingClientRect().width / 10;
   if (width > 0) charWidth = width;
+
+  const input = textarea.value;
+  if (input) {
+    const style = getComputedStyle(input);
+    editorLineHeight = parseFloat(style.lineHeight) || 24;
+    editorPadLeft = parseFloat(style.paddingLeft) || 12;
+    editorPadTop = parseFloat(style.paddingTop) || 12;
+  }
+}
+
+function hideErrorTooltip() {
+  hoverError.value = null;
+}
+
+function onMouseMove(event: MouseEvent) {
+  if (errorRanges.value.length === 0) {
+    hideErrorTooltip();
+    return;
+  }
+  const input = textarea.value;
+  if (!input) return;
+
+  const rect = input.getBoundingClientRect();
+  const x = event.clientX - rect.left - editorPadLeft + input.scrollLeft;
+  const y = event.clientY - rect.top - editorPadTop + input.scrollTop;
+  if (x < 0 || y < 0) {
+    hideErrorTooltip();
+    return;
+  }
+
+  const line = Math.floor(y / editorLineHeight);
+  const starts = lineStarts.value;
+  if (line < 0 || line >= starts.length) {
+    hideErrorTooltip();
+    return;
+  }
+
+  const lineStart = starts[line];
+  const lineEnd = starts[line + 1] ?? props.modelValue.length;
+  const column = Math.floor(x / charWidth);
+  const offset = Math.min(
+    lineStart + Math.max(0, column),
+    Math.max(lineStart, lineEnd - (lineEnd > lineStart ? 1 : 0)),
+  );
+  const range = errorRanges.value.find((item) => offset >= item.start && offset < item.end);
+  if (!range) {
+    hideErrorTooltip();
+    return;
+  }
+
+  hoverError.value = {
+    message: range.message,
+    line: range.line,
+    column: range.column,
+    x: Math.min(event.clientX + 12, window.innerWidth - 300),
+    y: Math.min(event.clientY + 16, window.innerHeight - 80),
+  };
 }
 
 function syncScroll() {
@@ -160,6 +239,7 @@ function updateSuggestions(force = false) {
 function onInput(event: Event) {
   const target = event.target as HTMLTextAreaElement;
   emit('update:modelValue', target.value);
+  hideErrorTooltip();
   void nextTick(() => {
     syncScroll();
     updateSuggestions();
@@ -244,9 +324,11 @@ function onKeyup(event: KeyboardEvent) {
 function onScroll() {
   syncScroll();
   closeSuggestions();
+  hideErrorTooltip();
 }
 
 function onBlur() {
+  hideErrorTooltip();
   if (blurTimer) clearTimeout(blurTimer);
   blurTimer = setTimeout(closeSuggestions, 120);
 }
@@ -356,6 +438,8 @@ defineExpose({
           @keydown="onKeydown"
           @keyup="onKeyup"
           @click="updateSuggestions()"
+          @mousemove="onMouseMove"
+          @mouseleave="hideErrorTooltip"
           @scroll="onScroll"
           @blur="onBlur"
           @focus="onFocus"
@@ -383,6 +467,17 @@ defineExpose({
       aria-hidden="true"
       class="invisible absolute left-0 top-0 font-mono text-xs"
     >MMMMMMMMMM</span>
+
+    <div
+      v-if="hoverError"
+      class="pointer-events-none fixed z-[120] max-w-xs rounded-md border border-red-main/40 bg-white px-2.5 py-1.5 text-xs shadow-lg dark:border-red-main/30 dark:bg-gray-dark-40 dark:text-white"
+      :style="{ left: `${hoverError.x}px`, top: `${hoverError.y}px` }"
+    >
+      <div class="font-mono text-[10px] text-red-main">
+        {{ hoverError.line }}:{{ hoverError.column }}
+      </div>
+      <div class="mt-0.5 whitespace-pre-wrap">{{ hoverError.message }}</div>
+    </div>
 
     <div
       v-if="suggestOpen && suggestions.length > 0"
@@ -422,6 +517,14 @@ defineExpose({
 
 .editor-input::selection {
   background: rgb(59 130 246 / 0.3);
+}
+
+:deep(.editor-error) {
+  border-radius: 2px;
+  background: rgb(239 68 68 / 0.08);
+  text-decoration: underline wavy #ef4444;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
 }
 
 .editor-menu {

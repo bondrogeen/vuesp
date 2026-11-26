@@ -1,4 +1,4 @@
-import type { CapabilityManifest } from './types.ts';
+import type { CapabilityManifest, CompileError } from './types.ts';
 
 export type CompletionKind =
   | 'keyword'
@@ -20,6 +20,89 @@ export interface CompletionItem {
 export interface CompletionResult {
   readonly items: readonly CompletionItem[];
   readonly start: number;
+}
+
+export interface ErrorRange {
+  readonly start: number;
+  readonly end: number;
+  readonly message: string;
+  readonly line: number;
+  readonly column: number;
+}
+
+function errorOffset(source: string, error: CompileError): number {
+  const offset = error.pos.offset;
+  if (Number.isInteger(offset) && offset >= 0 && offset <= source.length) return offset;
+  let line = 1;
+  let cursor = 0;
+  while (line < error.pos.line && cursor < source.length) {
+    const next = source.indexOf('\n', cursor);
+    if (next < 0) break;
+    cursor = next + 1;
+    line++;
+  }
+  return Math.min(source.length, cursor + Math.max(0, error.pos.column - 1));
+}
+
+function errorTokenEnd(source: string, start: number): number {
+  if (start >= source.length) return source.length;
+  const ch = source[start];
+  if (ch === "'" || ch === '"') {
+    let cursor = start + 1;
+    while (cursor < source.length) {
+      if (source[cursor] === '\\') cursor += 2;
+      else if (source[cursor] === ch) return cursor + 1;
+      else cursor++;
+    }
+    return Math.min(source.length, start + 1);
+  }
+  if (/[A-Za-z0-9_$]/.test(ch)) {
+    let cursor = start + 1;
+    while (cursor < source.length && /[A-Za-z0-9_$]/.test(source[cursor])) cursor++;
+    return cursor;
+  }
+  return Math.min(source.length, start + 1);
+}
+
+export function computeErrorRanges(
+  source: string,
+  errors: readonly CompileError[],
+): ErrorRange[] {
+  const ranges: ErrorRange[] = [];
+  for (const error of errors) {
+    let start = errorOffset(source, error);
+    while (start < source.length && source[start] !== '\n' && /\s/.test(source[start])) start++;
+    if (start >= source.length || source[start] === '\n') {
+      if (source.length === 0) continue;
+      start = source.length - 1;
+    }
+    const end = Math.max(start + 1, errorTokenEnd(source, start));
+    ranges.push({
+      start,
+      end: Math.min(source.length, end),
+      message: error.message,
+      line: error.pos.line,
+      column: error.pos.column,
+    });
+  }
+
+  ranges.sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: ErrorRange[] = [];
+  for (const range of ranges) {
+    const previous = merged[merged.length - 1];
+    if (previous && range.start <= previous.end) {
+      merged[merged.length - 1] = {
+        ...previous,
+        end: Math.max(previous.end, range.end),
+        message: previous.message.includes(range.message)
+          ? previous.message
+          : `${previous.message}\n${range.message}`,
+      };
+      continue;
+    }
+    merged.push(range);
+  }
+  return merged;
 }
 
 const KEYWORDS = ['if', 'else', 'while', 'break', 'continue', 'return', 'on', 'true', 'false'];
@@ -55,7 +138,53 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function highlightBytecode(source: string, manifest: CapabilityManifest): string {
+function wrapText(text: string, kind: string, error = false): string {
+  if (!text) return '';
+  const cls = [TOKEN_CLASS[kind] ?? '', error ? 'editor-error' : '']
+    .filter(Boolean)
+    .join(' ');
+  const content = escapeHtml(text);
+  return cls ? `<span class="${cls}">${content}</span>` : content;
+}
+
+function renderText(
+  text: string,
+  kind: string,
+  baseOffset: number,
+  ranges: readonly ErrorRange[],
+): string {
+  if (!text) return '';
+  if (ranges.length === 0) return wrapText(text, kind);
+
+  let html = '';
+  let cursor = baseOffset;
+  const end = baseOffset + text.length;
+
+  for (const range of ranges) {
+    if (range.end <= cursor) continue;
+    if (range.start >= end) break;
+    const start = Math.max(cursor, range.start);
+    const stop = Math.min(end, range.end);
+    if (start > cursor) {
+      html += wrapText(text.slice(cursor - baseOffset, start - baseOffset), kind);
+    }
+    if (stop > start) {
+      html += wrapText(text.slice(start - baseOffset, stop - baseOffset), kind, true);
+    }
+    cursor = stop;
+  }
+
+  if (cursor < end) {
+    html += wrapText(text.slice(cursor - baseOffset), kind);
+  }
+  return html;
+}
+
+export function highlightBytecode(
+  source: string,
+  manifest: CapabilityManifest,
+  errorRanges: readonly ErrorRange[] = [],
+): string {
   const functions = new Set(manifest.functions.map((fn) => fn.name));
   const events = new Set(manifest.events.map((event) => event.name));
   const dataVars = new Set((manifest.dataVars ?? []).map((item) => item.name));
@@ -67,7 +196,7 @@ export function highlightBytecode(source: string, manifest: CapabilityManifest):
   for (const match of source.matchAll(re)) {
     const text = match[0];
     const index = match.index ?? 0;
-    html += escapeHtml(source.slice(last, index));
+    html += renderText(source.slice(last, index), '', last, errorRanges);
 
     let kind = '';
     const first = text[0];
@@ -89,11 +218,10 @@ export function highlightBytecode(source: string, manifest: CapabilityManifest):
       kind = 'operator';
     }
 
-    const cls = kind ? TOKEN_CLASS[kind] : '';
-    html += cls ? `<span class="${cls}">${escapeHtml(text)}</span>` : escapeHtml(text);
+    html += renderText(text, kind, index, errorRanges);
     last = index + text.length;
   }
-  html += escapeHtml(source.slice(last));
+  html += renderText(source.slice(last), '', last, errorRanges);
   return `${html}\n`;
 }
 
