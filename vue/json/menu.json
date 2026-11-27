@@ -33,5 +33,10 @@
     "name": "menu.serial",
     "icon": "plug",
     "path": "/serial/"
+  },
+  {
+    "name": "menu.modbus",
+    "icon": "plug",
+    "path": "/device/modbus/"
   }
 ]

@@ -21,7 +21,7 @@ web       app shell, router, stores, composables, base pages
 | --- | --- | --- | --- |
 | `script` — ScriptRunner | `src/runner` | script page, script composables, script assets | `menu.script` |
 | `serial` — SERIAL example | — | `vue/src/pages/serial` | `menu.serial` |
-| `modbus` — Modbus RTU | `src/modbus` (not wired yet) | — | — |
+| `modbus` — Modbus RTU example | `src/modbus` | Modbus page, register map, frame helpers | `menu.modbus` |
 
 Protocol keys stay in `protocol.h` even when a feature is removed: they are small
 and keep the generated web protocol compatible.
@@ -45,10 +45,20 @@ and keep the generated web protocol compatible.
 3. Remove `serial.*` from `vue/json/locales/ru.json` and `en.json`.
 4. No firmware changes: the page uses a demo transport.
 
-### modbus (firmware only)
+### modbus (example)
 
 1. Delete `src/modbus`.
-2. Nothing else references the module yet.
+2. Delete `vue/src/components/service/ServiceModbus.vue`, `ModbusMapDetails.vue`,
+   `modbusMapTypes.ts` and `vue/src/utils/modbusFrame.ts`.
+3. Remove `menu.modbus` from `vue/json/menu.json`.
+4. Remove `modbus.*` and `menu.modbus` from `vue/json/locales/ru.json` and `en.json`.
+5. Nothing else references the module; keep the protocol keys.
+
+The example is **off by default** (`role = off`, UART not started). The user
+selects Master/Slave, sets TX/RX/DE pins and presses Connect. Pins are runtime
+settings; `DE = -1` means auto-direction. The template map is generic:
+firmware version, uptime, address, baud, role, last error, requests, errors,
+RTC, plus the dynamic slave bank `100–131`.
 
 ## Planned: `vuesp-create --without`
 

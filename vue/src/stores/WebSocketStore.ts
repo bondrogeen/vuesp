@@ -5,7 +5,7 @@ import type { TKey } from '@/generated/protocol';
 import { useAppStore } from './AppStore.ts';
 
 import type { TMessage } from '@/types';
-import type { IWebSocketStore, IPort, IDallas, IProgress, IMessage, IDiscovery, IInfo, IDevice, IBuffer, IEvent, ISettings } from '@/types';
+import type { IWebSocketStore, IPort, IDallas, IProgress, IMessage, IDiscovery, IInfo, IDevice, IBuffer, IEvent, IModbus, IModbusProfile, IModbusRaw, IModbusVarView, ISettings } from '@/types';
 
 const initialState = (): IWebSocketStore => ({
   main: {
@@ -36,6 +36,60 @@ const initialState = (): IWebSocketStore => ({
     device: { command: 0, analog: 0, now: 0, list: 0, message: '' },
     buffer: { empty: 0, head: 0, tail: 0, count: 0, data: [] },
     event: { command: 0, subCommand: 0, value1: 0, value2: 0, name: '' },
+    modbus: {
+      command: 0,
+      role: 0,
+      address: 1,
+      baud: 9600,
+      dataBits: 8,
+      parity: 0,
+      stopBits: 1,
+      txPin: 27,
+      rxPin: 14,
+      dePin: -1,
+      status: 0,
+      lastFunction: 0,
+      lastAddress: 0,
+      lastError: 0,
+      requests: 0,
+      errors: 0,
+      varCount: 0,
+      reserved: [0, 0, 0],
+      updated: 0,
+      point: 0,
+      ok: 0,
+      pad: [0, 0],
+      value: 0,
+      text: '',
+      vars: [],
+    },
+    modbusProfile: {
+      command: 0,
+      version: 1,
+      deviceCount: 0,
+      pointCount: 0,
+      varCount: 0,
+      reserved: 0,
+      devices: [],
+      points: [],
+      vars: [],
+    },
+    modbusRaw: {
+      command: 0,
+      slave: 1,
+      function: 3,
+      address: 0,
+      length: 1,
+      autoCrc: 1,
+      request: [],
+      requestLen: 0,
+      response: [],
+      responseLen: 0,
+      status: 0,
+      reserved: 0,
+      elapsed: 0,
+    },
+    vars: {},
     dallas: {},
     discovery: {},
     slots: {},
@@ -92,6 +146,56 @@ export const useWebSocketStore = defineStore('webSocketStore', {
     SET_DEVICE(value: IDevice) {
       this.main.device = value;
     },
+    SET_MODBUS(value: IModbus) {
+      this.main.modbus = value;
+
+      const profile = this.main.modbusProfile;
+      if (!profile.varCount) return;
+
+      const vars = { ...this.main.vars };
+      for (let i = 0; i < value.varCount && i < profile.varCount; i++) {
+        const def = profile.vars[i];
+        const live = value.vars[i];
+        if (!def?.id || !live) continue;
+        vars[def.id] = {
+          id: def.id,
+          name: def.name,
+          type: def.type,
+          unit: def.unit,
+          decimals: def.decimals,
+          value: live.value,
+          text: live.text,
+          quality: live.quality,
+          updated: value.updated,
+        };
+      }
+      this.main.vars = vars;
+    },
+    SET_MODBUSRAW(value: IModbusRaw) {
+      this.main.modbusRaw = value;
+    },
+    SET_MODBUSPROFILE(value: IModbusProfile) {
+      this.main.modbusProfile = value;
+
+      const vars: Record<string, IModbusVarView> = {};
+      for (let i = 0; i < value.varCount; i++) {
+        const def = value.vars[i];
+        const live = this.main.modbus.vars[i];
+        if (!def?.id) continue;
+        vars[def.id] = {
+          id: def.id,
+          name: def.name,
+          type: def.type,
+          unit: def.unit,
+          decimals: def.decimals,
+          value: live?.value ?? 0,
+          text: live?.text ?? '',
+          quality: live?.quality ?? 1,
+          updated: this.main.modbus.updated,
+        };
+      }
+      this.main.vars = vars;
+    },
     SET_BUFFER(value: IBuffer) {
       this.main.buffer = value;
     },
@@ -135,6 +239,15 @@ export const useWebSocketStore = defineStore('webSocketStore', {
           return;
         case KEY.DEVICE:
           this.SET_DEVICE(object);
+          return;
+        case KEY.MODBUS:
+          this.SET_MODBUS(object);
+          return;
+        case KEY.MODBUSPROFILE:
+          this.SET_MODBUSPROFILE(object);
+          return;
+        case KEY.MODBUSRAW:
+          this.SET_MODBUSRAW(object);
           return;
         case KEY.BUFFER:
           this.SET_BUFFER(object);

@@ -105,24 +105,47 @@
       ]
     },
     "modbus": {
-      "label": "Modbus RTU (firmware)",
-      "summary": "Modbus RTU master/slave module available in the template.",
+      "label": "Modbus RTU example",
+      "summary": "Modbus RTU master/slave example. Off by default; the user enables it and sets TX/RX/DE pins in the UI.",
       "firmware": [
         "src/modbus"
       ],
-      "web": [],
-      "menu": [],
-      "locales": [],
-      "protocol": [],
-      "wired": false,
+      "web": [
+        "vue/src/components/service/ServiceModbus.vue",
+        "vue/src/components/service/ModbusMapDetails.vue",
+        "vue/src/components/service/modbusMapTypes.ts",
+        "vue/src/utils/modbusFrame.ts"
+      ],
+      "menu": [
+        "menu.modbus"
+      ],
+      "locales": [
+        "menu.modbus",
+        "modbus"
+      ],
+      "protocol": [
+        "MODBUS",
+        "MODBUSPROFILE",
+        "MODBUSRAW"
+      ],
+      "wired": true,
       "wiring": [
-        "Not wired: src/main.cpp, src/webserver and src/const/protocol.h do not reference the module yet."
+        "src/main.cpp: setupFirstModbus(), setupModbus(), loopModbus(now)",
+        "src/webserver/webserver.cpp: MODBUS, MODBUSPROFILE and MODBUSRAW handlers"
       ],
       "remove": [
-        "delete src/modbus"
+        "delete src/modbus",
+        "delete vue/src/components/service/ServiceModbus.vue, ModbusMapDetails.vue, modbusMapTypes.ts",
+        "delete vue/src/utils/modbusFrame.ts",
+        "remove menu.modbus from vue/json/menu.json",
+        "remove modbus.* and menu.modbus from vue/json/locales/ru.json and en.json",
+        "keep protocol keys: MODBUS, MODBUSPROFILE, MODBUSRAW"
       ],
       "notes": [
-        "Decide before the next release: wire the module as a full example (WS key, menu page, settings) or drop it from the template."
+        "Disabled by default: role = off, UART is not started until the user connects.",
+        "Pins are runtime settings in the UI (TX/RX/DE); DE -1 means auto-direction.",
+        "ESP32/C3 only: the module compiles on ESP8266, but the UART is not started there.",
+        "Template register map is generic: firmware/uptime/address/baud/role/errors/requests/RTC + slave bank 100–131."
       ]
     }
   }

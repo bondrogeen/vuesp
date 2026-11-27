@@ -40,13 +40,20 @@ export const useWebSocket = defineStore('webSocket', {
     onmessage(message: MessageEvent) {
       this.pingDevice = Date.now();
       if (message.data instanceof ArrayBuffer) {
-        const data = struct.get(message.data);
-        event.emit('messages', data as TMessage);
+        // A web build can be paired with older firmware during a partial
+        // update; ignore frames whose struct layout does not match yet.
+        let data: TMessage | undefined;
+        try {
+          data = struct.get(message.data) as TMessage;
+        } catch {
+          return;
+        }
+        event.emit('messages', data);
         if (data) {
           const { object, key } = data;
           if (key !== KEY.PING) log(object, key);
           if (key === KEY.INFO) this.infoLoaded = true;
-          useWebSocketStore().onMessage(data as TMessage);
+          useWebSocketStore().onMessage(data);
         }
       }
     },

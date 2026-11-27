@@ -6,6 +6,7 @@
 #include "./files/files.h"
 #include "./gpio/gpio.h"
 #include "./init/init.h"
+#include "./modbus/modbus.h"
 #include "./runner/runner.h"
 #include "./setup/serialSetup.h"
 #include "./tasks/tasks.h"
@@ -36,6 +37,7 @@ void setupFirst() {
   configStore.begin();
   setupFirstDevice();
   setupFirstGPIO();
+  setupFirstModbus();
 }
 
 void setupDelay() {
@@ -51,6 +53,7 @@ void setupDelay() {
   initWiFi();
   setupGPIO();
   setupDevice();
+  setupModbus();
   setupServer();
   setupDiscovery();
   setupRunner();
@@ -76,6 +79,7 @@ void loop() {
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
+    loopModbus(now);
     loopWiFi(now);
     loopRunner(now);
     loopSerialSetup();

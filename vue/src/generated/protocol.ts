@@ -3,7 +3,7 @@
 export const PROTOCOL_VERSION = 2;
 
 export const ENUMS = {
-  KEY: { INIT: 0, SETTINGS: 1, INFO: 2, PING: 3, SCAN: 4, PROGRESS: 5, FILES: 6, REBOOT: 7, EVENT: 8, PORT: 9, MESSAGE: 10, DALLAS: 11, BUFFER: 12, DEVICE: 13, DISCOVERY: 14 },
+  KEY: { INIT: 0, SETTINGS: 1, INFO: 2, PING: 3, SCAN: 4, PROGRESS: 5, FILES: 6, REBOOT: 7, EVENT: 8, PORT: 9, MESSAGE: 10, DALLAS: 11, BUFFER: 12, DEVICE: 13, DISCOVERY: 14, MODBUS: 15, MODBUSPROFILE: 16, MODBUSRAW: 17 },
   CMD: { NONE: 0, GET: 1, SET: 2, GET_ALL: 3, CHANGE: 4, RESTORE: 5, READ: 6, WRITE: 7, SAVE: 254 },
   PORT: { NONE: 0, INPUT: 1, INPUT_PULLUP: 2, OUTPUT: 4, OUTPUT_OPEN_DRAIN: 8, PWM: 16, ONEWIRE: 32, ADC: 64, DAC: 128 },
 } as const;
@@ -156,6 +156,104 @@ export const STRUCTS = {
     { name: 'now', type: 'uint32_t' },
     { name: 'list', type: 'uint32_t' },
     { name: 'message', type: 'char', dimensions: [32] },
+  ],
+  ModbusVarValue: [
+    { name: 'var', type: 'uint8_t' },
+    { name: 'quality', type: 'uint8_t' },
+    { name: 'flags', type: 'uint8_t' },
+    { name: 'reserved', type: 'uint8_t' },
+    { name: 'value', type: 'double' },
+    { name: 'text', type: 'char', dimensions: [16] },
+  ],
+  ModbusDevice: [
+    { name: 'id', type: 'char', dimensions: [12] },
+    { name: 'name', type: 'char', dimensions: [20] },
+    { name: 'address', type: 'uint8_t' },
+    { name: 'enabled', type: 'uint8_t' },
+    { name: 'interval', type: 'uint16_t' },
+    { name: 'timeout', type: 'uint16_t' },
+    { name: 'retries', type: 'uint8_t' },
+  ],
+  ModbusPoint: [
+    { name: 'device', type: 'uint8_t' },
+    { name: 'id', type: 'char', dimensions: [12] },
+    { name: 'name', type: 'char', dimensions: [20] },
+    { name: 'fc', type: 'uint8_t' },
+    { name: 'address', type: 'uint16_t' },
+    { name: 'type', type: 'uint8_t' },
+    { name: 'flags', type: 'uint8_t' },
+    { name: 'registers', type: 'uint8_t' },
+    { name: 'decimals', type: 'uint8_t' },
+    { name: 'scale', type: 'float' },
+    { name: 'offset', type: 'float' },
+    { name: 'unit', type: 'char', dimensions: [8] },
+    { name: 'var', type: 'uint8_t' },
+  ],
+  ModbusVar: [
+    { name: 'id', type: 'char', dimensions: [16] },
+    { name: 'name', type: 'char', dimensions: [20] },
+    { name: 'type', type: 'uint8_t' },
+    { name: 'flags', type: 'uint8_t' },
+    { name: 'unit', type: 'char', dimensions: [8] },
+    { name: 'decimals', type: 'uint8_t' },
+    { name: 'point', type: 'uint8_t' },
+    { name: 'source', type: 'char', dimensions: [32] },
+  ],
+  ModbusProfile: [
+    { name: 'key', type: 'uint8_t' },
+    { name: 'command', type: 'uint8_t' },
+    { name: 'version', type: 'uint16_t' },
+    { name: 'deviceCount', type: 'uint8_t' },
+    { name: 'pointCount', type: 'uint8_t' },
+    { name: 'varCount', type: 'uint8_t' },
+    { name: 'reserved', type: 'uint8_t' },
+    { name: 'devices', type: 'ModbusDevice', dimensions: [8] },
+    { name: 'points', type: 'ModbusPoint', dimensions: [64] },
+    { name: 'vars', type: 'ModbusVar', dimensions: [32] },
+  ],
+  ModbusRaw: [
+    { name: 'key', type: 'uint8_t' },
+    { name: 'command', type: 'uint8_t' },
+    { name: 'slave', type: 'uint8_t' },
+    { name: 'function', type: 'uint8_t' },
+    { name: 'address', type: 'uint16_t' },
+    { name: 'length', type: 'uint8_t' },
+    { name: 'autoCrc', type: 'uint8_t' },
+    { name: 'request', type: 'uint8_t', dimensions: [64] },
+    { name: 'requestLen', type: 'uint8_t' },
+    { name: 'response', type: 'uint8_t', dimensions: [64] },
+    { name: 'responseLen', type: 'uint8_t' },
+    { name: 'status', type: 'uint8_t' },
+    { name: 'reserved', type: 'uint8_t' },
+    { name: 'elapsed', type: 'uint32_t' },
+  ],
+  Modbus: [
+    { name: 'key', type: 'uint8_t' },
+    { name: 'command', type: 'uint8_t' },
+    { name: 'role', type: 'uint8_t' },
+    { name: 'address', type: 'uint8_t' },
+    { name: 'baud', type: 'uint32_t' },
+    { name: 'dataBits', type: 'uint8_t' },
+    { name: 'parity', type: 'uint8_t' },
+    { name: 'stopBits', type: 'uint8_t' },
+    { name: 'txPin', type: 'uint8_t' },
+    { name: 'rxPin', type: 'uint8_t' },
+    { name: 'dePin', type: 'int8_t' },
+    { name: 'status', type: 'uint8_t' },
+    { name: 'lastFunction', type: 'uint8_t' },
+    { name: 'lastAddress', type: 'uint8_t' },
+    { name: 'lastError', type: 'uint8_t' },
+    { name: 'requests', type: 'uint32_t' },
+    { name: 'errors', type: 'uint32_t' },
+    { name: 'varCount', type: 'uint8_t' },
+    { name: 'reserved', type: 'uint8_t', dimensions: [3] },
+    { name: 'updated', type: 'uint32_t' },
+    { name: 'point', type: 'uint8_t' },
+    { name: 'ok', type: 'uint8_t' },
+    { name: 'pad', type: 'uint8_t', dimensions: [2] },
+    { name: 'value', type: 'double' },
+    { name: 'text', type: 'char', dimensions: [16] },
+    { name: 'vars', type: 'ModbusVarValue', dimensions: [32] },
   ],
 } as const;
 
@@ -313,6 +411,111 @@ export interface IDevice {
   message: string;
 }
 
+export interface IModbusVarValue {
+  var: number;
+  quality: number;
+  flags: number;
+  reserved: number;
+  value: number;
+  text: string;
+}
+
+export interface IModbusDevice {
+  id: string;
+  name: string;
+  address: number;
+  enabled: number;
+  interval: number;
+  timeout: number;
+  retries: number;
+}
+
+export interface IModbusPoint {
+  device: number;
+  id: string;
+  name: string;
+  fc: number;
+  address: number;
+  type: number;
+  flags: number;
+  registers: number;
+  decimals: number;
+  scale: number;
+  offset: number;
+  unit: string;
+  var: number;
+}
+
+export interface IModbusVar {
+  id: string;
+  name: string;
+  type: number;
+  flags: number;
+  unit: string;
+  decimals: number;
+  point: number;
+  source: string;
+}
+
+export interface IModbusProfile {
+  key?: number;
+  command: TCommand;
+  version: number;
+  deviceCount: number;
+  pointCount: number;
+  varCount: number;
+  reserved: number;
+  devices: IModbusDevice[];
+  points: IModbusPoint[];
+  vars: IModbusVar[];
+}
+
+export interface IModbusRaw {
+  key?: number;
+  command: TCommand;
+  slave: number;
+  function: number;
+  address: number;
+  length: number;
+  autoCrc: number;
+  request: number[];
+  requestLen: number;
+  response: number[];
+  responseLen: number;
+  status: number;
+  reserved: number;
+  elapsed: number;
+}
+
+export interface IModbus {
+  key?: number;
+  command: TCommand;
+  role: number;
+  address: number;
+  baud: number;
+  dataBits: number;
+  parity: number;
+  stopBits: number;
+  txPin: number;
+  rxPin: number;
+  dePin: number;
+  status: number;
+  lastFunction: number;
+  lastAddress: number;
+  lastError: number;
+  requests: number;
+  errors: number;
+  varCount: number;
+  reserved: number[];
+  updated: number;
+  point: number;
+  ok: number;
+  pad: number[];
+  value: number;
+  text: string;
+  vars: IModbusVarValue[];
+}
+
 export interface IMessageMap {
   INIT: IInit;
   SETTINGS: ISettings;
@@ -328,6 +531,9 @@ export interface IMessageMap {
   BUFFER: IBuffer;
   DEVICE: IDevice;
   DISCOVERY: IDiscovery;
+  MODBUS: IModbus;
+  MODBUSPROFILE: IModbusProfile;
+  MODBUSRAW: IModbusRaw;
 }
 
 export type TMessage =
@@ -344,4 +550,7 @@ export type TMessage =
   | { key: typeof KEY.DALLAS; object: IDallas }
   | { key: typeof KEY.BUFFER; object: IBuffer }
   | { key: typeof KEY.DEVICE; object: IDevice }
-  | { key: typeof KEY.DISCOVERY; object: IDiscovery };
+  | { key: typeof KEY.DISCOVERY; object: IDiscovery }
+  | { key: typeof KEY.MODBUS; object: IModbus }
+  | { key: typeof KEY.MODBUSPROFILE; object: IModbusProfile }
+  | { key: typeof KEY.MODBUSRAW; object: IModbusRaw };
