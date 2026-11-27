@@ -144,12 +144,8 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
 // }
 
 void setupDevice() {
-  scriptRunner.setDataProvider(dataProvider);
-  scriptRunner.registerFunction("http", httpHandler);
-#if ENABLE_BYTECODE_VM
   bytecodeService.vm().setDataProvider(dataProvider);
   bytecodeService.vm().registerFunction(3, httpHandler);
-#endif
 }
 
 void setupFirstDevice() {

@@ -1,3 +1,5 @@
+import type { ISuggestion } from 'vuesp-components/types';
+
 import type { CapabilityManifest, CompileError } from './types.ts';
 
 export type CompletionKind =
@@ -13,6 +15,11 @@ export interface CompletionItem {
   readonly label: string;
   readonly detail: string;
   readonly kind: CompletionKind;
+  readonly insert: string;
+  readonly caret?: number;
+}
+
+export interface ISuggestionInsert {
   readonly insert: string;
   readonly caret?: number;
 }
@@ -187,9 +194,14 @@ export function highlightBytecode(
   source: string,
   manifest: CapabilityManifest,
   errorRanges: readonly ErrorRange[] = [],
+  suggestions: readonly ISuggestion[] = [],
 ): string {
   const functions = new Set(manifest.functions.map((fn) => fn.name));
   const events = new Set(manifest.events.map((event) => event.name));
+  for (const suggestion of suggestions) {
+    if (suggestion.type === 'func') functions.add(suggestion.label);
+    if (suggestion.type === 'event') events.add(suggestion.label);
+  }
   const dataVars = new Set((manifest.dataVars ?? []).map((item) => item.name));
   const keywords = new Set(KEYWORDS);
 
@@ -287,12 +299,66 @@ function sortAndLimit(items: CompletionItem[], prefix: string): CompletionItem[]
   return unique.slice(0, 20);
 }
 
+function mergeSuggestionItems(items: CompletionItem[], suggestions: readonly ISuggestion[]): void {
+  for (const suggestion of suggestions) {
+    const detail = suggestion.detail || suggestion.description || suggestion.type;
+    if (suggestion.type === 'func') {
+      const index = items.findIndex((item) => item.label === suggestion.label);
+      if (index >= 0) {
+        items[index] = { ...items[index], detail };
+        continue;
+      }
+      const { insert, caret } = normalizeSuggestionInsert(suggestion);
+      items.push({ label: suggestion.label, detail, kind: 'function', insert, caret });
+      continue;
+    }
+    if (suggestion.type === 'event') {
+      const label = `on('${suggestion.label}')`;
+      const index = items.findIndex((item) => item.label === label);
+      if (index >= 0) {
+        items[index] = { ...items[index], detail };
+        continue;
+      }
+      const snippet = eventSnippet(suggestion.label);
+      items.push({ label, detail, kind: 'event', insert: snippet.insert, caret: snippet.caret });
+      continue;
+    }
+    if (items.some((item) => item.label === suggestion.label)) continue;
+    const { insert, caret } = normalizeSuggestionInsert(suggestion);
+    items.push({
+      label: suggestion.label,
+      detail,
+      kind: suggestion.type === 'var' ? 'slot' : 'keyword',
+      insert,
+      caret,
+    });
+  }
+}
+
+export function normalizeSuggestionInsert(suggestion: ISuggestion): ISuggestionInsert {
+  const raw = suggestion.insert ?? suggestion.label;
+  const marker = /\$\{[^}]*\}/g;
+  let text = '';
+  let last = 0;
+  let first = -1;
+  for (const match of raw.matchAll(marker)) {
+    const index = match.index ?? 0;
+    if (first < 0) first = text.length + (index - last);
+    text += raw.slice(last, index);
+    last = index + match[0].length;
+  }
+  text += raw.slice(last);
+  const caret = first >= 0 ? first : (suggestion.cursorOffset ?? text.length);
+  return { insert: text, caret };
+}
+
 export function getCompletions(
   source: string,
   caret: number,
   manifest: CapabilityManifest,
   scriptNames: readonly string[],
   force = false,
+  suggestions: readonly ISuggestion[] = [],
 ): CompletionResult | null {
   const before = source.slice(0, caret);
 
@@ -324,6 +390,21 @@ export function getCompletions(
         kind: 'event',
         insert: event.name,
       }));
+    for (const suggestion of suggestions) {
+      if (suggestion.type !== 'event') continue;
+      const detail = suggestion.detail || suggestion.description || 'event';
+      const index = items.findIndex((item) => item.label === suggestion.label);
+      if (index >= 0) {
+        items[index] = { ...items[index], detail };
+        continue;
+      }
+      items.push({
+        label: suggestion.label,
+        detail,
+        kind: 'event',
+        insert: suggestion.label,
+      });
+    }
     const sorted = sortAndLimit(items, prefix);
     return sorted.length > 0 ? { items: sorted, start } : null;
   }
@@ -391,6 +472,8 @@ export function getCompletions(
       });
     }
   }
+
+  mergeSuggestionItems(items, suggestions);
 
   const filtered = items.filter((item) => {
     if (!prefix) return true;

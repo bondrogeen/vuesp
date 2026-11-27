@@ -1,7 +1,5 @@
 #include "./BytecodeService.h"
 
-#if ENABLE_BYTECODE_VM
-
 #include <Arduino.h>
 #include <LittleFS.h>
 
@@ -9,6 +7,8 @@
 #include <string.h>
 
 #include "./BytecodeVerifier.h"
+
+#include "../../const/features.h"
 
 using namespace vuesp::bytecode;
 
@@ -21,6 +21,10 @@ const FunctionSpec kFunctions[] = {
     {1, "fade", 3, 3, VALUE_INT},
     {2, "udp", 1, 2, VALUE_INT},
     {3, "http", 2, 5, VALUE_INT},
+#if VUESP_MODBUS
+    {4, "var", 1, 2, VALUE_INT},
+    {5, "modbus", 2, 3, VALUE_INT},
+#endif
 };
 
 const EventSpec kEvents[] = {
@@ -28,22 +32,45 @@ const EventSpec kEvents[] = {
     {2, "btn_c", 3},
     {3, "btn_l", 2},
     {4, "btn_r", 2},
+#if VUESP_MODBUS
+    {5, "modbus", 0},
+#endif
 };
+
+const uint8_t kFunctionCount = (uint8_t)(sizeof(kFunctions) / sizeof(kFunctions[0]));
+const uint8_t kEventCount = (uint8_t)(sizeof(kEvents) / sizeof(kEvents[0]));
+
+const char* valueKindName(uint8_t kind) {
+  switch (kind) {
+    case VALUE_INT:
+      return "int";
+    case VALUE_UINT:
+      return "uint";
+    case VALUE_FLOAT:
+      return "float";
+    case VALUE_STRING:
+      return "string";
+    case VALUE_ARRAY:
+      return "array";
+    default:
+      return "none";
+  }
+}
 
 const Capabilities kCaps = {
     1,
     VBC_MAX_CODE_BYTES,
     VBC_STACK_SIZE,
-    {10, 10, 5, 2, 5, 40, 4, 4},
+    {10, 10, 5, 2, 5, 16, 4, 4},
     VBC_MAX_STRING_LEN,
     VBC_MAX_ARRAY_LEN,
     32,
     300,
     3000,
     kFunctions,
-    3,
+    kFunctionCount,
     kEvents,
-    4,
+    kEventCount,
 };
 
 bool readFull(File& file, uint8_t* buffer, uint16_t len) {
@@ -680,8 +707,71 @@ uint8_t BytecodeService::scriptCount() const { return _vm.scriptCount(); }
 uint8_t BytecodeService::savedCount() const { return _packCount; }
 
 String BytecodeService::capabilitiesJson() const {
-  return String(
-      R"json({"vm":1,"maxScripts":15,"maxCodeBytes":1024,"maxStack":64,"vars":{"u":10,"i":10,"f":5,"s":2,"a":5,"p":40,"e":4,"c":4},"maxStringLen":32,"maxArrayLen":64,"functions":[{"id":1,"name":"fade","min":3,"max":3,"ret":"int"},{"id":2,"name":"udp","min":1,"max":2,"ret":"int"},{"id":3,"name":"http","min":2,"max":5,"ret":"int"}],"events":[{"id":1,"name":"btn","params":2},{"id":2,"name":"btn_c","params":3},{"id":3,"name":"btn_l","params":2},{"id":4,"name":"btn_r","params":2}],"dataVars":[{"name":"$display","kind":"string"}],"limits":{"instrPerTick":32,"usPerTick":300,"updateBudgetUs":3000}})json");
+  const Capabilities& caps = _vm.capabilities();
+  String json = "{\"vm\":";
+  json += (unsigned)caps.vmVersion;
+  json += ",\"maxScripts\":";
+  json += (unsigned)kPackMaxEntries;
+  json += ",\"maxCodeBytes\":";
+  json += (unsigned)caps.maxCodeBytes;
+  json += ",\"maxStack\":";
+  json += (unsigned)caps.maxStack;
+  json += ",\"vars\":{\"u\":";
+  json += (unsigned)caps.vars[0];
+  json += ",\"i\":";
+  json += (unsigned)caps.vars[1];
+  json += ",\"f\":";
+  json += (unsigned)caps.vars[2];
+  json += ",\"s\":";
+  json += (unsigned)caps.vars[3];
+  json += ",\"a\":";
+  json += (unsigned)caps.vars[4];
+  json += ",\"p\":";
+  json += (unsigned)caps.vars[5];
+  json += ",\"e\":";
+  json += (unsigned)caps.vars[6];
+  json += ",\"c\":";
+  json += (unsigned)caps.vars[7];
+  json += "},\"maxStringLen\":";
+  json += (unsigned)caps.maxStringLen;
+  json += ",\"maxArrayLen\":";
+  json += (unsigned)caps.maxArrayLen;
+  json += ",\"functions\":[";
+  for (uint8_t i = 0; i < caps.functionCount; i++) {
+    const FunctionSpec& fn = caps.functions[i];
+    if (i) json += ',';
+    json += "{\"id\":";
+    json += (unsigned)fn.id;
+    json += ",\"name\":\"";
+    json += fn.name;
+    json += "\",\"min\":";
+    json += (unsigned)fn.minArgs;
+    json += ",\"max\":";
+    json += (unsigned)fn.maxArgs;
+    json += ",\"ret\":\"";
+    json += valueKindName(fn.ret);
+    json += "\"}";
+  }
+  json += "],\"events\":[";
+  for (uint8_t i = 0; i < caps.eventCount; i++) {
+    const EventSpec& event = caps.events[i];
+    if (i) json += ',';
+    json += "{\"id\":";
+    json += (unsigned)event.id;
+    json += ",\"name\":\"";
+    json += event.name;
+    json += "\",\"params\":";
+    json += (unsigned)event.params;
+    json += '}';
+  }
+  json += "],\"dataVars\":[{\"name\":\"$display\",\"kind\":\"string\"}],\"limits\":{\"instrPerTick\":";
+  json += (unsigned)caps.instrPerTick;
+  json += ",\"usPerTick\":";
+  json += (unsigned)caps.usPerTick;
+  json += ",\"updateBudgetUs\":";
+  json += (unsigned)caps.updateBudgetUs;
+  json += "}}";
+  return json;
 }
 
 String BytecodeService::listJson() const {
@@ -750,5 +840,3 @@ String BytecodeService::statusJson() const {
            (unsigned)_vm.lastErrorPc());
   return String(buffer);
 }
-
-#endif  // ENABLE_BYTECODE_VM

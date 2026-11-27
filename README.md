@@ -30,8 +30,8 @@ The CLI clones this template with its git history, keeps the selected board, set
 
 - 🚀 Full-stack Arduino projects with web UI
 - 🎨 Glass UI with light/dark themes and shared `vuesp-components@5`
-- 🧠 ScriptRunner editor with syntax highlighting and autocomplete
-- 📜 Starter scripts for variables, loops, arrays and button events
+- 🧠 Bytecode script studio with syntax highlighting, autocomplete and device hints
+- 📜 Starter bytecode examples for variables, loops, arrays and button events
 - 🖥️ Browser demo with a mock device — no hardware required
 - 🔒 Optional HTTP Basic Authentication
 - ⚡ Binary WebSocket for efficient communication
@@ -195,25 +195,25 @@ Binary WebSocket messages at `/esp` endpoint:
 - Remaining bytes: Struct data
 - All platform-specific
 
-## Starter scripts
+## Bytecode script studio
 
-The template ships ready-to-run examples in [`vue/public/scripts.txt`](./vue/public/scripts.txt). After `build-web` the file is copied to LittleFS as `/www/scripts.txt` and appears in the **Scripts** page:
+The template ships example sources in [`vue/src/lib/script/examples.ts`](./vue/src/lib/script/examples.ts). The studio at `/script/` compiles them in the browser and stores the pack in LittleFS as `/www/scripts.bc`:
 
-- `boot` — logs a message and registers the button handler;
-- `hello` — `log()` and `wait()`;
-- `counter` — `while` loop;
+- `boot` — logs a message and sets a port;
+- `blink` — `while` loop with `wait()`;
 - `button` — `on('btn_c')` with `$e0/$e1/$e2`;
 - `expressions` — arithmetic, strings and `len()`;
-- `array` — `len()`, `get()` and `set()`.
+- `array` — `len()`, `get()` and `set()`;
+- `chain` — `call('name')` between scripts.
 
-Device projects replace these with board-specific examples: relays, MOSFET outputs, ADC, Modbus or display screens. Global suggestions such as `fade()` and `udp()` come from `vuesp-components`; project `vue/json/suggestions.json` contains only board-specific functions and events.
+Device projects add board-specific hints in `vue/json/suggestions.json`; functions and events available to the compiler come from `/script/capabilities`.
 
 ## Документация / Documentation ScriptRunner
 
 | Язык / Language | Ссылка / Link |
 |-----------------|---------------|
-| 🇷🇺 Русский | [Документация на русском для  ScriptRunner](./github/docs/scriptrunner/ru.md) |
-| 🇬🇧 English | [Documentation in English from ScriptRunner](./github/docs/scriptrunner/en.md) |
+| 🇷🇺 Русский | [Bytecode ScriptRunner v1](./github/docs/scriptrunner/bytecode-v1.md) |
+| 🇬🇧 English | [Bytecode ScriptRunner v1](./github/docs/scriptrunner/bytecode-v1.md) |
 
 
 ## Version History

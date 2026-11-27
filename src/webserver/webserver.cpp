@@ -59,14 +59,6 @@ void wsSendAll(uint8_t* message, size_t len) {
   ws.binaryAll(message, len);
 }
 
-void emitEvent(char* message) {
-  if (message == nullptr) return;
-  memset(event.name, 0, sizeof(event.name));
-  strcpy(event.name, message);
-  wsSendAll((uint8_t*)&event, sizeof(event));
-  scriptRunner.emitEvent(message);
-}
-
 void sendProgress(bool force = false) {
   if (ws.count() == 0) return;
 
@@ -305,33 +297,10 @@ void onRecovery(AsyncWebServerRequest* request) {
 //   response->write((const uint8_t *)&infoFS, sizeof(infoFS));
 //   request->send(response);
 // }
-char cmdScriptBuffer[256];
-
 void onCmd(AsyncWebServerRequest* request) {
-  if (!request->hasParam("id") || !request->hasParam("script")) {
-    request->send(400, RES_TYPE_JSON, status(0));
-    return;
-  }
-
-  const String& idValue = request->getParam("id")->value();
-  const String& scriptValue = request->getParam("script")->value();
-
-  const uint8_t id = (uint8_t)atoi(idValue.c_str());
-  const size_t scriptLen = scriptValue.length();
-
-  if (id == 0 || scriptLen >= 255) {
-    request->send(400, RES_TYPE_JSON, status(0));
-    return;
-  }
-
-  // AsyncWebServer already URL-decodes query/form parameters; do not decode
-  // them a second time.
-  strncpy(cmdScriptBuffer, scriptValue.c_str(), 255);
-  cmdScriptBuffer[255] = '\0';
-
-  bool result = scriptRunner.registerScript(id, cmdScriptBuffer);
-  if (result) result = scriptRunner.runScript(id) >= 0;
-  request->send(200, RES_TYPE_JSON, status(result));
+  // TODO(bytecode): rework /cmd for the new script engine (run by name or a
+  // compiled container). Legacy text-script execution is disabled for now.
+  request->send(501, RES_TYPE_JSON, status(0));
 }
 
 void onRoot(AsyncWebServerRequest* request) {
@@ -351,7 +320,6 @@ void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
-#if ENABLE_BYTECODE_VM
 static uint8_t g_bytecodeUpload[VBC_MAX_CODE_BYTES];
 static uint16_t g_bytecodeUploadLen = 0;
 static bool g_bytecodeUploadOverflow = false;
@@ -483,7 +451,6 @@ static void onBytecodeEvent(AsyncWebServerRequest* request) {
   const bool ok = bytecodeService.emitEvent(name->value().c_str(), count, params);
   request->send(ok ? 200 : 400, RES_TYPE_JSON, status(ok));
 }
-#endif
 
 void setupServer() {
 
@@ -499,7 +466,6 @@ void setupServer() {
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
 
-#if ENABLE_BYTECODE_VM
   server.on("/script/bytecode", HTTP_POST, onBytecodePost, nullptr, onBytecodeBody);
   server.on("/script/bytecode", HTTP_GET, onBytecodeGet);
   server.on("/script/bytecode", HTTP_DELETE, onBytecodeDelete);
@@ -510,7 +476,6 @@ void setupServer() {
   server.on("/script/list", HTTP_GET, onBytecodeList);
   server.on("/script/status", HTTP_GET, onBytecodeStatus);
   server.on("/script/event", HTTP_POST, onBytecodeEvent);
-#endif
 
   server.on("*", HTTP_ANY, onRoot);
 

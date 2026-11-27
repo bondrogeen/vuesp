@@ -1,5 +1,11 @@
 #include "./BytecodeVM.h"
 
+#ifdef ARDUINO
+#include <Arduino.h>
+#else
+#include "../../tests/arduino_stub.h"
+#endif
+
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>

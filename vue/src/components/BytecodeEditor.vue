@@ -11,6 +11,7 @@ import type { CapabilityManifest, CompileError } from '@/lib/script';
 import { computeErrorRanges, getCompletions, highlightBytecode } from '@/lib/script/editor';
 import type { CompletionItem, ErrorRange } from '@/lib/script/editor';
 import { VIcon } from 'vuesp-components/components';
+import type { ISuggestion } from 'vuesp-components/types';
 
 const { $t } = useLocale();
 
@@ -23,10 +24,12 @@ const props = withDefaults(
     manifest: CapabilityManifest;
     scriptNames?: readonly string[];
     errors?: readonly CompileError[];
+    deviceSuggestions?: readonly ISuggestion[];
   }>(),
   {
     scriptNames: () => [],
     errors: () => [],
+    deviceSuggestions: () => [],
   }
 );
 
@@ -66,7 +69,7 @@ let editorPadLeft = 12;
 let editorPadTop = 12;
 
 const errorRanges = computed<ErrorRange[]>(() => computeErrorRanges(props.modelValue, props.errors));
-const highlighted = computed(() => highlightBytecode(props.modelValue, props.manifest, errorRanges.value));
+const highlighted = computed(() => highlightBytecode(props.modelValue, props.manifest, errorRanges.value, props.deviceSuggestions));
 const lineStarts = computed(() => {
   const starts = [0];
   for (let i = 0; i < props.modelValue.length; i++) {
@@ -214,7 +217,7 @@ function updateSuggestions(force = false) {
     closeSuggestions();
     return;
   }
-  const result = getCompletions(props.modelValue, input.selectionStart, props.manifest, props.scriptNames, force);
+  const result = getCompletions(props.modelValue, input.selectionStart, props.manifest, props.scriptNames, force, props.deviceSuggestions);
   if (!result) {
     closeSuggestions();
     return;

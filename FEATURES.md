@@ -19,7 +19,7 @@ web       app shell, router, stores, composables, base pages
 
 | Feature | Firmware | Web | Menu |
 | --- | --- | --- | --- |
-| `script` — ScriptRunner | `src/runner` | script page, script composables, script assets | `menu.script` |
+| `script` — Bytecode ScriptRunner | `src/runner` (bytecode + runner) | `/script/` studio, compiler/lib, script composables, device hints | `menu.script` |
 | `serial` — SERIAL example | — | `vue/src/pages/serial` | `menu.serial` |
 | `modbus` — Modbus RTU example | `src/modbus` | Modbus page, register map, frame helpers | `menu.modbus` |
 
@@ -28,15 +28,26 @@ and keep the generated web protocol compatible.
 
 ## Removing a feature manually
 
-### script (ScriptRunner)
+### script (Bytecode ScriptRunner)
 
-1. Delete `src/runner`, `vue/src/pages/script`, `vue/src/composables/script`,
-   `vue/src/assets/js/script`.
+The engine compiles a JavaScript-like source into a VBC1 container in the
+browser and executes the verified bytecode on the device. Sources live in
+`src/runner/bytecode`, the compiler/decompiler in `vue/src/lib/script`, the
+studio in `vue/src/components/script-studio`, and the page at `/script/`.
+Scripts are stored in `/www/scripts.bc`; `vue/json/suggestions.json` provides
+device-specific completion hints.
+
+1. Delete `src/runner`, `vue/src/pages/script`, `vue/src/lib/script`,
+   `vue/src/components/script-studio`, `vue/src/components/BytecodeEditor.vue`,
+   `vue/src/composables/script`, `vue/src/utils/scriptStudio.ts`,
+   `vue/src/types/scriptStudio.ts`.
 2. Remove `menu.script` from `vue/json/menu.json`.
 3. In `src/main.cpp` remove the runner include and the `setupRunner()` /
-   `loopRunner(now)` calls.
-4. In `src/webserver/webserver.cpp` remove the `scriptRunner.*` calls.
-5. Locale keys may stay; they are unused and tiny.
+   `bytecodeService.begin()` / `bytecodeService.loop(now)` calls.
+4. In `src/webserver/webserver.cpp` remove the `/script/*` routes and bytecode
+   upload buffers.
+5. Keep `vue/json/suggestions.json` only if another feature uses device hints.
+6. Locale keys may stay; they are unused and tiny.
 
 ### serial (SERIAL example)
 

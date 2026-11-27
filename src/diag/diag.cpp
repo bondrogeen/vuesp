@@ -7,7 +7,7 @@
 #include "../const/protocol.h"
 #include "../discovery/discovery.h"
 #include "../init/init.h"
-#include "../runner/runner.h"
+#include "../runner/bytecode/BytecodeService.h"
 #include "../webserver/webserver.h"
 
 #define DIAG_SAMPLES 64
@@ -140,7 +140,7 @@ void diagFillInfo(Info& info) {
   info.fragmentation = fragmentation;
   info.stackFree = stackFree;
   info.clients = wsClientCount();
-  info.scripts = scriptRunner.getUsedSlotsCount();
+  info.scripts = bytecodeService.savedCount();
   info.peers = (uint8_t)protocol.getPeerCount();
   info.wifi = isConnected;
   info.diagnostics = enabled ? 1 : 0;

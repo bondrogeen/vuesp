@@ -66,9 +66,7 @@ void setupDelay() {
   setupServer();
   setupDiscovery();
   setupRunner();
-#if ENABLE_BYTECODE_VM
   bytecodeService.begin();
-#endif
 }
 
 void loop() {
@@ -94,10 +92,7 @@ void loop() {
     loopModbus(now);
 #endif
     loopWiFi(now);
-    loopRunner(now);
-#if ENABLE_BYTECODE_VM
     bytecodeService.loop(now);
-#endif
     loopSerialSetup();
   }
 

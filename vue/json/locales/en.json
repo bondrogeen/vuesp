@@ -99,7 +99,6 @@
     "fs": "File system",
     "gpio": "GPIO",
     "script": "Script",
-    "bytecode": "Bytecode",
     "serial": "SERIAL",
     "modbus": "Modbus"
   },
@@ -502,6 +501,7 @@
     "vmUnavailableHint": "The firmware was built without ENABLE_BYTECODE_VM. Save and run are disabled.",
     "params": "params",
     "nameHint": "1–16 chars: a-z, 0-9, _ and -, first is a letter or _",
-    "nameTaken": "A script with this name already exists"
+    "nameTaken": "A script with this name already exists",
+    "deviceHints": "Device hints"
   }
 }

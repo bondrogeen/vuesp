@@ -169,6 +169,12 @@ test('slot range is checked', () => {
   assert.equal(result.errors[0].code, 'E_SLOT_RANGE');
 });
 
+test('port above 15 is rejected', () => {
+  const result = compile('$p16 = 1;');
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0].code, 'E_SLOT_RANGE');
+});
+
 test('duplicate handler is rejected', () => {
   const result = compile("on('btn') { } on('btn') { }");
   assert.equal(result.ok, false);

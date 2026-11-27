@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "../ScriptRunner.h"
+#include "../runnerTypes.h"
 #include "./BytecodeCapabilities.h"
 #include "./BytecodeFormat.h"
 #include "./BytecodeVerifier.h"

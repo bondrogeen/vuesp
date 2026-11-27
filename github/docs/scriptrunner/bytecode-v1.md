@@ -1,37 +1,24 @@
 # ScriptRunner Bytecode v1
 
-Экспериментальный движок: исходник компилируется в байткод в вебе, МК
-исполняет проверенный контейнер. Старый текстовый `ScriptRunner` не изменён и
-остаётся основным, пока не включён флаг `ENABLE_BYTECODE_VM`.
+Единственный движок ScriptRunner: исходник компилируется в байткод в вебе,
+МК исполняет проверенный контейнер. Текстовый раннер удалён.
 
 ## Быстрый старт
 
 ```bash
-# 1. Прошивка с байткод-движком
-cd /srv/vuesp-projects/vuesp
-~/.platformio/penv/bin/pio run -e esp8266-bytecode -t upload --upload-port /dev/ttyUSB0
+# 1. Прошивка
+cd ~/github/pets/vuesp-projects/vuesp
+~/.platformio/penv/bin/pio run -e esp8266 -t upload --upload-port /dev/ttyUSB0
 
-# 2. Web UI + LittleFS (страница /script-studio/)
+# 2. Web UI + LittleFS (страница /script/)
 cd vue && npm run build-web
 cd ..
-~/.platformio/penv/bin/pio run -e esp8266-bytecode -t buildfs
-~/.platformio/penv/bin/pio run -e esp8266-bytecode -t uploadfs --upload-port /dev/ttyUSB0
+~/.platformio/penv/bin/pio run -e esp8266 -t buildfs
+~/.platformio/penv/bin/pio run -e esp8266 -t uploadfs --upload-port /dev/ttyUSB0
 ```
 
-Открыть `http://<device>/script-studio/`. Авторизация — та же, что у остальных
-страниц устройства.
-
-Флаг:
-
-```cpp
-// src/const/bytecode.h
-#ifndef ENABLE_BYTECODE_VM
-#define ENABLE_BYTECODE_VM 0
-#endif
-```
-
-`[env:esp8266-bytecode]` включает флаг через `build_flags`. Обычный
-`[env:esp8266]` остаётся без байткод-движка.
+Открыть `http://<device>/script/`. Авторизация — та же, что у остальных
+страниц устройства. Движок включён во всех сборках.
 
 ## Язык
 
@@ -165,7 +152,7 @@ Code blobs
 - запись идёт через `scripts.bc.tmp` → `rename`, с `.bak` для отката;
 - TOC и каждый code blob защищены CRC;
 - старые `/www/scripts/<id>.vbc` не мигрируются и не используются;
-- `/www/scripts.txt` не изменяется.
+- `/www/scripts.txt` больше не используется.
 
 В RAM держатся TOC, карта `name → внутренний id` и кэш контейнеров
 (`VBC_CACHE_SLOTS`, default 3). Неактивные скрипты вытесняются.
@@ -209,8 +196,7 @@ curl -u admin:admin \
 - `wait` не блокирует loop;
 - ошибка останавливает только свой контекст и попадает в `/script/status`.
 
-На ESP8266 сборка с флагом занимает около 74.1% RAM (60 704 / 81 920) и 43.3%
-flash; обычная сборка не меняется (57.9% RAM).
+На ESP8266 сборка занимает около 61.7% RAM (50 528 / 81 920) и 41.1% flash.
 
 ## Тесты
 

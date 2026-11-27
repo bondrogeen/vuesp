@@ -210,10 +210,7 @@ void loopInterrupt(uint32_t now) {
       if (ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_REPEAT);
-          scriptRunner.emitEvent("btn_r", 2, ports[i].gpio, ports[i].value);
-#if ENABLE_BYTECODE_VM
           bytecodeService.vm().emitEvent("btn_r", 2, (int)ports[i].gpio, (int)ports[i].value);
-#endif
         }
       } else {
         ports[i].count = 0;
@@ -223,10 +220,7 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_LONG_PRESS);
-          scriptRunner.emitEvent("btn_l", 2, ports[i].gpio, ports[i].value);
-#if ENABLE_BYTECODE_VM
           bytecodeService.vm().emitEvent("btn_l", 2, (int)ports[i].gpio, (int)ports[i].value);
-#endif
         }
         ports[i].count = 0;
       }
@@ -235,11 +229,8 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_CLICK);
-          scriptRunner.emitEvent("btn_c", 3, ports[i].gpio, ports[i].value, ports[i].count);
-#if ENABLE_BYTECODE_VM
           bytecodeService.vm().emitEvent("btn_c", 3, (int)ports[i].gpio, (int)ports[i].value,
                                          (int)ports[i].count);
-#endif
         }
         ports[i].count = 0;
       }
@@ -260,10 +251,7 @@ void checkInterrupt(uint32_t now) {
         ports[i].pressStart = now;
       }
       ports[i].value = port.value;
-      scriptRunner.emitEvent("btn", 2, ports[i].gpio, ports[i].value);
-#if ENABLE_BYTECODE_VM
       bytecodeService.vm().emitEvent("btn", 2, (int)ports[i].gpio, (int)ports[i].value);
-#endif
       deviceGPIO(&ports[i], EVENT_NONE);
     }
     wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
@@ -318,15 +306,9 @@ bool fadeHandler(uint8_t paramCount, const Value* params, Value& result, void* u
 }
 
 void setupGPIO() {
-  scriptRunner.setStateChangeProvider(stateChangeProvider);
-  scriptRunner.setPortProvider(portProvider);
-  scriptRunner.registerFunction("fade", fadeHandler);
-
-#if ENABLE_BYTECODE_VM
   bytecodeService.vm().setStateChangeProvider(stateChangeProvider);
   bytecodeService.vm().setPortProvider(portProvider);
   bytecodeService.vm().registerFunction(1, fadeHandler);
-#endif
 
   fade.init(5, 3);
   fade.setDataProvider(portProvider);

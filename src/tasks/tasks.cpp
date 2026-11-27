@@ -30,9 +30,6 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
   if (task == KEY_PORT && info->len == sizeof(port)) {
     memcpy(&port, data, sizeof(port));
   }
-  if (task == KEY_MESSAGE && info->len == sizeof(message)) {
-    memcpy(&message, data, sizeof(message));
-  }
   if (task == KEY_DISCOVERY && info->len == sizeof(discovery)) {
     memcpy(&discovery, data, sizeof(discovery));
   }
@@ -233,10 +230,6 @@ void loopTask(uint32_t now) {
     scanWiFiStart();
   }
   scanWiFiPoll();
-  if (tasks[KEY_MESSAGE]) {
-    tasks[KEY_MESSAGE] = false;
-    eventRunner();
-  }
   if (tasks[KEY_DISCOVERY]) {
     tasks[KEY_DISCOVERY] = false;
     commDiscovery();

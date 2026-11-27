@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-25",
+  "updatedAt": "2026-11-27",
   "base": {
     "label": "Vuesp base",
     "always": true,
@@ -44,40 +44,44 @@
   },
   "features": {
     "script": {
-      "label": "ScriptRunner",
-      "summary": "Local scripting: editor, slots, logs and script execution.",
+      "label": "Bytecode ScriptRunner",
+      "summary": "Local bytecode scripting: studio, script pack, logs and execution.",
       "firmware": [
-        "src/runner"
+        "src/runner",
+        "src/const/bytecode.h"
       ],
       "web": [
         "vue/src/pages/script",
+        "vue/src/lib/script",
+        "vue/src/components/script-studio",
+        "vue/src/components/BytecodeEditor.vue",
         "vue/src/composables/script",
-        "vue/src/assets/js/script"
+        "vue/src/utils/scriptStudio.ts",
+        "vue/src/types/scriptStudio.ts",
+        "vue/json/suggestions.json"
       ],
       "menu": [
         "menu.script"
       ],
       "locales": [
-        "script",
-        "editor",
+        "scriptStudio",
         "logs",
-        "slots",
         "examples",
         "noScripts",
-        "noLogs",
-        "selectScript"
+        "noLogs"
       ],
       "protocol": [],
       "wiring": [
-        "src/main.cpp: include ./runner/runner.h, setupRunner(), loopRunner(now)",
-        "src/webserver/webserver.cpp: scriptRunner.emitEvent(), registerScript(), runScript()"
+        "src/main.cpp: include ./runner/runner.h, setupRunner(), bytecodeService.begin(), bytecodeService.loop(now)",
+        "src/webserver/webserver.cpp: /script/* routes and bytecodeService",
+        "src/gpio/gpio.cpp, src/device/device.cpp, src/discovery/discovery.cpp: VM providers and events"
       ],
       "remove": [
-        "delete src/runner, vue/src/pages/script, vue/src/composables/script, vue/src/assets/js/script",
+        "delete src/runner and the setupRunner()/bytecodeService calls from src/main.cpp",
+        "remove the /script/* routes and bytecode upload buffers from src/webserver",
+        "delete vue/src/pages/script, vue/src/lib/script, vue/src/components/script-studio, vue/src/components/BytecodeEditor.vue, vue/src/composables/script, vue/src/utils/scriptStudio.ts, vue/src/types/scriptStudio.ts",
         "remove menu.script from vue/json/menu.json",
-        "remove the runner include and setupRunner()/loopRunner() calls from src/main.cpp",
-        "remove scriptRunner calls from src/webserver/webserver.cpp",
-        "keep protocol keys: the script feature uses KEY.MESSAGE from the base"
+        "keep vue/json/suggestions.json only if another feature uses device hints"
       ]
     },
     "serial": {

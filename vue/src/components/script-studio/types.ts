@@ -1,4 +1,5 @@
 import type { BytecodeExample, CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
+import type { ISuggestion } from 'vuesp-components/types';
 import type { IStatusMeta, IRuntimeMetric, IScriptListItem } from '@/types';
 
 export interface IScriptStudioToolbarProps {
@@ -70,11 +71,13 @@ export interface IScriptStudioLogsEmits {
 
 export interface IScriptSnippetsDialogProps {
   manifest: CapabilityManifest;
+  suggestions: readonly ISuggestion[];
 }
 
 export interface IScriptSnippetsDialogEmits {
   'insert-function': [fn: FunctionSpec];
   'insert-event': [event: EventSpec];
+  'insert-suggestion': [suggestion: ISuggestion];
   close: [];
 }
 

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { DEFAULT_MANIFEST } from './types.ts';
-import { computeErrorRanges, getCompletions, highlightBytecode } from './editor.ts';
+import { computeErrorRanges, getCompletions, highlightBytecode, normalizeSuggestionInsert } from './editor.ts';
+import type { ISuggestion } from 'vuesp-components/types';
 
 const manifest = DEFAULT_MANIFEST;
 const scripts = ['boot', 'blink', 'display', 'chain'];
@@ -116,4 +117,45 @@ test('highlight adds error decorations for diagnostics', () => {
   const html = highlightBytecode(source, manifest, ranges);
   assert.match(html, /decoration-red-main/);
   assert.match(html, />;</);
+});
+
+const deviceSuggestions: readonly ISuggestion[] = [
+  { label: 'fade', type: 'func', detail: 'fade(gpio, value, time)' },
+  { label: 'custom', type: 'func', insert: 'custom(${0}, ${1})' },
+  { label: 'btn_c', type: 'event', description: 'click count' },
+  { label: '$p', type: 'var', insert: '$p${0}' },
+  { label: 'blink', type: 'word', insert: 'blink();' },
+];
+
+test('suggestions override manifest function details', () => {
+  const result = getCompletions('fa', 2, manifest, [], false, deviceSuggestions);
+  const fade = result?.items.find((item) => item.label === 'fade');
+  assert.equal(fade?.detail, 'fade(gpio, value, time)');
+});
+
+test('suggestions add functions, words and variables', () => {
+  const custom = getCompletions('cus', 3, manifest, [], false, deviceSuggestions);
+  assert.ok(custom?.items.some((item) => item.label === 'custom' && item.kind === 'function'));
+  const word = getCompletions('bli', 3, manifest, [], false, deviceSuggestions);
+  assert.ok(word?.items.some((item) => item.label === 'blink' && item.kind === 'keyword'));
+  const variable = getCompletions('$p', 2, manifest, [], true, deviceSuggestions);
+  assert.ok(variable?.items.some((item) => item.label === '$p' && item.kind === 'slot'));
+});
+
+test('suggestions add events inside on()', () => {
+  const result = getCompletions("on('bt", 6, manifest, [], false, deviceSuggestions);
+  const event = result?.items.find((item) => item.label === 'btn_c');
+  assert.ok(event);
+  assert.equal(event?.detail, 'click count');
+});
+
+test('suggestion placeholders move the caret to the first marker', () => {
+  const normalized = normalizeSuggestionInsert({ label: 'custom', type: 'func', insert: 'custom(${0}, ${1})' });
+  assert.equal(normalized.insert, 'custom(, )');
+  assert.equal(normalized.caret, 'custom('.length);
+});
+
+test('suggestions extend highlighting', () => {
+  const html = highlightBytecode('custom(1);', manifest, [], deviceSuggestions);
+  assert.match(html, /text-blue-600/);
 });

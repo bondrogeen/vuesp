@@ -3,7 +3,11 @@
 
 #include "../../const/bytecode.h"
 
-#if ENABLE_BYTECODE_VM
+#ifdef ARDUINO
+#include <Arduino.h>
+#else
+#include "../../tests/arduino_stub.h"
+#endif
 
 #include <stdint.h>
 
@@ -89,6 +93,5 @@ class BytecodeService {
 
 extern BytecodeService bytecodeService;
 
-#endif  // ENABLE_BYTECODE_VM
 
 #endif

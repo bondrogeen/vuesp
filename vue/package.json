@@ -43,7 +43,7 @@
     "screen:install": "playwright install chromium",
     "screen:mock": "node ./scripts/screen/mock-device.mjs",
     "dev:mock": "node ./scripts/screen/dev.mjs",
-    "tests": "cd ../src/tests g++ -std=c++11 -DVUESP_LOG_LEVEL=3 -I.. -I. -g -o test_runner test_runner.cpp arduino_stub.cpp ../runner/ScriptRunner.cpp && ./test_runner",
+    "tests": "cd ../src/tests && g++ -std=c++11 -DVUESP_LOG_LEVEL=3 -I.. -I. -o test_bytecode test_bytecode.cpp arduino_stub.cpp ../runner/bytecode/BytecodeFormat.cpp ../runner/bytecode/BytecodeInstruction.cpp ../runner/bytecode/BytecodeVerifier.cpp ../runner/bytecode/BytecodeVM.cpp && ./test_bytecode && g++ -std=c++11 -DVUESP_LOG_LEVEL=3 -I.. -I. -o test_bytecode_pack test_bytecode_pack.cpp ../runner/bytecode/BytecodeFormat.cpp ../runner/bytecode/BytecodePack.cpp && ./test_bytecode_pack",
     "test:script": "node --test src/lib/script/*.test.ts",
     "lint:fix": "eslint . --fix",
     "build:demo": "npm run protocol && vite build --mode demo",

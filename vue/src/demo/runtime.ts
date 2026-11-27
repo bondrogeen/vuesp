@@ -84,7 +84,6 @@ export const installDemoRuntime = (): void => {
 	const data = __DEMO_DATA__;
 	const dashboardJson = data.dashboardJson;
 	let blocksJson = sessionStorage.getItem('vuesp.demo.blocks') ?? JSON.stringify({ v: 1, b: [] });
-	const scriptsTxt = data.scriptsTxt;
 	const firmwareVersion = data.firmwareVersion;
 	const versionLabel = firmwareVersion.join('.');
 
@@ -233,13 +232,11 @@ export const installDemoRuntime = (): void => {
 				{ isDir: 1, isFile: 0, size: 0, name: 'tmp' },
 				{ isDir: 1, isFile: 0, size: 0, name: 'docs' },
 				{ isDir: 0, isFile: 1, size: 2048, name: 'config.json' },
-				{ isDir: 0, isFile: 1, size: 65536, name: 'scripts.txt' },
 			],
 			'/www': [
 				{ isDir: 1, isFile: 0, size: 0, name: 'assets' },
 				{ isDir: 0, isFile: 1, size: 1352, name: 'index.html' },
 				{ isDir: 0, isFile: 1, size: 5383, name: 'default.json' },
-				{ isDir: 0, isFile: 1, size: 65536, name: 'scripts.txt' },
 				{ isDir: 0, isFile: 1, size: 1150, name: 'favicon.ico' },
 			],
 			'/www/assets': [
@@ -397,7 +394,6 @@ export const installDemoRuntime = (): void => {
 			const file = url.searchParams.get('file') ?? '';
 			if (file === '/tmp/dashboard.json') return textResponse(dashboardJson, 'application/json; charset=utf-8');
 			if (file === '/tmp/blocks.json') return textResponse(blocksJson, 'application/json; charset=utf-8');
-			if (file === '/www/scripts.txt') return textResponse(scriptsTxt);
 			if (file === '/tmp/gpio.bin') return textResponse('');
 			return new Response('Not found', { status: 404 });
 		}

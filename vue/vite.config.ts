@@ -81,7 +81,6 @@ export default defineConfig(({ mode }) => {
     ? {
         defaultJson: readFileSync('public/default.json', 'utf8'),
         dashboardJson: readFileSync('json/dashboard.json', 'utf8'),
-        scriptsTxt: readFileSync('public/scripts.txt', 'utf8'),
         firmwareVersion: parseFirmwareVersion(readFileSync('../platformio.ini', 'utf8')),
       }
     : null;

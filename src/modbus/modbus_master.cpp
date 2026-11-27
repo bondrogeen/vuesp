@@ -4,7 +4,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "../runner/runner.h"
+#include "../runner/bytecode/BytecodeService.h"
 #include "./modbus.h"
 #include "./modbus_source.h"
 #include "./profile.h"
@@ -68,7 +68,9 @@ void modbusUpdateVarValue(uint8_t varIndex, double value, const char* text, uint
   }
   modbus.updated = millis() / 1000;
   if (changed) {
-    if (quality == MODBUS_Q_OK) scriptRunner.emitEvent("modbus");
+    if (quality == MODBUS_Q_OK) {
+      bytecodeService.vm().emitEvent("modbus", 0);
+    }
     modbusRequestSend();
   }
 }
@@ -694,6 +696,6 @@ static bool modbusHandler(uint8_t count, const Value* params, Value& result, voi
 }
 
 void registerMasterFunctions() {
-  scriptRunner.registerFunction("var", varHandler);
-  scriptRunner.registerFunction("modbus", modbusHandler);
+  bytecodeService.vm().registerFunction(4, varHandler);
+  bytecodeService.vm().registerFunction(5, modbusHandler);
 }

@@ -18,3 +18,5 @@ export { printProgram, printExpr } from './printer.ts';
 export { BYTECODE_EXAMPLES } from './examples.ts';
 export type { BytecodeExample } from './examples.ts';
 export { Opcode, OPCODES, opcodeName } from './opcodes.ts';
+export { normalizeSuggestionInsert } from './editor.ts';
+export type { ISuggestionInsert } from './editor.ts';

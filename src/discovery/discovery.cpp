@@ -88,9 +88,8 @@ void setupDiscovery() {
 #else
     (void)senderId;
 #endif
-    // Incoming text is a script: register it in the temporary slot and run it.
-    scriptRunner.registerScript(254, text.c_str());
-    scriptRunner.runScript(254);
+    // TODO(bytecode): incoming text execution will be implemented in the new
+    // script engine. Kept for now: the transport and logging stay intact.
   });
 
   protocol.onBinaryReceived([](uint32_t senderId, const uint8_t* data, size_t len) {
@@ -98,10 +97,7 @@ void setupDiscovery() {
     // for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
     // Serial.println();
   });
-  scriptRunner.registerFunction("udp", udpHandler);
-#if ENABLE_BYTECODE_VM
   bytecodeService.vm().registerFunction(2, udpHandler);
-#endif
 }
 
 void commDiscovery() {
