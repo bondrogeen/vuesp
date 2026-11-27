@@ -408,6 +408,15 @@ static void testVmPortRead() {
   expect(vm.getUintVar(0) == 255, "port read");
 }
 
+static void testVmPortWide() {
+  BytecodeVM vm;
+  setupVm(vm);
+  resetVmState();
+  expect(runFixture(vm, "port_wide", 1), "port_wide runs");
+  expect(g_ports[17] == 255, "port 17 written");
+  expect(vm.getUintVar(0) == 255, "port 17 read");
+}
+
 static void testVmDataRead() {
   BytecodeVM vm;
   setupVm(vm);
@@ -606,6 +615,7 @@ int main() {
   testVmBreakContinue();
   testVmCallee();
   testVmPortRead();
+  testVmPortWide();
   testVmDataRead();
   testVmHandlerReturn();
   testVmHandler();

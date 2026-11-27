@@ -1347,6 +1347,22 @@ bool BytecodeVM::execute(Context& ctx, uint32_t now) {
       if (!pushValue(ctx, value)) return abort();
       break;
     }
+    case Opcode::LOAD_PORT: {
+      uint16_t value = 0;
+      if (_portProvider) _portProvider((uint8_t)inst.operands[0], PORT_READ, value);
+      if (!pushValue(ctx, makeUint(value))) return abort();
+      break;
+    }
+    case Opcode::STORE_PORT: {
+      Value value;
+      if (!popValue(ctx, value)) return abort();
+      uint16_t portValue = (uint16_t)valueToUint(value);
+      if (portValue > MAX_PWM_VALUE) portValue = MAX_PWM_VALUE;
+      const uint8_t gpio = (uint8_t)inst.operands[0];
+      if (_portProvider) _portProvider(gpio, PORT_WRITE, portValue);
+      if (_stateChangeProvider) _stateChangeProvider(gpio, portValue);
+      break;
+    }
     case Opcode::STORE_DATA: {
       Value value;
       if (!popValue(ctx, value)) return abort();

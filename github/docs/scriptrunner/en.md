@@ -37,7 +37,7 @@ Highlights:
 | `$fN` | float | 0–4 |
 | `$sN` | string (up to 31 chars) | 0–1 |
 | `$aN` | array (up to 64 bytes) | 0–4 |
-| `$pN` | GPIO | 0–15 |
+| `$pN` | GPIO (pin number) | 0–39 |
 | `$eN` | event parameters | 0–3, read-only |
 | `$cN` | `call()` parameters | 0–3, read-only |
 

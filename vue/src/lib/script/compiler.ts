@@ -669,7 +669,11 @@ export class BytecodeCompiler {
     if (target.kind === 'var') {
       if (!target.slot) throw new ScriptError('E_LVALUE', 'invalid variable target', target.pos);
       this.genExpr(value, this.lvalueKind(target));
-      this.emitOp('STORE_VAR', target.slot.encoded);
+      if (this.isWidePort(target.slot)) {
+        this.emitOp('STORE_PORT', target.slot.index);
+      } else {
+        this.emitOp('STORE_VAR', target.slot.encoded);
+      }
       return;
     }
     if (target.kind === 'data') {
@@ -741,7 +745,11 @@ export class BytecodeCompiler {
         if (!expr.slot) {
           throw new ScriptError('E_LVALUE', 'variable has no slot', expr.pos);
         }
-        this.emitOp('LOAD_VAR', expr.slot.encoded);
+        if (this.isWidePort(expr.slot)) {
+          this.emitOp('LOAD_PORT', expr.slot.index);
+        } else {
+          this.emitOp('LOAD_VAR', expr.slot.encoded);
+        }
         return;
       case 'dataVar':
         this.emitOp(
@@ -893,6 +901,10 @@ export class BytecodeCompiler {
       bytes[index] = item.value & 0xff;
     });
     return bytes;
+  }
+
+  private isWidePort(slot: VarSlot): boolean {
+    return slot.type === 'p' && slot.index > 15;
   }
 
   private lvalueKind(target: Extract<LValue, { kind: 'var' }>): number {

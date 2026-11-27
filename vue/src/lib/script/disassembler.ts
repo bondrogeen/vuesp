@@ -69,6 +69,9 @@ function decodeInstruction(container: BytecodeContainer, offset: number): Decode
       const value = (code[cursor] << 24) >> 24;
       operands.push(String(value));
       cursor += 1;
+    } else if (type === 'u8' && (name === 'LOAD_PORT' || name === 'STORE_PORT')) {
+      operands.push(`$p${code[cursor]}`);
+      cursor += 1;
     } else if (type === 'u8' || type === 'argc8' || type === 'func8' || type === 'event8') {
       operands.push(String(code[cursor]));
       cursor += 1;

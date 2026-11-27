@@ -71,10 +71,12 @@ bool stackEffect(const DecodedInstruction& inst, const Capabilities& caps, uint8
     case Opcode::PUSH_ARRAY:
     case Opcode::LOAD_VAR:
     case Opcode::LOAD_DATA:
+    case Opcode::LOAD_PORT:
       push = 1;
       return true;
     case Opcode::STORE_VAR:
     case Opcode::STORE_DATA:
+    case Opcode::STORE_PORT:
       pop = 1;
       return true;
     case Opcode::DUP:

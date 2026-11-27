@@ -84,6 +84,19 @@ opcodes:
     pop: 1
     push: 0
 
+  # Wide port access: the GPIO number does not fit into the 4-bit variable
+  # slot index used by LOAD_VAR/STORE_VAR (0..15). Pins above 15 use these.
+  - name: LOAD_PORT
+    code: 0x14
+    operands: [u8]
+    pop: 0
+    push: 1
+  - name: STORE_PORT
+    code: 0x15
+    operands: [u8]
+    pop: 1
+    push: 0
+
   - name: ADD
     code: 0x20
     operands: []

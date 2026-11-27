@@ -24,6 +24,8 @@ enum class Opcode : uint8_t {
   STORE_VAR = 0x11,
   LOAD_DATA = 0x12,
   STORE_DATA = 0x13,
+  LOAD_PORT = 0x14,
+  STORE_PORT = 0x15,
   ADD = 0x20,
   SUB = 0x21,
   MUL = 0x22,
@@ -90,6 +92,8 @@ static const OpcodeInfo kOpcode_LOAD_VAR = {Opcode::LOAD_VAR, "LOAD_VAR", 0, 1, 
 static const OpcodeInfo kOpcode_STORE_VAR = {Opcode::STORE_VAR, "STORE_VAR", 1, 0, 1, 0};
 static const OpcodeInfo kOpcode_LOAD_DATA = {Opcode::LOAD_DATA, "LOAD_DATA", 0, 1, 2, 1};
 static const OpcodeInfo kOpcode_STORE_DATA = {Opcode::STORE_DATA, "STORE_DATA", 1, 0, 1, 1};
+static const OpcodeInfo kOpcode_LOAD_PORT = {Opcode::LOAD_PORT, "LOAD_PORT", 0, 1, 1, 0};
+static const OpcodeInfo kOpcode_STORE_PORT = {Opcode::STORE_PORT, "STORE_PORT", 1, 0, 1, 0};
 static const OpcodeInfo kOpcode_ADD = {Opcode::ADD, "ADD", 2, 1, 0, 0};
 static const OpcodeInfo kOpcode_SUB = {Opcode::SUB, "SUB", 2, 1, 0, 0};
 static const OpcodeInfo kOpcode_MUL = {Opcode::MUL, "MUL", 2, 1, 0, 0};
@@ -148,6 +152,8 @@ inline const OpcodeInfo* opcodeInfo(Opcode op) {
     case Opcode::STORE_VAR: return &kOpcode_STORE_VAR;
     case Opcode::LOAD_DATA: return &kOpcode_LOAD_DATA;
     case Opcode::STORE_DATA: return &kOpcode_STORE_DATA;
+    case Opcode::LOAD_PORT: return &kOpcode_LOAD_PORT;
+    case Opcode::STORE_PORT: return &kOpcode_STORE_PORT;
     case Opcode::ADD: return &kOpcode_ADD;
     case Opcode::SUB: return &kOpcode_SUB;
     case Opcode::MUL: return &kOpcode_MUL;

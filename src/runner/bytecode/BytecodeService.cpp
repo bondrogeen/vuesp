@@ -62,7 +62,7 @@ const Capabilities kCaps = {
     1,
     VBC_MAX_CODE_BYTES,
     VBC_STACK_SIZE,
-    {10, 10, 5, 2, 5, 16, 4, 4},
+    {10, 10, 5, 2, 5, 40, 4, 4},
     VBC_MAX_STRING_LEN,
     VBC_MAX_ARRAY_LEN,
     32,

@@ -37,6 +37,7 @@ const fixtures = [
   { name: 'break_continue', source: '$u0 = 0; while ($u0 < 10) { $u0 = $u0 + 1; if ($u0 == 3) { continue; } if ($u0 == 5) { break; } }' },
   { name: 'callee', source: '$u0 = $c0 + $c1;' },
   { name: 'port_read', source: '$p2 = 255; $u0 = $p2;' },
+  { name: 'port_wide', source: '$p17 = 255; $u0 = $p17;' },
   { name: 'data_read', source: "$display = 'hi'; $s0 = $display;" },
   { name: 'handler_return', source: "on('btn') { $p2 = 1; return; $p2 = 2; }" },
   { name: 'div_zero', source: '$u0 = 1 / 0;' },

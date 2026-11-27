@@ -230,6 +230,14 @@ class Decompiler {
             end: offset + size,
           };
         }
+        case 'STORE_PORT': {
+          const value = this.parseOne(cursor, offset);
+          const target = this.portLValue(operands[0], offset);
+          return {
+            stmt: { kind: 'assign', target, value, pos: this.pos(cursor) },
+            end: offset + size,
+          };
+        }
         case 'STORE_DATA': {
           const value = this.parseOne(cursor, offset);
           const nameConst = operands[0];
@@ -440,6 +448,9 @@ class Decompiler {
         case 'LOAD_DATA':
           stack.push(this.dataVar(operands[0], operands[1], cursor));
           break;
+        case 'LOAD_PORT':
+          stack.push(this.portExpr(operands[0], cursor));
+          break;
         case 'ADD':
         case 'SUB':
         case 'MUL':
@@ -643,8 +654,22 @@ class Decompiler {
     return { type, index, encoded: varid };
   }
 
+  private portSlot(index: number): VarSlot {
+    return { type: 'p', index, encoded: 0 };
+  }
+
   private varExpr(varid: number, offset: number): Expr {
     const slot = this.varSlot(varid);
+    return { kind: 'var', name: `$${slot.type}${slot.index}`, slot, pos: this.pos(offset) };
+  }
+
+  private portExpr(index: number, offset: number): Expr {
+    const slot = this.portSlot(index);
+    return { kind: 'var', name: `$${slot.type}${slot.index}`, slot, pos: this.pos(offset) };
+  }
+
+  private portLValue(index: number, offset: number): LValue {
+    const slot = this.portSlot(index);
     return { kind: 'var', name: `$${slot.type}${slot.index}`, slot, pos: this.pos(offset) };
   }
 

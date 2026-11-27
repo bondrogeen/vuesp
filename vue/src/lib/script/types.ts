@@ -335,7 +335,7 @@ export const DEFAULT_MANIFEST: CapabilityManifest = {
   cacheSlots: 3,
   maxCodeBytes: 1024,
   maxStack: 64,
-  vars: { u: 10, i: 10, f: 5, s: 2, a: 5, p: 16, e: 4, c: 4 },
+  vars: { u: 10, i: 10, f: 5, s: 2, a: 5, p: 40, e: 4, c: 4 },
   maxStringLen: 32,
   maxArrayLen: 64,
   functions: [

@@ -169,8 +169,15 @@ test('slot range is checked', () => {
   assert.equal(result.errors[0].code, 'E_SLOT_RANGE');
 });
 
-test('port above 15 is rejected', () => {
-  const result = compile('$p16 = 1;');
+test('wide port slots round-trip', () => {
+  const result = roundTrip('$p17 = 255; $u0 = $p17; $p39 = 1;');
+  assert.match(result.source, /\$p17 = 255;/);
+  assert.match(result.source, /\$u0 = \$p17;/);
+  assert.match(result.source, /\$p39 = 1;/);
+});
+
+test('port above 39 is rejected', () => {
+  const result = compile('$p40 = 1;');
   assert.equal(result.ok, false);
   assert.equal(result.errors[0].code, 'E_SLOT_RANGE');
 });
