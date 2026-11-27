@@ -220,3 +220,18 @@ static_assert(offsetof(Modbus, pad) == 36, "Modbus.pad: смещение не с
 static_assert(offsetof(Modbus, value) == 38, "Modbus.value: смещение не совпадает");
 static_assert(offsetof(Modbus, text) == 46, "Modbus.text: смещение не совпадает");
 static_assert(offsetof(Modbus, vars) == 62, "Modbus.vars: смещение не совпадает");
+static_assert(sizeof(ScriptCmd) == 21, "ScriptCmd: размер не совпадает с protocol.h");
+static_assert(offsetof(ScriptCmd, key) == 0, "ScriptCmd.key: смещение не совпадает");
+static_assert(offsetof(ScriptCmd, action) == 1, "ScriptCmd.action: смещение не совпадает");
+static_assert(offsetof(ScriptCmd, flags) == 2, "ScriptCmd.flags: смещение не совпадает");
+static_assert(offsetof(ScriptCmd, requestId) == 3, "ScriptCmd.requestId: смещение не совпадает");
+static_assert(offsetof(ScriptCmd, name) == 5, "ScriptCmd.name: смещение не совпадает");
+static_assert(sizeof(ScriptStatus) == 25, "ScriptStatus: размер не совпадает с protocol.h");
+static_assert(offsetof(ScriptStatus, key) == 0, "ScriptStatus.key: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, result) == 1, "ScriptStatus.result: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, state) == 2, "ScriptStatus.state: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, packError) == 3, "ScriptStatus.packError: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, requestId) == 4, "ScriptStatus.requestId: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, error) == 6, "ScriptStatus.error: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, errorPc) == 7, "ScriptStatus.errorPc: смещение не совпадает");
+static_assert(offsetof(ScriptStatus, name) == 9, "ScriptStatus.name: смещение не совпадает");

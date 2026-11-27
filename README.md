@@ -206,7 +206,7 @@ The template ships example sources in [`vue/src/lib/script/examples.ts`](./vue/s
 - `array` — `len()`, `get()` and `set()`;
 - `chain` — `call('name')` between scripts.
 
-Device projects add board-specific hints in `vue/json/suggestions.json`; functions and events available to the compiler come from `/script/capabilities`.
+Device projects add board-specific hints in `vue/json/suggestions.json`; functions and events available to the compiler come from `/vm/capabilities`.
 
 ## Документация / Documentation ScriptRunner
 

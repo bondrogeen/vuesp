@@ -22,6 +22,8 @@ enum key : uint8_t {
   KEY_MODBUS = 15,
   KEY_MODBUSPROFILE = 16,
   KEY_MODBUSRAW = 17,
+  KEY_SCRIPTCMD = 18,
+  KEY_SCRIPTSTATUS = 19,
   KEY_END
 };
 
@@ -37,6 +39,36 @@ enum cmd : uint8_t {
   CMD_SAVE = 254,
   CMD_END
 };
+
+enum scriptAct : uint8_t {
+  SCRIPTACT_STATUS = 0,
+  SCRIPTACT_RUN = 1,
+  SCRIPTACT_STOP = 2,
+  SCRIPTACT_STOP_ALL = 3,
+  SCRIPTACT_REMOVE = 4,
+  SCRIPTACT_SAVE = 5,
+  SCRIPTACT_END
+};
+
+enum scriptRes : uint8_t {
+  SCRIPTRES_OK = 0,
+  SCRIPTRES_NOT_FOUND = 1,
+  SCRIPTRES_INVALID = 2,
+  SCRIPTRES_BUSY = 3,
+  SCRIPTRES_IO = 4,
+  SCRIPTRES_CRC = 5,
+  SCRIPTRES_VERIFY = 6,
+  SCRIPTRES_NO_SPACE = 7,
+  SCRIPTRES_NO_CACHE = 8,
+  SCRIPTRES_END
+};
+
+#define SCRIPT_STATE_ACTIVE 0x01
+#define SCRIPT_STATE_LOADED 0x02
+#define SCRIPT_STATE_ERROR 0x04
+#define SCRIPT_STATE_BOOT 0x08
+
+#define SCRIPT_FLAG_RUN 0x01
 
 enum portMode : uint16_t {
   PORT_NONE = 0,
@@ -315,6 +347,27 @@ struct Modbus {
   double value;
   char text[16];
   ModbusVarValue vars[32];
+};
+
+// vuesp-struct matches KEY_SCRIPTCMD to the struct name case-insensitively,
+// so this type must stay "ScriptCmd" (not ScriptCommand).
+struct ScriptCmd {
+  uint8_t key;
+  uint8_t action;
+  uint8_t flags;
+  uint16_t requestId;
+  char name[16];
+};
+
+struct ScriptStatus {
+  uint8_t key;
+  uint8_t result;
+  uint8_t state;
+  uint8_t packError;
+  uint16_t requestId;
+  uint8_t error;
+  uint16_t errorPc;
+  char name[16];
 };
 
 #pragma pack(pop)

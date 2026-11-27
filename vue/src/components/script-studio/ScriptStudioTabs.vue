@@ -3,7 +3,7 @@ import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { VButton, VIcon } from 'vuesp-components/components';
 
 import { useLocale } from '@/composables/useLocale';
-import { getScriptStatusMeta, getToneDotClass } from '@/utils/scriptStudio';
+import { getScriptStatusMeta, getToneDotClass, isScriptActive } from '@/utils/scriptStudio';
 import type { IScriptStudioTabsEmits, IScriptStudioTabsProps } from './types';
 
 const ACTIVE_TAB_CLASS = 'cursor-default border-gray-light-10/70 bg-gray-dark-40/[0.05] text-gray-dark-40 dark:border-white/10 dark:bg-black/35 dark:text-white';
@@ -67,11 +67,11 @@ defineExpose({ scrollToActive });
             color="gray"
             class="rounded p-0.5 opacity-70 transition hover:opacity-100 disabled:opacity-40"
             :disabled="isBusy"
-            :title="script.active ? $t('scriptStudio.stop') : $t('scriptStudio.run')"
-            :aria-label="script.active ? $t('scriptStudio.stop') : $t('scriptStudio.run')"
+            :title="isScriptActive(script.state) ? $t('scriptStudio.stop') : $t('scriptStudio.run')"
+            :aria-label="isScriptActive(script.state) ? $t('scriptStudio.stop') : $t('scriptStudio.run')"
             @click.stop="emit('toggle-run', script)"
           >
-            <VIcon :name="script.active ? 'stop-circle' : 'play-circle'" :size="14" />
+            <VIcon :name="isScriptActive(script.state) ? 'stop-circle' : 'play-circle'" :size="14" />
           </VButton>
           <VButton
             size="none"

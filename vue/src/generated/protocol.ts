@@ -3,13 +3,17 @@
 export const PROTOCOL_VERSION = 2;
 
 export const ENUMS = {
-  KEY: { INIT: 0, SETTINGS: 1, INFO: 2, PING: 3, SCAN: 4, PROGRESS: 5, FILES: 6, REBOOT: 7, EVENT: 8, PORT: 9, MESSAGE: 10, DALLAS: 11, BUFFER: 12, DEVICE: 13, DISCOVERY: 14, MODBUS: 15, MODBUSPROFILE: 16, MODBUSRAW: 17 },
+  KEY: { INIT: 0, SETTINGS: 1, INFO: 2, PING: 3, SCAN: 4, PROGRESS: 5, FILES: 6, REBOOT: 7, EVENT: 8, PORT: 9, MESSAGE: 10, DALLAS: 11, BUFFER: 12, DEVICE: 13, DISCOVERY: 14, MODBUS: 15, MODBUSPROFILE: 16, MODBUSRAW: 17, SCRIPTCMD: 18, SCRIPTSTATUS: 19 },
   CMD: { NONE: 0, GET: 1, SET: 2, GET_ALL: 3, CHANGE: 4, RESTORE: 5, READ: 6, WRITE: 7, SAVE: 254 },
+  SCRIPTACT: { STATUS: 0, RUN: 1, STOP: 2, STOP_ALL: 3, REMOVE: 4, SAVE: 5 },
+  SCRIPTRES: { OK: 0, NOT_FOUND: 1, INVALID: 2, BUSY: 3, IO: 4, CRC: 5, VERIFY: 6, NO_SPACE: 7, NO_CACHE: 8 },
   PORT: { NONE: 0, INPUT: 1, INPUT_PULLUP: 2, OUTPUT: 4, OUTPUT_OPEN_DRAIN: 8, PWM: 16, ONEWIRE: 32, ADC: 64, DAC: 128 },
 } as const;
 
 export const KEY = ENUMS.KEY;
 export const CMD = ENUMS.CMD;
+export const SCRIPTACT = ENUMS.SCRIPTACT;
+export const SCRIPTRES = ENUMS.SCRIPTRES;
 export const PORT = ENUMS.PORT;
 
 export type TKey = keyof typeof KEY;
@@ -254,6 +258,23 @@ export const STRUCTS = {
     { name: 'value', type: 'double' },
     { name: 'text', type: 'char', dimensions: [16] },
     { name: 'vars', type: 'ModbusVarValue', dimensions: [32] },
+  ],
+  ScriptCmd: [
+    { name: 'key', type: 'uint8_t' },
+    { name: 'action', type: 'uint8_t' },
+    { name: 'flags', type: 'uint8_t' },
+    { name: 'requestId', type: 'uint16_t' },
+    { name: 'name', type: 'char', dimensions: [16] },
+  ],
+  ScriptStatus: [
+    { name: 'key', type: 'uint8_t' },
+    { name: 'result', type: 'uint8_t' },
+    { name: 'state', type: 'uint8_t' },
+    { name: 'packError', type: 'uint8_t' },
+    { name: 'requestId', type: 'uint16_t' },
+    { name: 'error', type: 'uint8_t' },
+    { name: 'errorPc', type: 'uint16_t' },
+    { name: 'name', type: 'char', dimensions: [16] },
   ],
 } as const;
 
@@ -516,6 +537,25 @@ export interface IModbus {
   vars: IModbusVarValue[];
 }
 
+export interface IScriptCmd {
+  key?: number;
+  action: number;
+  flags: number;
+  requestId: number;
+  name: string;
+}
+
+export interface IScriptStatus {
+  key?: number;
+  result: number;
+  state: number;
+  packError: number;
+  requestId: number;
+  error: number;
+  errorPc: number;
+  name: string;
+}
+
 export interface IMessageMap {
   INIT: IInit;
   SETTINGS: ISettings;
@@ -534,6 +574,8 @@ export interface IMessageMap {
   MODBUS: IModbus;
   MODBUSPROFILE: IModbusProfile;
   MODBUSRAW: IModbusRaw;
+  SCRIPTCMD: IScriptCmd;
+  SCRIPTSTATUS: IScriptStatus;
 }
 
 export type TMessage =
@@ -553,4 +595,6 @@ export type TMessage =
   | { key: typeof KEY.DISCOVERY; object: IDiscovery }
   | { key: typeof KEY.MODBUS; object: IModbus }
   | { key: typeof KEY.MODBUSPROFILE; object: IModbusProfile }
-  | { key: typeof KEY.MODBUSRAW; object: IModbusRaw };
+  | { key: typeof KEY.MODBUSRAW; object: IModbusRaw }
+  | { key: typeof KEY.SCRIPTCMD; object: IScriptCmd }
+  | { key: typeof KEY.SCRIPTSTATUS; object: IScriptStatus };

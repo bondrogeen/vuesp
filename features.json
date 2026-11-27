@@ -70,15 +70,18 @@
         "noScripts",
         "noLogs"
       ],
-      "protocol": [],
+      "protocol": [
+        "KEY_SCRIPTCMD",
+        "KEY_SCRIPTSTATUS"
+      ],
       "wiring": [
-        "src/main.cpp: include ./runner/runner.h, setupRunner(), bytecodeService.begin(), bytecodeService.loop(now)",
-        "src/webserver/webserver.cpp: /script/* routes and bytecodeService",
+        "src/main.cpp: include ./runner/runner.h and ./runner/bytecode/ScriptProtocol.h, setupRunner(), bytecodeService.begin(), scriptProtocol.begin(), bytecodeService.loop(now), scriptProtocol.loop()",
+        "src/webserver/webserver.cpp: /vm/* routes (caps/list/bytecode) and KEY_SCRIPTCMD dispatch",
         "src/gpio/gpio.cpp, src/device/device.cpp, src/discovery/discovery.cpp: VM providers and events"
       ],
       "remove": [
-        "delete src/runner and the setupRunner()/bytecodeService calls from src/main.cpp",
-        "remove the /script/* routes and bytecode upload buffers from src/webserver",
+        "delete src/runner and the setupRunner()/bytecodeService/scriptProtocol calls from src/main.cpp",
+        "remove the /vm/* routes and KEY_SCRIPTCMD dispatch from src/webserver",
         "delete vue/src/pages/script, vue/src/lib/script, vue/src/components/script-studio, vue/src/components/BytecodeEditor.vue, vue/src/composables/script, vue/src/utils/scriptStudio.ts, vue/src/types/scriptStudio.ts",
         "remove menu.script from vue/json/menu.json",
         "keep vue/json/suggestions.json only if another feature uses device hints"

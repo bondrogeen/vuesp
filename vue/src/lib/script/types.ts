@@ -313,6 +313,7 @@ export interface VarCounts {
 export interface CapabilityManifest {
   readonly vm: number;
   readonly maxScripts: number;
+  readonly cacheSlots?: number;
   readonly maxCodeBytes: number;
   readonly maxStack: number;
   readonly vars: VarCounts;
@@ -331,6 +332,7 @@ export interface CapabilityManifest {
 export const DEFAULT_MANIFEST: CapabilityManifest = {
   vm: 1,
   maxScripts: 15,
+  cacheSlots: 3,
   maxCodeBytes: 1024,
   maxStack: 64,
   vars: { u: 10, i: 10, f: 5, s: 2, a: 5, p: 16, e: 4, c: 4 },

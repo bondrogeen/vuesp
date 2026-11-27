@@ -2,11 +2,15 @@
 
 #include "../runner/bytecode/BytecodeService.h"
 #include "../const/features.h"
+#include "../runner/bytecode/BytecodePack.h"
+#include "../runner/bytecode/ScriptProtocol.h"
 
 #if VUESP_MODBUS
 #include "../modbus/modbus.h"
 #include "../modbus/modbus_raw.h"
 #endif
+
+using namespace vuesp::bytecode;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
@@ -57,6 +61,11 @@ void wsSend(uint8_t* message, size_t len) {
 void wsSendAll(uint8_t* message, size_t len) {
   if (message == nullptr || len == 0) return;
   ws.binaryAll(message, len);
+}
+
+void wsSendTo(uint32_t id, uint8_t* message, size_t len) {
+  if (message == nullptr || len == 0 || id == 0) return;
+  if (ws.hasClient(id)) ws.binary(id, message, len);
 }
 
 void sendProgress(bool force = false) {
@@ -148,6 +157,12 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
     }
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
+    if (info->opcode == WS_BINARY && info->final && info->index == 0 &&
+        info->len == len && len == sizeof(ScriptCmd) &&
+        data[0] == KEY_SCRIPTCMD) {
+      scriptProtocol.onWsCommand(data, len, clientID);
+      return;
+    }
 #if VUESP_MODBUS
     if (info->opcode == WS_BINARY) {
       handleWsFragment(info, data, len, clientID);
@@ -320,53 +335,126 @@ void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
-static uint8_t g_bytecodeUpload[VBC_MAX_CODE_BYTES];
-static uint16_t g_bytecodeUploadLen = 0;
-static bool g_bytecodeUploadOverflow = false;
+static const char kUploadTmp[] = "/tmp/upload.vbc";
+static const char kDownloadTmp[] = "/tmp/download.vbc";
+static File g_uploadFile;
+static bool g_uploadOpen = false;
+static uint32_t g_uploadLen = 0;
+static bool g_uploadFailed = false;
+static bool g_uploadHandedOff = false;
+static uint32_t g_uploadSeq = 0;
+static bool g_downloadBusy = false;
 
 static bool bytecodeNameFromRequest(AsyncWebServerRequest* request, String& name) {
   const AsyncWebParameter* param = request->getParam("name");
   if (!param) return false;
   const String& value = param->value();
-  if (value.length() == 0 ||
-      value.length() > vuesp::bytecode::kPackNameLen) {
-    return false;
-  }
+  if (value.length() == 0 || value.length() >= kPackNameLen) return false;
   name = value;
   return true;
 }
 
-static void onBytecodeBody(AsyncWebServerRequest* request, uint8_t* data, size_t len,
-                           size_t index, size_t total) {
-  (void)request;
-  if (index == 0) {
-    g_bytecodeUploadLen = 0;
-    g_bytecodeUploadOverflow = false;
+static uint16_t bytecodeRequestId(AsyncWebServerRequest* request) {
+  const AsyncWebParameter* param = request->getParam("request");
+  return param ? (uint16_t)param->value().toInt() : 0;
+}
+
+static bool readFull(File& file, uint8_t* buffer, uint16_t len) {
+  uint16_t offset = 0;
+  while (offset < len) {
+    const size_t read = file.read(buffer + offset, len - offset);
+    if (read == 0) return false;
+    offset = (uint16_t)(offset + read);
   }
-  if (total > sizeof(g_bytecodeUpload) ||
-      (uint32_t)g_bytecodeUploadLen + len > sizeof(g_bytecodeUpload)) {
-    g_bytecodeUploadOverflow = true;
+  return true;
+}
+
+static void onBytecodeBody(AsyncWebServerRequest* request, uint8_t* data,
+                           size_t len, size_t index, size_t total) {
+  if (index == 0) {
+    if (g_uploadOpen || scriptProtocol.isBusy()) {
+      request->_tempObject = (void*)1;
+      return;
+    }
+    const uint32_t seq = ++g_uploadSeq;
+    g_uploadLen = 0;
+    g_uploadFailed = false;
+    g_uploadHandedOff = false;
+    LittleFS.remove(kUploadTmp);
+    g_uploadFile = LittleFS.open(kUploadTmp, "w");
+    g_uploadOpen = (bool)g_uploadFile;
+    if (!g_uploadOpen) {
+      g_uploadFailed = true;
+      return;
+    }
+    request->onDisconnect([seq]() {
+      if (seq != g_uploadSeq) return;
+      if (g_uploadOpen) {
+        g_uploadFile.close();
+        g_uploadOpen = false;
+      }
+      if (!g_uploadHandedOff) LittleFS.remove(kUploadTmp);
+    });
+  }
+
+  if (!g_uploadOpen) {
+    g_uploadFailed = true;
     return;
   }
-  memcpy(g_bytecodeUpload + g_bytecodeUploadLen, data, len);
-  g_bytecodeUploadLen = (uint16_t)(g_bytecodeUploadLen + len);
+  if ((total > 0 && total > kMaxCodeBytes) ||
+      g_uploadLen + len > kMaxCodeBytes) {
+    g_uploadFailed = true;
+    return;
+  }
+  if (g_uploadFile.write(data, len) != len) {
+    g_uploadFailed = true;
+    return;
+  }
+  g_uploadLen += (uint32_t)len;
 }
 
 static void onBytecodePost(AsyncWebServerRequest* request) {
+  if (request->_tempObject == (void*)1) {
+    request->send(409, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  if (g_uploadOpen) {
+    g_uploadFile.close();
+    g_uploadOpen = false;
+  }
+
   String name;
-  if (!bytecodeNameFromRequest(request, name) || g_bytecodeUploadOverflow ||
-      g_bytecodeUploadLen == 0) {
+  if (!bytecodeNameFromRequest(request, name)) {
+    LittleFS.remove(kUploadTmp);
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
-  if (!bytecodeService.saveScript(name.c_str(), g_bytecodeUpload,
-                                  g_bytecodeUploadLen)) {
+  if (g_uploadFailed) {
+    LittleFS.remove(kUploadTmp);
+    request->send(413, RES_TYPE_JSON, status(0));
+    return;
+  }
+  if (g_uploadLen == 0) {
+    LittleFS.remove(kUploadTmp);
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
+
   const AsyncWebParameter* run = request->getParam("run");
-  if (run && run->value() == "1") bytecodeService.runScript(name.c_str());
-  request->send(200, RES_TYPE_JSON, status(1));
+  const uint8_t flags = (run && run->value() == "1") ? SCRIPT_FLAG_RUN : 0;
+  const uint16_t requestId = bytecodeRequestId(request);
+  if (!scriptProtocol.queueSave(name.c_str(), requestId, flags)) {
+    LittleFS.remove(kUploadTmp);
+    request->send(409, RES_TYPE_JSON, status(0));
+    return;
+  }
+  g_uploadHandedOff = true;
+
+  char body[48];
+  snprintf(body, sizeof(body), "{\"state\":true,\"request\":%u}",
+           (unsigned)requestId);
+  request->send(202, RES_TYPE_JSON, body);
 }
 
 static void onBytecodeGet(AsyncWebServerRequest* request) {
@@ -375,45 +463,94 @@ static void onBytecodeGet(AsyncWebServerRequest* request) {
     request->send(400, RES_TYPE_JSON, status(0));
     return;
   }
-  static uint8_t buffer[VBC_MAX_CODE_BYTES];
-  uint16_t len = 0;
-  if (!bytecodeService.readScript(name.c_str(), buffer, sizeof(buffer), len)) {
+  if (g_downloadBusy) {
+    request->send(409, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  File pack = LittleFS.open("/www/scripts.bc", "r");
+  if (!pack) {
     request->send(404, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, "application/octet-stream", buffer, len);
-}
 
-static void onBytecodeDelete(AsyncWebServerRequest* request) {
-  String name;
-  if (!bytecodeNameFromRequest(request, name)) {
-    request->send(400, RES_TYPE_JSON, status(0));
+  uint8_t header[kPackHeaderSize];
+  if (!readFull(pack, header, sizeof(header))) {
+    pack.close();
+    request->send(404, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, RES_TYPE_JSON, status(bytecodeService.removeScript(name.c_str())));
-}
-
-static void onBytecodeRun(AsyncWebServerRequest* request) {
-  String name;
-  if (!bytecodeNameFromRequest(request, name)) {
-    request->send(400, RES_TYPE_JSON, status(0));
+  const uint16_t tocSize = readU16(header + 8);
+  if (tocSize > (uint16_t)kPackMaxEntries * kPackEntrySize) {
+    pack.close();
+    request->send(404, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, RES_TYPE_JSON, status(bytecodeService.runScript(name.c_str())));
-}
-
-static void onBytecodeStop(AsyncWebServerRequest* request) {
-  String name;
-  if (!bytecodeNameFromRequest(request, name)) {
-    request->send(400, RES_TYPE_JSON, status(0));
+  const uint16_t tocTotal = (uint16_t)(kPackHeaderSize + tocSize);
+  uint8_t toc[kPackHeaderSize + (uint16_t)kPackMaxEntries * kPackEntrySize];
+  if (!pack.seek(0) || !readFull(pack, toc, tocTotal)) {
+    pack.close();
+    request->send(404, RES_TYPE_JSON, status(0));
     return;
   }
-  request->send(200, RES_TYPE_JSON, status(bytecodeService.stopScript(name.c_str())));
-}
 
-static void onBytecodeStopAll(AsyncWebServerRequest* request) {
-  bytecodeService.stopAll();
-  request->send(200, RES_TYPE_JSON, status(1));
+  PackView view;
+  PackError parseError;
+  if (!parsePackToc(toc, tocTotal, (uint32_t)pack.size(), view, parseError)) {
+    pack.close();
+    request->send(404, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  uint16_t index = 0;
+  if (!findPackEntry(view, name.c_str(), index)) {
+    pack.close();
+    request->send(404, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  PackEntry entry;
+  if (!getPackEntry(view, index, entry) || !pack.seek(entry.codeOff)) {
+    pack.close();
+    request->send(404, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  LittleFS.remove(kDownloadTmp);
+  File out = LittleFS.open(kDownloadTmp, "w");
+  if (!out) {
+    pack.close();
+    request->send(500, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  uint8_t buffer[64];
+  uint16_t remaining = entry.codeLen;
+  bool ok = true;
+  while (remaining > 0) {
+    const uint16_t chunk =
+        remaining > sizeof(buffer) ? (uint16_t)sizeof(buffer) : remaining;
+    if (!readFull(pack, buffer, chunk) || out.write(buffer, chunk) != chunk) {
+      ok = false;
+      break;
+    }
+    remaining = (uint16_t)(remaining - chunk);
+  }
+  pack.close();
+  out.close();
+
+  if (!ok) {
+    LittleFS.remove(kDownloadTmp);
+    request->send(500, RES_TYPE_JSON, status(0));
+    return;
+  }
+
+  g_downloadBusy = true;
+  request->onDisconnect([]() {
+    g_downloadBusy = false;
+    LittleFS.remove(kDownloadTmp);
+  });
+  request->send(LittleFS, kDownloadTmp, "application/octet-stream", true);
 }
 
 static void onBytecodeCapabilities(AsyncWebServerRequest* request) {
@@ -422,34 +559,6 @@ static void onBytecodeCapabilities(AsyncWebServerRequest* request) {
 
 static void onBytecodeList(AsyncWebServerRequest* request) {
   request->send(200, RES_TYPE_JSON, bytecodeService.listJson());
-}
-
-static void onBytecodeStatus(AsyncWebServerRequest* request) {
-  request->send(200, RES_TYPE_JSON, bytecodeService.statusJson());
-}
-
-static void onBytecodeEvent(AsyncWebServerRequest* request) {
-  const AsyncWebParameter* name = request->getParam("name");
-  if (!name || name->value().length() == 0) {
-    request->send(400, RES_TYPE_JSON, status(0));
-    return;
-  }
-  static const char* const keys[4] = {"p0", "p1", "p2", "p3"};
-  int32_t params[4] = {0, 0, 0, 0};
-  for (uint8_t i = 0; i < 4; i++) {
-    const AsyncWebParameter* param = request->getParam(keys[i]);
-    if (param) params[i] = param->value().toInt();
-  }
-  uint8_t count = 4;
-  const AsyncWebParameter* countParam = request->getParam("count");
-  if (countParam) {
-    long value = countParam->value().toInt();
-    if (value < 0) value = 0;
-    if (value > 4) value = 4;
-    count = (uint8_t)value;
-  }
-  const bool ok = bytecodeService.emitEvent(name->value().c_str(), count, params);
-  request->send(ok ? 200 : 400, RES_TYPE_JSON, status(ok));
 }
 
 void setupServer() {
@@ -466,16 +575,10 @@ void setupServer() {
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
 
-  server.on("/script/bytecode", HTTP_POST, onBytecodePost, nullptr, onBytecodeBody);
-  server.on("/script/bytecode", HTTP_GET, onBytecodeGet);
-  server.on("/script/bytecode", HTTP_DELETE, onBytecodeDelete);
-  server.on("/script/run", HTTP_POST, onBytecodeRun);
-  server.on("/script/stop", HTTP_POST, onBytecodeStop);
-  server.on("/script/stop-all", HTTP_POST, onBytecodeStopAll);
-  server.on("/script/capabilities", HTTP_GET, onBytecodeCapabilities);
-  server.on("/script/list", HTTP_GET, onBytecodeList);
-  server.on("/script/status", HTTP_GET, onBytecodeStatus);
-  server.on("/script/event", HTTP_POST, onBytecodeEvent);
+  server.on("/vm/bytecode", HTTP_POST, onBytecodePost, nullptr, onBytecodeBody);
+  server.on("/vm/bytecode", HTTP_GET, onBytecodeGet);
+  server.on("/vm/capabilities", HTTP_GET, onBytecodeCapabilities);
+  server.on("/vm/list", HTTP_GET, onBytecodeList);
 
   server.on("*", HTTP_ANY, onRoot);
 

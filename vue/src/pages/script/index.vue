@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { VCard } from 'vuesp-components/components';
 
 import BytecodeEditor from '@/components/BytecodeEditor.vue';
@@ -23,7 +23,17 @@ import { BYTECODE_EXAMPLES, normalizeSuggestionInsert } from '@/lib/script';
 import type { BytecodeExample, EventSpec, FunctionSpec } from '@/lib/script';
 import type { ISuggestion } from 'vuesp-components/types';
 import type { IRuntimeMetric, IScriptListItem } from '@/types';
-import { downloadBlob, getMessageText, getScriptStatusMeta, toArrayBuffer } from '@/utils/scriptStudio';
+import {
+  SCRIPT_STATE,
+  downloadBlob,
+  getMessageText,
+  getPackErrorName,
+  getScriptStatusMeta,
+  getVmErrorName,
+  isScriptActive,
+  isScriptError,
+  toArrayBuffer,
+} from '@/utils/scriptStudio';
 
 const DEFAULT_SOURCE = `$u0 = 5;
 log('hello', $u0);
@@ -38,7 +48,7 @@ const { suggestions } = useStore();
 
 const { manifest, result, isVmAvailable, diagnostics, hex, stackMax, byteCount, loadCapabilities, compileSource, resetResult, getSourceLines } = useBytecodeCompile();
 
-const { scripts, runtime, isBusy, onRefresh, onSave, onRemove, onRun, onStop, onStopAll, onLoad, onStartPolling, onStopPolling } = useBytecodeScripts(manifest);
+const { scripts, runtime, isBusy, onRefresh, onSave, onRemove, onRun, onStop, onStopAll, onLoad } = useBytecodeScripts(manifest);
 
 const source = ref(DEFAULT_SOURCE);
 const name = ref('boot');
@@ -64,28 +74,29 @@ const scriptNames = computed(() => scripts.value.map((script) => script.name));
 const isDownloadAvailable = computed(() => Boolean(result.value?.bytecode));
 const lineCount = computed(() => getSourceLines(source.value));
 
-const packState = computed(() => (runtime.value?.packError ? runtime.value.packErrorName : $t('scriptStudio.noError')));
-
-const lastError = computed(() => {
-  if (!runtime.value?.error) return $t('scriptStudio.noError');
-  return [runtime.value.errorName, runtime.value.errorScriptName].filter(Boolean).join(' · ');
-});
+const loadedCount = computed(
+  () => scripts.value.filter((script) => (script.state & SCRIPT_STATE.LOADED) !== 0).length,
+);
 
 const metrics = computed<IRuntimeMetric[]>(() => {
   const value = runtime.value;
+  const packName = getPackErrorName(value?.packError ?? 0);
+  const errorName = value?.error ? getVmErrorName(value.error) : $t('scriptStudio.noError');
+  const errorScript = scripts.value.find((script) => isScriptError(script.state))?.name ?? '';
+  const errorText = [errorName, errorScript].filter(Boolean).join(' · ');
   return [
-    { key: 'cacheSlots', label: $t('scriptStudio.cacheSlots'), value: String(value?.cacheSlots ?? '—') },
+    { key: 'cacheSlots', label: $t('scriptStudio.cacheSlots'), value: String(manifest.value.cacheSlots ?? 3) },
     { key: 'vm', label: $t('scriptStudio.vm'), value: `v${manifest.value.vm}` },
-    { key: 'pack', label: $t('scriptStudio.pack'), value: packState.value, isError: Boolean(value?.packError) },
+    { key: 'pack', label: $t('scriptStudio.pack'), value: packName, isError: Boolean(value?.packError) },
     {
       key: 'lastError',
       label: $t('scriptStudio.lastError'),
-      value: lastError.value,
+      value: errorText,
       isError: Boolean(value?.error),
-      title: lastError.value,
+      title: errorText,
     },
     { key: 'errorPc', label: $t('scriptStudio.errorPc'), value: String(value?.errorPc ?? 0) },
-    { key: 'vmScripts', label: $t('scriptStudio.vmScripts'), value: String(value?.scripts ?? 0) },
+    { key: 'vmScripts', label: $t('scriptStudio.vmScripts'), value: String(loadedCount.value) },
   ];
 });
 
@@ -181,7 +192,7 @@ const onStopNamed = async (scriptName: string) => {
 };
 
 const onToggleRun = async (script: IScriptListItem) => {
-  if (script.active) await onStopNamed(script.name);
+  if (isScriptActive(script.state)) await onStopNamed(script.name);
   else await onRunNamed(script.name);
 };
 
@@ -300,10 +311,7 @@ onMounted(async () => {
   const initial = scripts.value.find((script) => script.name === name.value) ?? scripts.value[0];
   if (initial) await onLoadScript(initial.name);
   else onCompile(true);
-  onStartPolling();
 });
-
-onBeforeUnmount(onStopPolling);
 </script>
 
 <template>

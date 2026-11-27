@@ -159,20 +159,19 @@ Code blobs
 
 ## HTTP API
 
-Все маршруты требуют ту же авторизацию, что и остальные страницы.
+Все маршруты требуют ту же авторизацию, что и остальные страницы. Через HTTP
+идут только редкие операции; команды и статус — по WebSocket.
 
 | Метод | Путь | Назначение |
 |---|---|---|
-| GET | `/script/capabilities` | capability manifest: VM, лимиты, функции, события, `dataVars` |
-| GET | `/script/list` | список сохранённых скриптов `{name,size,boot,flags}` |
-| GET | `/script/status` | active, scripts, saved, cacheSlots, packError, последняя ошибка |
-| GET | `/script/bytecode?name=boot` | скачать контейнер |
-| POST | `/script/bytecode?name=boot&run=1` | загрузить контейнер (тело запроса) |
-| DELETE | `/script/bytecode?name=boot` | удалить скрипт |
-| POST | `/script/run?name=boot` | запустить |
-| POST | `/script/stop?name=boot` | остановить |
-| POST | `/script/stop-all` | остановить все |
-| POST | `/script/event?name=btn_c&count=3&p0=4&p1=1&p2=2` | диагностически отправить событие |
+| GET | `/vm/capabilities` | JSON: VM, лимиты, слоты, функции, события |
+| GET | `/vm/list` | JSON: `[{"name":"boot","state":10}]` |
+| GET | `/vm/bytecode?name=boot` | скачать контейнер (потоково) |
+| POST | `/vm/bytecode?name=boot&request=1&run=1` | загрузить контейнер (тело запроса) |
+
+Загрузка возвращает `202 Accepted` и `requestId`; результат сохранения
+приходит сообщением `KEY_SCRIPTSTATUS`. Тело запроса пишется сразу во временный
+файл, без 1-КБ буфера в RAM; проверка контейнера выполняется в `loop()`.
 
 Пример:
 
@@ -180,8 +179,22 @@ Code blobs
 curl -u admin:admin \
   -H 'Content-Type: application/octet-stream' \
   --data-binary @out.vbc \
-  'http://<device>/script/bytecode?name=boot&run=1'
+  'http://<device>/vm/bytecode?name=boot&request=1&run=1'
 ```
+
+## WebSocket
+
+Тот же бинарный канал `/esp`:
+
+- `KEY_SCRIPTCMD` (`ScriptCmd`) — команды:
+  `STATUS`, `RUN`, `STOP`, `STOP_ALL`, `REMOVE`;
+  поля `action`, `flags`, `requestId`, `name[16]` (до 15 символов + NUL).
+- `KEY_SCRIPTSTATUS` (`ScriptStatus`) — результат и состояние:
+  `result`, `state` (active/loaded/error/boot), `packError`, `error`,
+  `errorPc`, `name[16]` (до 15 символов + NUL).
+
+Статус приходит после каждой команды и после завершения HTTP-загрузки;
+`requestId` связывает ответ с загрузкой. Отдельного `/vm/status` нет.
 
 ## Лимиты v1
 
@@ -194,7 +207,7 @@ curl -u admin:admin \
 - рекурсия запрещена;
 - 32 инструкции или 300 µs на контекст за проход, 3 ms общий бюджет;
 - `wait` не блокирует loop;
-- ошибка останавливает только свой контекст и попадает в `/script/status`.
+- ошибка останавливает только свой контекст и попадает в `KEY_SCRIPTSTATUS`.
 
 На ESP8266 сборка занимает около 61.7% RAM (50 528 / 81 920) и 41.1% flash.
 

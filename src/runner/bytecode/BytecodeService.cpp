@@ -4,6 +4,7 @@
 #include <LittleFS.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "./BytecodeVerifier.h"
@@ -126,6 +127,8 @@ bool copyCode(File& in, File& out, uint16_t offset, uint16_t len,
 BytecodeService bytecodeService;
 
 void BytecodeService::begin() {
+  LittleFS.remove("/tmp/upload.vbc");
+  LittleFS.remove("/tmp/download.vbc");
   memset(_slots, 0, sizeof(_slots));
   memset(_refs, 0, sizeof(_refs));
   memset(&_packView, 0, sizeof(_packView));
@@ -682,29 +685,61 @@ bool BytecodeService::emitEvent(const char* name, uint8_t count,
   return false;
 }
 
-bool BytecodeService::readScript(const char* name, uint8_t* buffer,
-                                 uint16_t maxLen, uint16_t& len) {
-  if (!_packValid || !buffer) return false;
-
-  const int8_t ref = findRef(name);
-  if (ref < 0) return false;
-  const int8_t slot = findSlot(_refs[ref].id);
-  if (slot >= 0) {
-    if (_slots[slot].len > maxLen) return false;
-    memcpy(buffer, _slots[slot].data, _slots[slot].len);
-    len = _slots[slot].len;
-    return true;
-  }
-
-  uint16_t index = 0;
-  if (!findPackEntry(_packView, name, index)) return false;
-  VmError error = VmError::NONE;
-  return readBlob(index, buffer, maxLen, len, error);
-}
-
 uint8_t BytecodeService::scriptCount() const { return _vm.scriptCount(); }
 
 uint8_t BytecodeService::savedCount() const { return _packCount; }
+
+uint8_t BytecodeService::scriptStateByIndex(uint8_t index) const {
+  if (index >= _packCount || !_refs[index].used) return 0;
+  const uint8_t id = _refs[index].id;
+  uint8_t state = 0;
+  if (findSlot(id) >= 0) state |= SCRIPT_STATE_LOADED;
+  if (_vm.isScriptActive(id)) state |= SCRIPT_STATE_ACTIVE;
+  if (_vm.lastError() != VmError::NONE && _vm.lastErrorScript() == id) {
+    state |= SCRIPT_STATE_ERROR;
+  }
+  if (memcmp(_refs[index].name, "boot", 5) == 0) state |= SCRIPT_STATE_BOOT;
+  return state;
+}
+
+uint8_t BytecodeService::scriptState(const char* name) const {
+  const int8_t ref = findRef(name);
+  if (ref < 0) return 0;
+  return scriptStateByIndex((uint8_t)ref);
+}
+
+uint8_t BytecodeService::packErrorCode() const { return (uint8_t)_packError; }
+
+uint8_t BytecodeService::lastErrorCode() const { return (uint8_t)_vm.lastError(); }
+
+uint16_t BytecodeService::lastErrorPc() const { return _vm.lastErrorPc(); }
+
+uint8_t BytecodeService::saveScriptFromFile(const char* name, const char* path,
+                                            bool runAfter) {
+  File file = LittleFS.open(path, "r");
+  if (!file) return SCRIPTRES_IO;
+  const size_t size = file.size();
+  if (size == 0 || size > kMaxCodeBytes) {
+    file.close();
+    return SCRIPTRES_INVALID;
+  }
+  uint8_t* data = (uint8_t*)malloc(size);
+  if (!data) {
+    file.close();
+    return SCRIPTRES_NO_SPACE;
+  }
+  const size_t read = file.read(data, size);
+  file.close();
+  if (read != size) {
+    free(data);
+    return SCRIPTRES_IO;
+  }
+  const bool ok = saveScript(name, data, size);
+  free(data);
+  if (!ok) return SCRIPTRES_VERIFY;
+  if (runAfter && !runScript(name)) return SCRIPTRES_INVALID;
+  return SCRIPTRES_OK;
+}
 
 String BytecodeService::capabilitiesJson() const {
   const Capabilities& caps = _vm.capabilities();
@@ -712,6 +747,8 @@ String BytecodeService::capabilitiesJson() const {
   json += (unsigned)caps.vmVersion;
   json += ",\"maxScripts\":";
   json += (unsigned)kPackMaxEntries;
+  json += ",\"cacheSlots\":";
+  json += (unsigned)VBC_CACHE_SLOTS;
   json += ",\"maxCodeBytes\":";
   json += (unsigned)caps.maxCodeBytes;
   json += ",\"maxStack\":";
@@ -764,7 +801,7 @@ String BytecodeService::capabilitiesJson() const {
     json += (unsigned)event.params;
     json += '}';
   }
-  json += "],\"dataVars\":[{\"name\":\"$display\",\"kind\":\"string\"}],\"limits\":{\"instrPerTick\":";
+  json += "],\"limits\":{\"instrPerTick\":";
   json += (unsigned)caps.instrPerTick;
   json += ",\"usPerTick\":";
   json += (unsigned)caps.usPerTick;
@@ -777,66 +814,21 @@ String BytecodeService::capabilitiesJson() const {
 String BytecodeService::listJson() const {
   String json = "[";
   bool first = true;
-
   if (_packValid) {
     for (uint8_t i = 0; i < _packCount; i++) {
       PackEntry entry;
       if (!getPackEntry(_packView, i, entry)) continue;
       char name[kPackNameLen + 1];
       if (!packNameToText(entry.name, name)) continue;
-
-      const int8_t ref = findRefByKey(entry.name);
-      const uint8_t id = ref >= 0 ? _refs[ref].id : 0;
-      const bool loaded = id != 0 && findSlot(id) >= 0;
-      const bool active = id != 0 && _vm.isScriptActive(id);
-      const bool error = id != 0 && _vm.lastError() != VmError::NONE &&
-                         _vm.lastErrorScript() == id;
-
       if (!first) json += ',';
       first = false;
       json += "{\"name\":\"";
       json += name;
-      json += "\",\"id\":";
-      json += id;
-      json += ",\"size\":";
-      json += entry.codeLen;
-      json += ",\"boot\":";
-      json += strcmp(name, "boot") == 0 ? 1 : 0;
-      json += ",\"loaded\":";
-      json += loaded ? 1 : 0;
-      json += ",\"active\":";
-      json += active ? 1 : 0;
-      json += ",\"error\":";
-      json += error ? 1 : 0;
-      json += ",\"flags\":";
-      json += entry.flags;
+      json += "\",\"state\":";
+      json += (unsigned)scriptStateByIndex(i);
       json += '}';
     }
   }
-
   json += ']';
   return json;
-}
-
-String BytecodeService::statusJson() const {
-  char errorScriptName[kPackNameLen + 1];
-  errorScriptName[0] = '\0';
-  if (_vm.lastErrorScript() != 0) {
-    const int8_t ref = findRefById(_vm.lastErrorScript());
-    if (ref >= 0) packNameToText(_refs[ref].name, errorScriptName);
-  }
-
-  char buffer[384];
-  snprintf(buffer, sizeof(buffer),
-           "{\"active\":%u,\"scripts\":%u,\"saved\":%u,\"cacheSlots\":%u,"
-           "\"packError\":%u,\"packErrorName\":\"%s\",\"error\":%u,"
-           "\"errorName\":\"%s\",\"errorScript\":%u,\"errorScriptName\":\"%s\","
-           "\"errorPc\":%u}",
-           (unsigned)_vm.activeContexts(), (unsigned)_vm.scriptCount(),
-           (unsigned)_packCount, (unsigned)kCacheSlots,
-           (unsigned)_packError, packErrorName(_packError),
-           (unsigned)_vm.lastError(), vmErrorName(_vm.lastError()),
-           (unsigned)_vm.lastErrorScript(), errorScriptName,
-           (unsigned)_vm.lastErrorPc());
-  return String(buffer);
 }

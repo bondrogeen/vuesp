@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "../../const/protocol.h"
 #include "./BytecodePack.h"
 #include "./BytecodeVM.h"
 
@@ -24,18 +25,22 @@ class BytecodeService {
   vuesp::bytecode::BytecodeVM& vm() { return _vm; }
 
   bool saveScript(const char* name, const uint8_t* data, uint16_t len);
+  uint8_t saveScriptFromFile(const char* name, const char* path, bool runAfter);
   bool removeScript(const char* name);
   bool runScript(const char* name);
   bool stopScript(const char* name);
   void stopAll();
   bool emitEvent(const char* name, uint8_t count, const int32_t* params);
-  bool readScript(const char* name, uint8_t* buffer, uint16_t maxLen, uint16_t& len);
   uint8_t scriptCount() const;
   uint8_t savedCount() const;
+  uint8_t scriptState(const char* name) const;
+  uint8_t scriptStateByIndex(uint8_t index) const;
+  uint8_t packErrorCode() const;
+  uint8_t lastErrorCode() const;
+  uint16_t lastErrorPc() const;
 
   String capabilitiesJson() const;
   String listJson() const;
-  String statusJson() const;
 
  private:
   static constexpr uint8_t kCacheSlots = VBC_CACHE_SLOTS;

@@ -35,17 +35,19 @@ browser and executes the verified bytecode on the device. Sources live in
 `src/runner/bytecode`, the compiler/decompiler in `vue/src/lib/script`, the
 studio in `vue/src/components/script-studio`, and the page at `/script/`.
 Scripts are stored in `/www/scripts.bc`; `vue/json/suggestions.json` provides
-device-specific completion hints.
+device-specific completion hints. Commands and status use the WebSocket channel
+(`KEY_SCRIPTCMD` / `KEY_SCRIPTSTATUS`); caps, list and `.vbc` transfer use
+`/vm/*`.
 
 1. Delete `src/runner`, `vue/src/pages/script`, `vue/src/lib/script`,
    `vue/src/components/script-studio`, `vue/src/components/BytecodeEditor.vue`,
    `vue/src/composables/script`, `vue/src/utils/scriptStudio.ts`,
    `vue/src/types/scriptStudio.ts`.
 2. Remove `menu.script` from `vue/json/menu.json`.
-3. In `src/main.cpp` remove the runner include and the `setupRunner()` /
-   `bytecodeService.begin()` / `bytecodeService.loop(now)` calls.
-4. In `src/webserver/webserver.cpp` remove the `/script/*` routes and bytecode
-   upload buffers.
+3. In `src/main.cpp` remove the runner and `ScriptProtocol` includes and the
+   `setupRunner()` / `bytecodeService.*` / `scriptProtocol.*` calls.
+4. In `src/webserver/webserver.cpp` remove the `/vm/*` routes, the
+   `KEY_SCRIPTCMD` dispatch, and the streamed upload/download handlers.
 5. Keep `vue/json/suggestions.json` only if another feature uses device hints.
 6. Locale keys may stay; they are unused and tiny.
 

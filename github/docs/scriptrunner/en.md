@@ -18,7 +18,7 @@ Highlights:
 - compilation and diagnostics run in the browser; the MC executes verified bytecode;
 - up to 15 scripts; the script named `boot` starts automatically;
 - `wait()` does not block `loop()`;
-- an error stops only its own script and is reported by `/script/status`.
+- an error stops only its own script and is reported by `KEY_SCRIPTSTATUS` over WebSocket.
 
 ## Basic Rules
 
@@ -42,7 +42,7 @@ Highlights:
 | `$cN` | `call()` parameters | 0–3, read-only |
 
 `$name` (for example `$display`) is a device data variable. Available names and
-types come from `/script/capabilities` and the device suggestions.
+types come from `/vm/capabilities` and the device suggestions.
 
 ## Working with Ports
 
@@ -133,7 +133,7 @@ Strings are concatenated with `+`. A `$sN` variable holds up to 31 characters.
 - `var(id [, value])` — Modbus profile variable (when Modbus is enabled);
 - `modbus(device, point [, value])` — Modbus profile point (when Modbus is enabled).
 
-The authoritative function/event list is `/script/capabilities`; hint descriptions
+The authoritative function/event list is `/vm/capabilities`; hint descriptions
 live in the device project's `vue/json/suggestions.json`.
 
 ## Example Scripts

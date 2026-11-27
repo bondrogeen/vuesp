@@ -9,6 +9,7 @@
 #include "./gpio/gpio.h"
 #include "./init/init.h"
 #include "./runner/bytecode/BytecodeService.h"
+#include "./runner/bytecode/ScriptProtocol.h"
 #if VUESP_MODBUS
 #include "./modbus/modbus.h"
 #endif
@@ -67,6 +68,7 @@ void setupDelay() {
   setupDiscovery();
   setupRunner();
   bytecodeService.begin();
+  scriptProtocol.begin();
 }
 
 void loop() {
@@ -93,6 +95,7 @@ void loop() {
 #endif
     loopWiFi(now);
     bytecodeService.loop(now);
+    scriptProtocol.loop();
     loopSerialSetup();
   }
 

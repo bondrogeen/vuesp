@@ -8,27 +8,7 @@ export type TLogMode = 'text' | 'hex';
 
 export interface IScriptListItem {
   name: string;
-  id: number;
-  size: number;
-  boot: number;
-  loaded: number;
-  active: number;
-  error: number;
-  flags: number;
-}
-
-export interface IScriptStatus {
-  active: number;
-  scripts: number;
-  saved: number;
-  cacheSlots: number;
-  packError: number;
-  packErrorName: string;
-  error: number;
-  errorName: string;
-  errorScript: number;
-  errorScriptName: string;
-  errorPc: number;
+  state: number;
 }
 
 export interface IStatusMeta {

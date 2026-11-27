@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "label": "$display",
+    "type": "var",
+    "insert": "$display",
+    "detail": "device data"
+  }
+]

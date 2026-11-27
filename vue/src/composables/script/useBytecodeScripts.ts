@@ -1,39 +1,78 @@
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Ref } from 'vue';
+import { event } from '@/assets/js/';
 import { decompile, disassemble } from '@/lib/script';
 import type { CapabilityManifest } from '@/lib/script';
+import { SCRIPTACT, SCRIPTRES } from '@/generated/protocol';
 import type { IScriptListItem, IScriptPayload, IScriptStatus } from '@/types';
+import { getScriptResultName } from '@/utils/scriptStudio';
 import { useBytecodeApi } from './useBytecodeApi';
-
-const POLL_INTERVAL_MS = 1500;
+import { useScriptSocket } from './useScriptSocket';
 
 export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
   const api = useBytecodeApi();
+  const socket = useScriptSocket();
   const scripts = ref<IScriptListItem[]>([]);
   const runtime = ref<IScriptStatus | null>(null);
   const isBusy = ref(false);
-  const isRefreshing = ref(false);
   let refreshSeq = 0;
-  let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-  const onRefresh = async (): Promise<void> => {
-    const seq = ++refreshSeq;
-    isRefreshing.value = true;
-    try {
-      const [list, status] = await Promise.all([api.getList(), api.getStatus()]);
-      if (seq !== refreshSeq) return;
-      scripts.value = list;
-      runtime.value = status;
-    } finally {
-      if (seq === refreshSeq) isRefreshing.value = false;
+  socket.onStatus((status) => {
+    runtime.value = status;
+    if (!status.name) return;
+    const script = scripts.value.find((item) => item.name === status.name);
+    if (script) script.state = status.state;
+  });
+
+  const onConnected = (value: unknown) => {
+    if (value === true) {
+      void socket.send(SCRIPTACT.STATUS).catch(() => {
+        /* device may not have answered yet */
+      });
     }
   };
 
-  const onSave = async (name: string, bytes: Uint8Array, isRunAfterSave: boolean): Promise<boolean> => {
+  onMounted(() => {
+    event.on('connected', onConnected);
+    void socket.send(SCRIPTACT.STATUS).catch(() => {
+      /* device may not have answered yet */
+    });
+  });
+
+  onBeforeUnmount(() => event.off('connected', onConnected));
+
+  const onRefresh = async (): Promise<void> => {
+    const seq = ++refreshSeq;
+    const list = await api.getList();
+    if (seq === refreshSeq) scripts.value = list;
+  };
+
+  const assertOk = (status: IScriptStatus) => {
+    if (status.result !== SCRIPTRES.OK) {
+      throw new Error(getScriptResultName(status.result));
+    }
+  };
+
+  const onSave = async (
+    name: string,
+    bytes: Uint8Array,
+    isRunAfterSave: boolean,
+  ): Promise<boolean> => {
     if (isBusy.value) return false;
     isBusy.value = true;
     try {
-      await api.saveScript(name, bytes, isRunAfterSave);
+      const requestId = socket.nextRequestId();
+      const pending = socket.waitFor(requestId);
+      pending.catch(() => {
+        /* the HTTP call failed before the status arrived */
+      });
+      try {
+        await api.uploadScript(name, bytes, requestId, isRunAfterSave);
+      } catch (error) {
+        socket.cancel(requestId);
+        throw error;
+      }
+      assertOk(await pending);
       return true;
     } finally {
       isBusy.value = false;
@@ -44,7 +83,7 @@ export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
     if (isBusy.value) return false;
     isBusy.value = true;
     try {
-      await api.removeScript(name);
+      assertOk(await socket.send(SCRIPTACT.REMOVE, name));
       return true;
     } finally {
       isBusy.value = false;
@@ -55,7 +94,7 @@ export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
     if (isBusy.value) return false;
     isBusy.value = true;
     try {
-      await api.runScript(name);
+      assertOk(await socket.send(SCRIPTACT.RUN, name));
       return true;
     } finally {
       isBusy.value = false;
@@ -66,7 +105,7 @@ export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
     if (isBusy.value) return false;
     isBusy.value = true;
     try {
-      await api.stopScript(name);
+      assertOk(await socket.send(SCRIPTACT.STOP, name));
       return true;
     } finally {
       isBusy.value = false;
@@ -77,7 +116,7 @@ export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
     if (isBusy.value) return false;
     isBusy.value = true;
     try {
-      await api.stopAll();
+      assertOk(await socket.send(SCRIPTACT.STOP_ALL));
       return true;
     } finally {
       isBusy.value = false;
@@ -100,28 +139,10 @@ export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
     }
   };
 
-  const onStartPolling = (): void => {
-    if (pollTimer) return;
-    pollTimer = setInterval(() => {
-      const isPaused = document.hidden || isRefreshing.value || isBusy.value;
-      if (isPaused) return;
-      void onRefresh().catch(() => {
-        /* keep the previous view on transient errors */
-      });
-    }, POLL_INTERVAL_MS);
-  };
-
-  const onStopPolling = (): void => {
-    if (!pollTimer) return;
-    clearInterval(pollTimer);
-    pollTimer = null;
-  };
-
   return {
     scripts,
     runtime,
     isBusy,
-    isRefreshing,
     onRefresh,
     onSave,
     onRemove,
@@ -129,7 +150,5 @@ export const useBytecodeScripts = (manifest: Ref<CapabilityManifest>) => {
     onStop,
     onStopAll,
     onLoad,
-    onStartPolling,
-    onStopPolling,
   };
 };

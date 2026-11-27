@@ -1,5 +1,12 @@
 import type { IStatusMeta, IScriptListItem, ITranslator, TLogMode, TStatusTone } from '@/types';
 
+export const SCRIPT_STATE = {
+  ACTIVE: 0x01,
+  LOADED: 0x02,
+  ERROR: 0x04,
+  BOOT: 0x08,
+} as const;
+
 const BYTES_PER_HEX_LINE = 16;
 const HEX_PAD_LENGTH = 2;
 
@@ -24,9 +31,9 @@ export const getToneTagClass = (tone: TStatusTone): string => TONE_TAG_CLASS[ton
 export const getToneDotClass = (tone: TStatusTone): string => TONE_DOT_CLASS[tone];
 
 const STATUS_MATCHERS: Array<{ matches: (script: IScriptListItem) => boolean; tone: TStatusTone; key: string }> = [
-  { matches: (script) => script.error > 0, tone: 'red', key: 'scriptStudio.stateError' },
-  { matches: (script) => script.active > 0, tone: 'green', key: 'scriptStudio.stateRunning' },
-  { matches: (script) => script.loaded > 0, tone: 'blue', key: 'scriptStudio.stateLoaded' },
+  { matches: (script) => (script.state & SCRIPT_STATE.ERROR) !== 0, tone: 'red', key: 'scriptStudio.stateError' },
+  { matches: (script) => (script.state & SCRIPT_STATE.ACTIVE) !== 0, tone: 'green', key: 'scriptStudio.stateRunning' },
+  { matches: (script) => (script.state & SCRIPT_STATE.LOADED) !== 0, tone: 'blue', key: 'scriptStudio.stateLoaded' },
   { matches: () => true, tone: 'gray', key: 'scriptStudio.stateStopped' },
 ];
 
@@ -77,7 +84,8 @@ export const downloadBlob = (data: BlobPart, fileName: string, type: string): vo
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 };
 
-export const SCRIPT_NAME_PATTERN = /^[a-z_][a-z0-9_-]{0,15}$/;
+// The WS command carries the name in a NUL-terminated char[16].
+export const SCRIPT_NAME_PATTERN = /^[a-z_][a-z0-9_-]{0,14}$/;
 
 export const isValidScriptName = (name: string): boolean => SCRIPT_NAME_PATTERN.test(name);
 
@@ -100,3 +108,71 @@ export const getMessageText = (error: unknown): string => {
 export const scrollIntoView = (element: HTMLElement | null): void => {
   element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
+
+export const isScriptActive = (state: number): boolean => (state & SCRIPT_STATE.ACTIVE) !== 0;
+
+export const isScriptLoaded = (state: number): boolean => (state & SCRIPT_STATE.LOADED) !== 0;
+
+export const isScriptError = (state: number): boolean => (state & SCRIPT_STATE.ERROR) !== 0;
+
+const SCRIPT_RESULT_NAMES = [
+  'OK',
+  'Not found',
+  'Invalid',
+  'Busy',
+  'I/O error',
+  'CRC error',
+  'Verify error',
+  'No space',
+  'No cache',
+];
+
+export const getScriptResultName = (code: number): string =>
+  SCRIPT_RESULT_NAMES[code] ?? `Result ${code}`;
+
+const PACK_ERROR_NAMES = [
+  'none',
+  'short pack',
+  'bad magic',
+  'unsupported version',
+  'entry count',
+  'toc size',
+  'toc crc',
+  'bad name',
+  'duplicate name',
+  'out of bounds',
+  'code crc',
+  'overlap',
+  'capacity',
+  'code length',
+  'flags',
+];
+
+export const getPackErrorName = (code: number): string =>
+  PACK_ERROR_NAMES[code] ?? `Pack error ${code}`;
+
+const VM_ERROR_NAMES = [
+  'none',
+  'parse',
+  'verify',
+  'opcode',
+  'bounds',
+  'stack',
+  'type',
+  'variable',
+  'constant',
+  'data',
+  'runtime',
+  'no context',
+  'no script',
+  'no function',
+  'arguments',
+  'not ready',
+  'code crc',
+  'no cache',
+  'recursion',
+  'depth',
+];
+
+export const getVmErrorName = (code: number): string =>
+  VM_ERROR_NAMES[code] ?? `VM error ${code}`;

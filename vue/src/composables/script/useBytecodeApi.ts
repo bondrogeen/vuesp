@@ -1,5 +1,5 @@
 import type { CapabilityManifest } from '@/lib/script';
-import type { IScriptListItem, IScriptStatus } from '@/types';
+import type { IScriptListItem } from '@/types';
 import { toArrayBuffer } from '@/utils/scriptStudio';
 
 const REQUEST_TIMEOUT_MS = 8000;
@@ -55,45 +55,38 @@ const requestBinary = async (url: string): Promise<Uint8Array> => {
 
 export const useBytecodeApi = () => {
   const getCapabilities = async (): Promise<CapabilityManifest | null> => {
-    const response = await fetch('/script/capabilities', withTimeout());
+    const response = await fetch('/vm/capabilities', withTimeout());
     if (!response.ok || !isJsonResponse(response)) return null;
     return (await response.json()) as CapabilityManifest;
   };
 
-  const getList = (): Promise<IScriptListItem[]> => requestJson<IScriptListItem[]>('/script/list');
-
-  const getStatus = (): Promise<IScriptStatus> => requestJson<IScriptStatus>('/script/status');
+  const getList = (): Promise<IScriptListItem[]> => requestJson<IScriptListItem[]>('/vm/list');
 
   const getBytecode = (name: string): Promise<Uint8Array> =>
-    requestBinary(`/script/bytecode?name=${encodeURIComponent(name)}`);
+    requestBinary(`/vm/bytecode?name=${encodeURIComponent(name)}`);
 
-  const saveScript = (name: string, bytes: Uint8Array, isRunAfterSave: boolean): Promise<unknown> =>
-    requestJson(`/script/bytecode?name=${encodeURIComponent(name)}&run=${isRunAfterSave ? 1 : 0}`, {
-      method: 'POST',
-      headers: { 'Content-Type': BINARY_TYPE },
-      body: toArrayBuffer(bytes),
-    });
+  const uploadScript = (
+    name: string,
+    bytes: Uint8Array,
+    requestId: number,
+    isRunAfterSave: boolean,
+  ): Promise<{ state: boolean; request: number }> =>
+    requestJson(
+      `/vm/bytecode?name=${encodeURIComponent(name)}&request=${requestId}&run=${
+        isRunAfterSave ? 1 : 0
+      }`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': BINARY_TYPE },
+        body: toArrayBuffer(bytes),
+      },
+    );
 
-  const removeScript = (name: string): Promise<unknown> =>
-    requestJson(`/script/bytecode?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
-
-  const runScript = (name: string): Promise<unknown> =>
-    requestJson(`/script/run?name=${encodeURIComponent(name)}`, { method: 'POST' });
-
-  const stopScript = (name: string): Promise<unknown> =>
-    requestJson(`/script/stop?name=${encodeURIComponent(name)}`, { method: 'POST' });
-
-  const stopAll = (): Promise<unknown> => requestJson('/script/stop-all', { method: 'POST' });
 
   return {
     getCapabilities,
     getList,
-    getStatus,
     getBytecode,
-    saveScript,
-    removeScript,
-    runScript,
-    stopScript,
-    stopAll,
+    uploadScript,
   };
 };
