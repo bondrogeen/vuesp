@@ -184,7 +184,7 @@ void BytecodeVM::logError(const char* message) {
 }
 
 int8_t BytecodeVM::findScriptIndex(uint8_t id) const {
-  for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+  for (uint8_t i = 0; i < kMaxScripts; i++) {
     if (_scripts[i].used && _scripts[i].id == id) return (int8_t)i;
   }
   return -1;
@@ -228,7 +228,7 @@ void BytecodeVM::releaseStack(uint16_t base, uint16_t size) {
 
 void BytecodeVM::releaseContext(Context& ctx) {
   if (!ctx.active) return;
-  const uint8_t scriptId = ctx.scriptIndex < MAX_SCRIPTS && _scripts[ctx.scriptIndex].used
+  const uint8_t scriptId = ctx.scriptIndex < kMaxScripts && _scripts[ctx.scriptIndex].used
                                ? _scripts[ctx.scriptIndex].id
                                : 0;
   const bool wasHandler = ctx.handler;
@@ -248,7 +248,7 @@ void BytecodeVM::releaseContext(Context& ctx) {
 
 bool BytecodeVM::startContext(int8_t scriptIndex, uint16_t entry, int8_t handlerIndex,
                               int8_t& contextIndex, int8_t parentContext) {
-  if (scriptIndex < 0 || scriptIndex >= MAX_SCRIPTS || !_scripts[scriptIndex].used) {
+  if (scriptIndex < 0 || scriptIndex >= kMaxScripts || !_scripts[scriptIndex].used) {
     setError(VmError::NO_SCRIPT, 0, entry);
     return false;
   }
@@ -283,7 +283,7 @@ bool BytecodeVM::startContext(int8_t scriptIndex, uint16_t entry, int8_t handler
     memcpy(ctx.ancestors, parent.ancestors, parent.ancestorCount);
     if (ctx.ancestorCount < kMaxCallDepth) {
       const uint8_t parentScriptId =
-          parent.scriptIndex < MAX_SCRIPTS && _scripts[parent.scriptIndex].used
+          parent.scriptIndex < kMaxScripts && _scripts[parent.scriptIndex].used
               ? _scripts[parent.scriptIndex].id
               : 0;
       ctx.ancestors[ctx.ancestorCount++] = parentScriptId;
@@ -299,7 +299,7 @@ uint8_t BytecodeVM::callDepth(const Context& ctx) const {
 }
 
 bool BytecodeVM::inCallChain(const Context& ctx, uint8_t scriptId) const {
-  if (ctx.scriptIndex < MAX_SCRIPTS && _scripts[ctx.scriptIndex].used &&
+  if (ctx.scriptIndex < kMaxScripts && _scripts[ctx.scriptIndex].used &&
       _scripts[ctx.scriptIndex].id == scriptId) {
     return true;
   }
@@ -347,7 +347,7 @@ bool BytecodeVM::loadScript(uint8_t id, const uint8_t* data, uint16_t size, bool
   stopScript(id);
   int8_t index = findScriptIndex(id);
   if (index < 0) {
-    for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+    for (uint8_t i = 0; i < kMaxScripts; i++) {
       if (!_scripts[i].used) {
         index = (int8_t)i;
         break;
@@ -395,7 +395,7 @@ bool BytecodeVM::stopScript(uint8_t id) {
   for (uint8_t i = 0; i < kMaxContexts; i++) {
     Context& ctx = _contexts[i];
     if (!ctx.active) continue;
-    if (ctx.scriptIndex < MAX_SCRIPTS && _scripts[ctx.scriptIndex].used &&
+    if (ctx.scriptIndex < kMaxScripts && _scripts[ctx.scriptIndex].used &&
         _scripts[ctx.scriptIndex].id == id) {
       releaseContext(ctx);
       stopped = true;
@@ -427,7 +427,7 @@ uint8_t BytecodeVM::activeContexts() const {
 
 uint8_t BytecodeVM::scriptCount() const {
   uint8_t count = 0;
-  for (uint8_t i = 0; i < MAX_SCRIPTS; i++) {
+  for (uint8_t i = 0; i < kMaxScripts; i++) {
     if (_scripts[i].used) count++;
   }
   return count;
@@ -436,7 +436,7 @@ uint8_t BytecodeVM::scriptCount() const {
 bool BytecodeVM::isScriptActive(uint8_t id) const {
   for (uint8_t i = 0; i < kMaxContexts; i++) {
     const Context& ctx = _contexts[i];
-    if (!ctx.active || ctx.scriptIndex >= MAX_SCRIPTS) continue;
+    if (!ctx.active || ctx.scriptIndex >= kMaxScripts) continue;
     const ScriptEntry& script = _scripts[ctx.scriptIndex];
     if (script.used && script.id == id) return true;
   }
@@ -1263,7 +1263,7 @@ bool BytecodeVM::wait(Context& ctx, uint32_t ms, uint32_t now) {
 }
 
 bool BytecodeVM::execute(Context& ctx, uint32_t now) {
-  if (ctx.scriptIndex >= MAX_SCRIPTS || !_scripts[ctx.scriptIndex].used) {
+  if (ctx.scriptIndex >= kMaxScripts || !_scripts[ctx.scriptIndex].used) {
     setError(VmError::NO_SCRIPT, 0, ctx.pc);
     releaseContext(ctx);
     return false;
@@ -1521,7 +1521,7 @@ bool BytecodeVM::execute(Context& ctx, uint32_t now) {
 
 bool BytecodeVM::emitToHandler(int8_t scriptIndex, uint8_t handlerIndex, uint8_t paramCount,
                                const int32_t* params) {
-  if (scriptIndex < 0 || scriptIndex >= MAX_SCRIPTS || !_scripts[scriptIndex].used) return false;
+  if (scriptIndex < 0 || scriptIndex >= kMaxScripts || !_scripts[scriptIndex].used) return false;
   HandlerRef handler;
   if (!getHandler(_scripts[scriptIndex].view, handlerIndex, handler)) return false;
   for (uint8_t i = 0; i < MAX_EVENT_PARAMS; i++) {
@@ -1534,7 +1534,7 @@ bool BytecodeVM::emitToHandler(int8_t scriptIndex, uint8_t handlerIndex, uint8_t
 
 bool BytecodeVM::emitEvent(uint8_t eventId, uint8_t paramCount, const int32_t* params) {
   bool started = false;
-  for (uint8_t s = 0; s < MAX_SCRIPTS; s++) {
+  for (uint8_t s = 0; s < kMaxScripts; s++) {
     if (!_scripts[s].used) continue;
     const ContainerView& view = _scripts[s].view;
     for (uint16_t h = 0; h < view.header.handlerCount; h++) {

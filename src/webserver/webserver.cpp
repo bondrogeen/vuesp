@@ -20,7 +20,6 @@ uint32_t lastProgress = 0;
 #define PROGRESS_MIN_INTERVAL_MS 250
 #define CLEANUP_INTERVAL_MS 1000
 
-static uint8_t profileBuffer[sizeof(ModbusProfile)];
 static size_t profileLen = 0;
 static bool profileActive = false;
 static uint8_t fragmentBuffer[1024];
@@ -100,11 +99,11 @@ static void handleWsFragment(const AwsFrameInfo* info, const uint8_t* data, size
     if (!profileActive && !fragmentActive) return;
   }
 
-  uint8_t* target = profileActive ? profileBuffer : fragmentBuffer;
-  const size_t capacity = profileActive ? sizeof(profileBuffer) : sizeof(fragmentBuffer);
+  uint8_t* target = profileActive ? modbusProfileBuffer() : fragmentBuffer;
+  const size_t capacity = profileActive ? sizeof(ModbusProfile) : sizeof(fragmentBuffer);
   size_t& used = profileActive ? profileLen : fragmentLen;
 
-  if (used + len > capacity) {
+  if (!target || used + len > capacity) {
     profileActive = false;
     fragmentActive = false;
     profileLen = 0;
@@ -124,7 +123,7 @@ static void handleWsFragment(const AwsFrameInfo* info, const uint8_t* data, size
 
     if (profileActive && profileLen == sizeof(ModbusProfile)) {
       local.len = profileLen;
-      onWsEventModbusProfile(&local, profileBuffer, profileLen, clientId, KEY_MODBUSPROFILE);
+      onWsEventModbusProfile(&local, modbusProfileBuffer(), profileLen, clientId, KEY_MODBUSPROFILE);
     } else if (fragmentActive) {
       local.len = fragmentLen;
       handleWsMessage(fragmentBuffer, fragmentLen, clientId);

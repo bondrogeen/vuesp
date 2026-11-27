@@ -12,4 +12,15 @@
 #define VBC_CACHE_SLOTS 3
 #endif
 
+// The legacy text runner keeps its full slot table in normal builds. The
+// bytecode build only needs a few slots for the old pages, so it defaults to 4
+// to leave DRAM for the VM and Wi-Fi stack.
+#ifndef VBC_LEGACY_SCRIPT_SLOTS
+#if ENABLE_BYTECODE_VM
+#define VBC_LEGACY_SCRIPT_SLOTS 4
+#else
+#define VBC_LEGACY_SCRIPT_SLOTS 15
+#endif
+#endif
+
 #endif

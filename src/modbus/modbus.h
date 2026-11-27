@@ -78,5 +78,6 @@ void setupModbus();
 void loopModbus(uint32_t now);
 void onWsEventModbus(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task);
 void onWsEventModbusProfile(void* arg, uint8_t* data, size_t len, uint32_t clientId, uint8_t task);
+uint8_t* modbusProfileBuffer();
 
 #endif

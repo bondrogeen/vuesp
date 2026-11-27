@@ -26,6 +26,12 @@ Modbus modbus = {KEY_MODBUS, 0, MODBUS_DEFAULT_ROLE, MODBUS_DEFAULT_ADDRESS, MOD
                  MODBUS_DATA_BITS, MODBUS_PARITY_NONE, 1, MODBUS_DEFAULT_TX_PIN, MODBUS_DEFAULT_RX_PIN,
                  MODBUS_DEFAULT_DE_PIN, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, 0};
 ModbusProfile modbusProfile;
+static ModbusProfile* incomingProfile = nullptr;
+
+uint8_t* modbusProfileBuffer() {
+  if (!incomingProfile) incomingProfile = new ModbusProfile;
+  return (uint8_t*)incomingProfile;
+}
 
 static uint8_t rxFrame[MODBUS_MAX_FRAME];
 static uint16_t rxLen = 0;
@@ -651,21 +657,24 @@ static void sendProfile() {
   if (wsClientCount() > 0) wsSendAll((uint8_t*)&modbusProfile, sizeof(modbusProfile));
 }
 
-static ModbusProfile incomingProfile;
-
 static void handleProfileCommand() {
   if (!tasks[KEY_MODBUSPROFILE]) return;
   tasks[KEY_MODBUSPROFILE] = 0;
 
-  if (incomingProfile.command == CMD_SET || incomingProfile.command == CMD_SAVE) {
-    if (validateModbusProfile(incomingProfile)) {
-      modbusProfile = incomingProfile;
+  if (incomingProfile &&
+      (incomingProfile->command == CMD_SET || incomingProfile->command == CMD_SAVE)) {
+    if (validateModbusProfile(*incomingProfile)) {
+      modbusProfile = *incomingProfile;
       modbus.varCount = modbusProfile.varCount;
       resetMaster();
-      if (incomingProfile.command == CMD_SAVE) saveModbusProfile(modbusProfile);
+      if (incomingProfile->command == CMD_SAVE) saveModbusProfile(modbusProfile);
     }
   }
 
+  if (incomingProfile) {
+    delete incomingProfile;
+    incomingProfile = nullptr;
+  }
   modbusProfile.command = 0;
   sendProfile();
 }
@@ -676,8 +685,12 @@ void onWsEventModbusProfile(void* arg, uint8_t* data, size_t len, uint32_t clien
   AwsFrameInfo* info = (AwsFrameInfo*)arg;
   if (info->len != sizeof(ModbusProfile)) return;
 
-  memcpy(&incomingProfile, data, sizeof(incomingProfile));
-  incomingProfile.key = KEY_MODBUSPROFILE;
+  uint8_t* buffer = modbusProfileBuffer();
+  if (!buffer) return;
+  if (data != buffer) {
+    memcpy(buffer, data, sizeof(ModbusProfile));
+  }
+  incomingProfile->key = KEY_MODBUSPROFILE;
   tasks[KEY_MODBUSPROFILE] = 1;
 }
 

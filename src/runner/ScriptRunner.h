@@ -12,6 +12,7 @@
 #include <cstring>
 
 #include "../const/define.h"
+#include "../const/bytecode.h"
 
 #ifndef VUESP_LOG_LEVEL
 #define VUESP_LOG_LEVEL 0
@@ -24,7 +25,13 @@
 #define ENABLE_PORT_LOGGING (VUESP_LOG_LEVEL >= 3)
 #define ENABLE_DATA_LOGGING (VUESP_LOG_LEVEL >= 3)
 
+#ifndef MAX_SCRIPTS
+#if ENABLE_BYTECODE_VM
+#define MAX_SCRIPTS VBC_LEGACY_SCRIPT_SLOTS
+#else
 #define MAX_SCRIPTS 15
+#endif
+#endif
 #define MAX_SCRIPT_LEN 256
 #define MAX_TOKEN_LEN 64
 #define MAX_UINT_VARS 10
