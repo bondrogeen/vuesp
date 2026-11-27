@@ -1,4 +1,5 @@
 #include "./config/ConfigStore.h"
+#include "./const/features.h"
 #include "./diag/bootlog.h"
 #include "./diag/diag.h"
 #include "./device/device.h"
@@ -6,7 +7,9 @@
 #include "./files/files.h"
 #include "./gpio/gpio.h"
 #include "./init/init.h"
+#if VUESP_MODBUS
 #include "./modbus/modbus.h"
+#endif
 #include "./runner/runner.h"
 #include "./setup/serialSetup.h"
 #include "./tasks/tasks.h"
@@ -37,7 +40,9 @@ void setupFirst() {
   configStore.begin();
   setupFirstDevice();
   setupFirstGPIO();
+#if VUESP_MODBUS
   setupFirstModbus();
+#endif
 }
 
 void setupDelay() {
@@ -53,7 +58,9 @@ void setupDelay() {
   initWiFi();
   setupGPIO();
   setupDevice();
+#if VUESP_MODBUS
   setupModbus();
+#endif
   setupServer();
   setupDiscovery();
   setupRunner();
@@ -79,7 +86,9 @@ void loop() {
     loopTask(now);
     loopGPIO(now);
     loopDevice(now);
+#if VUESP_MODBUS
     loopModbus(now);
+#endif
     loopWiFi(now);
     loopRunner(now);
     loopSerialSetup();

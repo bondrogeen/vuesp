@@ -1,7 +1,11 @@
 #include "./webserver.h"
 
+#include "../const/features.h"
+
+#if VUESP_MODBUS
 #include "../modbus/modbus.h"
 #include "../modbus/modbus_raw.h"
+#endif
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
@@ -19,6 +23,9 @@ uint32_t lastProgress = 0;
 #define PROGRESS_MIN_INTERVAL_MS 250
 #define CLEANUP_INTERVAL_MS 1000
 
+#if VUESP_MODBUS
+// Modbus profile and fragmented message buffers: about 14 KB of static RAM,
+// so they only exist when the feature is enabled.
 static uint8_t profileBuffer[sizeof(ModbusProfile)];
 static size_t profileLen = 0;
 static bool profileActive = false;
@@ -26,6 +33,7 @@ static uint8_t fragmentBuffer[1024];
 static size_t fragmentLen = 0;
 static uint8_t fragmentTask = 0xFF;
 static bool fragmentActive = false;
+#endif
 
 static AsyncAuthenticationMiddleware basicAuth;
 static AsyncCorsMiddleware cors;
@@ -68,6 +76,7 @@ void sendProgress(bool force = false) {
   lastProgress = now;
 }
 
+#if VUESP_MODBUS
 static void handleWsMessage(const uint8_t* data, size_t len, uint32_t clientId) {
   if (!data || len == 0) return;
 
@@ -136,6 +145,7 @@ static void handleWsFragment(const AwsFrameInfo* info, const uint8_t* data, size
     fragmentTask = 0xFF;
   }
 }
+#endif
 
 void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
   clientID = client->id();
@@ -145,9 +155,19 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
     }
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
+#if VUESP_MODBUS
     if (info->opcode == WS_BINARY) {
       handleWsFragment(info, data, len, clientID);
     }
+#else
+    // Without Modbus there are no messages larger than one WebSocket frame.
+    if (info->opcode == WS_BINARY && info->final && info->index == 0 && info->len == len) {
+      const uint8_t task = data[0];
+      if (task > KEY_END) return;
+      onWsEventTasks(arg, data, len, clientID, task);
+      onWsEventDevice(arg, data, len, clientID, task);
+    }
+#endif
   }
 }
 
