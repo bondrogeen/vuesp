@@ -99,6 +99,7 @@
     "fs": "File system",
     "gpio": "GPIO",
     "script": "Script",
+    "bytecode": "Bytecode",
     "serial": "SERIAL",
     "modbus": "Modbus"
   },

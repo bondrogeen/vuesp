@@ -15,6 +15,11 @@
     "path": "/script/"
   },
   {
+    "name": "menu.bytecode",
+    "icon": "code",
+    "path": "/script-studio/"
+  },
+  {
     "name": "menu.settings",
     "icon": "settings",
     "path": "/device/settings/"

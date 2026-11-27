@@ -99,6 +99,7 @@
     "fs": "Файловая система",
     "gpio": "GPIO",
     "script": "Сценарии",
+    "bytecode": "Байткод",
     "serial": "SERIAL",
     "modbus": "Modbus"
   },
