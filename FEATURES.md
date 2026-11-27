@@ -54,9 +54,21 @@ and keep the generated web protocol compatible.
 4. Remove `modbus.*` and `menu.modbus` from `vue/json/locales/ru.json` and `en.json`.
 5. Nothing else references the module; keep the protocol keys.
 
-The example is **off by default** (`role = off`, UART not started). The user
-selects Master/Slave, sets TX/RX/DE pins and presses Connect. Pins are runtime
-settings; `DE = -1` means auto-direction. The template map is generic:
+The example is **off by default**: `VUESP_MODBUS` is `0`, so `src/modbus` stays
+in the repository but is not compiled into the firmware. This keeps the default
+build lean: the Modbus profile and receive buffers take about 21 KB of static
+RAM, which is too much for ESP8266 and makes the web UI fail with OOM.
+
+To enable it on ESP32, add the flag to that environment:
+
+```ini
+build_flags = -D VUESP_MODBUS=1
+```
+
+Then return `menu.modbus` to `vue/json/menu.json` and run `npm run protocol`
+(or add the item back to `vue/public/default.json`). The user selects
+Master/Slave, sets TX/RX/DE pins and presses Connect. Pins are runtime settings;
+`DE = -1` means auto-direction. The template map is generic:
 firmware version, uptime, address, baud, role, last error, requests, errors,
 RTC, plus the dynamic slave bank `100–131`.
 
@@ -74,5 +86,6 @@ removal after a template update.
 
 ## Known issues
 
-- `src/modbus` is present but not wired into `main.cpp`, `webserver` or the
-  protocol. Decide whether to turn it into a full example or drop it.
+- `src/modbus` is compiled only with `-D VUESP_MODBUS=1`; the default build
+  leaves it out. Enabling it on ESP8266 is blocked at compile time because the
+  web UI runs out of heap (`-D VUESP_MODBUS_ALLOW_ESP8266=1` overrides that).
