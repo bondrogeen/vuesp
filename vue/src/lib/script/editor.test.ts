@@ -108,12 +108,12 @@ test('error ranges underline a whole identifier and merge overlaps', () => {
   assert.match(ranges[0].message, /second/);
 });
 
-test('highlight adds editor-error spans for diagnostics', () => {
+test('highlight adds error decorations for diagnostics', () => {
   const source = '$u0 = ;';
   const ranges = computeErrorRanges(source, [
     { code: 'E_SYNTAX', message: 'unexpected token', pos: { line: 1, column: 7, offset: 6 } },
   ]);
   const html = highlightBytecode(source, manifest, ranges);
-  assert.match(html, /editor-error/);
+  assert.match(html, /decoration-red-main/);
   assert.match(html, />;</);
 });

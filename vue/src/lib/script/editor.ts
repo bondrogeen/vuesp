@@ -138,9 +138,12 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+const ERROR_CLASS =
+  'rounded-xs bg-red-main/10 underline decoration-red-main decoration-wavy decoration-2 underline-offset-2';
+
 function wrapText(text: string, kind: string, error = false): string {
   if (!text) return '';
-  const cls = [TOKEN_CLASS[kind] ?? '', error ? 'editor-error' : '']
+  const cls = [TOKEN_CLASS[kind] ?? '', error ? ERROR_CLASS : '']
     .filter(Boolean)
     .join(' ');
   const content = escapeHtml(text);

@@ -1,6 +1,6 @@
 {
   "name": "vuesp",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "author": "bondrogeen",
   "description": "This is a Vue 3 web application for managing devices (e.g., IoT devices). The app interacts with devices via WebSockets, displays firmware and file system information, provides functions for uploading, deleting, and formatting files, and manages device services through a user-friendly interface.",
   "repository": {

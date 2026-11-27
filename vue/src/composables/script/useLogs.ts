@@ -2,7 +2,7 @@ import { nextTick, ref, useTemplateRef, watch, type Ref } from 'vue';
 import { timeUtcToString } from 'vuesp-components/helpers';
 import type { IMessage } from '@/types';
 
-interface ILog {
+export interface ILog {
   time: string;
   type: number;
   text: string;

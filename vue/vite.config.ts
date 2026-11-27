@@ -153,6 +153,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           headers: authHeader ? { Authorization: authHeader } : undefined,
         },
+        '/script': {
+          target: `http://${ip}`,
+          changeOrigin: true,
+          headers: authHeader ? { Authorization: authHeader } : undefined,
+        },
       },
     },
     define: {

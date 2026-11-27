@@ -497,6 +497,11 @@
     "copied": "Скопировано",
     "logEmpty": "Нет логов",
     "runs": "запусков",
-    "vmScripts": "Скрипты VM"
+    "vmScripts": "Скрипты VM",
+    "vmUnavailable": "VM недоступен",
+    "vmUnavailableHint": "Прошивка собрана без ENABLE_BYTECODE_VM. Сохранение и запуск отключены.",
+    "params": "параметров",
+    "nameHint": "1–16 символов: a-z, 0-9, _ и -, первый — буква или _",
+    "nameTaken": "Скрипт с таким именем уже есть"
   }
 }
