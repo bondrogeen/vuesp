@@ -1,6 +1,8 @@
 #include "./webserver.h"
 
 #include "../runner/bytecode/BytecodeService.h"
+#include "../modbus/modbus.h"
+#include "../modbus/modbus_raw.h"
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
@@ -17,6 +19,14 @@ uint32_t lastProgress = 0;
 // a frame per chunk. PING stays at 1 s as the liveness heartbeat.
 #define PROGRESS_MIN_INTERVAL_MS 250
 #define CLEANUP_INTERVAL_MS 1000
+
+static uint8_t profileBuffer[sizeof(ModbusProfile)];
+static size_t profileLen = 0;
+static bool profileActive = false;
+static uint8_t fragmentBuffer[1024];
+static size_t fragmentLen = 0;
+static uint8_t fragmentTask = 0xFF;
+static bool fragmentActive = false;
 
 static AsyncAuthenticationMiddleware basicAuth;
 static AsyncCorsMiddleware cors;
@@ -59,6 +69,75 @@ void sendProgress(bool force = false) {
   lastProgress = now;
 }
 
+static void handleWsMessage(const uint8_t* data, size_t len, uint32_t clientId) {
+  if (!data || len == 0) return;
+
+  const uint8_t task = data[0];
+  if (task > KEY_END) return;
+
+  AwsFrameInfo info = {};
+  info.final = 1;
+  info.index = 0;
+  info.opcode = WS_BINARY;
+  info.len = len;
+
+  onWsEventTasks(&info, (uint8_t*)data, len, clientId, task);
+  onWsEventDevice(&info, (uint8_t*)data, len, clientId, task);
+  onWsEventModbus(&info, (uint8_t*)data, len, clientId, task);
+  onWsEventModbusProfile(&info, (uint8_t*)data, len, clientId, task);
+  onWsEventModbusRaw(&info, (uint8_t*)data, len, clientId, task);
+}
+
+static void handleWsFragment(const AwsFrameInfo* info, const uint8_t* data, size_t len, uint32_t clientId) {
+  if (!info || !data || len == 0) return;
+
+  if (info->opcode == WS_BINARY && info->index == 0) {
+    fragmentLen = 0;
+    profileLen = 0;
+    fragmentTask = data[0];
+    profileActive = fragmentTask == KEY_MODBUSPROFILE;
+    fragmentActive = !profileActive && fragmentTask <= KEY_END;
+    if (!profileActive && !fragmentActive) return;
+  }
+
+  uint8_t* target = profileActive ? profileBuffer : fragmentBuffer;
+  const size_t capacity = profileActive ? sizeof(profileBuffer) : sizeof(fragmentBuffer);
+  size_t& used = profileActive ? profileLen : fragmentLen;
+
+  if (used + len > capacity) {
+    profileActive = false;
+    fragmentActive = false;
+    profileLen = 0;
+    fragmentLen = 0;
+    return;
+  }
+
+  memcpy(target + used, data, len);
+  used += len;
+
+  const bool frameComplete = info->final && (info->index + len >= info->len);
+  if (frameComplete) {
+    AwsFrameInfo local = {};
+    local.final = 1;
+    local.index = 0;
+    local.opcode = WS_BINARY;
+
+    if (profileActive && profileLen == sizeof(ModbusProfile)) {
+      local.len = profileLen;
+      onWsEventModbusProfile(&local, profileBuffer, profileLen, clientId, KEY_MODBUSPROFILE);
+    } else if (fragmentActive) {
+      local.len = fragmentLen;
+      handleWsMessage(fragmentBuffer, fragmentLen, clientId);
+    }
+
+    profileActive = false;
+    fragmentActive = false;
+    profileLen = 0;
+    fragmentLen = 0;
+    fragmentTask = 0xFF;
+  }
+}
+
 void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
   clientID = client->id();
   if (type == WS_EVT_DISCONNECT) {
@@ -68,12 +147,7 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (info->opcode == WS_BINARY) {
-      if (info->final && info->index == 0 && info->len == len) {
-        uint8_t task = data[0];
-        if (task > KEY_END) return;
-        onWsEventTasks(arg, data, len, clientID, task);
-        onWsEventDevice(arg, data, len, clientID, task);
-      }
+      handleWsFragment(info, data, len, clientID);
     }
   }
 }

@@ -10,6 +10,7 @@ import { getPageTitle } from 'vuesp-components/helpers';
 import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
 import ServiceStorage from '@/components/service/ServiceStorage.vue';
 import ServiceSettings from '@/components/service/ServiceSettings.vue';
+import ServiceModbus from '@/components/service/ServiceModbus.vue';
 
 const appStore = useAppStore();
 const { menu } = storeToRefs(appStore);
@@ -44,6 +45,8 @@ onMounted(() => {
       <ServiceStorage v-if="isPage('storage')" />
 
       <ServiceGPIO v-if="isPage('gpio')" />
+
+      <ServiceModbus v-if="isPage('modbus')" />
     </template>
   </div>
 </template>

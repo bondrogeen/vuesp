@@ -1,5 +1,5 @@
 import type { IDashboardItem, IDialog, IMenuItem, INotification, IPackage, ISuggestion } from 'vuesp-components/types';
-import type { IDallas, IDevice, IDiscovery, IEvent, IInfo, IBuffer, IMessage, IPort, IProgress, ISettings, TKey } from '@/generated/protocol';
+import type { IDallas, IDevice, IDiscovery, IEvent, IInfo, IBuffer, IMessage, IModbus, IModbusProfile, IModbusRaw, IPort, IProgress, ISettings, TKey } from '@/generated/protocol';
 
 export type { TMessage } from '@/generated/protocol';
 
@@ -34,6 +34,18 @@ export interface IWebSocketStore {
   message: IMessage;
 }
 
+export interface IModbusVarView {
+  id: string;
+  name: string;
+  type: number;
+  unit: string;
+  decimals: number;
+  value: number;
+  text: string;
+  quality: number;
+  updated: number;
+}
+
 export interface IStateMain {
   dallas: Record<string, IDallas>;
   discovery: Record<string, IDiscovery>;
@@ -42,5 +54,9 @@ export interface IStateMain {
   device: IDevice;
   buffer: IBuffer;
   event: IEvent;
+  modbus: IModbus;
+  modbusProfile: IModbusProfile;
+  modbusRaw: IModbusRaw;
+  vars: Record<string, IModbusVarView>;
   slots: Record<number, IMessage>;
 }

@@ -19,6 +19,9 @@ enum key : uint8_t {
   KEY_BUFFER = 12,
   KEY_DEVICE = 13,
   KEY_DISCOVERY = 14,
+  KEY_MODBUS = 15,
+  KEY_MODBUSPROFILE = 16,
+  KEY_MODBUSRAW = 17,
   KEY_END
 };
 
@@ -46,6 +49,10 @@ enum portMode : uint16_t {
   PORT_ADC = 1 << 6,
   PORT_DAC = 1 << 7
 };
+
+#define MODBUS_DEVICES_MAX 8
+#define MODBUS_POINTS_MAX 64
+#define MODBUS_VARS_MAX 32
 
 #pragma pack(push, 1)
 
@@ -204,6 +211,112 @@ struct Device {
   uint32_t list;
   char message[32];
 };
+
+struct ModbusVarValue {
+  uint8_t var;
+  uint8_t quality;
+  uint8_t flags;
+  uint8_t reserved;
+  double value;
+  char text[16];
+};
+
+struct ModbusDevice {
+  char id[12];
+  char name[20];
+  uint8_t address;
+  uint8_t enabled;
+  uint16_t interval;
+  uint16_t timeout;
+  uint8_t retries;
+};
+
+struct ModbusPoint {
+  uint8_t device;
+  char id[12];
+  char name[20];
+  uint8_t fc;
+  uint16_t address;
+  uint8_t type;
+  uint8_t flags;
+  uint8_t registers;
+  uint8_t decimals;
+  float scale;
+  float offset;
+  char unit[8];
+  uint8_t var;
+};
+
+struct ModbusVar {
+  char id[16];
+  char name[20];
+  uint8_t type;
+  uint8_t flags;
+  char unit[8];
+  uint8_t decimals;
+  uint8_t point;
+  char source[32];
+};
+
+struct ModbusProfile {
+  uint8_t key;
+  uint8_t command;
+  uint16_t version;
+  uint8_t deviceCount;
+  uint8_t pointCount;
+  uint8_t varCount;
+  uint8_t reserved;
+  ModbusDevice devices[8];
+  ModbusPoint points[64];
+  ModbusVar vars[32];
+};
+
+struct ModbusRaw {
+  uint8_t key;
+  uint8_t command;
+  uint8_t slave;
+  uint8_t function;
+  uint16_t address;
+  uint8_t length;
+  uint8_t autoCrc;
+  uint8_t request[64];
+  uint8_t requestLen;
+  uint8_t response[64];
+  uint8_t responseLen;
+  uint8_t status;
+  uint8_t reserved;
+  uint32_t elapsed;
+};
+
+struct Modbus {
+  uint8_t key;
+  uint8_t command;
+  uint8_t role;  // 0 off, 1 slave, 2 master
+  uint8_t address;
+  uint32_t baud;
+  uint8_t dataBits;
+  uint8_t parity;
+  uint8_t stopBits;
+  uint8_t txPin;
+  uint8_t rxPin;
+  int8_t dePin;
+  uint8_t status;  // 0 off, 1 listening/polling, 2 error
+  uint8_t lastFunction;
+  uint8_t lastAddress;
+  uint8_t lastError;
+  uint32_t requests;
+  uint32_t errors;
+  uint8_t varCount;
+  uint8_t reserved[3];
+  uint32_t updated;
+  uint8_t point;
+  uint8_t ok;
+  uint8_t pad[2];
+  double value;
+  char text[16];
+  ModbusVarValue vars[32];
+};
+
 #pragma pack(pop)
 
 #include "protocol.generated.h"

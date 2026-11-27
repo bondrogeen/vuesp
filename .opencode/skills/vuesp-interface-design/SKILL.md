@@ -53,7 +53,7 @@ description: Use when designing, reviewing, or implementing Vuesp interfaces —
 - Стилизация — только Tailwind-утилиты в разметке.
 - Отступы, паддинги, маржины и `gap` — по шкале, кратной 4 px.
 - Карточки — только `VCard` из `vuesp-components`.
-- Кнопки — `VButton`; ссылки — `NuxtLink`; иконки — `VIcon`.
+- Кнопки и ссылки — `VButton` (`to` для внутренних маршрутов, `href` — для внешних); иконки — `VIcon`.
 - Иконочные кнопки — с `aria-label` и `title`.
 - Типы: интерфейсы `I*`, type-алиасы `T*`.
 - Не добавляй произвольные цвета, размеры и `style`, если есть токен/утилита.
