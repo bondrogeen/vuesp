@@ -12,19 +12,97 @@ import type { BytecodeExample, CapabilityManifest, CompileResult, EventSpec, Fun
 
 const { $t } = useLocale();
 const { message: wsMessage } = useStore();
-const { logs, onHover } = useLogs(wsMessage);
+const { logs } = useLogs(wsMessage);
 
 const logsOpen = ref(true);
 const logsPanel = ref<HTMLElement | null>(null);
+const logEl = ref<HTMLDivElement | null>(null);
+const logsPaused = ref(false);
+const pausedLogs = ref<{ time: string; type: number; text: string }[]>([]);
+const logMode = ref<'text' | 'hex'>('text');
+const logSearchOpen = ref(false);
+const logSearch = ref('');
+const autoScroll = ref(true);
+const copiedLogs = ref(false);
 
 function clearLogs() {
   logs.value = [];
+  pausedLogs.value = [];
 }
 
 function showLogs() {
   logsOpen.value = true;
   void nextTick(() => logsPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
+
+function togglePauseLogs() {
+  if (logsPaused.value) {
+    logsPaused.value = false;
+    pausedLogs.value = [];
+    return;
+  }
+  pausedLogs.value = logs.value.map((entry) => ({ ...entry }));
+  logsPaused.value = true;
+}
+
+const liveLogs = computed(() => (logsPaused.value ? pausedLogs.value : logs.value));
+const visibleLogs = computed(() => {
+  const query = logSearch.value.trim().toLowerCase();
+  if (!query) return liveLogs.value;
+  return liveLogs.value.filter((entry) => entry.text.toLowerCase().includes(query));
+});
+
+function logText(entry: { text: string }): string {
+  if (logMode.value === 'text') return entry.text;
+  return Array.from(new TextEncoder().encode(entry.text))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join(' ');
+}
+
+function formatLog(entry: { time: string; text: string }): string {
+  return `${entry.time}  ${logText(entry)}`;
+}
+
+async function copyLogs() {
+  if (visibleLogs.value.length === 0) return;
+  await navigator.clipboard.writeText(visibleLogs.value.map(formatLog).join('\n'));
+  copiedLogs.value = true;
+  window.setTimeout(() => (copiedLogs.value = false), 1200);
+}
+
+function downloadLogs() {
+  if (visibleLogs.value.length === 0) return;
+  const blob = new Blob([visibleLogs.value.map(formatLog).join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `script-${name.value || 'script'}.log`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function followLogs() {
+  autoScroll.value = true;
+  void nextTick(() => {
+    if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight;
+  });
+}
+
+function onLogScroll() {
+  const element = logEl.value;
+  if (!element) return;
+  autoScroll.value = element.scrollHeight - element.scrollTop - element.clientHeight < 24;
+}
+
+watch(
+  [() => visibleLogs.value.length, logMode, logSearch],
+  () => {
+    if (!autoScroll.value) return;
+    void nextTick(() => {
+      if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight;
+    });
+  },
+);
 
 interface ScriptListItem {
   name: string;
@@ -35,6 +113,20 @@ interface ScriptListItem {
   active: number;
   error: number;
   flags: number;
+}
+
+interface ScriptStatus {
+  active: number;
+  scripts: number;
+  saved: number;
+  cacheSlots: number;
+  packError: number;
+  packErrorName: string;
+  error: number;
+  errorName: string;
+  errorScript: number;
+  errorScriptName: string;
+  errorPc: number;
 }
 
 interface EditorApi {
@@ -61,6 +153,7 @@ const manifest = ref<CapabilityManifest>(DEFAULT_MANIFEST);
 const message = ref('');
 const busy = ref(false);
 const scripts = ref<ScriptListItem[]>([]);
+const runtime = ref<ScriptStatus | null>(null);
 const editor = ref<EditorApi | null>(null);
 const tabsScroll = ref<HTMLDivElement | null>(null);
 const nameInput = ref<HTMLInputElement | null>(null);
@@ -72,6 +165,7 @@ const examplesOpen = ref(false);
 const advancedOpen = ref(false);
 const advancedTab = ref<'disasm' | 'hex'>('disasm');
 const moreOpen = ref(false);
+const settingsOpen = ref(false);
 const deleteTarget = ref<string | null>(null);
 
 const examples = BYTECODE_EXAMPLES;
@@ -101,6 +195,16 @@ const hex = computed(() => {
 const currentEntry = computed(() => scripts.value.find((script) => script.name === name.value) ?? null);
 const draftTab = computed(() => !scripts.value.some((script) => script.name === name.value));
 const dirty = computed(() => source.value !== savedSource.value || name.value !== savedName.value);
+const loadedCount = computed(() => scripts.value.filter((script) => script.loaded).length);
+const runningCount = computed(() => scripts.value.filter((script) => script.active).length);
+const packState = computed(() =>
+  runtime.value?.packError ? runtime.value.packErrorName : $t('scriptStudio.noError'),
+);
+const lastError = computed(() => {
+  if (!runtime.value?.error) return $t('scriptStudio.noError');
+  const script = runtime.value.errorScriptName;
+  return script ? `${runtime.value.errorName} · ${script}` : runtime.value.errorName;
+});
 
 const currentState = computed<{ label: string; tone: Tone }>(() => {
   const entry = currentEntry.value;
@@ -184,8 +288,12 @@ function scrollActiveTab() {
 
 async function refresh() {
   try {
-    const response = await fetch('/script/list');
-    if (response.ok) scripts.value = (await response.json()) as ScriptListItem[];
+    const [listResponse, statusResponse] = await Promise.all([
+      fetch('/script/list'),
+      fetch('/script/status'),
+    ]);
+    if (listResponse.ok) scripts.value = (await listResponse.json()) as ScriptListItem[];
+    if (statusResponse.ok) runtime.value = (await statusResponse.json()) as ScriptStatus;
   } catch {
     /* keep the previous view */
   }
@@ -463,6 +571,14 @@ async function copyHex() {
 }
 
 function closeTopLayer(): boolean {
+  if (logSearchOpen.value) {
+    logSearchOpen.value = false;
+    return true;
+  }
+  if (settingsOpen.value) {
+    settingsOpen.value = false;
+    return true;
+  }
   if (moreOpen.value) {
     moreOpen.value = false;
     return true;
@@ -562,15 +678,24 @@ onBeforeUnmount(() => {
             </button>
           </template>
           <span
-            v-if="dirty"
-            class="size-1.5 rounded-full bg-amber-main"
-            :title="$t('scriptStudio.stateNotSaved')"
-          />
-          <span
             class="rounded px-2 py-0.5 text-[10px]"
             :class="stateClass(currentState.tone)"
           >
             {{ currentState.label }}
+          </span>
+
+          <span class="hidden h-4 w-px bg-gray-light-10/70 dark:bg-white/10 sm:block" />
+          <span class="hidden font-mono text-[11px] text-gray-dark-25 dark:text-gray-main sm:inline">
+            {{ $t('scriptStudio.savedCount') }} {{ scripts.length }} ·
+            {{ $t('scriptStudio.loadedCount') }} {{ loadedCount }} ·
+            {{ $t('scriptStudio.runningCount') }} {{ runningCount }}
+          </span>
+          <span
+            v-if="dirty"
+            class="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400"
+          >
+            <span class="size-1.5 rounded-full bg-amber-500" />
+            {{ $t('scriptStudio.stateNotSaved') }}
           </span>
 
           <div class="ml-auto flex flex-wrap items-center gap-2">
@@ -602,6 +727,16 @@ onBeforeUnmount(() => {
               @click="runCurrent"
             >
               <VIcon name="play-circle" class="size-4" />
+            </button>
+
+            <button
+              class="inline-flex items-center justify-center rounded-md border border-gray-light-10/70 px-2 py-1.5 text-xs transition hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5"
+              :class="settingsOpen ? 'bg-black/5 dark:bg-white/10' : ''"
+              :title="$t('scriptStudio.settings')"
+              :aria-label="$t('scriptStudio.settings')"
+              @click="settingsOpen = !settingsOpen"
+            >
+              <VIcon name="settings" class="size-4" />
             </button>
 
             <div class="relative">
@@ -654,6 +789,69 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <div v-if="settingsOpen" class="border-b border-gray-light-10/70 px-4 py-3 dark:border-white/10">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div>
+              <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.cacheSlots') }}</div>
+              <div class="mt-1 font-mono text-sm font-semibold">{{ runtime?.cacheSlots ?? '—' }}</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.vm') }}</div>
+              <div class="mt-1 font-mono text-sm font-semibold">v{{ manifest.vm }}</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.pack') }}</div>
+              <div class="mt-1 font-mono text-sm font-semibold" :class="runtime?.packError ? 'text-red-main' : ''">
+                {{ packState }}
+              </div>
+            </div>
+            <div>
+              <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.lastError') }}</div>
+              <div class="mt-1 truncate font-mono text-sm font-semibold" :class="runtime?.error ? 'text-red-main' : ''" :title="lastError">
+                {{ lastError }}
+              </div>
+            </div>
+            <div>
+              <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.errorPc') }}</div>
+              <div class="mt-1 font-mono text-sm font-semibold">{{ runtime?.errorPc ?? 0 }}</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.vmScripts') }}</div>
+              <div class="mt-1 font-mono text-sm font-semibold">{{ runtime?.scripts ?? 0 }}</div>
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+            <button
+              class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 transition hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5"
+              :disabled="busy || !currentEntry"
+              @click="reloadCurrent"
+            >
+              <VIcon name="refresh" class="size-3.5" />
+              {{ $t('scriptStudio.reloaded') }}
+            </button>
+            <button
+              class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 transition hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5"
+              :disabled="!result?.bytecode"
+              @click="download"
+            >
+              <VIcon name="download" class="size-3.5" />
+              {{ $t('scriptStudio.download') }}
+            </button>
+            <button
+              class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 transition hover:bg-black/5 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5"
+              :disabled="busy"
+              @click="stopAll"
+            >
+              <VIcon name="stop-circle" class="size-3.5" />
+              {{ $t('scriptStudio.stopAll') }}
+            </button>
+            <span class="ml-auto font-mono text-[11px] text-gray-dark-25 dark:text-gray-main">
+              {{ $t('scriptStudio.limits') }}: {{ manifest.limits.instrPerTick }} / {{ manifest.limits.usPerTick }} µs
+            </span>
+          </div>
+        </div>
+
         <div
           class="flex flex-wrap items-center gap-2 border-b border-gray-light-10/70 px-4 py-2 text-xs dark:border-white/10"
         >
@@ -671,6 +869,7 @@ onBeforeUnmount(() => {
             <VIcon name="document" class="size-3.5" />
             {{ $t('examples') }}
           </button>
+          <span class="hidden h-4 w-px bg-gray-light-10/70 dark:bg-white/10 sm:block" />
           <button
             class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 transition hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
             @click="advancedOpen = true"
@@ -678,6 +877,7 @@ onBeforeUnmount(() => {
             <VIcon name="list-check" class="size-3.5" />
             {{ $t('scriptStudio.details') }}
           </button>
+          <span class="hidden h-4 w-px bg-gray-light-10/70 dark:bg-white/10 sm:block" />
           <button
             class="inline-flex items-center gap-1 rounded-md border border-gray-light-10/70 px-2.5 py-1.5 transition hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
             @click="showLogs"
@@ -717,7 +917,7 @@ onBeforeUnmount(() => {
                 :class="
                   script.name === name
                     ? 'border-gray-light-10/70 bg-gray-dark-40/[0.05] text-gray-dark-40 dark:border-white/10 dark:bg-black/35 dark:text-white'
-                    : 'translate-y-px border-gray-light-10/70 bg-black/[0.02] text-gray-dark-30 hover:bg-black/5 dark:border-white/10 dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
+                    : 'border-transparent bg-transparent text-gray-dark-30 hover:bg-black/5 dark:border-transparent dark:bg-transparent dark:text-white/60 dark:hover:bg-white/5'
                 "
               >
                 <button class="flex min-w-0 items-center gap-1 text-left" @click="selectScript(script)">
@@ -750,7 +950,7 @@ onBeforeUnmount(() => {
               <div
                 v-if="draftTab"
                 :id="`tab-${name}`"
-                class="-mb-px flex items-center gap-1 rounded-t-lg border border-b-0 border-amber-main/40 bg-white/70 px-2 py-1 text-gray-dark-40 dark:border-amber-main/40 dark:bg-white/10 dark:text-white"
+                class="flex items-center gap-1 rounded-t-lg border border-b-0 border-amber-main/40 bg-white/70 px-2 py-1 text-gray-dark-40 dark:border-amber-main/40 dark:bg-white/10 dark:text-white"
               >
                 <span class="size-1.5 shrink-0 rounded-full bg-amber-main" />
                 <span class="max-w-40 truncate font-mono text-[11px]">{{ name }}</span>
@@ -791,41 +991,123 @@ onBeforeUnmount(() => {
 
 
         <div ref="logsPanel" class="border-t border-gray-light-10/70 dark:border-white/10">
-          <div class="flex items-center gap-2 px-4 py-2 text-xs">
-            <button class="flex items-center gap-2" @click="logsOpen = !logsOpen">
-              <VIcon name="code" class="size-3.5" />
-              <span>{{ $t('logs') }}</span>
-              <span class="rounded bg-black/5 px-1.5 text-[10px] dark:bg-white/10">
-                {{ logs.length }}
+          <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
+            <div class="flex flex-wrap items-center gap-2">
+              <button class="flex items-center gap-2" @click="logsOpen = !logsOpen">
+                <VIcon name="code" class="size-3.5" />
+                <span>{{ $t('logs') }}</span>
+                <span class="rounded bg-black/5 px-1.5 text-[10px] dark:bg-white/10">
+                  {{ liveLogs.length }}
+                </span>
+                <span class="text-[10px] text-gray-dark-25 dark:text-gray-main">
+                  {{ logsOpen ? '−' : '+' }}
+                </span>
+              </button>
+              <span class="hidden h-4 w-px bg-gray-light-10/70 dark:bg-white/10 sm:block" />
+              <div class="flex items-center gap-1 rounded-md border border-gray-light-10/70 p-0.5 dark:border-white/10">
+                <button
+                  class="rounded px-2 py-0.5 text-[10px] font-medium transition"
+                  :class="logMode === 'text' ? 'bg-blue-main/10 text-blue-main' : 'text-gray-dark-30 dark:text-white/60'"
+                  @click="logMode = 'text'"
+                >
+                  {{ $t('scriptStudio.textMode') }}
+                </button>
+                <button
+                  class="rounded px-2 py-0.5 text-[10px] font-medium transition"
+                  :class="logMode === 'hex' ? 'bg-blue-main/10 text-blue-main' : 'text-gray-dark-30 dark:text-white/60'"
+                  @click="logMode = 'hex'"
+                >
+                  {{ $t('scriptStudio.hexMode') }}
+                </button>
+              </div>
+              <span class="font-mono text-[11px] text-gray-dark-25 dark:text-gray-main">
+                {{ visibleLogs.length }}/{{ liveLogs.length }} {{ $t('scriptStudio.lines') }}
               </span>
-              <span class="text-[10px] text-gray-dark-25 dark:text-gray-main">
-                {{ logsOpen ? '−' : '+' }}
+              <span v-if="logsPaused" class="text-[11px] text-amber-600 dark:text-amber-400">
+                {{ $t('scriptStudio.paused') }}
               </span>
-            </button>
-            <button
-              class="ml-auto text-[11px] text-blue-500 hover:underline disabled:opacity-50"
-              :disabled="logs.length === 0"
-              @click="clearLogs"
-            >
-              {{ $t('scriptStudio.clear') }}
-            </button>
+            </div>
+            <div class="flex flex-wrap items-center gap-1">
+              <button
+                class="grid size-7 place-items-center rounded-md transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
+                :class="logsPaused ? 'text-amber-main' : ''"
+                :title="logsPaused ? $t('scriptStudio.resume') : $t('scriptStudio.pause')"
+                :aria-label="logsPaused ? $t('scriptStudio.resume') : $t('scriptStudio.pause')"
+                @click="togglePauseLogs"
+              >
+                <VIcon :name="logsPaused ? 'play-circle' : 'stop-circle'" class="size-3.5" />
+              </button>
+              <button
+                class="grid size-7 place-items-center rounded-md transition hover:bg-black/5 dark:hover:bg-white/5"
+                :class="logSearchOpen ? 'bg-black/5 text-blue-main dark:bg-white/10' : ''"
+                :title="$t('scriptStudio.search')"
+                :aria-label="$t('scriptStudio.search')"
+                @click="logSearchOpen = !logSearchOpen"
+              >
+                <VIcon name="search" class="size-3.5" />
+              </button>
+              <button
+                class="grid size-7 place-items-center rounded-md transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
+                :disabled="liveLogs.length === 0"
+                :title="$t('scriptStudio.clear')"
+                :aria-label="$t('scriptStudio.clear')"
+                @click="clearLogs"
+              >
+                <VIcon name="eraser" class="size-3.5" />
+              </button>
+              <button
+                class="grid size-7 place-items-center rounded-md transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
+                :disabled="visibleLogs.length === 0"
+                :title="copiedLogs ? $t('scriptStudio.copied') : $t('scriptStudio.copy')"
+                :aria-label="$t('scriptStudio.copy')"
+                @click="copyLogs"
+              >
+                <VIcon :name="copiedLogs ? 'check' : 'copy'" class="size-3.5" :class="copiedLogs ? 'text-green-main' : ''" />
+              </button>
+              <button
+                class="grid size-7 place-items-center rounded-md transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
+                :disabled="visibleLogs.length === 0"
+                :title="$t('scriptStudio.downloadLog')"
+                :aria-label="$t('scriptStudio.downloadLog')"
+                @click="downloadLogs"
+              >
+                <VIcon name="download" class="size-3.5" />
+              </button>
+            </div>
           </div>
-          <div
-            v-if="logsOpen"
-            ref="container"
-            class="h-48 overflow-auto border-t border-gray-light-10/70 bg-gray-dark-40/[0.05] p-3 font-mono text-xs leading-5 scrollbar dark:border-white/10 dark:bg-black/35"
-            @mouseenter="onHover(true)"
-            @mouseleave="onHover(false)"
-          >
-            <div v-for="(log, index) in logs" :key="index" class="flex gap-2">
-              <span class="shrink-0 text-gray-dark-25 dark:text-gray-main">{{ log.time }}</span>
-              <span class="whitespace-pre-wrap break-all text-gray-dark-30 dark:text-white/70">
-                {{ log.text }}
-              </span>
+          <div v-if="logSearchOpen" class="border-b border-gray-light-10/70 px-3 py-2 dark:border-white/10">
+            <input
+              v-model="logSearch"
+              type="text"
+              class="w-full rounded-md border border-gray-light-10/70 bg-transparent px-2 py-1 text-xs outline-none focus:border-blue-main dark:border-white/10"
+              :placeholder="$t('scriptStudio.searchPlaceholder')"
+              :aria-label="$t('scriptStudio.search')"
+            />
+          </div>
+          <div v-if="logsOpen" class="relative">
+            <div
+              ref="logEl"
+              class="h-[min(52vh,30rem)] min-h-[12rem] overflow-auto border-t border-gray-light-10/70 bg-gray-dark-40/[0.05] p-3 font-mono text-xs leading-5 scrollbar dark:border-white/10 dark:bg-black/35"
+              @scroll="onLogScroll"
+            >
+              <div v-if="visibleLogs.length === 0" class="text-gray-dark-25 dark:text-gray-main">
+                {{ logSearch ? $t('scriptStudio.noMatches') : $t('scriptStudio.logEmpty') }}
+              </div>
+              <div v-for="(log, index) in visibleLogs" :key="index" class="flex gap-2">
+                <span class="shrink-0 text-gray-dark-25 dark:text-gray-main">{{ log.time }}</span>
+                <span class="whitespace-pre-wrap break-all text-gray-dark-30 dark:text-white/70">
+                  {{ logText(log) }}
+                </span>
+              </div>
             </div>
-            <div v-if="logs.length === 0" class="text-gray-dark-25 dark:text-gray-main">
-              {{ $t('noLogs') }}
-            </div>
+            <button
+              v-if="!autoScroll && visibleLogs.length > 0"
+              class="absolute bottom-3 right-3 flex items-center gap-1 rounded-md bg-blue-main px-2 py-1 text-[11px] font-medium text-white shadow-lg transition hover:opacity-90"
+              @click="followLogs"
+            >
+              <VIcon name="chevron-down" class="size-3.5" />
+              {{ $t('scriptStudio.follow') }}
+            </button>
           </div>
         </div>
       </section>
