@@ -29,7 +29,7 @@ The CLI clones this template with its git history, keeps the selected board, set
 ## Features
 
 - 🚀 Full-stack Arduino projects with web UI
-- 🎨 Glass UI with light/dark themes and shared `vuesp-components@5`
+- 🎨 Glass UI with light/dark themes and shared `vuesp-components@6`
 - 🧠 Bytecode script studio with syntax highlighting, autocomplete and device hints
 - ⚙️ YAML project configuration for board, modules, limits, pins and web UI
 - 📜 Starter bytecode examples for variables, loops, arrays and button events
@@ -253,6 +253,13 @@ Device projects add board-specific hints in `vue/json/suggestions.json`. Events,
 
 ## Version History
 
+### 6.0.0 (2026-11-28)
+
+**Web UI**
+- Компоненты Script Studio и Modbus вынесены в `vuesp-components@6.0.0`.
+- Студия скриптов: локальные переменные на скрипт, импорт/экспорт исходника и статусы на вкладках.
+- Прошивка и Web UI переведены на общую версию `6.0.0`.
+
 ### 5.0.12 (2026-11-21)
 
 **Web UI**
@@ -270,7 +277,7 @@ Device projects add board-specific hints in `vue/json/suggestions.json`. Events,
 **Совместимость**
 - Бинарный протокол не изменялся.
 - Web-пакет `4.1.0`, прошивка `5.0.12`.
-- Приложения и все device-проекты переведены на `vuesp-components@5.0.1`.
+- Приложения и все device-проекты переведены на `vuesp-components@6.0.1`.
 
 ### 4.0.1 (2026-11-08)
 

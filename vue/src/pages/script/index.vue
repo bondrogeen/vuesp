@@ -1,23 +1,26 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { VCard } from 'vuesp-components/components';
+import {
+  ScriptDeleteDialog,
+  ScriptDetailsDialog,
+  ScriptDiscardDialog,
+  ScriptRenameDialog,
+  ScriptStudioActionBar,
+  ScriptStudioLogs,
+  ScriptStudioMetrics,
+  ScriptStudioTabs,
+  ScriptStudioToolbar,
+  VCard,
+} from 'vuesp-components/components';
 
 import BytecodeEditor from '@/components/BytecodeEditor.vue';
-import ScriptStudioToolbar from '@/components/script-studio/ScriptStudioToolbar.vue';
-import ScriptStudioMetrics from '@/components/script-studio/ScriptStudioMetrics.vue';
-import ScriptStudioActionBar from '@/components/script-studio/ScriptStudioActionBar.vue';
-import ScriptStudioTabs from '@/components/script-studio/ScriptStudioTabs.vue';
-import ScriptStudioLogs from '@/components/script-studio/ScriptStudioLogs.vue';
-import ScriptDetailsDialog from '@/components/script-studio/ScriptDetailsDialog.vue';
-import ScriptDeleteDialog from '@/components/script-studio/ScriptDeleteDialog.vue';
-import ScriptRenameDialog from '@/components/script-studio/ScriptRenameDialog.vue';
-import ScriptDiscardDialog from '@/components/script-studio/ScriptDiscardDialog.vue';
 
 import { useLocale } from '@/composables/useLocale';
 import { useStore } from '@/composables/useStore';
 import { useBytecodeCompile } from '@/composables/script/useBytecodeCompile';
 import { useBytecodeScripts } from '@/composables/script/useBytecodeScripts';
+import { useLogs } from '@/composables/script/useLogs';
 import { useProjectConfig } from '@/composables/useProjectConfig';
 import type { IRuntimeMetric, IScriptListItem } from '@/types';
 import {
@@ -41,7 +44,8 @@ $p13 = 0;
 `;
 
 const { $t } = useLocale();
-const { suggestions } = useStore();
+const { suggestions, message: wsMessage } = useStore();
+const { logs } = useLogs(wsMessage);
 const projectConfig = useProjectConfig();
 
 const { manifest, result, isVmAvailable, diagnostics, hex, stackMax, byteCount, loadCapabilities, compileSource, resetResult, getSourceLines } = useBytecodeCompile();
@@ -397,6 +401,10 @@ const onUpdateLogsCount = (count: number) => {
   logsCount.value = count;
 };
 
+const onClearLogs = () => {
+  logs.value = [];
+};
+
 watch(source, () => {
   ranName.value = null;
   void debouncedCompile();
@@ -468,10 +476,10 @@ onMounted(async () => {
 
     <BytecodeEditor ref="editor" v-model="source" :manifest="manifest" :script-names="scriptNames" :errors="diagnostics" :device-suggestions="suggestions" />
 
-    <ScriptStudioLogs ref="logsRef" :name="name" @update:count="onUpdateLogsCount" />
+    <ScriptStudioLogs ref="logsRef" :name="name" :logs="logs" @update:count="onUpdateLogsCount" @clear="onClearLogs" />
   </VCard>
 
-  <ScriptDetailsDialog v-if="isDetailsOpen" :result="result" :hex="hex" @close="isDetailsOpen = false" />
+  <ScriptDetailsDialog v-if="isDetailsOpen" :disassembly="result?.disassembly ?? ''" :hex="hex" @close="isDetailsOpen = false" />
   <ScriptDeleteDialog v-if="deleteTarget" :name="deleteTarget" :is-busy="isBusy" @confirm="onConfirmDelete" @close="deleteTarget = null" />
   <ScriptRenameDialog v-if="isRenameOpen" :name="name" :is-busy="isBusy" @save="onRenameSave" @close="isRenameOpen = false" />
   <ScriptDiscardDialog v-if="discardAction" @save="onDiscardSave" @discard="onDiscardDiscard" @cancel="discardAction = null" />

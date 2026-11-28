@@ -7,7 +7,7 @@ export const VUESP_CONFIG = {
     "name": "vuesp.",
     "board": "esp8266",
     "buildProfile": "standard",
-    "firmwareVersion": "5.0.13",
+    "firmwareVersion": "6.0.0",
     "deviceName": "vuesp."
   },
   "features": {

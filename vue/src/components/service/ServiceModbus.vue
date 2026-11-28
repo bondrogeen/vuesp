@@ -1,59 +1,32 @@
 <template>
   <div class="flex flex-col gap-4">
-    <VCard variant="glass" padding="none" class="relative z-20">
-      <div class="flex flex-wrap items-center gap-3 border-b border-gray-light-10/70 px-3 py-2.5 dark:border-white/10">
-        <div class="flex items-center gap-2">
-          <span class="size-2.5 rounded-full" :class="statusDotClass" />
-          <span class="text-sm font-medium">{{ statusText }}</span>
-        </div>
-        <span class="hidden h-4 w-px bg-gray-light-10/70 dark:bg-white/10 sm:block" />
-        <span class="min-w-0 truncate font-mono text-xs text-gray-dark-25 dark:text-gray-main">
-          {{ form.role === 1 ? `${$t('modbus.address')} ${form.address} · ` : '' }}{{ formatText }}
-        </span>
-        <span class="hidden h-4 w-px bg-gray-light-10/70 dark:bg-white/10 sm:block" />
-        <span class="hidden font-mono text-[11px] text-gray-dark-25 dark:text-gray-main sm:inline">
-          {{ $t('modbus.requests') }} {{ status.requests }} · {{ $t('modbus.errors') }} {{ status.errors }}
-        </span>
-        <span v-if="dirty" class="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
-          <span class="size-1.5 rounded-full bg-amber-500" />
-          {{ $t('modbus.unsaved') }}
-        </span>
-        <div class="ml-auto flex flex-wrap items-center gap-2">
-          <div class="w-32 shrink-0">
-            <VSelect size="sm" hide-message :model-value="roleName" :items="roles" :disabled="isConnected" :label="$t('modbus.role')" @change="onRole" />
-          </div>
-          <div class="w-28 shrink-0">
-            <VSelect size="sm" hide-message :model-value="baudName" :items="bauds" :disabled="isConnected" :label="$t('modbus.baud')" @change="onBaud" />
-          </div>
-          <VButton size="sm" :color="isConnected ? 'red' : 'blue'" :variant="isConnected ? 'outline' : 'solid'" @click="toggleConnection">
-            {{ isConnected ? $t('modbus.disconnect') : $t('modbus.connect') }}
-          </VButton>
-          <VButton type="icon" size="sm" :variant="settingsOpen ? 'soft' : 'ghost'" color="gray" :title="$t('modbus.settings')" :aria-label="$t('modbus.settings')" @click="settingsOpen = !settingsOpen">
-            <VIcon name="settings" :size="17" />
-          </VButton>
-        </div>
-      </div>
-
-      <div v-if="settingsOpen" class="border-b border-gray-light-10/70 px-3 py-3 dark:border-white/10">
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <VSelect size="sm" hide-message :model-value="parityName" :items="parities" :disabled="isConnected" :label="$t('modbus.parity')" @change="onParity" />
-          <VSelect size="sm" hide-message :model-value="stopBitsName" :items="stopBits" :disabled="isConnected" :label="$t('modbus.stopBits')" @change="onStopBits" />
-          <VTextField v-if="form.role !== 2" size="sm" hide-message :model-value="String(form.address)" :disabled="isConnected || form.role !== 1" :label="$t('modbus.address')" @update:model-value="onAddress" />
-          <VTextField size="sm" hide-message :model-value="String(form.txPin)" :disabled="isConnected" :label="$t('modbus.txPin')" @update:model-value="(v) => onPin('tx', String(v))" />
-          <VTextField size="sm" hide-message :model-value="String(form.rxPin)" :disabled="isConnected" :label="$t('modbus.rxPin')" @update:model-value="(v) => onPin('rx', String(v))" />
-          <VTextField size="sm" hide-message :model-value="String(form.dePin)" :disabled="isConnected" :label="$t('modbus.dePin')" @update:model-value="(v) => onPin('de', String(v))" />
-        </div>
-
-        <p class="mt-2 text-[11px] text-gray-dark-25 dark:text-gray-main">{{ $t('modbus.format') }}: {{ formatText }} · DE -1 — {{ $t('modbus.deAuto') }}</p>
-
-        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <div v-for="item in statusItems" :key="item.label">
-            <div class="text-[11px] text-gray-dark-25 dark:text-gray-main">{{ item.label }}</div>
-            <div class="mt-1 text-sm font-semibold" :class="item.className">{{ item.value }}</div>
-          </div>
-        </div>
-      </div>
-
+    <ModbusConnectionCard
+      :form="form"
+      :status="status"
+      :is-connected="isConnected"
+      :is-dirty="dirty"
+      :is-settings-open="settingsOpen"
+      :roles="roles"
+      :bauds="bauds"
+      :parities="parities"
+      :stop-bits="stopBits"
+      :status-items="statusItems"
+      :role-name="roleName"
+      :baud-name="baudName"
+      :parity-name="parityName"
+      :stop-bits-name="stopBitsName"
+      :format-text="formatText"
+      :status-text="statusText"
+      :status-dot-class="statusDotClass"
+      @toggle-settings="settingsOpen = !settingsOpen"
+      @toggle-connection="toggleConnection"
+      @role="onRole"
+      @baud="onBaud"
+      @parity="onParity"
+      @stop-bits="onStopBits"
+      @address="onAddress"
+      @pin="onPin"
+    >
       <div v-if="form.role === 1" class="flex flex-wrap items-center gap-2 border-b border-gray-light-10/70 bg-gray-dark-40/[0.03] px-3 py-2 dark:border-white/10 dark:bg-black/20">
         <div class="flex h-8 items-center gap-1 rounded-md ring-1 ring-inset ring-gray-light-10/70 dark:ring-white/10">
           <VButton size="sm" :variant="tab === 'profile' ? 'soft' : 'ghost'" :color="tab === 'profile' ? 'blue' : 'gray'" @click="tab = 'profile'">
@@ -73,336 +46,105 @@
             </template>
             <template v-else>{{ $t('modbus.registers') }} {{ slaveBankUsed }}/{{ SLAVE_REG_COUNT }}</template>
           </span>
-          <div class="ml-auto flex flex-wrap items-center gap-2">
-            <VButton size="sm"
-              type="icon"
-              variant="outline"
-              :disabled="profileLoading || profileSending !== null"
-              :title="$t('modbus.importProfile')"
-              :aria-label="$t('modbus.importProfile')"
-              @click="fileInput?.click()"
-            >
-              <VIcon name="upload" :size="16" />
-            </VButton>
-            <VButton size="sm" type="icon" variant="outline" :disabled="profileLoading || profileSending !== null" :title="$t('modbus.exportProfile')" :aria-label="$t('modbus.exportProfile')" @click="onExport">
-              <VIcon name="download" :size="16" />
-            </VButton>
-            <VButton size="sm"
-              type="icon"
-              variant="outline"
-              :disabled="!profileValid || profileLoading || profileSending !== null"
-              :loading="profileSending === 'apply'"
-              :title="$t('modbus.applyProfile')"
-              :aria-label="$t('modbus.applyProfile')"
-              @click="onApplyProfile"
-            >
-              <VIcon name="check" :size="16" />
-            </VButton>
-            <VButton size="sm"
-              type="icon"
-              color="blue"
-              :disabled="!profileValid || profileLoading || profileSending !== null"
-              :loading="profileSending === 'save'"
-              :title="$t('modbus.saveProfile')"
-              :aria-label="$t('modbus.saveProfile')"
-              @click="onSaveProfile"
-            >
-              <VIcon name="save" :size="16" />
-            </VButton>
-          </div>
+          <ModbusProfileToolbar
+            :is-dirty="profileDirty"
+            :is-loading="profileLoading"
+            :is-sending="profileSending"
+            :message="profileMessage"
+            :error="profileErrorText"
+            :is-valid="profileValid"
+            @import="onImport"
+            @export="onExport"
+            @apply="onApplyProfile"
+            @save="onSaveProfile"
+          />
         </div>
-
-        <div class="mt-2 flex flex-wrap items-center justify-end gap-2 text-xs">
-          <p v-if="profileLoading" class="whitespace-nowrap text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.profileLoading') }}</p>
-          <p v-else-if="profileSending" class="whitespace-nowrap text-amber-600 dark:text-amber-400">{{ profileSendingText }}</p>
-          <p v-else-if="profileDirty" class="whitespace-nowrap text-amber-600 dark:text-amber-400">{{ $t('modbus.profileDirty') }}</p>
-          <p v-else-if="profileMessage" class="whitespace-nowrap text-green-600 dark:text-green-400">{{ profileMessage }}</p>
-          <p v-if="profileErrorText" class="text-red-600 dark:text-red-400">{{ profileErrorText }}</p>
-        </div>
-
-        <input ref="fileInput" class="hidden" type="file" accept=".bin,application/octet-stream" @change="onImport" />
 
         <template v-if="form.role === 2">
-          <div class="mt-6 flex items-center justify-between gap-4">
-            <h4 class="text-sm font-semibold">
-              {{ $t('modbus.devices') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ draft.deviceCount }}/{{ MODBUS.DEVICES_MAX }}</span>
-            </h4>
-            <VButton size="sm"
-              type="icon"
-              variant="outline"
-              :disabled="profileLoading || profileSending !== null || draft.deviceCount >= MODBUS.DEVICES_MAX"
-              :title="$t('modbus.addDevice')"
-              :aria-label="$t('modbus.addDevice')"
-              @click="openDevice()"
-            >
-              <VIcon name="add" :size="16" />
-            </VButton>
-          </div>
-
-          <div class="mt-2 flex flex-col gap-2">
-            <div
-              v-for="(device, index) in draft.devices.slice(0, draft.deviceCount)"
-              :key="`device-${index}`"
-              class="flex flex-wrap items-center gap-3 rounded-lg bg-black/5 px-3 py-2 dark:bg-white/5"
-            >
-              <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium">{{ device.name || device.id || `#${index + 1}` }}</div>
-                <div class="truncate text-xs text-gray-dark-25 dark:text-gray-light-10">
-                  {{ device.id }} · {{ $t('modbus.address') }} {{ device.address }} · {{ device.interval }} ms · {{ $t('modbus.timeout') }} {{ device.timeout }} ms · {{ $t('modbus.retries') }}
-                  {{ device.retries }} ·
-                  {{ device.enabled ? $t('modbus.enabled') : $t('modbus.disabledState') }}
-                </div>
-              </div>
-              <div>
-                <VButton size="sm" type="icon" variant="ghost" :title="$t('modbus.edit')" :aria-label="$t('modbus.edit')" @click="openDevice(index)">
-                  <VIcon name="edit" :size="16" />
-                </VButton>
-                <VButton size="sm" type="icon" variant="ghost" color="red" :title="$t('modbus.remove')" :aria-label="$t('modbus.remove')" @click="askRemoveDevice(index)">
-                  <VIcon name="trash" :size="16" />
-                </VButton>
-              </div>
-            </div>
-            <p v-if="!profileLoading && draft.deviceCount === 0" class="text-sm text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.noDevices') }}</p>
-          </div>
-
-          <div class="mt-6 flex items-center justify-between gap-4">
-            <h4 class="text-sm font-semibold">
-              {{ $t('modbus.masterPoints') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ masterPointEntries.length }} · {{ draft.pointCount }}/{{ MODBUS.POINTS_MAX }}</span>
-            </h4>
-            <VButton size="sm"
-              type="icon"
-              variant="outline"
-              :disabled="profileLoading || profileSending !== null || draft.pointCount >= MODBUS.POINTS_MAX"
-              :title="$t('modbus.addPoint')"
-              :aria-label="$t('modbus.addPoint')"
-              @click="openPoint()"
-            >
-              <VIcon name="add" :size="16" />
-            </VButton>
-          </div>
-
-          <div class="mt-2 flex flex-col gap-2">
-            <div v-for="entry in masterPointEntries" :key="`point-${entry.index}`" class="flex flex-wrap items-center gap-3 rounded-lg bg-black/5 px-3 py-2 dark:bg-white/5">
-              <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium">{{ entry.point.name || entry.point.id || `#${entry.index + 1}` }}</div>
-                <div class="truncate text-xs text-gray-dark-25 dark:text-gray-light-10">
-                  {{ deviceName(entry.point.device) }} · FC {{ entry.point.fc }} · {{ $t('modbus.address') }} {{ entry.point.address }} · {{ typeName(entry.point.type) }} ·
-                  {{ entry.point.var === 0xff ? '—' : varName(entry.point.var) }}
-                </div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium">{{ pointValue(entry.point) }}</span>
-                <span class="rounded px-2 py-1 text-xs font-semibold" :class="qualityClass(liveOf(entry.point)?.quality)">
-                  {{ qualityName(liveOf(entry.point)?.quality) }}
-                </span>
-              </div>
-
-              <template v-if="entry.point.flags & 4">
-                <VTextField size="sm" hide-message class="w-28" :model-value="writeDrafts[entry.index] ?? ''" :label="$t('modbus.writeValue')" @update:model-value="(v) => (writeDrafts[entry.index] = v)" />
-                <VButton size="sm" type="icon" variant="soft" :title="$t('modbus.write')" :aria-label="$t('modbus.write')" @click="writePoint(entry.index)">
-                  <VIcon name="play-circle" :size="16" />
-                </VButton>
-              </template>
-
-              <VButton size="sm" type="icon" variant="ghost" :title="$t('modbus.edit')" :aria-label="$t('modbus.edit')" @click="openPoint(entry.index)">
-                <VIcon name="edit" :size="16" />
-              </VButton>
-              <VButton size="sm" type="icon" variant="ghost" color="red" :title="$t('modbus.remove')" :aria-label="$t('modbus.remove')" @click="askRemovePoint(entry.index)">
-                <VIcon name="trash" :size="16" />
-              </VButton>
-            </div>
-            <p v-if="!profileLoading && masterPointEntries.length === 0" class="text-sm text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.noPoints') }}</p>
-          </div>
+          <ModbusDeviceList
+            :items="deviceViews"
+            :count-label="`${draft.deviceCount}/${MODBUS.DEVICES_MAX}`"
+            :can-add="draft.deviceCount < MODBUS.DEVICES_MAX"
+            :is-disabled="profileLoading || profileSending !== null"
+            @add="openDevice()"
+            @edit="openDevice"
+            @remove="askRemoveDevice"
+          />
+          <ModbusPointList
+            :items="masterPointViews"
+            :count-label="`${masterPointEntries.length} · ${draft.pointCount}/${MODBUS.POINTS_MAX}`"
+            :can-add="draft.pointCount < MODBUS.POINTS_MAX"
+            :is-disabled="profileLoading || profileSending !== null"
+            @add="openPoint()"
+            @edit="openPoint"
+            @remove="askRemovePoint"
+            @write="writePoint"
+            @update:write-value="onWriteDraft"
+          />
+          <ModbusVarList
+            :items="varViews"
+            :count-label="`${draft.varCount}/${MODBUS.VARS_MAX}`"
+            :can-add="draft.varCount < MODBUS.VARS_MAX"
+            :is-disabled="profileLoading || profileSending !== null"
+            @add="openVar()"
+            @edit="openVar"
+            @remove="askRemoveVar"
+          />
         </template>
 
         <template v-if="form.role === 1">
-          <div class="mt-6 flex items-center justify-between gap-4">
-            <h4 class="text-sm font-semibold">
-              {{ $t('modbus.slaveValues') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ slavePointEntries.length }}</span>
-            </h4>
-            <div class="flex gap-2">
-              <VButton size="sm"
-                type="icon"
-                variant="outline"
-                :disabled="profileLoading || profileSending !== null || draft.pointCount >= MODBUS.POINTS_MAX"
-                :title="$t('modbus.addSlaveValue')"
-                :aria-label="$t('modbus.addSlaveValue')"
-                @click="openSlaveValue"
-              >
-                <VIcon name="add" :size="16" />
-              </VButton>
-            </div>
-          </div>
-
-          <div class="mt-2 flex flex-col gap-2">
-            <div v-for="entry in slavePointEntries" :key="`slave-${entry.index}`" class="flex flex-wrap items-center gap-3 rounded-lg bg-black/5 px-3 py-2 dark:bg-white/5">
-              <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium">{{ entry.point.name || entry.point.id || `#${entry.index + 1}` }}</div>
-                <div class="truncate text-xs text-gray-dark-25 dark:text-gray-light-10">
-                  {{ $t('modbus.slaveValue') }} · {{ $t('modbus.address') }} {{ entry.point.address }}–{{
-                    entry.point.address + Math.max(1, entry.point.registers || registersForType(entry.point.type, 1)) - 1
-                  }}
-                  · {{ typeName(entry.point.type) }} · {{ varSourceLabel(draft.vars[entry.point.var]) }}
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium">{{ pointValue(entry.point) }}</span>
-                <span class="rounded px-2 py-1 text-xs font-semibold" :class="qualityClass(liveOf(entry.point)?.quality)">
-                  {{ qualityName(liveOf(entry.point)?.quality) }}
-                </span>
-              </div>
-              <VButton size="sm" type="icon" variant="ghost" :title="$t('modbus.edit')" :aria-label="$t('modbus.edit')" @click="openSlaveValueEdit(entry.index)">
-                <VIcon name="edit" :size="16" />
-              </VButton>
-              <VButton size="sm" type="icon" variant="ghost" color="red" :title="$t('modbus.remove')" :aria-label="$t('modbus.remove')" @click="askRemovePoint(entry.index)">
-                <VIcon name="trash" :size="16" />
-              </VButton>
-            </div>
-
-            <p v-if="!profileLoading && slavePointEntries.length === 0" class="text-sm text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.noSlaveValues') }}</p>
-          </div>
-        </template>
-
-        <template v-if="form.role === 2">
-          <div class="mt-6 flex items-center justify-between gap-4">
-            <h4 class="text-sm font-semibold">
-              {{ $t('modbus.vars') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ draft.varCount }}/{{ MODBUS.VARS_MAX }}</span>
-            </h4>
-            <VButton size="sm"
-              type="icon"
-              variant="outline"
-              :disabled="profileLoading || profileSending !== null || draft.varCount >= MODBUS.VARS_MAX"
-              :title="$t('modbus.addVar')"
-              :aria-label="$t('modbus.addVar')"
-              @click="openVar()"
-            >
-              <VIcon name="add" :size="16" />
-            </VButton>
-          </div>
-
-          <div class="mt-2 flex flex-col gap-2">
-            <div v-for="(variable, index) in draft.vars.slice(0, draft.varCount)" :key="`var-${index}`" class="flex flex-wrap items-center gap-3 rounded-lg bg-black/5 px-3 py-2 dark:bg-white/5">
-              <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium">{{ variable.name || variable.id || `#${index + 1}` }}</div>
-                <div class="truncate text-xs text-gray-dark-25 dark:text-gray-light-10">
-                  {{ variable.id }} · {{ typeName(variable.type) }} · {{ varSourceLabel(variable) }} · vars.{{ variable.id }}.value
-                </div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium">{{ varValue(variable, index) }}</span>
-                <span class="rounded px-2 py-1 text-xs font-semibold" :class="qualityClass(main.modbus.vars[index]?.quality)">
-                  {{ qualityName(main.modbus.vars[index]?.quality) }}
-                </span>
-              </div>
-
-              <VButton size="sm" type="icon" variant="ghost" :title="$t('modbus.edit')" :aria-label="$t('modbus.edit')" @click="openVar(index)">
-                <VIcon name="edit" :size="16" />
-              </VButton>
-              <VButton size="sm" type="icon" variant="ghost" color="red" :title="$t('modbus.remove')" :aria-label="$t('modbus.remove')" @click="askRemoveVar(index)">
-                <VIcon name="trash" :size="16" />
-              </VButton>
-            </div>
-            <p v-if="!profileLoading && draft.varCount === 0" class="text-sm text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.noVars') }}</p>
-          </div>
+          <ModbusSlaveValueList
+            :items="slaveViews"
+            :count-label="String(slavePointEntries.length)"
+            :can-add="draft.pointCount < MODBUS.POINTS_MAX"
+            :is-disabled="profileLoading || profileSending !== null"
+            @add="openSlaveValue"
+            @edit="openSlaveValueEdit"
+            @remove="askRemovePoint"
+          />
         </template>
       </div>
 
       <div v-else-if="tab === 'map' && form.role === 1" class="p-3 sm:p-4">
-        <VTable :headers="mapHeaders" :items="mapItems" @click="onMapClick">
-          <template #type="{ item }">
-            <div class="text-gray-dark-25 dark:text-gray-light-10">{{ item.type }}</div>
-          </template>
-          <template #target="{ item }">
-            <div class="flex flex-col">
-              <span>{{ item.target }}</span>
-            </div>
-          </template>
-        </VTable>
-
-        <ModbusMapDetails v-if="mapDetails && isDesktop" class="mt-4 border-t border-gray-light-10/70 pt-4 dark:border-white/10" :details="mapDetails" closable @close="closeMapDetails" />
+        <ModbusMapTable
+          :headers="mapHeaders"
+          :items="mapItems"
+          :details="mapDetails"
+          :is-desktop="isDesktop"
+          @click="onMapClick"
+          @close="closeMapDetails"
+        />
       </div>
-    </VCard>
+    </ModbusConnectionCard>
 
-    <VDialog v-if="mapDetails && !isDesktop" size="md" :title="$t('modbus.mapDetails')" @close="closeMapDetails">
-      <ModbusMapDetails :details="mapDetails" />
-    </VDialog>
+    <ModbusDeviceDialog
+      v-if="deviceEdit !== null"
+      v-model="deviceForm"
+      :title="deviceEdit < 0 ? $t('modbus.addDevice') : $t('modbus.editDevice')"
+      :errors="deviceErrors"
+      :enabled-items="enabledItems"
+      @save="saveDevice"
+      @close="deviceEdit = null"
+    />
 
-    <VDialog v-if="deviceEdit !== null" size="md" :title="deviceEdit < 0 ? $t('modbus.addDevice') : $t('modbus.editDevice')" @close="deviceEdit = null">
-      <form class="flex max-h-[70dvh] xl:max-h-[calc(100dvh-27rem)] min-h-0 flex-col gap-4" @submit.prevent="saveDevice" @keydown.esc.stop="deviceEdit = null">
-        <div class="flex-1">
-          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <VTextField size="sm" :error="deviceErrors.id" :model-value="deviceForm.id" :label="$t('modbus.id')" @update:model-value="(v) => (deviceForm.id = v)" />
-            <VTextField size="sm" :error="deviceErrors.name" :model-value="deviceForm.name" :label="$t('name')" @update:model-value="(v) => (deviceForm.name = v)" />
-            <VTextField size="sm" :error="deviceErrors.address" :model-value="String(deviceForm.address)" :label="$t('modbus.address')" @update:model-value="(v) => (deviceForm.address = toInt(v))" />
-            <VSelect size="sm" :model-value="selectName(enabledItems, deviceForm.enabled)" :items="enabledItems" :label="$t('modbus.enabled')" @change="({ value }) => (deviceForm.enabled = value)" />
-            <VTextField size="sm" :error="deviceErrors.interval" :model-value="String(deviceForm.interval)" :label="$t('modbus.interval')" @update:model-value="(v) => (deviceForm.interval = toInt(v))" />
-            <VTextField size="sm" :error="deviceErrors.timeout" :model-value="String(deviceForm.timeout)" :label="$t('modbus.timeout')" @update:model-value="(v) => (deviceForm.timeout = toInt(v))" />
-            <VTextField size="sm" :error="deviceErrors.retries" :model-value="String(deviceForm.retries)" :label="$t('modbus.retries')" @update:model-value="(v) => (deviceForm.retries = toInt(v))" />
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <VButton size="sm" class="min-w-24" color="blue" @click="saveDevice">{{ $t('modbus.apply') }}</VButton>
-          <VButton size="sm" class="min-w-24" variant="outline" color="gray" @click="deviceEdit = null">{{ $t('modbus.close') }}</VButton>
-          <button type="submit" class="hidden" aria-hidden="true" tabindex="-1"></button>
-        </div>
-      </form>
-    </VDialog>
-
-    <VDialog v-if="slaveEdit !== null && !sourceTreeOpen" size="md" :title="slaveEdit < 0 ? $t('modbus.addSlaveValue') : $t('modbus.editSlaveValue')" @close="closeSlaveValue">
-      <form class="flex max-h-[70dvh] xl:max-h-[calc(100dvh-27rem)] min-h-0 flex-col gap-4" @submit.prevent="saveSlaveValue" @keydown.esc.stop="closeSlaveValue">
-        <div class="flex-1">
-          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <VSelect size="sm" class="mb-4" hide-message :model-value="slaveSourceKindName" :items="slaveSourceKindItems" :label="$t('modbus.source')" @change="({ value }) => onSlaveSourceKind(value)" />
-            <div v-if="slaveForm.sourceKind === 'data'" class="flex items-end gap-2 mb-4">
-              <VTextField size="sm" class="flex-auto" readonly hide-message :model-value="slaveForm.sourcePath || '—'" :label="$t('modbus.value')" />
-              <VButton size="sm" type="icon" variant="outline" :title="$t('modbus.pickData')" :aria-label="$t('modbus.pickData')" @click="openSourceTree">
-                <VIcon name="search" :size="16" />
-              </VButton>
-            </div>
-            <p v-else class="sm:col-span-2 text-xs text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.scriptVarHint', { id: slaveForm.id }) }}</p>
-            <VTextField size="sm" :error="slaveErrors.name" :model-value="slaveForm.name" :label="$t('name')" @update:model-value="(v) => (slaveForm.name = v)" />
-            <VTextField size="sm" :error="slaveErrors.address" :model-value="String(slaveForm.address)" :label="$t('modbus.address')" @update:model-value="(v) => (slaveForm.address = toInt(v))" />
-            <VTextField v-if="slaveForm.sourceKind === 'data'" size="sm" readonly :model-value="slaveTypeText" :label="$t('modbus.type')" />
-            <VSelect size="sm" v-else :model-value="selectName(slaveTypeItems, slaveForm.type)" :items="slaveTypeItems" :label="$t('modbus.type')" @change="({ value }) => (slaveForm.type = value)" />
-            <VTextField size="sm" :error="slaveErrors.decimals" :model-value="String(slaveForm.decimals)" :label="$t('modbus.decimals')" @update:model-value="(v) => (slaveForm.decimals = toInt(v))" />
-            <VTextField size="sm" :error="slaveErrors.unit" :model-value="slaveForm.unit" :label="$t('modbus.unit')" @update:model-value="(v) => (slaveForm.unit = v)" />
-          </div>
-
-          <div class="mt-3 flex flex-wrap gap-4">
-            <VCheckbox :model-value="slaveForm.writable" @update:model-value="(v) => (slaveForm.writable = v)">{{ $t('modbus.writable') }}</VCheckbox>
-          </div>
-          <p v-if="slaveWritableHint" class="mt-1 text-xs text-amber-600 dark:text-amber-400">{{ $t('modbus.writableHint') }}</p>
-
-          <VButton size="sm" class="mt-3" variant="ghost" @click="slaveAdvanced = !slaveAdvanced">
-            <div class="flex gap-3 items-center">
-              {{ $t('modbus.advanced') }}
-              <VIcon name="chevron-down" :size="16" :class="slaveAdvanced ? 'rotate-180' : ''" />
-            </div>
-          </VButton>
-          <div v-if="slaveAdvanced" class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <VTextField size="sm" :error="slaveErrors.id" :model-value="slaveForm.id" :label="$t('modbus.id')" @update:model-value="(v) => (slaveForm.id = v)" />
-            <VTextField size="sm" :model-value="String(slaveForm.scale)" :label="$t('modbus.scale')" @update:model-value="(v) => (slaveForm.scale = toNumber(v, 1))" />
-            <VTextField size="sm" :model-value="String(slaveForm.offset)" :label="$t('modbus.offset')" @update:model-value="(v) => (slaveForm.offset = toNumber(v, 0))" />
-          </div>
-
-          <p v-if="slaveErrors.source || slaveErrors.address || slaveErrors.name || slaveErrors.id" class="mt-2 text-xs text-red-600 dark:text-red-400">
-            {{ slaveErrors.source || slaveErrors.address || slaveErrors.name || slaveErrors.id }}
-          </p>
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <VButton size="sm" class="min-w-24" color="blue" type="submit" @click="saveSlaveValue">{{ $t('modbus.apply') }}</VButton>
-          <VButton size="sm" class="min-w-24" variant="outline" color="gray" @click="closeSlaveValue">{{ $t('modbus.close') }}</VButton>
-        </div>
-      </form>
-    </VDialog>
+    <ModbusSlaveDialog
+      v-if="slaveEdit !== null && !sourceTreeOpen"
+      v-model="slaveForm"
+      :title="slaveEdit < 0 ? $t('modbus.addSlaveValue') : $t('modbus.editSlaveValue')"
+      :errors="slaveErrors"
+      :source-kind-items="slaveSourceKindItems"
+      :source-kind-name="slaveSourceKindName"
+      :source-path="slaveForm.sourcePath"
+      :type-items="slaveTypeItems"
+      :type-text="slaveTypeText"
+      :writable-hint="slaveWritableHint"
+      :advanced="slaveAdvanced"
+      @save="saveSlaveValue"
+      @close="closeSlaveValue"
+      @source-kind="onSlaveSourceKind"
+      @pick-source="openSourceTree"
+      @update:advanced="slaveAdvanced = $event"
+    />
 
     <VDialog v-if="sourceTreeOpen" size="md" :title="$t('modbus.pickData')" @close="closeSourceTree">
       <div class="relative max-h-120 overflow-auto scrollbar">
@@ -410,145 +152,60 @@
       </div>
     </VDialog>
 
-    <VDialog v-if="pointEdit !== null" size="lg" :title="pointEdit < 0 ? $t('modbus.addPoint') : $t('modbus.editPoint')" @close="closePoint">
-      <form class="flex max-h-[70dvh] xl:max-h-[calc(100dvh-27rem)] min-h-0 flex-col gap-4" @submit.prevent="savePoint" @keydown.esc.stop="closePoint">
-        <VTabs :key="pointTab" :value="pointTab" :items="pointTabs" size="sm" @click="onPointTab" />
-        <div class="flex-1">
-          <template v-if="pointTab === 0">
-            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <VTextField size="sm" :error="pointErrors.id" :model-value="pointForm.id" :label="$t('modbus.id')" @update:model-value="(v) => (pointForm.id = v)" />
-              <VTextField size="sm" :error="pointErrors.name" :model-value="pointForm.name" :label="$t('name')" @update:model-value="(v) => (pointForm.name = v)" />
-              <VSelect size="sm" :model-value="selectName(pointDeviceItems, pointForm.device)" :items="pointDeviceItems" :label="$t('modbus.device')" @change="({ value }) => (pointForm.device = value)" />
-              <VSelect size="sm" :model-value="selectName(fcItems, pointForm.fc)" :items="fcItems" :label="$t('modbus.fc')" @change="({ value }) => (pointForm.fc = value)" />
-              <VTextField size="sm" :error="pointErrors.address" :model-value="String(pointForm.address)" :label="$t('modbus.address')" @update:model-value="(v) => (pointForm.address = toInt(v))" />
-              <VSelect size="sm" :model-value="selectName(typeItems, pointForm.type)" :items="typeItems" :label="$t('modbus.type')" @change="({ value }) => onPointType(value)" />
-              <VSelect size="sm" :model-value="selectName(masterVarItems, pointForm.var)" :items="masterVarItems" :label="$t('modbus.variable')" @change="({ value }) => (pointForm.var = value)" />
-              <VTextField size="sm" :error="pointErrors.registers" :model-value="String(pointForm.registers)" :label="$t('modbus.registers')" @update:model-value="(v) => (pointForm.registers = toInt(v))" />
-              <VTextField size="sm" :error="pointErrors.decimals" :model-value="String(pointForm.decimals)" :label="$t('modbus.decimals')" @update:model-value="(v) => (pointForm.decimals = toInt(v))" />
-              <VTextField size="sm" :model-value="String(pointForm.scale)" :label="$t('modbus.scale')" @update:model-value="(v) => (pointForm.scale = toNumber(v, 1))" />
-              <VTextField size="sm" :model-value="String(pointForm.offset)" :label="$t('modbus.offset')" @update:model-value="(v) => (pointForm.offset = toNumber(v, 0))" />
-              <VTextField size="sm" :error="pointErrors.unit" :model-value="pointForm.unit" :label="$t('modbus.unit')" @update:model-value="(v) => (pointForm.unit = v)" />
-            </div>
+    <ModbusPointDialog
+      v-if="pointEdit !== null"
+      v-model="pointForm"
+      :title="pointEdit < 0 ? $t('modbus.addPoint') : $t('modbus.editPoint')"
+      :errors="pointErrors"
+      :device-items="pointDeviceItems"
+      :fc-items="fcItems"
+      :type-items="typeItems"
+      :var-items="masterVarItems"
+      :point-tabs="pointTabs"
+      :point-tab="pointTab"
+      :test-auto-crc="testAutoCrc"
+      :test-frame="testFrame"
+      :test-pending="testPending"
+      :test-valid="testValid"
+      :test-error="testError"
+      :test-summary="testSummary"
+      :test-result="Boolean(testResult)"
+      :test-elapsed="String(testResult?.elapsed ?? '')"
+      :test-status-name="testResult ? testStatusName(testResult.status) : ''"
+      :test-status-class="testResult ? testStatusClass(testResult.status) : ''"
+      :test-response="testResponse"
+      :test-decoded="testDecoded"
+      :test-exception="testException"
+      @save="savePoint"
+      @close="pointEdit = null"
+      @update:point-tab="onPointTab"
+      @update:test-auto-crc="setTestAutoCrc"
+      @update:test-frame="onTestFrameInput"
+      @update:type="onPointType"
+      @rebuild="rebuildTestFrame"
+      @test="onPointTest"
+    />
 
-            <div class="flex flex-wrap gap-4">
-              <VCheckbox :model-value="Boolean(pointForm.flags & 4)" @update:model-value="(v) => setFlag(pointForm, 4, v)">
-                {{ $t('modbus.writable') }}
-              </VCheckbox>
-              <VCheckbox :model-value="Boolean(pointForm.flags & 2)" @update:model-value="(v) => setFlag(pointForm, 2, v)">
-                {{ $t('modbus.byteLittle') }}
-              </VCheckbox>
-              <VCheckbox :model-value="Boolean(pointForm.flags & 1)" @update:model-value="(v) => setFlag(pointForm, 1, v)">
-                {{ $t('modbus.wordLittle') }}
-              </VCheckbox>
-            </div>
+    <ModbusVarDialog
+      v-if="varEdit !== null"
+      v-model="varForm"
+      :title="varEdit < 0 ? $t('modbus.addVar') : $t('modbus.editVar')"
+      :errors="varErrors"
+      :type-items="typeItems"
+      :point-items="varPointItems"
+      @save="saveVar"
+      @close="varEdit = null"
+      @update:type="onVarType"
+    />
 
-            <p v-if="pointErrors.device || pointErrors.var" class="text-xs text-red-600 dark:text-red-400">
-              {{ pointErrors.device || pointErrors.var }}
-            </p>
-          </template>
-
-          <template v-else>
-            <div class="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <h4 class="text-sm font-semibold">{{ $t('modbus.pointTest') }}</h4>
-                <p class="mt-1 text-xs text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.pointTestHint') }}</p>
-              </div>
-              <span class="font-mono text-xs text-gray-dark-25 dark:text-gray-light-10">{{ testSummary }}</span>
-            </div>
-
-            <div class="mt-3">
-              <VCheckbox :model-value="testAutoCrc" @update:model-value="setTestAutoCrc">{{ $t('modbus.rawAutoCrc') }}</VCheckbox>
-            </div>
-
-            <VTextField size="sm" class="mt-2" hide-message :model-value="testFrame" :label="$t('modbus.rawRequest')" @update:model-value="onTestFrameInput" />
-
-            <p class="mt-1 text-xs text-gray-dark-25 dark:text-gray-light-10">
-              {{ testAutoCrc ? $t('modbus.pointTestAutoHint') : $t('modbus.pointTestManualHint') }}
-            </p>
-
-            <div class="mt-3 flex flex-wrap items-center gap-2">
-              <VButton size="sm" variant="outline" @click="rebuildTestFrame">{{ $t('modbus.rawBuild') }}</VButton>
-              <VButton size="sm" color="blue" :loading="testPending" :disabled="!testValid" @click="onPointTest">{{ $t('modbus.testRead') }}</VButton>
-            </div>
-
-            <p v-if="testError" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ testError }}</p>
-
-            <div v-if="testResult" ref="testResultRef" class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <div>
-                <div class="text-xs font-semibold text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.status') }}</div>
-                <div class="mt-1 text-sm font-semibold" :class="testStatusClass(testResult.status)">{{ testStatusName(testResult.status) }}</div>
-              </div>
-              <div>
-                <div class="text-xs font-semibold text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.rawElapsed') }}</div>
-                <div class="mt-1 font-mono text-sm">{{ testResult.elapsed }}</div>
-              </div>
-              <div class="sm:col-span-2">
-                <div class="text-xs font-semibold text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.rawResponse') }}</div>
-                <div class="mt-1 break-all font-mono text-sm">{{ testResponse || $t('modbus.rawEmpty') }}</div>
-              </div>
-              <div class="sm:col-span-2">
-                <div class="text-xs font-semibold text-gray-dark-25 dark:text-gray-light-10">{{ $t('modbus.testValue') }}</div>
-                <div class="mt-1 text-sm font-medium">{{ testDecoded }}</div>
-              </div>
-              <div v-if="testException !== null" class="text-xs text-red-600 dark:text-red-400 sm:col-span-2">{{ $t('modbus.exceptionCode') }}: {{ testException }}</div>
-            </div>
-          </template>
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <VButton size="sm" class="min-w-24" color="blue" @click="savePoint">{{ $t('modbus.apply') }}</VButton>
-          <VButton size="sm" class="min-w-24" variant="outline" color="gray" @click="pointEdit = null">{{ $t('modbus.close') }}</VButton>
-          <button type="submit" class="hidden" aria-hidden="true" tabindex="-1"></button>
-        </div>
-      </form>
-    </VDialog>
-
-    <VDialog v-if="varEdit !== null" size="md" :title="varEdit < 0 ? $t('modbus.addVar') : $t('modbus.editVar')" @close="varEdit = null">
-      <form class="flex max-h-[70dvh] xl:max-h-[calc(100dvh-27rem)] min-h-0 flex-col gap-4" @submit.prevent="saveVar" @keydown.esc.stop="varEdit = null">
-        <div class="flex-1">
-          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <VTextField size="sm" :error="varErrors.id" :model-value="varForm.id" :label="$t('modbus.id')" @update:model-value="(v) => (varForm.id = v)" />
-            <VTextField size="sm" :error="varErrors.name" :model-value="varForm.name" :label="$t('name')" @update:model-value="(v) => (varForm.name = v)" />
-            <VSelect size="sm" :model-value="selectName(typeItems, varForm.type)" :items="typeItems" :label="$t('modbus.type')" @change="({ value }) => onVarType(value)" />
-            <VSelect size="sm"
-              :disabled="!!varForm.source"
-              :model-value="selectName(varPointItems, varForm.point)"
-              :items="varPointItems"
-              :label="$t('modbus.point')"
-              @change="({ value }) => (varForm.point = value)"
-            />
-            <VTextField size="sm" readonly :model-value="varForm.source" :label="$t('modbus.source')" />
-            <VTextField size="sm" :error="varErrors.unit" :model-value="varForm.unit" :label="$t('modbus.unit')" @update:model-value="(v) => (varForm.unit = v)" />
-            <VTextField size="sm" :error="varErrors.decimals" :model-value="String(varForm.decimals)" :label="$t('modbus.decimals')" @update:model-value="(v) => (varForm.decimals = toInt(v))" />
-          </div>
-
-          <p v-if="varErrors.point" class="text-xs text-red-600 dark:text-red-400">
-            {{ varErrors.point }}
-          </p>
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <VButton size="sm" class="min-w-24" color="blue" @click="saveVar">{{ $t('modbus.apply') }}</VButton>
-          <VButton size="sm" class="min-w-24" variant="outline" color="gray" @click="varEdit = null">{{ $t('modbus.close') }}</VButton>
-          <button type="submit" class="hidden" aria-hidden="true" tabindex="-1"></button>
-        </div>
-      </form>
-    </VDialog>
-
-    <VDialog v-if="deleteTarget" size="sm" :title="$t('modbus.deleteTitle')" @close="deleteTarget = null">
-      <p class="text-sm text-gray-dark-30 dark:text-gray-main">{{ deleteHint }}</p>
-      <div class="mt-4 flex justify-end gap-3">
-        <VButton size="sm" class="min-w-24" color="red" @click="confirmDelete">{{ $t('modbus.remove') }}</VButton>
-        <VButton size="sm" class="min-w-24" variant="outline" color="gray" @click="deleteTarget = null">{{ $t('modbus.close') }}</VButton>
-      </div>
-    </VDialog>
+    <ModbusDeleteDialog v-if="deleteTarget" :hint="deleteHint" @confirm="confirmDelete" @close="deleteTarget = null" />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { IListItem, IModbus, IModbusDevice, IModbusPoint, IModbusProfile, IModbusRaw, IModbusVar, TMessage } from '@/types';
 import type { TCommand } from '@/generated/protocol';
-import type { IMapDetails, IMapItem } from './modbusMapTypes';
+import type { IMapDetails, IMapItem, IModbusDeviceView, IModbusPointView, IModbusSlaveView, IModbusVarView } from 'vuesp-components/components';
 
 import { useMediaQuery } from '@vueuse/core';
 
@@ -562,9 +219,23 @@ import { struct } from '@/assets/js/';
 import { useConnection } from '@/composables/useConnection';
 import { useLocale } from '@/composables/useLocale';
 
-import { VButton, VCard, VCheckbox, VDialog, VIcon, VListObject, VSelect, VTabs, VTable, VTextField } from 'vuesp-components/components';
-
-import ModbusMapDetails from './ModbusMapDetails.vue';
+import {
+  ModbusConnectionCard,
+  ModbusDeleteDialog,
+  ModbusDeviceDialog,
+  ModbusDeviceList,
+  ModbusMapTable,
+  ModbusPointDialog,
+  ModbusPointList,
+  ModbusProfileToolbar,
+  ModbusSlaveDialog,
+  ModbusSlaveValueList,
+  ModbusVarDialog,
+  ModbusVarList,
+  VButton,
+  VDialog,
+  VListObject,
+} from 'vuesp-components/components';
 
 interface IDeviceForm {
   id: string;
@@ -816,7 +487,6 @@ const tab = ref<'profile' | 'map'>('profile');
 let profileLoaded = false;
 let modbusLoaded = false;
 
-const fileInput = ref<HTMLInputElement | null>(null);
 const profileDirty = ref(false);
 const profileLoading = ref(true);
 const profileSending = ref<TProfileAction | null>(null);
@@ -1143,13 +813,6 @@ const clamp = (value: string | number, min: number, max: number) => {
   return Math.min(max, Math.max(min, Math.trunc(parsed)));
 };
 
-// Editors accept out-of-range numbers and explain them inline instead of
-// silently clamping the value under the cursor.
-const toInt = (value: string | number, fallback = 0) => {
-  const parsed = typeof value === 'number' ? value : Number(String(value).replace(',', '.'));
-  return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
-};
-
 const clearErrors = (errors: Record<string, string>) => {
   for (const key of Object.keys(errors)) delete errors[key];
 };
@@ -1167,8 +830,6 @@ const toNumber = (value: string, fallback: number) => {
   const parsed = Number(String(value).replace(',', '.'));
   return Number.isFinite(parsed) ? parsed : fallback;
 };
-
-const selectName = (items: IListItem<number>[], value: number) => items.find((item) => item.value === value)?.name ?? '';
 
 const typeName = (value: number) => typeItems.find((item) => item.value === value)?.name ?? String(value);
 const deviceName = (index: number) => {
@@ -1196,6 +857,53 @@ const pointEntries = computed(() => draft.value.points.slice(0, draft.value.poin
 const masterPointEntries = computed(() => pointEntries.value.filter(({ point }) => point.device !== DEVICE_SLAVE));
 const slavePointEntries = computed(() => pointEntries.value.filter(({ point }) => point.device === DEVICE_SLAVE));
 const slaveBankUsed = computed(() => slavePointEntries.value.reduce((sum, { point }) => sum + Math.max(1, point.registers || registersForType(point.type, 1)), 0));
+
+const deviceViews = computed<IModbusDeviceView[]>(() =>
+  draft.value.devices.slice(0, draft.value.deviceCount).map((device, index) => ({
+    index,
+    title: device.name || device.id || `#${index + 1}`,
+    meta: `${device.id} · ${$t('modbus.address')} ${device.address} · ${device.interval} ms · ${$t('modbus.timeout')} ${device.timeout} ms · ${$t('modbus.retries')} ${device.retries} · ${device.enabled ? $t('modbus.enabled') : $t('modbus.disabledState')}`,
+  })),
+);
+
+const masterPointViews = computed<IModbusPointView[]>(() =>
+  masterPointEntries.value.map(({ point, index }) => ({
+    index,
+    title: point.name || point.id || `#${index + 1}`,
+    meta: `${deviceName(point.device)} · FC ${point.fc} · ${$t('modbus.address')} ${point.address} · ${typeName(point.type)} · ${point.var === NONE ? '—' : varName(point.var)}`,
+    value: pointValue(point),
+    quality: qualityName(liveOf(point)?.quality),
+    qualityClass: qualityClass(liveOf(point)?.quality),
+    isWritable: Boolean(point.flags & 4),
+    writeValue: writeDrafts[index] ?? '',
+  })),
+);
+
+const slaveViews = computed<IModbusSlaveView[]>(() =>
+  slavePointEntries.value.map(({ point, index }) => ({
+    index,
+    title: point.name || point.id || `#${index + 1}`,
+    meta: `${$t('modbus.slaveValue')} · ${$t('modbus.address')} ${point.address}–${point.address + Math.max(1, point.registers || registersForType(point.type, 1)) - 1} · ${typeName(point.type)} · ${varSourceLabel(draft.value.vars[point.var])}`,
+    value: pointValue(point),
+    quality: qualityName(liveOf(point)?.quality),
+    qualityClass: qualityClass(liveOf(point)?.quality),
+  })),
+);
+
+const varViews = computed<IModbusVarView[]>(() =>
+  draft.value.vars.slice(0, draft.value.varCount).map((variable, index) => ({
+    index,
+    title: variable.name || variable.id || `#${index + 1}`,
+    meta: `${variable.id} · ${typeName(variable.type)} · ${varSourceLabel(variable)} · vars.${variable.id}.value`,
+    value: varValue(variable, index),
+    quality: qualityName(main.value.modbus.vars[index]?.quality),
+    qualityClass: qualityClass(main.value.modbus.vars[index]?.quality),
+  })),
+);
+
+const onWriteDraft = (index: number, value: string) => {
+  writeDrafts[index] = value;
+};
 const nextSlaveVarId = computed(() => uniqueId('v', draft.value.vars, draft.value.varCount));
 
 const uniqueId = (prefix: string, items: { id: string }[], count: number) => {
@@ -1331,7 +1039,6 @@ const profileErrors = computed<string[]>(() => {
 
 const profileValid = computed(() => profileErrors.value.length === 0);
 const profileErrorText = computed(() => profileError.value || profileErrors.value[0] || '');
-const profileSendingText = computed(() => (profileSending.value === 'save' ? $t('modbus.profileSaving') : $t('modbus.profileApplying')));
 const deleteHint = computed(() => (deleteTarget.value ? $t('modbus.deleteHint', { name: deleteTarget.value.name }) : ''));
 
 const appliedVarCount = computed(() => main.value.modbus.varCount ?? 0);
@@ -1503,10 +1210,6 @@ const markDirty = () => {
   profileDirty.value = true;
   profileMessage.value = '';
   profileError.value = '';
-};
-
-const setFlag = (target: { flags: number }, flag: number, value: boolean) => {
-  target.flags = value ? target.flags | flag : target.flags & ~flag;
 };
 
 const onPointType = (value: number) => {
@@ -2109,10 +1812,6 @@ const performRemoveVar = (index: number) => {
   markDirty();
 };
 
-const closePoint = () => {
-  pointEdit.value = null;
-};
-
 const confirmDelete = () => {
   const target = deleteTarget.value;
   if (!target) return;
@@ -2173,12 +1872,9 @@ const onExport = () => {
   URL.revokeObjectURL(url);
 };
 
-const onImport = async (event: Event) => {
+const onImport = async (file: File) => {
   if (profileLoading.value || profileSending.value) return;
   profileError.value = '';
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
 
   try {
     const buffer = await file.arrayBuffer();
@@ -2191,8 +1887,6 @@ const onImport = async (event: Event) => {
     markDirty();
   } catch {
     profileError.value = $t('modbus.importError');
-  } finally {
-    input.value = '';
   }
 };
 

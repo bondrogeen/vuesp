@@ -7,9 +7,9 @@
 #define VUESP_CONFIG_VERSION 1
 #define VUESP_PROJECT_NAME "vuesp."
 #define VUESP_BOARD 1
-#define VUESP_FIRMWARE_MAJOR 5
+#define VUESP_FIRMWARE_MAJOR 6
 #define VUESP_FIRMWARE_MINOR 0
-#define VUESP_FIRMWARE_PATCH 13
+#define VUESP_FIRMWARE_PATCH 0
 
 // Features. Build flags may override these values.
 #ifndef VUESP_SCRIPT
@@ -75,7 +75,7 @@
 #define DEF_DEVICE_NAME "vuesp."
 #endif
 #ifndef DEF_DEVICE_FIRMWARE
-#define DEF_DEVICE_FIRMWARE {5, 0, 13}
+#define DEF_DEVICE_FIRMWARE {6, 0, 0}
 #endif
 #ifndef DEF_BOARD
 #define DEF_BOARD 1

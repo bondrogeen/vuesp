@@ -102,7 +102,7 @@ pio run
 
 ```yaml
 project:
-  firmwareVersion: "5.0.13"
+  firmwareVersion: "6.0.0"
   deviceName: "vuesp."
 ```
 
@@ -532,6 +532,9 @@ vue/json/locales/*.json      # тексты локалей
   имена в разных скриптах — разные переменные. `$p` остаются общими.
 - Память под локальные переменные ограничена `script.varPoolBytes` (по
   умолчанию 3072 B, минимум 2048 B).
+- Компоненты студии скриптов (`ScriptStudio*`, диалоги) и Modbus
+  (`Modbus*`) лежат в `vuesp-components@6`; приложение содержит только
+  состояние, WebSocket и бизнес-логику.
 
 ### 16. Границы текущей версии
 
@@ -651,7 +654,7 @@ project:
   name: my-device
   board: esp8266
   buildProfile: standard
-  firmwareVersion: "5.0.13"
+  firmwareVersion: "6.0.0"
   deviceName: "vuesp."
 
 features:

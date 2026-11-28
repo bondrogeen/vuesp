@@ -1,7 +1,7 @@
 # ScriptRunner — bytecode scripts
 
-Version: 2.0.0
-Updated: 2026-11-27
+Version: 6.0.0
+Updated: 2026-11-28
 
 > The only engine: the source is compiled in the browser into a VBC1 container,
 > the firmware verifies it and executes it. The text runner and `scripts.txt`
@@ -18,7 +18,9 @@ Highlights:
 - compilation and diagnostics run in the browser; the MC executes verified bytecode;
 - up to 15 scripts; the script named `boot` starts automatically;
 - `wait()` does not block `loop()`;
-- an error stops only its own script and is reported by `KEY_SCRIPTSTATUS` over WebSocket.
+- an error stops only its own script and is reported by `KEY_SCRIPTSTATUS` over WebSocket;
+- the studio can import a source file (`.js`, `.txt`, `.vjs`) and export the current script as `.js`;
+- status is shown by the tab dot, logs open in a separate panel.
 
 ## Basic Rules
 

@@ -10,7 +10,7 @@ project:
   board: esp8266
   buildProfile: standard
   # firmwareVersion/deviceName feed the generated [common] section and build flags.
-  firmwareVersion: "5.0.13"
+  firmwareVersion: "6.0.0"
   deviceName: "vuesp."
 
 features:
