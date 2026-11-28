@@ -41,6 +41,10 @@ Highlights:
 | `$eN` | event parameters | 0–3, read-only |
 | `$cN` | `call()` parameters | 0–3, read-only |
 
+`$u/$i/$f/$s/$a` are local to the loaded script: the same name in different
+scripts means different variables. `$p` is shared hardware. Local variable
+memory is limited by `script.varPoolBytes` (default 3072 B, minimum 2048 B).
+
 `$name` (for example `$display`) is a device data variable. Available names and
 types come from `/vm/capabilities` and the device suggestions.
 

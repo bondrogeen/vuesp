@@ -431,10 +431,15 @@ const scriptLimits = {
   maxFunctionParams: integer(rawScript.maxFunctionParams, 5, 'script.maxFunctionParams', 1, 15),
   maxCallParams: integer(rawScript.maxCallParams, 4, 'script.maxCallParams', 0, 15),
   maxEventParams,
+  varPoolBytes: integer(rawScript.varPoolBytes, 3072, 'script.varPoolBytes', 2048, 8192),
   instrPerTick: integer(rawScript.instrPerTick, 32, 'script.instrPerTick', 1, 65535),
   usPerTick: integer(rawScript.usPerTick, 300, 'script.usPerTick', 1, 65535),
   updateBudgetUs: integer(rawScript.updateBudgetUs, 3000, 'script.updateBudgetUs', 1, 65535),
 };
+
+if (scriptLimits.varPoolBytes % 8 !== 0) {
+  fail('script.varPoolBytes: must be a multiple of 8');
+}
 
 const rawEvents = Array.isArray(rawScript.events) ? rawScript.events : [];
 const events = rawEvents.map((event, index) => {
@@ -708,6 +713,9 @@ const renderConfigHeader = () => `#ifndef VUESP_GENERATED_CONFIG_H
 #ifndef MAX_ARRAY_VARS
 #define MAX_ARRAY_VARS ${scriptLimits.vars.a}
 #endif
+#ifndef VBC_VAR_POOL_BYTES
+#define VBC_VAR_POOL_BYTES ${scriptLimits.varPoolBytes}
+#endif
 #ifndef MAX_STRING_LEN
 #define MAX_STRING_LEN ${scriptLimits.maxStringLen}
 #endif
@@ -852,6 +860,7 @@ const configSnapshot = {
     maxFunctionParams: scriptLimits.maxFunctionParams,
     maxCallParams: scriptLimits.maxCallParams,
     maxEventParams: scriptLimits.maxEventParams,
+    varPoolBytes: scriptLimits.varPoolBytes,
     instrPerTick: scriptLimits.instrPerTick,
     usPerTick: scriptLimits.usPerTick,
     updateBudgetUs: scriptLimits.updateBudgetUs,
@@ -1174,6 +1183,7 @@ const renderSchema = () => {
           maxFunctionParams: { type: 'integer', minimum: 1, maximum: 15, default: 5 },
           maxCallParams: { type: 'integer', minimum: 0, maximum: 15, default: 4 },
           maxEventParams: { type: 'integer', minimum: 0, maximum: 4, default: 4 },
+          varPoolBytes: { type: 'integer', minimum: 2048, maximum: 8192, default: 3072 },
           instrPerTick: { type: 'integer', minimum: 1, maximum: 65535, default: 32 },
           usPerTick: { type: 'integer', minimum: 1, maximum: 65535, default: 300 },
           updateBudgetUs: { type: 'integer', minimum: 1, maximum: 65535, default: 3000 },

@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { VButton, VIcon } from 'vuesp-components/components';
+import type { IScriptStudioMetricsProps } from './types';
 
-import { useLocale } from '@/composables/useLocale';
-import type { IScriptStudioMetricsEmits, IScriptStudioMetricsProps } from './types';
-
-const { $t } = useLocale();
-const { metrics, isBusy, isDownloadAvailable, isCurrentSelected, instrPerTick, usPerTick } = defineProps<IScriptStudioMetricsProps>();
-const emit = defineEmits<IScriptStudioMetricsEmits>();
+const { metrics } = defineProps<IScriptStudioMetricsProps>();
 </script>
 
 <template>
@@ -18,22 +13,8 @@ const emit = defineEmits<IScriptStudioMetricsEmits>();
       </div>
     </div>
 
-    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs mb-2">
-      <VButton size="sm" variant="soft" color="gray" :disabled="isBusy || !isCurrentSelected" @click="emit('reload')">
-        <VIcon name="refresh" :size="14" />
-        {{ $t('scriptStudio.reloaded') }}
-      </VButton>
-      <VButton size="sm" variant="soft" color="gray" :disabled="!isDownloadAvailable" @click="emit('download')">
-        <VIcon name="download" :size="14" />
-        {{ $t('scriptStudio.download') }}
-      </VButton>
-      <VButton size="sm" variant="soft" color="gray" :disabled="isBusy" @click="emit('stop-all')">
-        <VIcon name="stop-circle" :size="14" />
-        {{ $t('scriptStudio.stopAll') }}
-      </VButton>
-      <span class="ml-auto font-mono text-xs text-gray-dark-25 dark:text-gray-main">{{ $t('scriptStudio.limits') }}: {{ instrPerTick }} / {{ usPerTick }} µs</span>
+    <div class="mt-3">
+      <slot></slot>
     </div>
-
-    <slot></slot>
   </div>
 </template>

@@ -451,6 +451,12 @@
           "maximum": 4,
           "default": 4
         },
+        "varPoolBytes": {
+          "type": "integer",
+          "minimum": 2048,
+          "maximum": 8192,
+          "default": 3072
+        },
         "instrPerTick": {
           "type": "integer",
           "minimum": 1,

@@ -477,7 +477,7 @@ bool BytecodeService::savePack(const uint8_t name[kPackNameLen],
     if (slot >= 0) {
       memcpy(_slots[slot].data, data, len);
       _slots[slot].len = len;
-      if (!_vm.loadScript(_slots[slot].id, _slots[slot].data, len)) {
+      if (!_vm.loadScript(_slots[slot].id, _slots[slot].data, len, false, true)) {
         _slots[slot].used = false;
       }
     }
@@ -685,6 +685,14 @@ uint8_t BytecodeService::scriptState(const char* name) const {
   const int8_t ref = findRef(name);
   if (ref < 0) return 0;
   return scriptStateByIndex((uint8_t)ref);
+}
+
+bool BytecodeService::scriptName(uint8_t id,
+                                 char name[vuesp::bytecode::kPackNameLen + 1]) const {
+  if (!name) return false;
+  const int8_t ref = findRefById(id);
+  if (ref < 0) return false;
+  return packNameToText(_refs[ref].name, name);
 }
 
 uint8_t BytecodeService::packErrorCode() const { return (uint8_t)_packError; }

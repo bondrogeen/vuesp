@@ -87,6 +87,7 @@ export const VUESP_CONFIG = {
     "maxFunctionParams": 5,
     "maxCallParams": 4,
     "maxEventParams": 4,
+    "varPoolBytes": 3072,
     "instrPerTick": 32,
     "usPerTick": 300,
     "updateBudgetUs": 3000,

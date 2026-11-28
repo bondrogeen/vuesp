@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core';
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { VCard } from 'vuesp-components/components';
 
 import BytecodeEditor from '@/components/BytecodeEditor.vue';
@@ -9,31 +9,27 @@ import ScriptStudioMetrics from '@/components/script-studio/ScriptStudioMetrics.
 import ScriptStudioActionBar from '@/components/script-studio/ScriptStudioActionBar.vue';
 import ScriptStudioTabs from '@/components/script-studio/ScriptStudioTabs.vue';
 import ScriptStudioLogs from '@/components/script-studio/ScriptStudioLogs.vue';
-import ScriptSnippetsDialog from '@/components/script-studio/ScriptSnippetsDialog.vue';
-import ScriptExamplesDialog from '@/components/script-studio/ScriptExamplesDialog.vue';
 import ScriptDetailsDialog from '@/components/script-studio/ScriptDetailsDialog.vue';
 import ScriptDeleteDialog from '@/components/script-studio/ScriptDeleteDialog.vue';
 import ScriptRenameDialog from '@/components/script-studio/ScriptRenameDialog.vue';
+import ScriptDiscardDialog from '@/components/script-studio/ScriptDiscardDialog.vue';
 
 import { useLocale } from '@/composables/useLocale';
 import { useStore } from '@/composables/useStore';
 import { useBytecodeCompile } from '@/composables/script/useBytecodeCompile';
 import { useBytecodeScripts } from '@/composables/script/useBytecodeScripts';
-import { SCRIPT_LIMITS } from '@/generated/scriptManifest';
-import { BYTECODE_EXAMPLES, getEventArgNames, normalizeSuggestionInsert } from '@/lib/script';
-import type { BytecodeExample, EventSpec, FunctionSpec } from '@/lib/script';
-import type { ISuggestion } from 'vuesp-components/types';
+import { useProjectConfig } from '@/composables/useProjectConfig';
 import type { IRuntimeMetric, IScriptListItem } from '@/types';
 import {
   SCRIPT_STATE,
   downloadBlob,
   getMessageText,
   getPackErrorName,
-  getScriptStatusMeta,
   getVmErrorName,
   isScriptActive,
   isScriptError,
-  toArrayBuffer,
+  isValidScriptName,
+  SCRIPT_NAME_MAX_LENGTH,
 } from '@/utils/scriptStudio';
 
 const DEFAULT_SOURCE = `$u0 = 5;
@@ -46,6 +42,7 @@ $p13 = 0;
 
 const { $t } = useLocale();
 const { suggestions } = useStore();
+const projectConfig = useProjectConfig();
 
 const { manifest, result, isVmAvailable, diagnostics, hex, stackMax, byteCount, loadCapabilities, compileSource, resetResult, getSourceLines } = useBytecodeCompile();
 
@@ -59,21 +56,39 @@ const message = ref('');
 const logsCount = ref(0);
 const isSettingsOpen = ref(false);
 const isRenameOpen = ref(false);
-const isSnippetsOpen = ref(false);
-const isExamplesOpen = ref(false);
 const isDetailsOpen = ref(false);
 const deleteTarget = ref<string | null>(null);
+const discardAction = ref<TDiscardAction | null>(null);
+
+type TDiscardAction =
+  | { type: 'select'; name: string }
+  | { type: 'run'; name: string }
+  | { type: 'reload' }
+  | { type: 'new' }
+  | { type: 'import'; fileName: string; source: string };
 
 const logsRef = useTemplateRef<InstanceType<typeof ScriptStudioLogs>>('logsRef');
+const importInput = useTemplateRef<HTMLInputElement>('importInput');
 const editorRef = useTemplateRef<InstanceType<typeof BytecodeEditor>>('editor');
 
 const currentEntry = computed(() => scripts.value.find((script) => script.name === name.value) ?? null);
 const isDirty = computed(() => source.value !== savedSource.value || name.value !== savedName.value);
-const currentStatus = computed(() => getScriptStatusMeta(currentEntry.value, $t));
 const draftName = computed(() => (currentEntry.value ? null : name.value));
 const scriptNames = computed(() => scripts.value.map((script) => script.name));
-const isDownloadAvailable = computed(() => Boolean(result.value?.bytecode));
+const isDownloadAvailable = computed(() => Boolean(source.value.trim()));
 const lineCount = computed(() => getSourceLines(source.value));
+const maxScripts = computed(() => manifest.value.maxScripts ?? projectConfig.maxSavedScripts);
+
+const ranName = ref<string | null>(null);
+let ranTimer: ReturnType<typeof setTimeout> | null = null;
+
+const flashRan = (scriptName: string) => {
+  ranName.value = scriptName;
+  if (ranTimer) clearTimeout(ranTimer);
+  ranTimer = setTimeout(() => {
+    ranName.value = null;
+  }, 2500);
+};
 
 const loadedCount = computed(
   () => scripts.value.filter((script) => (script.state & SCRIPT_STATE.LOADED) !== 0).length,
@@ -86,7 +101,8 @@ const metrics = computed<IRuntimeMetric[]>(() => {
   const errorScript = scripts.value.find((script) => isScriptError(script.state))?.name ?? '';
   const errorText = [errorName, errorScript].filter(Boolean).join(' · ');
   return [
-    { key: 'cacheSlots', label: $t('scriptStudio.cacheSlots'), value: String(manifest.value.cacheSlots ?? SCRIPT_LIMITS.cacheSlots) },
+    { key: 'scripts', label: $t('scriptStudio.savedCount'), value: `${scripts.value.length}/${maxScripts.value}` },
+    { key: 'cacheSlots', label: $t('scriptStudio.cacheSlots'), value: String(manifest.value.cacheSlots ?? projectConfig.cacheSlots) },
     { key: 'vm', label: $t('scriptStudio.vm'), value: `v${manifest.value.vm}` },
     { key: 'pack', label: $t('scriptStudio.pack'), value: packName, isError: Boolean(value?.packError) },
     {
@@ -134,14 +150,16 @@ const onLoadScript = async (scriptName: string) => {
       source: payload.source,
     };
     message.value = $t('scriptStudio.decompiled');
+    ranName.value = null;
   } catch (error) {
     message.value = getMessageText(error);
   }
 };
 
 const onSelectScript = async (script: IScriptListItem) => {
-  if (script.name === name.value && !isDirty.value) return;
-  if (isDirty.value && script.name !== name.value && !window.confirm($t('scriptStudio.discardChanges'))) {
+  if (script.name === name.value) return;
+  if (isDirty.value) {
+    discardAction.value = { type: 'select', name: script.name };
     return;
   }
   await onLoadScript(script.name);
@@ -149,26 +167,36 @@ const onSelectScript = async (script: IScriptListItem) => {
 
 const onReloadCurrent = async () => {
   if (!currentEntry.value) return;
+  if (isDirty.value) {
+    discardAction.value = { type: 'reload' };
+    return;
+  }
   await onLoadScript(name.value);
 };
 
-const onSaveScript = async (isRunAfterSave: boolean) => {
+const onSaveScript = async (isRunAfterSave: boolean): Promise<boolean> => {
   onCompile(true);
   const compiled = result.value;
-  if (!compiled?.ok || !compiled.bytecode) return;
+  if (!compiled?.ok || !compiled.bytecode) return false;
   const targetName = name.value;
   const targetSource = source.value;
   try {
     const isSaved = await onSave(targetName, compiled.bytecode, isRunAfterSave);
-    if (!isSaved) return;
+    if (!isSaved) return false;
     if (name.value === targetName) {
       savedName.value = targetName;
       savedSource.value = targetSource;
     }
     message.value = isRunAfterSave ? $t('scriptStudio.started') : $t('scriptStudio.saved');
     await onRefreshList();
+    if (isRunAfterSave) {
+      const entry = scripts.value.find((script) => script.name === targetName);
+      if (!entry || !isScriptActive(entry.state)) flashRan(targetName);
+    }
+    return true;
   } catch (error) {
     message.value = getMessageText(error);
+    return false;
   }
 };
 
@@ -177,6 +205,8 @@ const onRunNamed = async (scriptName: string) => {
     if (!(await onRun(scriptName))) return;
     message.value = $t('scriptStudio.started');
     await onRefreshList();
+    const entry = scripts.value.find((script) => script.name === scriptName);
+    if (!entry || !isScriptActive(entry.state)) flashRan(scriptName);
   } catch (error) {
     message.value = getMessageText(error);
   }
@@ -186,6 +216,7 @@ const onStopNamed = async (scriptName: string) => {
   try {
     if (!(await onStop(scriptName))) return;
     message.value = $t('scriptStudio.stopped');
+    if (ranName.value === scriptName) ranName.value = null;
     await onRefreshList();
   } catch (error) {
     message.value = getMessageText(error);
@@ -193,22 +224,37 @@ const onStopNamed = async (scriptName: string) => {
 };
 
 const onToggleRun = async (script: IScriptListItem) => {
-  if (isScriptActive(script.state)) await onStopNamed(script.name);
-  else await onRunNamed(script.name);
+  if (isScriptActive(script.state)) {
+    await onStopNamed(script.name);
+    return;
+  }
+  if (script.name === name.value && isDirty.value) {
+    await onSaveScript(true);
+    return;
+  }
+  if (script.name !== name.value) {
+    if (isDirty.value) {
+      discardAction.value = { type: 'run', name: script.name };
+      return;
+    }
+    await onLoadScript(script.name);
+    if (name.value !== script.name) return;
+  }
+  await onRunNamed(script.name);
 };
 
 const onStopAllScripts = async () => {
   try {
     if (!(await onStopAll())) return;
     message.value = $t('scriptStudio.stopped');
+    ranName.value = null;
     await onRefreshList();
   } catch (error) {
     message.value = getMessageText(error);
   }
 };
 
-const onNewScript = () => {
-  if (isDirty.value && !window.confirm($t('scriptStudio.discardChanges'))) return;
+const createNewScript = () => {
   let index = 1;
   while (scripts.value.some((script) => script.name === `script${index}`)) index += 1;
   name.value = `script${index}`;
@@ -216,9 +262,18 @@ const onNewScript = () => {
   savedSource.value = '';
   savedName.value = '';
   resetResult();
+  ranName.value = null;
   message.value = $t('scriptStudio.newScript');
   onCompile(true);
   void nextTick(() => editorRef.value?.focus());
+};
+
+const onNewScript = () => {
+  if (isDirty.value) {
+    discardAction.value = { type: 'new' };
+    return;
+  }
+  createNewScript();
 };
 
 const onAskDelete = (scriptName: string) => {
@@ -235,7 +290,7 @@ const onConfirmDelete = async () => {
     if (name.value === target) {
       const next = scripts.value.find((script) => script.name !== target);
       if (next) await onLoadScript(next.name);
-      else onNewScript();
+      else createNewScript();
     }
     await onRefreshList();
   } catch (error) {
@@ -243,42 +298,84 @@ const onConfirmDelete = async () => {
   }
 };
 
-const onLoadExample = (example: BytecodeExample) => {
-  if (isDirty.value && !window.confirm($t('scriptStudio.discardChanges'))) return;
-  name.value = example.name;
-  source.value = example.source;
+const scriptNameFromFile = (fileName: string): string => {
+  const base = fileName.replace(/\.[^.]+$/, '').toLowerCase();
+  let candidate = base
+    .replace(/[^a-z0-9_-]/g, '_')
+    .replace(/^[^a-z_]/, '_')
+    .slice(0, SCRIPT_NAME_MAX_LENGTH);
+  if (!isValidScriptName(candidate)) candidate = 'imported';
+  if (scripts.value.some((script) => script.name === candidate)) {
+    let index = 2;
+    let next = candidate;
+    while (scripts.value.some((script) => script.name === next)) {
+      const suffix = String(index);
+      next = `${candidate.slice(0, SCRIPT_NAME_MAX_LENGTH - suffix.length)}${suffix}`;
+      index += 1;
+    }
+    candidate = next;
+  }
+  return candidate;
+};
+
+const applyImported = (importedName: string, text: string) => {
+  name.value = importedName;
+  source.value = text;
   savedSource.value = '';
   savedName.value = '';
   resetResult();
-  message.value = '';
-  isExamplesOpen.value = false;
+  ranName.value = null;
+  message.value = $t('scriptStudio.imported');
+  onCompile(true);
   void nextTick(() => editorRef.value?.focus());
 };
 
-const onInsertFunction = (fn: FunctionSpec) => {
-  editorRef.value?.insertAtCursor(`${fn.name}()`, fn.name.length + 1);
-  isSnippetsOpen.value = false;
+const onImportClick = () => {
+  importInput.value?.click();
 };
 
-const onInsertEvent = (event: EventSpec) => {
-  const params = getEventArgNames(event.name);
-  const snippet = params.length > 0
-    ? `on('${event.name}', (${params.join(', ')}) => {\n  \n});\n`
-    : `on('${event.name}') {\n  \n}\n`;
-  editorRef.value?.insertAtCursor(snippet, snippet.indexOf('\n') + 3);
-  isSnippetsOpen.value = false;
+const onImportFile = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  const text = await file.text();
+  if (!text.trim()) {
+    message.value = $t('scriptStudio.importEmpty');
+    return;
+  }
+  if (isDirty.value) {
+    discardAction.value = { type: 'import', fileName: file.name, source: text };
+    return;
+  }
+  applyImported(scriptNameFromFile(file.name), text);
 };
 
-const onInsertSuggestion = (suggestion: ISuggestion) => {
-  const { insert, caret } = normalizeSuggestionInsert(suggestion);
-  editorRef.value?.insertAtCursor(insert, caret);
-  isSnippetsOpen.value = false;
+const runDiscardAction = async () => {
+  const action = discardAction.value;
+  discardAction.value = null;
+  if (!action) return;
+  if (action.type === 'select') await onLoadScript(action.name);
+  else if (action.type === 'run') {
+    await onLoadScript(action.name);
+    if (name.value === action.name) await onRunNamed(action.name);
+  } else if (action.type === 'reload') await onLoadScript(name.value);
+  else if (action.type === 'new') createNewScript();
+  else if (action.type === 'import') applyImported(scriptNameFromFile(action.fileName), action.source);
+};
+
+const onDiscardSave = async () => {
+  if (!(await onSaveScript(false))) return;
+  await runDiscardAction();
+};
+
+const onDiscardDiscard = async () => {
+  await runDiscardAction();
 };
 
 const onDownload = () => {
-  const bytes = result.value?.bytecode;
-  if (!bytes) return;
-  downloadBlob(toArrayBuffer(bytes), `script-${name.value || 'script'}.vbc`, 'application/octet-stream');
+  if (!source.value.trim()) return;
+  downloadBlob(source.value, `${name.value || 'script'}.js`, 'text/javascript');
 };
 
 const onRenameSave = (nextName: string) => {
@@ -301,7 +398,12 @@ const onUpdateLogsCount = (count: number) => {
 };
 
 watch(source, () => {
+  ranName.value = null;
   void debouncedCompile();
+});
+
+onBeforeUnmount(() => {
+  if (ranTimer) clearTimeout(ranTimer);
 });
 
 onMounted(async () => {
@@ -322,55 +424,56 @@ onMounted(async () => {
   <VCard variant="glass" padding="none" class="flex min-w-0 flex-col">
     <ScriptStudioToolbar
       :name="name"
-      :status="currentStatus"
       :is-busy="isBusy"
       :is-vm-available="isVmAvailable"
       :is-settings-open="isSettingsOpen"
       :is-download-available="isDownloadAvailable"
-      :is-current-selected="Boolean(currentEntry)"
+      :is-dirty="isDirty"
       @save="onSaveScript(false)"
       @rename="isRenameOpen = true"
       @reload="onReloadCurrent"
+      @import="onImportClick"
       @download="onDownload"
       @stop-all="onStopAllScripts"
-      @remove="onAskDelete(name)"
       @toggle-settings="isSettingsOpen = !isSettingsOpen"
     />
 
     <ScriptStudioMetrics
       v-if="isSettingsOpen"
       :metrics="metrics"
-      :is-busy="isBusy"
-      :is-download-available="isDownloadAvailable"
-      :is-current-selected="Boolean(currentEntry)"
-      :instr-per-tick="manifest.limits.instrPerTick"
-      :us-per-tick="manifest.limits.usPerTick"
-      @reload="onReloadCurrent"
-      @download="onDownload"
-      @stop-all="onStopAllScripts"
     >
       <ScriptStudioActionBar
         :logs-count="logsCount"
         :line-count="lineCount"
         :byte-count="byteCount"
         :stack-max="stackMax"
-        @insert="isSnippetsOpen = true"
-        @examples="isExamplesOpen = true"
         @details="isDetailsOpen = true"
         @show-logs="onShowLogs"
       />
     </ScriptStudioMetrics>
 
-    <ScriptStudioTabs :scripts="scripts" :active-name="name" :draft-name="draftName" :is-busy="isBusy" @select="onSelectScript" @toggle-run="onToggleRun" @remove="onAskDelete" @create="onNewScript" />
+    <ScriptStudioTabs
+      :scripts="scripts"
+      :active-name="name"
+      :draft-name="draftName"
+      :is-busy="isBusy"
+      :is-dirty="isDirty"
+      :max-scripts="maxScripts"
+      :ran-name="ranName"
+      @select="onSelectScript"
+      @toggle-run="onToggleRun"
+      @remove="onAskDelete"
+      @create="onNewScript"
+    />
 
     <BytecodeEditor ref="editor" v-model="source" :manifest="manifest" :script-names="scriptNames" :errors="diagnostics" :device-suggestions="suggestions" />
 
     <ScriptStudioLogs ref="logsRef" :name="name" @update:count="onUpdateLogsCount" />
   </VCard>
 
-  <ScriptSnippetsDialog v-if="isSnippetsOpen" :manifest="manifest" :suggestions="suggestions" @insert-function="onInsertFunction" @insert-event="onInsertEvent" @insert-suggestion="onInsertSuggestion" @close="isSnippetsOpen = false" />
-  <ScriptExamplesDialog v-if="isExamplesOpen" :examples="BYTECODE_EXAMPLES" @load="onLoadExample" @close="isExamplesOpen = false" />
   <ScriptDetailsDialog v-if="isDetailsOpen" :result="result" :hex="hex" @close="isDetailsOpen = false" />
   <ScriptDeleteDialog v-if="deleteTarget" :name="deleteTarget" :is-busy="isBusy" @confirm="onConfirmDelete" @close="deleteTarget = null" />
   <ScriptRenameDialog v-if="isRenameOpen" :name="name" :is-busy="isBusy" @save="onRenameSave" @close="isRenameOpen = false" />
+  <ScriptDiscardDialog v-if="discardAction" @save="onDiscardSave" @discard="onDiscardDiscard" @cancel="discardAction = null" />
+  <input ref="importInput" type="file" accept=".js,.txt,.vjs" class="hidden" @change="onImportFile" />
 </template>

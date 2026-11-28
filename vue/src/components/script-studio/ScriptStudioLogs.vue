@@ -15,6 +15,8 @@ const {
   visibleLogs,
   count,
   isOpen,
+  hasUnread,
+  pulseSeq,
   isPaused,
   isSearchOpen,
   isAutoScroll,
@@ -42,8 +44,17 @@ defineExpose({ open: onOpen });
   <div ref="logsPanel">
     <div class="flex flex-wrap items-center justify-between gap-2 bg-gray-dark-40/[0.03] px-3 py-2 dark:bg-black/20">
       <div class="flex flex-wrap items-center gap-2">
-        <VButton size="sm" variant="ghost" color="gray" @click="onToggleOpen">
-          <VIcon name="code" :size="14" />
+        <VButton
+          size="sm"
+          variant="ghost"
+          color="gray"
+          :title="hasUnread ? $t('scriptStudio.newLogs') : undefined"
+          @click="onToggleOpen"
+        >
+          <span v-if="hasUnread" :key="pulseSeq" class="inline-flex text-cyan-main animate-shake">
+            <VIcon name="code" :size="14" />
+          </span>
+          <VIcon v-else name="code" :size="14" />
           <span>{{ $t('logs') }}</span>
           <VIcon name="chevron-down" :size="14" class="transition" :class="{ 'rotate-180': isOpen }" />
         </VButton>

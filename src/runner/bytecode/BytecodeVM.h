@@ -32,7 +32,8 @@ enum class VmError : uint8_t {
   CODE_CRC,
   NO_CACHE,
   RECURSION,
-  DEPTH
+  DEPTH,
+  NO_VARS
 };
 
 const char* vmErrorName(VmError error);
@@ -63,7 +64,8 @@ class BytecodeVM {
 
   bool registerFunction(uint8_t id, ExternalFunction func, void* userData = nullptr);
 
-  bool loadScript(uint8_t id, const uint8_t* data, uint16_t size, bool persistent = false);
+  bool loadScript(uint8_t id, const uint8_t* data, uint16_t size,
+                  bool persistent = false, bool resetVars = false);
   bool removeScript(uint8_t id);
   int8_t runScript(uint8_t id);
   bool stopScript(uint8_t id);
@@ -82,11 +84,29 @@ class BytecodeVM {
   float getFloatVar(uint8_t index) const;
   const char* getStringVar(uint8_t index) const;
   uint8_t getArrayLen(uint8_t index) const;
+  uint32_t getUintVar(uint8_t scriptId, uint8_t index) const;
+  int32_t getIntVar(uint8_t scriptId, uint8_t index) const;
+  float getFloatVar(uint8_t scriptId, uint8_t index) const;
+  const char* getStringVar(uint8_t scriptId, uint8_t index) const;
+  uint8_t getArrayLen(uint8_t scriptId, uint8_t index) const;
   VmError lastError() const { return _lastError; }
   uint8_t lastErrorScript() const { return _lastErrorScript; }
   uint16_t lastErrorPc() const { return _lastErrorPc; }
 
  private:
+  static constexpr uint16_t kVarPoolNone = 0xFFFF;
+
+  struct ScriptVars {
+    uint16_t offset;
+    uint16_t size;
+    uint8_t u;
+    uint8_t i;
+    uint8_t f;
+    uint8_t s;
+    uint8_t a;
+    bool used;
+  };
+
   struct ScriptEntry {
     bool used;
     bool persistent;
@@ -94,6 +114,7 @@ class BytecodeVM {
     const uint8_t* data;
     uint16_t size;
     ContainerView view;
+    ScriptVars vars;
   };
 
   struct ExternalEntry {
@@ -127,7 +148,8 @@ class BytecodeVM {
   Context _contexts[kMaxContexts];
   Value _stack[kStackSize];
   uint64_t _stackUsed;
-  ScriptContext _ctx;
+  alignas(8) uint8_t _varPool[VBC_VAR_POOL_BYTES];
+  const ScriptVars* _lastVars;
   char _scratch[kScratchBytes];
   uint16_t _scratchUsed;
   uint8_t _nextContext;
@@ -177,9 +199,23 @@ class BytecodeVM {
   char* allocScratch(uint16_t len);
   bool valueToString(const Value& value, const char*& data, uint16_t& len);
 
-  bool isWritableArray(const Value& value) const;
+  bool isWritableArray(const ScriptVars& vars, const Value& value) const;
   bool readVar(Context& ctx, uint8_t varid, Value& out);
   bool writeVar(Context& ctx, uint8_t varid, const Value& value);
+
+  void varPoolReset();
+  uint16_t varPoolAlloc(uint16_t payload);
+  void varPoolFree(uint16_t offset);
+  bool scanVars(const ContainerView& view, ScriptVars& vars) const;
+  uint16_t varPayloadSize(const ScriptVars& vars) const;
+  bool allocVars(ScriptVars& vars);
+  const ScriptVars* findVars(uint8_t scriptId) const;
+  uint32_t* uintVars(const ScriptVars& vars) const;
+  int32_t* intVars(const ScriptVars& vars) const;
+  double* floatVars(const ScriptVars& vars) const;
+  char (*stringVars(const ScriptVars& vars) const)[MAX_STRING_LEN];
+  uint8_t (*arrayVars(const ScriptVars& vars) const)[MAX_ARRAY_SIZE];
+  uint8_t* arrayLen(const ScriptVars& vars) const;
   bool readData(const ContainerView& view, uint16_t nameConst, uint8_t kind, Value& out);
   bool writeData(const ContainerView& view, uint16_t nameConst, const Value& value);
 

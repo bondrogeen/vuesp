@@ -101,6 +101,17 @@ void ScriptProtocol::sendStatus(const Request& request, uint8_t result) {
   }
 }
 
+void ScriptProtocol::sendState(uint8_t id) {
+  char name[vuesp::bytecode::kPackNameLen + 1] = {0};
+  if (!bytecodeService.scriptName(id, name)) return;
+
+  Request request = {};
+  request.action = SCRIPTACT_STATUS;
+  request.requestId = 0;
+  strncpy(request.name, name, sizeof(request.name) - 1);
+  sendStatus(request, SCRIPTRES_OK);
+}
+
 void ScriptProtocol::sendBusy(uint32_t clientId, uint16_t requestId) {
   ScriptStatus status = {};
   status.key = KEY_SCRIPTSTATUS;

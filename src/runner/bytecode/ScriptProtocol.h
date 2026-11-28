@@ -14,6 +14,9 @@ class ScriptProtocol {
   bool onWsCommand(const uint8_t* data, size_t len, uint32_t clientId);
   bool queueSave(const char* name, uint16_t requestId, uint8_t flags);
 
+  // Broadcast the current state of a script after the VM finishes it.
+  void sendState(uint8_t id);
+
   // True while a SAVE request is queued or being executed. The HTTP upload
   // path uses it to avoid overwriting the temporary file under a running save.
   bool isBusy() const;

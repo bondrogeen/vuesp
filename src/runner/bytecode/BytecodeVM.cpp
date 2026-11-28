@@ -21,6 +21,14 @@ static_assert(kStackSize <= 64, "stack allocator uses a 64-bit mask");
 
 namespace {
 
+struct VarBlock {
+  uint16_t size;
+  uint16_t prev;
+  uint8_t free;
+  uint8_t pad[3];
+};
+static_assert(sizeof(VarBlock) == 8, "variable block header must stay 8 bytes");
+
 const char* vmErrorNameInternal(VmError error) {
   switch (error) {
     case VmError::NONE:
@@ -63,6 +71,8 @@ const char* vmErrorNameInternal(VmError error) {
       return "recursive script call";
     case VmError::DEPTH:
       return "call depth exceeded";
+    case VmError::NO_VARS:
+      return "no variable memory";
     default:
       return "unknown";
   }
@@ -147,15 +157,200 @@ void BytecodeVM::reset() {
   memset(_scripts, 0, sizeof(_scripts));
   memset(_externals, 0, sizeof(_externals));
   memset(_contexts, 0, sizeof(_contexts));
-  memset(&_ctx, 0, sizeof(_ctx));
+  varPoolReset();
   memset(_stack, 0, sizeof(_stack));
   memset(_scratch, 0, sizeof(_scratch));
   _stackUsed = 0;
   _scratchUsed = 0;
   _nextContext = 0;
+  _lastVars = nullptr;
   _lastError = VmError::NONE;
   _lastErrorScript = 0;
   _lastErrorPc = 0;
+}
+
+void BytecodeVM::varPoolReset() {
+  VarBlock* block = reinterpret_cast<VarBlock*>(_varPool);
+  block->size = VBC_VAR_POOL_BYTES;
+  block->prev = kVarPoolNone;
+  block->free = 1;
+  memset(block->pad, 0, sizeof(block->pad));
+}
+
+uint16_t BytecodeVM::varPoolAlloc(uint16_t payload) {
+  if (payload == 0) return kVarPoolNone;
+  const uint16_t aligned = (uint16_t)((payload + 7u) & ~7u);
+  const uint32_t need = (uint32_t)sizeof(VarBlock) + aligned;
+
+  uint16_t offset = 0;
+  while ((uint32_t)offset + sizeof(VarBlock) <= VBC_VAR_POOL_BYTES) {
+    VarBlock* block = reinterpret_cast<VarBlock*>(_varPool + offset);
+    if (block->size < sizeof(VarBlock) ||
+        (uint32_t)offset + block->size > VBC_VAR_POOL_BYTES) {
+      break;
+    }
+    if (block->free && block->size >= need) {
+      const uint16_t remaining = (uint16_t)(block->size - need);
+      if (remaining >= sizeof(VarBlock) + 8u) {
+        const uint16_t nextOffset = (uint16_t)(offset + need);
+        VarBlock* next = reinterpret_cast<VarBlock*>(_varPool + nextOffset);
+        next->size = remaining;
+        next->prev = offset;
+        next->free = 1;
+        memset(next->pad, 0, sizeof(next->pad));
+        block->size = (uint16_t)need;
+
+        const uint16_t afterOffset = (uint16_t)(nextOffset + remaining);
+        if (afterOffset < VBC_VAR_POOL_BYTES) {
+          VarBlock* after = reinterpret_cast<VarBlock*>(_varPool + afterOffset);
+          after->prev = nextOffset;
+        }
+      }
+      block->free = 0;
+      return (uint16_t)(offset + sizeof(VarBlock));
+    }
+    offset = (uint16_t)(offset + block->size);
+  }
+  return kVarPoolNone;
+}
+
+void BytecodeVM::varPoolFree(uint16_t payloadOffset) {
+  if (payloadOffset == kVarPoolNone ||
+      payloadOffset < sizeof(VarBlock) ||
+      payloadOffset >= VBC_VAR_POOL_BYTES) {
+    return;
+  }
+  const uint16_t blockOffset = (uint16_t)(payloadOffset - sizeof(VarBlock));
+  VarBlock* block = reinterpret_cast<VarBlock*>(_varPool + blockOffset);
+  if (block->free) return;
+  block->free = 1;
+
+  const uint16_t nextOffset = (uint16_t)(blockOffset + block->size);
+  if (nextOffset < VBC_VAR_POOL_BYTES) {
+    VarBlock* next = reinterpret_cast<VarBlock*>(_varPool + nextOffset);
+    if (next->free) {
+      const uint16_t afterOffset = (uint16_t)(nextOffset + next->size);
+      block->size = (uint16_t)(block->size + next->size);
+      if (afterOffset < VBC_VAR_POOL_BYTES) {
+        VarBlock* after = reinterpret_cast<VarBlock*>(_varPool + afterOffset);
+        after->prev = blockOffset;
+      }
+    }
+  }
+
+  if (block->prev != kVarPoolNone && block->prev < VBC_VAR_POOL_BYTES) {
+    VarBlock* prev = reinterpret_cast<VarBlock*>(_varPool + block->prev);
+    if (prev->free) {
+      const uint16_t afterOffset = (uint16_t)(blockOffset + block->size);
+      prev->size = (uint16_t)(prev->size + block->size);
+      if (afterOffset < VBC_VAR_POOL_BYTES) {
+        VarBlock* after = reinterpret_cast<VarBlock*>(_varPool + afterOffset);
+        after->prev = block->prev;
+      }
+    }
+  }
+}
+
+uint16_t BytecodeVM::varPayloadSize(const ScriptVars& vars) const {
+  const uint16_t scalarEnd = (uint16_t)(vars.u * 4u + vars.i * 4u);
+  const uint16_t floatStart = (uint16_t)((scalarEnd + 7u) & ~7u);
+  const uint16_t stringStart = (uint16_t)(floatStart + vars.f * 8u);
+  const uint16_t arrayStart = (uint16_t)(stringStart + vars.s * MAX_STRING_LEN);
+  return (uint16_t)(arrayStart + vars.a * MAX_ARRAY_SIZE + vars.a);
+}
+
+bool BytecodeVM::allocVars(ScriptVars& vars) {
+  const uint16_t payload = varPayloadSize(vars);
+  vars.offset = kVarPoolNone;
+  vars.size = payload;
+  vars.used = false;
+  if (payload == 0) return true;
+
+  const uint16_t offset = varPoolAlloc(payload);
+  if (offset == kVarPoolNone) return false;
+  vars.offset = offset;
+  vars.used = true;
+  memset(_varPool + offset, 0, payload);
+  return true;
+}
+
+bool BytecodeVM::scanVars(const ContainerView& view, ScriptVars& vars) const {
+  vars = ScriptVars{};
+  vars.offset = kVarPoolNone;
+
+  uint16_t offset = 0;
+  while (offset < view.header.codeLength) {
+    DecodedInstruction inst;
+    if (!decodeInstruction(view.code, view.header.codeLength, offset, inst) ||
+        inst.size == 0) {
+      return false;
+    }
+    if (inst.op == Opcode::LOAD_VAR || inst.op == Opcode::STORE_VAR) {
+      const uint8_t varid = (uint8_t)inst.operands[0];
+      const uint8_t type = (uint8_t)((varid >> 4) & 0x0F);
+      const uint8_t index = (uint8_t)(varid & 0x0F);
+      const uint8_t count = (uint8_t)(index + 1);
+      switch (type) {
+        case 0:
+          if (count > vars.u) vars.u = count;
+          break;
+        case 1:
+          if (count > vars.i) vars.i = count;
+          break;
+        case 2:
+          if (count > vars.f) vars.f = count;
+          break;
+        case 3:
+          if (count > vars.s) vars.s = count;
+          break;
+        case 4:
+          if (count > vars.a) vars.a = count;
+          break;
+        default:
+          break;
+      }
+    }
+    offset = (uint16_t)(offset + inst.size);
+  }
+  return true;
+}
+
+uint32_t* BytecodeVM::uintVars(const ScriptVars& vars) const {
+  return reinterpret_cast<uint32_t*>(const_cast<uint8_t*>(_varPool + vars.offset));
+}
+
+int32_t* BytecodeVM::intVars(const ScriptVars& vars) const {
+  return reinterpret_cast<int32_t*>(
+      const_cast<uint8_t*>(_varPool + vars.offset + vars.u * 4u));
+}
+
+double* BytecodeVM::floatVars(const ScriptVars& vars) const {
+  const uint16_t scalarEnd = (uint16_t)(vars.u * 4u + vars.i * 4u);
+  const uint16_t floatStart = (uint16_t)((scalarEnd + 7u) & ~7u);
+  return reinterpret_cast<double*>(
+      const_cast<uint8_t*>(_varPool + vars.offset + floatStart));
+}
+
+char (*BytecodeVM::stringVars(const ScriptVars& vars) const)[MAX_STRING_LEN] {
+  const uint16_t scalarEnd = (uint16_t)(vars.u * 4u + vars.i * 4u);
+  const uint16_t floatStart = (uint16_t)((scalarEnd + 7u) & ~7u);
+  return reinterpret_cast<char (*)[MAX_STRING_LEN]>(
+      const_cast<uint8_t*>(_varPool + vars.offset + floatStart + vars.f * 8u));
+}
+
+uint8_t (*BytecodeVM::arrayVars(const ScriptVars& vars) const)[MAX_ARRAY_SIZE] {
+  const uint16_t scalarEnd = (uint16_t)(vars.u * 4u + vars.i * 4u);
+  const uint16_t floatStart = (uint16_t)((scalarEnd + 7u) & ~7u);
+  return reinterpret_cast<uint8_t (*)[MAX_ARRAY_SIZE]>(
+      const_cast<uint8_t*>(_varPool + vars.offset + floatStart + vars.f * 8u +
+                           vars.s * MAX_STRING_LEN));
+}
+
+uint8_t* BytecodeVM::arrayLen(const ScriptVars& vars) const {
+  const uint16_t scalarEnd = (uint16_t)(vars.u * 4u + vars.i * 4u);
+  const uint16_t floatStart = (uint16_t)((scalarEnd + 7u) & ~7u);
+  return const_cast<uint8_t*>(_varPool + vars.offset + floatStart + vars.f * 8u +
+                              vars.s * MAX_STRING_LEN + vars.a * MAX_ARRAY_SIZE);
 }
 
 void BytecodeVM::setCapabilities(const Capabilities& caps) { _caps = caps; }
@@ -271,6 +466,7 @@ bool BytecodeVM::startContext(int8_t scriptIndex, uint16_t entry, int8_t handler
     setError(VmError::NO_CONTEXT, _scripts[scriptIndex].id, entry);
     return false;
   }
+  _lastVars = &_scripts[scriptIndex].vars;
   Context& ctx = _contexts[freeContext];
   ctx.active = true;
   ctx.waiting = false;
@@ -340,7 +536,8 @@ bool BytecodeVM::registerFunction(uint8_t id, ExternalFunction func, void* userD
   return false;
 }
 
-bool BytecodeVM::loadScript(uint8_t id, const uint8_t* data, uint16_t size, bool persistent) {
+bool BytecodeVM::loadScript(uint8_t id, const uint8_t* data, uint16_t size,
+                             bool persistent, bool resetVars) {
   if (!data || id > 254) return false;
   ContainerView view;
   ParseError parseError;
@@ -354,9 +551,16 @@ bool BytecodeVM::loadScript(uint8_t id, const uint8_t* data, uint16_t size, bool
     return false;
   }
 
+  ScriptVars newVars;
+  if (!scanVars(view, newVars)) {
+    setError(VmError::VERIFY, id, 0);
+    return false;
+  }
+
   stopScript(id);
   int8_t index = findScriptIndex(id);
-  if (index < 0) {
+  const bool isNew = index < 0;
+  if (isNew) {
     for (uint8_t i = 0; i < kMaxScripts; i++) {
       if (!_scripts[i].used) {
         index = (int8_t)i;
@@ -368,7 +572,28 @@ bool BytecodeVM::loadScript(uint8_t id, const uint8_t* data, uint16_t size, bool
     setError(VmError::NO_CONTEXT, id, 0);
     return false;
   }
+
   ScriptEntry& entry = _scripts[index];
+  if (isNew) {
+    entry = ScriptEntry{};
+    entry.vars.offset = kVarPoolNone;
+    entry.used = true;
+  } else if (resetVars) {
+    varPoolFree(entry.vars.offset);
+    entry.vars = ScriptVars{};
+    entry.vars.offset = kVarPoolNone;
+  }
+
+  if (isNew || resetVars || !entry.vars.used) {
+    ScriptVars allocated = newVars;
+    if (!allocVars(allocated)) {
+      entry.used = false;
+      setError(VmError::NO_VARS, id, 0);
+      return false;
+    }
+    entry.vars = allocated;
+  }
+
   entry.used = true;
   entry.persistent = persistent;
   entry.id = id;
@@ -382,7 +607,11 @@ bool BytecodeVM::removeScript(uint8_t id) {
   const int8_t index = findScriptIndex(id);
   if (index < 0) return false;
   stopScript(id);
-  _scripts[index].used = false;
+  ScriptEntry& entry = _scripts[index];
+  varPoolFree(entry.vars.offset);
+  entry.vars = ScriptVars{};
+  entry.vars.offset = kVarPoolNone;
+  entry.used = false;
   return true;
 }
 
@@ -454,23 +683,63 @@ bool BytecodeVM::isScriptActive(uint8_t id) const {
 }
 
 uint32_t BytecodeVM::getUintVar(uint8_t index) const {
-  return index < MAX_UINT_VARS ? _ctx.uintVars[index] : 0;
+  if (!_lastVars || index >= _lastVars->u) return 0;
+  return uintVars(*_lastVars)[index];
 }
 
 int32_t BytecodeVM::getIntVar(uint8_t index) const {
-  return index < MAX_INT_VARS ? _ctx.intVars[index] : 0;
+  if (!_lastVars || index >= _lastVars->i) return 0;
+  return intVars(*_lastVars)[index];
 }
 
 float BytecodeVM::getFloatVar(uint8_t index) const {
-  return index < MAX_FLOAT_VARS ? (float)_ctx.floatVars[index] : 0.0f;
+  if (!_lastVars || index >= _lastVars->f) return 0.0f;
+  return (float)floatVars(*_lastVars)[index];
 }
 
 const char* BytecodeVM::getStringVar(uint8_t index) const {
-  return index < MAX_STRING_VARS ? _ctx.stringVars[index] : "";
+  if (!_lastVars || index >= _lastVars->s) return "";
+  return stringVars(*_lastVars)[index];
 }
 
 uint8_t BytecodeVM::getArrayLen(uint8_t index) const {
-  return index < MAX_ARRAY_VARS ? _ctx.arrayLen[index] : 0;
+  if (!_lastVars || index >= _lastVars->a) return 0;
+  return arrayLen(*_lastVars)[index];
+}
+
+const BytecodeVM::ScriptVars* BytecodeVM::findVars(uint8_t scriptId) const {
+  const int8_t index = findScriptIndex(scriptId);
+  return index >= 0 ? &_scripts[index].vars : nullptr;
+}
+
+uint32_t BytecodeVM::getUintVar(uint8_t scriptId, uint8_t index) const {
+  const ScriptVars* vars = findVars(scriptId);
+  if (!vars || index >= vars->u) return 0;
+  return uintVars(*vars)[index];
+}
+
+int32_t BytecodeVM::getIntVar(uint8_t scriptId, uint8_t index) const {
+  const ScriptVars* vars = findVars(scriptId);
+  if (!vars || index >= vars->i) return 0;
+  return intVars(*vars)[index];
+}
+
+float BytecodeVM::getFloatVar(uint8_t scriptId, uint8_t index) const {
+  const ScriptVars* vars = findVars(scriptId);
+  if (!vars || index >= vars->f) return 0.0f;
+  return (float)floatVars(*vars)[index];
+}
+
+const char* BytecodeVM::getStringVar(uint8_t scriptId, uint8_t index) const {
+  const ScriptVars* vars = findVars(scriptId);
+  if (!vars || index >= vars->s) return "";
+  return stringVars(*vars)[index];
+}
+
+uint8_t BytecodeVM::getArrayLen(uint8_t scriptId, uint8_t index) const {
+  const ScriptVars* vars = findVars(scriptId);
+  if (!vars || index >= vars->a) return 0;
+  return arrayLen(*vars)[index];
 }
 
 void BytecodeVM::update(uint32_t now) {
@@ -682,10 +951,10 @@ bool BytecodeVM::valueToString(const Value& value, const char*& data, uint16_t& 
   }
 }
 
-bool BytecodeVM::isWritableArray(const Value& value) const {
+bool BytecodeVM::isWritableArray(const ScriptVars& vars, const Value& value) const {
   if (value.type != VAL_ARRAY) return false;
-  for (uint8_t i = 0; i < MAX_ARRAY_VARS; i++) {
-    if (value.arrayVal.data == _ctx.arrayVars[i]) return true;
+  for (uint8_t i = 0; i < vars.a; i++) {
+    if (value.arrayVal.data == arrayVars(vars)[i]) return true;
   }
   return false;
 }
@@ -693,26 +962,28 @@ bool BytecodeVM::isWritableArray(const Value& value) const {
 bool BytecodeVM::readVar(Context& ctx, uint8_t varid, Value& out) {
   const uint8_t type = (uint8_t)((varid >> 4) & 0x0F);
   const uint8_t index = (uint8_t)(varid & 0x0F);
+  const ScriptVars& vars = _scripts[ctx.scriptIndex].vars;
   switch (type) {
     case 0:
-      if (index >= MAX_UINT_VARS) return false;
-      out = makeUint(_ctx.uintVars[index]);
+      if (index >= vars.u) return false;
+      out = makeUint(uintVars(vars)[index]);
       return true;
     case 1:
-      if (index >= MAX_INT_VARS) return false;
-      out = makeInt(_ctx.intVars[index]);
+      if (index >= vars.i) return false;
+      out = makeInt(intVars(vars)[index]);
       return true;
     case 2:
-      if (index >= MAX_FLOAT_VARS) return false;
-      out = makeFloat((float)_ctx.floatVars[index]);
+      if (index >= vars.f) return false;
+      out = makeFloat((float)floatVars(vars)[index]);
       return true;
     case 3:
-      if (index >= MAX_STRING_VARS) return false;
-      out = makeString(_ctx.stringVars[index], (uint16_t)strlen(_ctx.stringVars[index]));
+      if (index >= vars.s) return false;
+      out = makeString(stringVars(vars)[index],
+                       (uint16_t)strlen(stringVars(vars)[index]));
       return true;
     case 4:
-      if (index >= MAX_ARRAY_VARS) return false;
-      out = makeArray(_ctx.arrayVars[index], _ctx.arrayLen[index]);
+      if (index >= vars.a) return false;
+      out = makeArray(arrayVars(vars)[index], arrayLen(vars)[index]);
       return true;
     case 5: {
       uint16_t value = 0;
@@ -737,42 +1008,44 @@ bool BytecodeVM::readVar(Context& ctx, uint8_t varid, Value& out) {
 bool BytecodeVM::writeVar(Context& ctx, uint8_t varid, const Value& value) {
   const uint8_t type = (uint8_t)((varid >> 4) & 0x0F);
   const uint8_t index = (uint8_t)(varid & 0x0F);
+  const ScriptVars& vars = _scripts[ctx.scriptIndex].vars;
   switch (type) {
     case 0:
-      if (index >= MAX_UINT_VARS) return false;
-      _ctx.uintVars[index] = valueToUint(value);
+      if (index >= vars.u) return false;
+      uintVars(vars)[index] = valueToUint(value);
       return true;
     case 1:
-      if (index >= MAX_INT_VARS) return false;
-      _ctx.intVars[index] = valueToInt(value);
+      if (index >= vars.i) return false;
+      intVars(vars)[index] = valueToInt(value);
       return true;
     case 2:
-      if (index >= MAX_FLOAT_VARS) return false;
-      _ctx.floatVars[index] = valueToFloat(value);
+      if (index >= vars.f) return false;
+      floatVars(vars)[index] = valueToFloat(value);
       return true;
     case 3: {
-      if (index >= MAX_STRING_VARS) return false;
+      if (index >= vars.s) return false;
+      char* target = stringVars(vars)[index];
       if (value.type == VAL_STRING) {
         uint16_t len = value.stringVal.len;
         if (len >= MAX_STRING_LEN) len = MAX_STRING_LEN - 1;
-        memcpy(_ctx.stringVars[index], value.stringVal.data, len);
-        _ctx.stringVars[index][len] = '\0';
+        memcpy(target, value.stringVal.data, len);
+        target[len] = '\0';
       } else {
-        _ctx.stringVars[index][0] = (char)valueToInt(value);
-        _ctx.stringVars[index][1] = '\0';
+        target[0] = (char)valueToInt(value);
+        target[1] = '\0';
       }
       return true;
     }
     case 4: {
-      if (index >= MAX_ARRAY_VARS) return false;
+      if (index >= vars.a) return false;
       if (value.type != VAL_ARRAY) {
         setError(VmError::TYPE, _scripts[ctx.scriptIndex].id, ctx.pc);
         return false;
       }
       uint16_t len = value.arrayVal.len;
       if (len > MAX_ARRAY_SIZE) len = MAX_ARRAY_SIZE;
-      memcpy(_ctx.arrayVars[index], value.arrayVal.data, len);
-      _ctx.arrayLen[index] = (uint8_t)len;
+      memcpy(arrayVars(vars)[index], value.arrayVal.data, len);
+      arrayLen(vars)[index] = (uint8_t)len;
       return true;
     }
     case 5: {
@@ -1466,7 +1739,8 @@ bool BytecodeVM::execute(Context& ctx, uint32_t now) {
       if (!popValue(ctx, value) || !popValue(ctx, index) || !popValue(ctx, array)) {
         return abort();
       }
-      if (array.type != VAL_ARRAY || !isWritableArray(array)) {
+      if (array.type != VAL_ARRAY ||
+          !isWritableArray(_scripts[ctx.scriptIndex].vars, array)) {
         setError(VmError::TYPE, scriptId, ctx.pc);
         return abort();
       }

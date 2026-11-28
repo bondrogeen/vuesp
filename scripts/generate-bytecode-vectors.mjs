@@ -39,6 +39,8 @@ const fixtures = [
   { name: 'port_read', source: '$p2 = 255; $u0 = $p2;' },
   { name: 'port_wide', source: '$p17 = 255; $u0 = $p17;' },
   { name: 'two_events', source: "on('btn', (gpio, value) => { $p13 = gpio; }); on('btn_c', (gpio, value, count) => { $p14 = count; });" },
+  { name: 'local_vars_a', source: "$u0 = 1; $i0 = -1; $f0 = 1.5; $s0 = 'A'; $a0 = [1, 2, 3];" },
+  { name: 'local_vars_b', source: "$u0 = 100; $i0 = -100; $f0 = 9.5; $s0 = 'B'; $a0 = [9];" },
   { name: 'data_read', source: "$display = 'hi'; $s0 = $display;" },
   { name: 'handler_return', source: "on('btn') { $p2 = 1; return; $p2 = 2; }" },
   { name: 'div_zero', source: '$u0 = 1 / 0;' },

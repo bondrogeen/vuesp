@@ -11,7 +11,9 @@ export const useScriptStudioLogs = (getScriptName: () => string) => {
   const { message: wsMessage } = useStore();
   const { logs } = useLogs(wsMessage);
 
-  const isOpen = ref(true);
+  const isOpen = ref(false);
+  const hasUnread = ref(false);
+  const pulseSeq = ref(0);
   const isPaused = ref(false);
   const isSearchOpen = ref(false);
   const isAutoScroll = ref(true);
@@ -37,13 +39,22 @@ export const useScriptStudioLogs = (getScriptName: () => string) => {
     if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight;
   };
 
-  const onOpen = () => {
+  const openLogs = () => {
     isOpen.value = true;
+    hasUnread.value = false;
     void nextTick(() => scrollIntoView(logsPanel.value));
   };
 
+  const onOpen = () => {
+    openLogs();
+  };
+
   const onToggleOpen = () => {
-    isOpen.value = !isOpen.value;
+    if (isOpen.value) {
+      isOpen.value = false;
+      return;
+    }
+    openLogs();
   };
 
   const onTogglePause = () => {
@@ -63,6 +74,7 @@ export const useScriptStudioLogs = (getScriptName: () => string) => {
   const onClear = () => {
     logs.value = [];
     pausedLogs.value = [];
+    hasUnread.value = false;
   };
 
   const onFollow = () => {
@@ -95,6 +107,13 @@ export const useScriptStudioLogs = (getScriptName: () => string) => {
     downloadBlob(text, `script-${getScriptName() || 'script'}.log`, 'text/plain');
   };
 
+  watch(count, (value, previous) => {
+    if (!isOpen.value && value > previous) {
+      hasUnread.value = true;
+      pulseSeq.value += 1;
+    }
+  });
+
   watch(
     [() => visibleLogs.value.length, mode, search],
     () => {
@@ -113,6 +132,8 @@ export const useScriptStudioLogs = (getScriptName: () => string) => {
     visibleLogs,
     count,
     isOpen,
+    hasUnread,
+    pulseSeq,
     isPaused,
     isSearchOpen,
     isAutoScroll,

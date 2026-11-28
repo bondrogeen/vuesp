@@ -39,6 +39,7 @@ class BytecodeService {
   uint8_t savedCount() const;
   uint8_t scriptState(const char* name) const;
   uint8_t scriptStateByIndex(uint8_t index) const;
+  bool scriptName(uint8_t id, char name[vuesp::bytecode::kPackNameLen + 1]) const;
   uint8_t packErrorCode() const;
   uint8_t lastErrorCode() const;
   uint16_t lastErrorPc() const;

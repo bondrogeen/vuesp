@@ -121,6 +121,9 @@
 #ifndef MAX_ARRAY_VARS
 #define MAX_ARRAY_VARS 5
 #endif
+#ifndef VBC_VAR_POOL_BYTES
+#define VBC_VAR_POOL_BYTES 3072
+#endif
 #ifndef MAX_STRING_LEN
 #define MAX_STRING_LEN 32
 #endif

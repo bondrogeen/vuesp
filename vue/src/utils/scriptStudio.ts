@@ -86,7 +86,8 @@ export const downloadBlob = (data: BlobPart, fileName: string, type: string): vo
 };
 
 // The WS command carries the name in a NUL-terminated char[16].
-export const SCRIPT_NAME_PATTERN = /^[a-z_][a-z0-9_-]{0,14}$/;
+export const SCRIPT_NAME_MAX_LENGTH = 15;
+export const SCRIPT_NAME_PATTERN = new RegExp(`^[a-z_][a-z0-9_-]{0,${SCRIPT_NAME_MAX_LENGTH - 1}}$`);
 
 export const isValidScriptName = (name: string): boolean => SCRIPT_NAME_PATTERN.test(name);
 
@@ -173,6 +174,7 @@ const VM_ERROR_NAMES = [
   'no cache',
   'recursion',
   'depth',
+  'no variable memory',
 ];
 
 export const getVmErrorName = (code: number): string =>

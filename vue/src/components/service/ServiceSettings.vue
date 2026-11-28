@@ -6,7 +6,7 @@ import { computed, ref, nextTick, watch, onUnmounted } from 'vue';
 import { required, maxLen, minLen, sameAs, ip, minVal, maxVal } from 'vuesp-components/validate';
 
 import { KEY } from '@/generated/protocol';
-import { VUESP_FEATURES } from '@/generated/vuespConfig';
+import { useProjectConfig } from '@/composables/useProjectConfig';
 
 import { useForm } from 'vuesp-components/composables';
 import type { TValidationSchema } from 'vuesp-components/types';
@@ -20,6 +20,7 @@ import { VIcon, VCheckbox, BlockScan, BlockService, BlockUpdate, VCard } from 'v
 import BlockDiagnostics from './BlockDiagnostics.vue';
 
 const { $t, getLocale, setLocale, list } = useLocale();
+const { features } = useProjectConfig();
 
 const listLocale = computed(() => list.map((i: string) => ({ name: $t(`locale.${i}`), value: i })));
 const onLocale = ({ value }: IListItem<string>) => setLocale(value);
@@ -207,9 +208,7 @@ const onUpdate = (name: string, files: FormData) => {
             <h3 class="text-lg font-semibold text-gray-dark-30 dark:text-white/90">{{ $t('wifi') }}</h3>
           </div>
 
-          <div class="mb-6">
-            <v-select :model-value="getValueListWiFi(settings.wifiMode)" :label="$t('mode')" :items="listWiFi" @change="onSureOffWifi" />
-          </div>
+          <v-select :model-value="getValueListWiFi(settings.wifiMode)" :label="$t('mode')" :items="listWiFi" @change="onSureOffWifi" />
 
           <v-text-field v-model="wifiSsid" v-bind="wifiSsidProps" :label="$t('ssid')" :disabled="isWifi" @on-icon="onScan">
             <template #icon>
@@ -294,7 +293,7 @@ const onUpdate = (name: string, files: FormData) => {
       <BlockService :locale="getLocale()" :locales="listLocale" @locale="onLocale" @reset="onSureReset" @reboot="onSureReboot" />
     </VCard>
 
-    <VCard v-if="VUESP_FEATURES.discovery" :title="`${$t('discovery')} (UDP)`" hover>
+    <VCard v-if="features.discovery" :title="`${$t('discovery')} (UDP)`" hover>
       <template #header>
         <div class="col-span-full">
           <VCheckbox :model-value="Boolean(settings.discovery)" @update:model-value="settings.discovery = $event ? 1 : 0">{{ $t('discovery') }}</VCheckbox>

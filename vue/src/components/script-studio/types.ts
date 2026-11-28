@@ -1,40 +1,27 @@
-import type { BytecodeExample, CapabilityManifest, CompileResult, EventSpec, FunctionSpec } from '@/lib/script';
-import type { ISuggestion } from 'vuesp-components/types';
-import type { IStatusMeta, IRuntimeMetric, IScriptListItem } from '@/types';
+import type { CompileResult } from '@/lib/script';
+import type { IRuntimeMetric, IScriptListItem } from '@/types';
 
 export interface IScriptStudioToolbarProps {
   name: string;
-  status: IStatusMeta;
   isBusy: boolean;
   isVmAvailable: boolean;
   isSettingsOpen: boolean;
   isDownloadAvailable: boolean;
-  isCurrentSelected: boolean;
+  isDirty: boolean;
 }
 
 export interface IScriptStudioToolbarEmits {
   save: [];
   rename: [];
   reload: [];
+  import: [];
   download: [];
   'stop-all': [];
-  remove: [];
   'toggle-settings': [];
 }
 
 export interface IScriptStudioMetricsProps {
   metrics: IRuntimeMetric[];
-  isBusy: boolean;
-  isDownloadAvailable: boolean;
-  isCurrentSelected: boolean;
-  instrPerTick: number;
-  usPerTick: number;
-}
-
-export interface IScriptStudioMetricsEmits {
-  reload: [];
-  download: [];
-  'stop-all': [];
 }
 
 export interface IScriptStudioActionBarProps {
@@ -45,8 +32,6 @@ export interface IScriptStudioActionBarProps {
 }
 
 export interface IScriptStudioActionBarEmits {
-  insert: [];
-  examples: [];
   details: [];
   'show-logs': [];
 }
@@ -56,6 +41,9 @@ export interface IScriptStudioTabsProps {
   activeName: string;
   draftName: string | null;
   isBusy: boolean;
+  isDirty: boolean;
+  maxScripts: number;
+  ranName: string | null;
 }
 
 export interface IScriptStudioTabsEmits {
@@ -67,27 +55,6 @@ export interface IScriptStudioTabsEmits {
 
 export interface IScriptStudioLogsEmits {
   'update:count': [count: number];
-}
-
-export interface IScriptSnippetsDialogProps {
-  manifest: CapabilityManifest;
-  suggestions: readonly ISuggestion[];
-}
-
-export interface IScriptSnippetsDialogEmits {
-  'insert-function': [fn: FunctionSpec];
-  'insert-event': [event: EventSpec];
-  'insert-suggestion': [suggestion: ISuggestion];
-  close: [];
-}
-
-export interface IScriptExamplesDialogProps {
-  examples: readonly BytecodeExample[];
-}
-
-export interface IScriptExamplesDialogEmits {
-  load: [example: BytecodeExample];
-  close: [];
 }
 
 export interface IScriptDetailsDialogProps {
@@ -117,4 +84,10 @@ export interface IScriptRenameDialogProps {
 export interface IScriptRenameDialogEmits {
   save: [name: string];
   close: [];
+}
+
+export interface IScriptDiscardDialogEmits {
+  save: [];
+  discard: [];
+  cancel: [];
 }

@@ -3,6 +3,7 @@
 #include "../const/define.h"
 #include "../tasks/tasks.h"
 #include "./bytecode/BytecodeService.h"
+#include "./bytecode/ScriptProtocol.h"
 
 void onScriptComplete(uint8_t slot, uint8_t id) {
 #if VUESP_LOG_LEVEL >= 2
@@ -12,8 +13,9 @@ void onScriptComplete(uint8_t slot, uint8_t id) {
   Serial.println(slot);
 #else
   (void)slot;
-  (void)id;
 #endif
+
+  scriptProtocol.sendState(id);
 }
 
 void setupRunner() {

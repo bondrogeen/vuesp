@@ -549,6 +549,32 @@ static void testVmWait() {
   expect(vm.getUintVar(0) == 1, "wait resumes");
 }
 
+static void testVmLocalVars() {
+  BytecodeVM vm;
+  setupVm(vm);
+  resetVmState();
+  const fixtures::Vector* a = findFixture("local_vars_a");
+  const fixtures::Vector* b = findFixture("local_vars_b");
+  expect(a != nullptr && b != nullptr, "local variable fixtures");
+  if (!a || !b) return;
+  expect(vm.loadScript(1, a->data, a->size), "local_a loads");
+  expect(vm.loadScript(2, b->data, b->size), "local_b loads");
+  vm.runScript(1);
+  vm.runScript(2);
+  for (uint8_t i = 0; i < 6 && vm.isBusy(); i++) vm.update(stub_millis);
+
+  expect(vm.getUintVar(1, 0) == 1, "local_a $u0");
+  expect(vm.getUintVar(2, 0) == 100, "local_b $u0");
+  expect(vm.getIntVar(1, 0) == -1, "local_a $i0");
+  expect(vm.getIntVar(2, 0) == -100, "local_b $i0");
+  expect(vm.getFloatVar(1, 0) == 1.5f, "local_a $f0");
+  expect(vm.getFloatVar(2, 0) == 9.5f, "local_b $f0");
+  expect(strcmp(vm.getStringVar(1, 0), "A") == 0, "local_a $s0");
+  expect(strcmp(vm.getStringVar(2, 0), "B") == 0, "local_b $s0");
+  expect(vm.getArrayLen(1, 0) == 3, "local_a $a0 len");
+  expect(vm.getArrayLen(2, 0) == 1, "local_b $a0 len");
+}
+
 static void testVmDivZero() {
   BytecodeVM vm;
   setupVm(vm);
@@ -639,6 +665,7 @@ int main() {
   testVmRecursion();
   testVmCallDepth();
   testVmWait();
+  testVmLocalVars();
   testVmDivZero();
   testVmBadContainer();
   testVmUnknownEvent();
