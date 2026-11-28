@@ -37,7 +37,7 @@ enum class VmError : uint8_t {
 
 const char* vmErrorName(VmError error);
 
-static constexpr uint8_t kMaxScripts = 15;
+static constexpr uint8_t kMaxScripts = VBC_MAX_SCRIPTS;
 
 using ScriptResolver = bool (*)(void* userData, const char* name, uint8_t& id,
                                 const uint8_t*& data, uint16_t& size,
@@ -117,6 +117,8 @@ class BytecodeVM {
     uint8_t ancestors[kMaxCallDepth];
     uint8_t ancestorCount;
     int32_t callParams[MAX_CALL_PARAMS];
+    int32_t eventParams[MAX_EVENT_PARAMS];
+    uint8_t eventParamCount;
   };
 
   Capabilities _caps;

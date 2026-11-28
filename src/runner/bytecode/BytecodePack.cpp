@@ -138,7 +138,7 @@ bool parsePackToc(const uint8_t* data, uint16_t size, uint32_t fileSize,
       error = PackError::FLAGS;
       return false;
     }
-    if (len == 0 || len > kMaxCodeBytes) {
+    if (len == 0 || len > kPackMaxCodeLen) {
       error = PackError::CODE_LEN;
       return false;
     }

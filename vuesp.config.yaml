@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=./vuesp.config.schema.json
+# Single user-facing project configuration. Generated files must not be edited.
+# After editing run: cd vue && npm run config
+# For the full build run: cd vue && npm run build
+version: 1
+
+project:
+  name: vuesp.
+  # Board selects the default PlatformIO env; use `pio run -e <env>` to override.
+  board: esp8266
+  buildProfile: standard
+  # firmwareVersion/deviceName feed the generated [common] section and build flags.
+  firmwareVersion: "5.0.13"
+  deviceName: "vuesp."
+
+features:
+  script: true
+  modbus: false
+  serial: true
+  discovery: true
+  dashboard: true
+
+hardware:
+  # Pin overrides are applied before saved ConfigStore ports; saved settings win.
+  # Example:
+  # pins:
+  #   - id: led
+  #     gpio: 13
+  #     mode: pwm
+  #     value: 255
+  pins: []
+
+network:
+  wifi:
+    dhcp: true
+    ip: 192.168.1.12
+    subnet: 255.255.255.0
+    gateway: 192.168.1.1
+    dns: 8.8.8.8
+    ssid: ""
+    password: ""
+  auth:
+    enabled: true
+    login: admin
+    password: admin
+  discovery:
+    enabled: true
+    interval: 5
+    port: 12345
+
+logging:
+  # 0 silent, 1 errors/boot, 2 events and script lifecycle, 3 per-port debug
+  level: 3
+
+script:
+  maxCodeBytes: 512
+  cacheSlots: 6
+  maxSavedScripts: 15
+  maxScripts: 15
+  maxContexts: 15
+  stackSize: 64
+  scratchBytes: 256
+  maxCallDepth: 4
+  vars:
+    u: 10
+    i: 10
+    f: 5
+    s: 2
+    a: 5
+    p: 40
+    e: 4
+    c: 4
+  maxStringLen: 32
+  maxArrayLen: 64
+  maxPwmValue: 255
+  maxExternalFunctions: 16
+  maxFunctionParams: 5
+  maxCallParams: 4
+  maxEventParams: 4
+  instrPerTick: 32
+  usPerTick: 300
+  updateBudgetUs: 3000
+  events:
+    - id: 1
+      name: btn
+      args: [gpio, value]
+      description: "button edge: press or release"
+    - id: 2
+      name: btn_c
+      args: [gpio, value, count]
+      description: "button click with click count"
+    - id: 3
+      name: btn_l
+      args: [gpio, value]
+      description: button long press
+    - id: 4
+      name: btn_r
+      args: [gpio, value]
+      description: button hold repeat
+    - id: 5
+      name: modbus
+      args: []
+      description: Modbus event
+      requires: modbus
+    - id: 6
+      name: time
+      args: [hours, minutes]
+      description: device uptime clock
+  functions:
+    - id: 1
+      name: fade
+      minArgs: 3
+      maxArgs: 3
+      ret: int
+      description: PWM fade
+    - id: 2
+      name: udp
+      minArgs: 1
+      maxArgs: 2
+      ret: int
+      description: UDP send
+    - id: 3
+      name: http
+      minArgs: 2
+      maxArgs: 5
+      ret: int
+      description: HTTP request
+    - id: 4
+      name: var
+      minArgs: 1
+      maxArgs: 2
+      ret: float
+      description: "read a Modbus variable"
+      requires: modbus
+    - id: 5
+      name: modbus
+      minArgs: 2
+      maxArgs: 3
+      ret: float
+      description: Modbus operation
+      requires: modbus
+
+web:
+  menu:
+    auto: true
+  pages:
+    gpio: true
+    settings: true
+    storage: true
+  dashboard:
+    cards:
+      - button
+      - date
+      - dimmer
+      - info
+      - input
+      - list
+      - chart
+  locales:
+    - ru
+    - en

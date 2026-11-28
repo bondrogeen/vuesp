@@ -15,11 +15,27 @@ internet connection are not required.
 - GPIO inputs and outputs, PWM, inverted signals and safe values;
 - Dallas temperature sensors, analog inputs and value history;
 - real-time dashboard over WebSocket;
-- Lua scripts, periodic tasks and device-side actions;
+- bytecode scripts, events and device-side actions;
 - LittleFS storage for configuration, dashboard and user files;
 - OTA updates over Wi-Fi;
 - optional HTTP Basic Authentication;
 - light and dark themes based on `vuesp-components`.
+
+## Project configuration
+
+Project settings live in [`vuesp.config.yaml`](./vuesp.config.yaml): board,
+firmware version, modules, network defaults, script limits, pin overrides and
+web composition. After editing run:
+
+```bash
+cd vue
+npm run config
+npm run config:check
+```
+
+Then build the web UI and firmware. Generated files under `src/generated` and
+`vue/src/generated` must not be edited by hand. See
+[CONFIGURATION.md](./CONFIGURATION.md) for the full reference.
 
 ## Supported boards
 
@@ -48,12 +64,13 @@ Set `VITE_IP` in `vue/.env` to the device IP. The development server opens at
 ## Firmware
 
 ```bash
-pio run -e esp32-c3-devkitm-1
+pio run                        # board from vuesp.config.yaml
+pio run -e esp32-c3-devkitm-1  # explicit env
 pio run -e esp32-c3-devkitm-1 -t upload
 ```
 
-`npm run build` builds the web UI, updates the generated structs and builds
-the firmware for the selected board.
+`npm run build` generates the project config, builds the web UI, updates the
+generated structs and builds firmware for the selected board.
 
 ## API
 
@@ -70,10 +87,10 @@ See the [API documentation](https://docs.vuesp.ru/api) for the message layout.
 
 LittleFS stores:
 
-- `default.json` — device configuration;
+- `default.json` — device configuration and web data;
 - `dashboard.json` — dashboard cards and layout;
-- `gpio.json` — port configuration;
-- `scripts/` — user scripts;
+- `/tmp/config.bin` — `ConfigStore` data (ports, device, profiles);
+- `/www/scripts.bc` — script pack;
 - `www/` — the built web interface.
 
 ## Troubleshooting

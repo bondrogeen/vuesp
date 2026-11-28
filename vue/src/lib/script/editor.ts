@@ -1,5 +1,6 @@
 import type { ISuggestion } from 'vuesp-components/types';
 
+import { getEventArgNames } from './types.ts';
 import type { CapabilityManifest, CompileError } from './types.ts';
 
 export type CompletionKind =
@@ -203,6 +204,14 @@ export function highlightBytecode(
     if (suggestion.type === 'event') events.add(suggestion.label);
   }
   const dataVars = new Set((manifest.dataVars ?? []).map((item) => item.name));
+  const locals = new Set<string>();
+  const handlerRe = /on\s*\(\s*(['"])[^'"]*\1\s*,\s*\(([^)]*)\)\s*=>/g;
+  for (const match of source.matchAll(handlerRe)) {
+    for (const name of match[2].split(',')) {
+      const trimmed = name.trim();
+      if (trimmed) locals.add(trimmed);
+    }
+  }
   const keywords = new Set(KEYWORDS);
 
   const re = new RegExp(TOKEN_RE.source, 'g');
@@ -224,7 +233,8 @@ export function highlightBytecode(
     } else if (first === '$') {
       kind = dataVars.has(text) ? 'data' : 'variable';
     } else if (first === '_' || (first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z')) {
-      if (functions.has(text) || BUILTINS.some((item) => item.name === text)) kind = 'function';
+      if (locals.has(text)) kind = 'variable';
+      else if (functions.has(text) || BUILTINS.some((item) => item.name === text)) kind = 'function';
       else if (keywords.has(text)) kind = 'keyword';
       else if (events.has(text)) kind = 'event';
     } else if ('{}()[];:,'.includes(first)) {
@@ -259,9 +269,36 @@ function slotItems(manifest: CapabilityManifest): CompletionItem[] {
   return items;
 }
 
-function eventSnippet(name: string): { insert: string; caret: number } {
-  const insert = `on('${name}') {\n  \n}\n`;
+function eventSnippet(name: string, params: readonly string[] = []): { insert: string; caret: number } {
+  if (params.length === 0) {
+    const insert = `on('${name}') {\n  \n}\n`;
+    return { insert, caret: insert.indexOf('\n') + 3 };
+  }
+  const insert = `on('${name}', (${params.join(', ')}) => {\n  \n});\n`;
   return { insert, caret: insert.indexOf('\n') + 3 };
+}
+
+function handlerParamsAt(source: string, caret: number): readonly string[] {
+  const re = /on\s*\(\s*(['"])[^'"]*\1\s*,\s*\(([^)]*)\)\s*=>\s*\{/g;
+  let last: RegExpExecArray | null = null;
+  for (let match = re.exec(source); match; match = re.exec(source)) {
+    if (match.index >= caret) break;
+    last = match;
+  }
+  if (!last) return [];
+  const open = last.index + last[0].length;
+  let depth = 1;
+  for (let i = open; i < caret; i++) {
+    if (source[i] === '{') depth++;
+    else if (source[i] === '}') {
+      depth--;
+      if (depth === 0) return [];
+    }
+  }
+  return last[2]
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function keywordSnippet(label: string): { insert: string; caret?: number } {
@@ -319,7 +356,7 @@ function mergeSuggestionItems(items: CompletionItem[], suggestions: readonly ISu
         items[index] = { ...items[index], detail };
         continue;
       }
-      const snippet = eventSnippet(suggestion.label);
+      const snippet = eventSnippet(suggestion.label, getEventArgNames(suggestion.label));
       items.push({ label, detail, kind: 'event', insert: snippet.insert, caret: snippet.caret });
       continue;
     }
@@ -433,6 +470,14 @@ export function getCompletions(
       });
     }
   } else {
+    for (const name of handlerParamsAt(source, caret)) {
+      items.push({
+        label: name,
+        detail: 'event argument',
+        kind: 'slot',
+        insert: name,
+      });
+    }
     for (const keyword of KEYWORDS) {
       const snippet = keywordSnippet(keyword);
       items.push({
@@ -462,7 +507,7 @@ export function getCompletions(
       });
     }
     for (const event of manifest.events) {
-      const snippet = eventSnippet(event.name);
+      const snippet = eventSnippet(event.name, getEventArgNames(event.name));
       items.push({
         label: `on('${event.name}')`,
         detail: `${event.params} params`,

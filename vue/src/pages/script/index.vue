@@ -19,7 +19,8 @@ import { useLocale } from '@/composables/useLocale';
 import { useStore } from '@/composables/useStore';
 import { useBytecodeCompile } from '@/composables/script/useBytecodeCompile';
 import { useBytecodeScripts } from '@/composables/script/useBytecodeScripts';
-import { BYTECODE_EXAMPLES, normalizeSuggestionInsert } from '@/lib/script';
+import { SCRIPT_LIMITS } from '@/generated/scriptManifest';
+import { BYTECODE_EXAMPLES, getEventArgNames, normalizeSuggestionInsert } from '@/lib/script';
 import type { BytecodeExample, EventSpec, FunctionSpec } from '@/lib/script';
 import type { ISuggestion } from 'vuesp-components/types';
 import type { IRuntimeMetric, IScriptListItem } from '@/types';
@@ -85,7 +86,7 @@ const metrics = computed<IRuntimeMetric[]>(() => {
   const errorScript = scripts.value.find((script) => isScriptError(script.state))?.name ?? '';
   const errorText = [errorName, errorScript].filter(Boolean).join(' · ');
   return [
-    { key: 'cacheSlots', label: $t('scriptStudio.cacheSlots'), value: String(manifest.value.cacheSlots ?? 3) },
+    { key: 'cacheSlots', label: $t('scriptStudio.cacheSlots'), value: String(manifest.value.cacheSlots ?? SCRIPT_LIMITS.cacheSlots) },
     { key: 'vm', label: $t('scriptStudio.vm'), value: `v${manifest.value.vm}` },
     { key: 'pack', label: $t('scriptStudio.pack'), value: packName, isError: Boolean(value?.packError) },
     {
@@ -260,7 +261,10 @@ const onInsertFunction = (fn: FunctionSpec) => {
 };
 
 const onInsertEvent = (event: EventSpec) => {
-  const snippet = `on('${event.name}') {\n  \n}\n`;
+  const params = getEventArgNames(event.name);
+  const snippet = params.length > 0
+    ? `on('${event.name}', (${params.join(', ')}) => {\n  \n});\n`
+    : `on('${event.name}') {\n  \n}\n`;
   editorRef.value?.insertAtCursor(snippet, snippet.indexOf('\n') + 3);
   isSnippetsOpen.value = false;
 };

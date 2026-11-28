@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "id": "dashboard",
+      "label": {
+        "ru": "Dashboard",
+        "en": "Dashboard"
+      },
+      "description": {
+        "ru": "Панель с карточками устройств.",
+        "en": "Device dashboard with cards."
+      },
+      "category": "web",
+      "default": true,
+      "removable": true,
+      "requires": {},
+      "conflicts": {},
+      "firmware": {
+        "files": []
+      },
+      "web": {
+        "pages": [
+          "dashboard"
+        ]
+      }
+    },
+    {
+      "id": "discovery",
+      "label": {
+        "ru": "Discovery",
+        "en": "Discovery"
+      },
+      "description": {
+        "ru": "Поиск устройств Vuesp в локальной сети.",
+        "en": "Vuesp device discovery in the local network."
+      },
+      "category": "firmware",
+      "default": true,
+      "removable": true,
+      "requires": {},
+      "conflicts": {},
+      "firmware": {
+        "files": [
+          "src/discovery"
+        ],
+        "srcFilter": {
+          "exclude": [
+            "discovery/*"
+          ]
+        }
+      },
+      "web": {}
+    },
+    {
+      "id": "modbus",
+      "label": {
+        "ru": "Modbus RTU",
+        "en": "Modbus RTU"
+      },
+      "description": {
+        "ru": "Профиль, master/slave и регистры Modbus.",
+        "en": "Profile, master/slave and Modbus registers."
+      },
+      "category": "integration",
+      "default": false,
+      "removable": true,
+      "requires": {
+        "board": [
+          "esp32",
+          "pico32",
+          "esp32-c3-devkitm-1"
+        ]
+      },
+      "conflicts": {},
+      "firmware": {
+        "files": [
+          "src/modbus"
+        ],
+        "srcFilter": {
+          "exclude": [
+            "modbus/*"
+          ]
+        },
+        "defines": {
+          "VUESP_MODBUS": 1
+        }
+      },
+      "web": {
+        "servicePages": [
+          "modbus"
+        ],
+        "locales": [
+          "modbus"
+        ]
+      }
+    },
+    {
+      "id": "script",
+      "label": {
+        "ru": "Bytecode ScriptRunner",
+        "en": "Bytecode ScriptRunner"
+      },
+      "description": {
+        "ru": "Локальные сценарии, пакет скриптов и выполнение на VM.",
+        "en": "Local scripts, script pack and VM execution."
+      },
+      "category": "firmware",
+      "default": true,
+      "removable": true,
+      "requires": {},
+      "conflicts": {},
+      "firmware": {
+        "files": [
+          "src/runner"
+        ],
+        "srcFilter": {
+          "exclude": [
+            "runner/*"
+          ]
+        }
+      },
+      "web": {
+        "pages": [
+          "script"
+        ],
+        "locales": [
+          "script",
+          "scriptStudio"
+        ]
+      }
+    },
+    {
+      "id": "serial",
+      "label": {
+        "ru": "SERIAL example",
+        "en": "SERIAL example"
+      },
+      "description": {
+        "ru": "Пример страницы последовательной консоли.",
+        "en": "Example serial console page."
+      },
+      "category": "example",
+      "default": true,
+      "removable": true,
+      "requires": {},
+      "conflicts": {},
+      "firmware": {
+        "files": []
+      },
+      "web": {
+        "pages": [
+          "serial"
+        ],
+        "locales": [
+          "serial"
+        ]
+      }
+    }
+  ]
+}

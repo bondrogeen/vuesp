@@ -4,7 +4,10 @@
 #include <math.h>
 #include <string.h>
 
+#include "../const/features.h"
+#if VUESP_SCRIPT
 #include "../runner/bytecode/BytecodeService.h"
+#endif
 #include "./modbus.h"
 #include "./modbus_source.h"
 #include "./profile.h"
@@ -69,7 +72,9 @@ void modbusUpdateVarValue(uint8_t varIndex, double value, const char* text, uint
   modbus.updated = millis() / 1000;
   if (changed) {
     if (quality == MODBUS_Q_OK) {
+#if VUESP_SCRIPT
       bytecodeService.vm().emitEvent("modbus", 0);
+#endif
     }
     modbusRequestSend();
   }
@@ -587,6 +592,7 @@ static int findPoint(uint8_t device, const char* id, size_t len) {
   return -1;
 }
 
+#if VUESP_SCRIPT
 static double paramNumber(const Value& value) {
   switch (value.type) {
     case VAL_INT:
@@ -694,8 +700,11 @@ static bool modbusHandler(uint8_t count, const Value* params, Value& result, voi
   result.intVal = ok ? 1 : 0;
   return true;
 }
+#endif
 
 void registerMasterFunctions() {
+#if VUESP_SCRIPT
   bytecodeService.vm().registerFunction(4, varHandler);
   bytecodeService.vm().registerFunction(5, modbusHandler);
+#endif
 }

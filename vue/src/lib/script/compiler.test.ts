@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { compile } from './compiler.ts';
 import { decompile } from './decompiler.ts';
 import { readContainer } from './container.ts';
-import { BYTECODE_EXAMPLES } from './examples.ts';
 import { DEFAULT_MANIFEST } from './types.ts';
+import { BYTECODE_EXAMPLES } from './examples.ts';
 import type { CompileError, CompileResult } from './types.ts';
 
 function errorsText(errors: readonly CompileError[]): string {
@@ -26,7 +26,12 @@ function roundTrip(source: string): { first: CompileResult; source: string; seco
   assert.ok(decoded.source !== undefined);
   const second = compile(decoded.source);
   const secondBytes = ok(second);
-  assert.deepEqual(Array.from(secondBytes), Array.from(bytecode));
+  const withoutHash = (bytes: Uint8Array) => {
+    const copy = Array.from(bytes);
+    for (let i = 20; i < 28; i++) copy[i] = 0;
+    return copy;
+  };
+  assert.deepEqual(withoutHash(secondBytes), withoutHash(bytecode));
   return { first, source: decoded.source, second };
 }
 
@@ -89,8 +94,8 @@ test('event handler round-trips', () => {
   $p2 = 1;
 }`;
   const result = roundTrip(source);
-  assert.match(result.source, /on\('btn'\)/);
-  assert.match(result.source, /\$e0/);
+  assert.match(result.source, /on\('btn', \(gpio, value\) =>/);
+  assert.match(result.source, /log\(gpio, value\)/);
 });
 
 test('wait normalizes to milliseconds', () => {
@@ -252,4 +257,67 @@ test('call rejects invalid script names', () => {
     assert.equal(result.ok, false);
     assert.equal(result.errors[0].code, 'E_CALL_NAME');
   }
+});
+
+test('container size is checked, not only code', () => {
+  const source = Array.from({ length: 80 }, (_, i) => `log('k${i}');`).join('\n');
+  const result = compile(source);
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.code, 'E_CODE_SIZE');
+  assert.match(result.errors[0]?.message ?? '', /container is .* limit is 512/);
+});
+
+test('all shipped examples fit the 512-byte container', () => {
+  for (const example of BYTECODE_EXAMPLES) {
+    const result = compile(example.source);
+    assert.ok(result.ok, `${example.name}: ${result.errors.map((err) => err.message).join('; ')}`);
+    assert.ok(result.bytecode, `${example.name}: bytecode is missing`);
+    assert.ok(result.bytecode.length <= DEFAULT_MANIFEST.maxCodeBytes, `${example.name}: ${result.bytecode.length} bytes`);
+  }
+});
+
+test('named handler arguments round-trip', () => {
+  const result = roundTrip(
+    "on('btn_c', (gpio, value, count) => { log('x', gpio, value, count); });",
+  );
+  assert.match(result.source, /on\('btn_c', \(gpio, value, count\) =>/);
+  assert.match(result.source, /log\('x', gpio, value, count\)/);
+});
+
+test('custom time handler round-trips with named arguments', () => {
+  const result = roundTrip(
+    "on('time', (hours, minutes) => { log('time', hours, minutes); });",
+  );
+  assert.match(result.source, /on\('time', \(hours, minutes\) =>/);
+  assert.match(result.source, /log\('time', hours, minutes\)/);
+});
+
+test('time handler enforces its arity', () => {
+  const result = compile("on('time', (a, b, c) => { });");
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.code, 'E_EVENT_ARITY');
+});
+
+test('handler arguments cannot exceed the event arity', () => {
+  const result = compile("on('btn', (a, b, c) => { });");
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.code, 'E_EVENT_ARITY');
+});
+
+test('handler arguments are read-only', () => {
+  const result = compile("on('btn_c', (gpio) => { gpio = 1; });");
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.code, 'E_READONLY');
+});
+
+test('duplicate handler arguments are rejected', () => {
+  const result = compile("on('btn_c', (gpio, gpio) => { });");
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.code, 'E_DUPLICATE_PARAM');
+});
+
+test('reserved handler argument names are rejected', () => {
+  const result = compile("on('btn', (log) => { });");
+  assert.equal(result.ok, false);
+  assert.equal(result.errors[0]?.code, 'E_PARAM_NAME');
 });

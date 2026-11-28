@@ -5,7 +5,6 @@
 
 #include "../libs/UnixTime.h"
 #include "./gpio/gpio.h"
-#include "./runner/runner.h"
 
 extern Device device;
 

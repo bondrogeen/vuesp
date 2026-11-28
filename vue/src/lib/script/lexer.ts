@@ -33,6 +33,7 @@ const TWO_CHAR_PUNCT = new Set([
   '||',
   '<<',
   '>>',
+  '=>',
 ]);
 
 const ONE_CHAR_PUNCT = new Set('{}()[];,=+-*/%!~&|^<>?:'.split(''));

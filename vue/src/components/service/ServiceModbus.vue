@@ -69,7 +69,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <span class="truncate font-mono text-[11px] text-gray-dark-25 dark:text-gray-light-10">
             <template v-if="form.role === 2">
-              {{ $t('modbus.devices') }} {{ draft.deviceCount }}/8 · {{ $t('modbus.points') }} {{ draft.pointCount }}/64 · {{ $t('modbus.vars') }} {{ draft.varCount }}/32
+              {{ $t('modbus.devices') }} {{ draft.deviceCount }}/{{ MODBUS.DEVICES_MAX }} · {{ $t('modbus.points') }} {{ draft.pointCount }}/{{ MODBUS.POINTS_MAX }} · {{ $t('modbus.vars') }} {{ draft.varCount }}/{{ MODBUS.VARS_MAX }}
             </template>
             <template v-else>{{ $t('modbus.registers') }} {{ slaveBankUsed }}/{{ SLAVE_REG_COUNT }}</template>
           </span>
@@ -126,12 +126,12 @@
           <div class="mt-6 flex items-center justify-between gap-4">
             <h4 class="text-sm font-semibold">
               {{ $t('modbus.devices') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ draft.deviceCount }}/8</span>
+              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ draft.deviceCount }}/{{ MODBUS.DEVICES_MAX }}</span>
             </h4>
             <VButton size="sm"
               type="icon"
               variant="outline"
-              :disabled="profileLoading || profileSending !== null || draft.deviceCount >= 8"
+              :disabled="profileLoading || profileSending !== null || draft.deviceCount >= MODBUS.DEVICES_MAX"
               :title="$t('modbus.addDevice')"
               :aria-label="$t('modbus.addDevice')"
               @click="openDevice()"
@@ -169,12 +169,12 @@
           <div class="mt-6 flex items-center justify-between gap-4">
             <h4 class="text-sm font-semibold">
               {{ $t('modbus.masterPoints') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ masterPointEntries.length }} · {{ draft.pointCount }}/64</span>
+              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ masterPointEntries.length }} · {{ draft.pointCount }}/{{ MODBUS.POINTS_MAX }}</span>
             </h4>
             <VButton size="sm"
               type="icon"
               variant="outline"
-              :disabled="profileLoading || profileSending !== null || draft.pointCount >= 64"
+              :disabled="profileLoading || profileSending !== null || draft.pointCount >= MODBUS.POINTS_MAX"
               :title="$t('modbus.addPoint')"
               :aria-label="$t('modbus.addPoint')"
               @click="openPoint()"
@@ -228,7 +228,7 @@
               <VButton size="sm"
                 type="icon"
                 variant="outline"
-                :disabled="profileLoading || profileSending !== null || draft.pointCount >= 64"
+                :disabled="profileLoading || profileSending !== null || draft.pointCount >= MODBUS.POINTS_MAX"
                 :title="$t('modbus.addSlaveValue')"
                 :aria-label="$t('modbus.addSlaveValue')"
                 @click="openSlaveValue"
@@ -271,12 +271,12 @@
           <div class="mt-6 flex items-center justify-between gap-4">
             <h4 class="text-sm font-semibold">
               {{ $t('modbus.vars') }}
-              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ draft.varCount }}/32</span>
+              <span class="ml-1 text-xs font-normal text-gray-dark-25 dark:text-gray-light-10">{{ draft.varCount }}/{{ MODBUS.VARS_MAX }}</span>
             </h4>
             <VButton size="sm"
               type="icon"
               variant="outline"
-              :disabled="profileLoading || profileSending !== null || draft.varCount >= 32"
+              :disabled="profileLoading || profileSending !== null || draft.varCount >= MODBUS.VARS_MAX"
               :title="$t('modbus.addVar')"
               :aria-label="$t('modbus.addVar')"
               @click="openVar()"
@@ -556,7 +556,7 @@ import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue';
 
 import { buildReadFrame, buildReadResponse, encodePointValue, formatHex } from '@/utils/modbusFrame';
 import { KEY } from '@/utils/const';
-import { CMD } from '@/generated/protocol';
+import { CMD, MODBUS } from '@/generated/protocol';
 import { struct } from '@/assets/js/';
 
 import { useConnection } from '@/composables/useConnection';
@@ -892,7 +892,7 @@ function emptyPoint(index: number): IPointForm {
 }
 
 function emptyVar(index: number): IVarForm {
-  return { id: `v${index + 1}`, name: '', type: TYPE_U16, flags: 0, unit: '', decimals: 0, point: index < 64 ? index : NONE, source: '' };
+  return { id: `v${index + 1}`, name: '', type: TYPE_U16, flags: 0, unit: '', decimals: 0, point: index < MODBUS.POINTS_MAX ? index : NONE, source: '' };
 }
 
 function makeDevice(): IModbusDevice {
@@ -929,17 +929,17 @@ function emptyProfile(): IModbusProfile {
     pointCount: 0,
     varCount: 0,
     reserved: 0,
-    devices: Array.from({ length: 8 }, makeDevice),
-    points: Array.from({ length: 64 }, makePoint),
-    vars: Array.from({ length: 32 }, makeVar),
+    devices: Array.from({ length: MODBUS.DEVICES_MAX }, makeDevice),
+    points: Array.from({ length: MODBUS.POINTS_MAX }, makePoint),
+    vars: Array.from({ length: MODBUS.VARS_MAX }, makeVar),
   };
 }
 
 function normalizeProfile(value: IModbusProfile): IModbusProfile {
   const pick = <T extends object>(source: T | undefined, fallback: T): T => ({ ...fallback, ...(source ?? {}) });
-  const devices = Array.from({ length: 8 }, (_, i) => pick(value.devices?.[i], makeDevice()));
-  const points = Array.from({ length: 64 }, (_, i) => pick(value.points?.[i], makePoint()));
-  const vars = Array.from({ length: 32 }, (_, i) => pick(value.vars?.[i], makeVar()));
+  const devices = Array.from({ length: MODBUS.DEVICES_MAX }, (_, i) => pick(value.devices?.[i], makeDevice()));
+  const points = Array.from({ length: MODBUS.POINTS_MAX }, (_, i) => pick(value.points?.[i], makePoint()));
+  const vars = Array.from({ length: MODBUS.VARS_MAX }, (_, i) => pick(value.vars?.[i], makeVar()));
 
   // Older profiles could carry a smaller count than the selected type needs.
   for (const point of points) {
@@ -949,9 +949,9 @@ function normalizeProfile(value: IModbusProfile): IModbusProfile {
   return {
     command: 0,
     version: value.version || 2,
-    deviceCount: Math.min(8, value.deviceCount || 0),
-    pointCount: Math.min(64, value.pointCount || 0),
-    varCount: Math.min(32, value.varCount || 0),
+    deviceCount: Math.min(MODBUS.DEVICES_MAX, value.deviceCount || 0),
+    pointCount: Math.min(MODBUS.POINTS_MAX, value.pointCount || 0),
+    varCount: Math.min(MODBUS.VARS_MAX, value.varCount || 0),
     reserved: 0,
     devices,
     points,
@@ -1248,7 +1248,7 @@ const profileErrors = computed<string[]>(() => {
   const errors: string[] = [];
   const ids = new Set<string>();
 
-  if (draft.value.deviceCount > 8) errors.push($t('modbus.limitDevices'));
+  if (draft.value.deviceCount > MODBUS.DEVICES_MAX) errors.push($t('modbus.limitDevices'));
 
   for (let i = 0; i < draft.value.deviceCount; i++) {
     const device = draft.value.devices[i];
@@ -1262,7 +1262,7 @@ const profileErrors = computed<string[]>(() => {
     if (device && device.retries > 5) errors.push(`${$t('modbus.device')} #${i + 1}: ${$t('modbus.retries')}`);
   }
 
-  if (draft.value.pointCount > 64) errors.push($t('modbus.limitPoints'));
+  if (draft.value.pointCount > MODBUS.POINTS_MAX) errors.push($t('modbus.limitPoints'));
 
   ids.clear();
   for (let i = 0; i < draft.value.pointCount; i++) {
@@ -1312,7 +1312,7 @@ const profileErrors = computed<string[]>(() => {
     else sourceVars.add(point.var);
   }
 
-  if (draft.value.varCount > 32) errors.push($t('modbus.limitVars'));
+  if (draft.value.varCount > MODBUS.VARS_MAX) errors.push($t('modbus.limitVars'));
 
   ids.clear();
   for (let i = 0; i < draft.value.varCount; i++) {
@@ -1662,7 +1662,7 @@ const validateVarForm = () => {
 const openDevice = (index?: number) => {
   clearErrors(deviceErrors);
   if (index === undefined) {
-    if (draft.value.deviceCount >= 8) return;
+    if (draft.value.deviceCount >= MODBUS.DEVICES_MAX) return;
     Object.assign(deviceForm, emptyDevice(draft.value.deviceCount));
     deviceEdit.value = -1;
   } else {
@@ -1676,7 +1676,7 @@ const saveDevice = () => {
   if (!validateDeviceForm()) return;
 
   if (deviceEdit.value < 0) {
-    if (draft.value.deviceCount >= 8) return;
+    if (draft.value.deviceCount >= MODBUS.DEVICES_MAX) return;
     draft.value.devices[draft.value.deviceCount] = { ...deviceForm };
     draft.value.deviceCount += 1;
   } else {
@@ -1925,7 +1925,7 @@ const validateSlaveForm = () => {
     }
   }
 
-  if (draft.value.pointCount + (target.needsNewPoint ? 1 : 0) > 64 || draft.value.varCount + (target.needsNewVar ? 1 : 0) > 32) {
+  if (draft.value.pointCount + (target.needsNewPoint ? 1 : 0) > MODBUS.POINTS_MAX || draft.value.varCount + (target.needsNewVar ? 1 : 0) > MODBUS.VARS_MAX) {
     slaveErrors.source = $t('modbus.limit');
     ok = false;
   }
@@ -1984,7 +1984,7 @@ const saveSlaveValue = () => {
 const openPoint = (index?: number) => {
   clearErrors(pointErrors);
   if (index === undefined) {
-    if (draft.value.pointCount >= 64) return;
+    if (draft.value.pointCount >= MODBUS.POINTS_MAX) return;
     Object.assign(pointForm, emptyPoint(draft.value.pointCount));
     pointForm.device = Math.min(pointForm.device, Math.max(0, draft.value.deviceCount - 1));
     pointEdit.value = -1;
@@ -2012,7 +2012,7 @@ const savePoint = () => {
   const oldPoint = pointEdit.value >= 0 ? draft.value.points[pointEdit.value] : null;
 
   if (pointEdit.value < 0) {
-    if (draft.value.pointCount >= 64) return;
+    if (draft.value.pointCount >= MODBUS.POINTS_MAX) return;
     draft.value.points[draft.value.pointCount] = pointData;
     draft.value.pointCount += 1;
   } else {
@@ -2073,7 +2073,7 @@ const performRemovePoint = (index: number) => {
 const openVar = (index?: number) => {
   clearErrors(varErrors);
   if (index === undefined) {
-    if (draft.value.varCount >= 32) return;
+    if (draft.value.varCount >= MODBUS.VARS_MAX) return;
     Object.assign(varForm, emptyVar(draft.value.varCount));
     varForm.point = draft.value.pointCount === 0 ? NONE : Math.min(varForm.point, draft.value.pointCount - 1);
     varEdit.value = -1;
@@ -2088,7 +2088,7 @@ const saveVar = () => {
   if (!validateVarForm()) return;
 
   if (varEdit.value < 0) {
-    if (draft.value.varCount >= 32) return;
+    if (draft.value.varCount >= MODBUS.VARS_MAX) return;
     draft.value.vars[draft.value.varCount] = { ...varForm };
     draft.value.varCount += 1;
   } else {

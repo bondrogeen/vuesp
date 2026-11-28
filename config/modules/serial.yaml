@@ -1,0 +1,22 @@
+id: serial
+version: 1
+
+label:
+  ru: SERIAL example
+  en: SERIAL example
+description:
+  ru: Пример страницы последовательной консоли.
+  en: Example serial console page.
+
+category: example
+default: true
+removable: true
+
+firmware:
+  files: []
+
+web:
+  pages:
+    - serial
+  locales:
+    - serial

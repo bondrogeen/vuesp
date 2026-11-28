@@ -2,6 +2,13 @@
 // This module is intentionally free of runtime enums so Node's TypeScript
 // type stripping can execute it directly in tests.
 
+import {
+  SCRIPT_EVENTS,
+  SCRIPT_EVENT_ARG_NAMES,
+  SCRIPT_FUNCTIONS,
+  SCRIPT_LIMITS,
+} from '../../generated/scriptManifest.ts';
+
 export interface SourcePos {
   readonly line: number;
   readonly column: number;
@@ -224,9 +231,21 @@ export interface WhileStmt {
   readonly pos: SourcePos;
 }
 
+export const EVENT_ARG_NAMES: Readonly<Record<string, readonly string[]>> =
+  SCRIPT_EVENT_ARG_NAMES;
+
+export const getEventArgNames = (name: string): readonly string[] =>
+  EVENT_ARG_NAMES[name] ?? [];
+
+export interface OnParam {
+  readonly name: string;
+  readonly pos: SourcePos;
+}
+
 export interface OnStmt {
   readonly kind: 'on';
   readonly event: string;
+  readonly params: readonly OnParam[];
   readonly body: readonly Stmt[];
   readonly pos: SourcePos;
 }
@@ -285,7 +304,7 @@ export interface FunctionSpec {
   readonly name: string;
   readonly min: number;
   readonly max: number;
-  readonly ret: 'none' | 'int' | 'uint' | 'float' | 'string';
+  readonly ret: 'none' | 'int' | 'uint' | 'float' | 'string' | 'array';
 }
 
 export interface EventSpec {
@@ -331,29 +350,21 @@ export interface CapabilityManifest {
 
 export const DEFAULT_MANIFEST: CapabilityManifest = {
   vm: 1,
-  maxScripts: 15,
-  cacheSlots: 3,
-  maxCodeBytes: 1024,
-  maxStack: 64,
-  vars: { u: 10, i: 10, f: 5, s: 2, a: 5, p: 40, e: 4, c: 4 },
-  maxStringLen: 32,
-  maxArrayLen: 64,
-  functions: [
-    { id: 1, name: 'fade', min: 3, max: 3, ret: 'int' },
-    { id: 2, name: 'udp', min: 1, max: 2, ret: 'int' },
-    { id: 3, name: 'http', min: 2, max: 5, ret: 'int' },
-    { id: 4, name: 'var', min: 1, max: 2, ret: 'float' },
-    { id: 5, name: 'modbus', min: 2, max: 3, ret: 'float' },
-  ],
-  events: [
-    { id: 1, name: 'btn', params: 2 },
-    { id: 2, name: 'btn_c', params: 3 },
-    { id: 3, name: 'btn_l', params: 2 },
-    { id: 4, name: 'btn_r', params: 2 },
-    { id: 5, name: 'modbus', params: 0 },
-  ],
+  maxScripts: SCRIPT_LIMITS.maxSavedScripts,
+  cacheSlots: SCRIPT_LIMITS.cacheSlots,
+  maxCodeBytes: SCRIPT_LIMITS.maxCodeBytes,
+  maxStack: SCRIPT_LIMITS.stackSize,
+  vars: SCRIPT_LIMITS.vars,
+  maxStringLen: SCRIPT_LIMITS.maxStringLen,
+  maxArrayLen: SCRIPT_LIMITS.maxArrayLen,
+  functions: SCRIPT_FUNCTIONS.map(({ id, name, min, max, ret }) => ({ id, name, min, max, ret })),
+  events: SCRIPT_EVENTS.map(({ id, name, params }) => ({ id, name, params })),
   dataVars: [{ name: '$display', kind: 'string' }],
-  limits: { instrPerTick: 32, usPerTick: 300, updateBudgetUs: 3000 },
+  limits: {
+    instrPerTick: SCRIPT_LIMITS.instrPerTick,
+    usPerTick: SCRIPT_LIMITS.usPerTick,
+    updateBudgetUs: SCRIPT_LIMITS.updateBudgetUs,
+  },
 };
 
 export function error(code: string, message: string, pos: SourcePos): CompileError {

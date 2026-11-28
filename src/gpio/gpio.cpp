@@ -1,7 +1,11 @@
 #include "./gpio.h"
 
 #include "../config/ConfigStore.h"
+#include "../const/features.h"
+#include "../generated/gpioConfig.h"
+#if VUESP_SCRIPT
 #include "../runner/bytecode/BytecodeService.h"
+#endif
 
 #if defined(ESP8266)
 Port ports[6] = {
@@ -210,7 +214,9 @@ void loopInterrupt(uint32_t now) {
       if (ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_REPEAT);
+#if VUESP_SCRIPT
           bytecodeService.vm().emitEvent("btn_r", 2, (int)ports[i].gpio, (int)ports[i].value);
+#endif
         }
       } else {
         ports[i].count = 0;
@@ -220,7 +226,9 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count == 1) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_LONG_PRESS);
+#if VUESP_SCRIPT
           bytecodeService.vm().emitEvent("btn_l", 2, (int)ports[i].gpio, (int)ports[i].value);
+#endif
         }
         ports[i].count = 0;
       }
@@ -229,8 +237,10 @@ void loopInterrupt(uint32_t now) {
       if (!ports[i].isPressed && ports[i].count) {
         if (ports[i].isButton) {
           deviceGPIO(&ports[i], EVENT_CLICK);
+#if VUESP_SCRIPT
           bytecodeService.vm().emitEvent("btn_c", 3, (int)ports[i].gpio, (int)ports[i].value,
                                          (int)ports[i].count);
+#endif
         }
         ports[i].count = 0;
       }
@@ -251,7 +261,9 @@ void checkInterrupt(uint32_t now) {
         ports[i].pressStart = now;
       }
       ports[i].value = port.value;
+#if VUESP_SCRIPT
       bytecodeService.vm().emitEvent("btn", 2, (int)ports[i].gpio, (int)ports[i].value);
+#endif
       deviceGPIO(&ports[i], EVENT_NONE);
     }
     wsSendAll((uint8_t*)&ports[i], sizeof(ports[i]));
@@ -295,6 +307,7 @@ bool portProvider(uint8_t gpio, uint8_t action, uint16_t& value) {
   return false;
 }
 
+#if VUESP_SCRIPT
 bool fadeHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
   if (paramCount < 3) return false;
   const uint32_t port = params[0].uintVal;
@@ -304,18 +317,37 @@ bool fadeHandler(uint8_t paramCount, const Value* params, Value& result, void* u
   result.intVal = fade.start(port, value, time);
   return true;
 }
+#endif
 
 void setupGPIO() {
+#if VUESP_SCRIPT
   bytecodeService.vm().setStateChangeProvider(stateChangeProvider);
   bytecodeService.vm().setPortProvider(portProvider);
   bytecodeService.vm().registerFunction(1, fadeHandler);
+#endif
 
   fade.init(5, 3);
   fade.setDataProvider(portProvider);
   fade.setStateChangeProvider(stateChangeProvider);
 }
 
+static void applyPinOverrides() {
+  for (uint8_t i = 0; i < kPinOverrideCount; i++) {
+    const PinOverride& override = kPinOverrides[i];
+    for (int j = 0; j < ports_len; j++) {
+      if (ports[j].gpio != override.gpio) continue;
+      ports[j].mode = override.mode;
+      ports[j].interrupt = override.interrupt;
+      ports[j].disabled = override.disabled;
+      ports[j].isButton = override.isButton;
+      if (override.hasValue) ports[j].value = override.value;
+      break;
+    }
+  }
+}
+
 void setupFirstGPIO() {
+  applyPinOverrides();
   const TConfigStatus status =
       configStore.read("ports", &portsBlob, sizeof(portsBlob), CONFIG_PORTS_VERSION);
   if (status == TConfigStatus::Ok && portsBlob.count <= PORTS_MAX) {

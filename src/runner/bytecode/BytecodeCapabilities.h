@@ -22,12 +22,15 @@ struct FunctionSpec {
   uint8_t minArgs;
   uint8_t maxArgs;
   uint8_t ret;  // ValueKind
+  const char* description;
 };
 
 struct EventSpec {
   uint8_t id;
   const char* name;
   uint8_t params;
+  const char* args;
+  const char* description;
 };
 
 struct Capabilities {

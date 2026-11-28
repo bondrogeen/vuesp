@@ -3,33 +3,13 @@
 
 #include <stdint.h>
 
-#ifndef VBC_MAX_CODE_BYTES
-#define VBC_MAX_CODE_BYTES 1024
-#endif
+#include "../../generated/vuespConfig.h"
 
-#ifndef VBC_MAX_CONTEXTS
-#define VBC_MAX_CONTEXTS 15
-#endif
-
-#ifndef VBC_STACK_SIZE
-#define VBC_STACK_SIZE 64
-#endif
-
-#ifndef VBC_SCRATCH_BYTES
-#define VBC_SCRATCH_BYTES 256
-#endif
-
-#ifndef VBC_MAX_STRING_LEN
-#define VBC_MAX_STRING_LEN 32
-#endif
-
-#ifndef VBC_MAX_ARRAY_LEN
-#define VBC_MAX_ARRAY_LEN 64
-#endif
-
-#ifndef VBC_MAX_CALL_DEPTH
-#define VBC_MAX_CALL_DEPTH 4
-#endif
+// VBC_* limits and build profiles are defined in vuesp.config.yaml and
+// generated into src/generated/vuespConfig.h:
+//   basic:    256 x 12
+//   standard: 512 x 6
+//   pro:      1024 x 3
 
 namespace vuesp {
 namespace bytecode {
@@ -40,8 +20,6 @@ static constexpr uint16_t kMaxCodeBytes = VBC_MAX_CODE_BYTES;
 static constexpr uint8_t kMaxContexts = VBC_MAX_CONTEXTS;
 static constexpr uint16_t kStackSize = VBC_STACK_SIZE;
 static constexpr uint16_t kScratchBytes = VBC_SCRATCH_BYTES;
-static constexpr uint8_t kMaxStringLen = VBC_MAX_STRING_LEN;
-static constexpr uint8_t kMaxArrayLen = VBC_MAX_ARRAY_LEN;
 static constexpr uint8_t kMaxCallDepth = VBC_MAX_CALL_DEPTH;
 static constexpr uint8_t kMaxScriptNameLen = 16;
 

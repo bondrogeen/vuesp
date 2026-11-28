@@ -16,23 +16,28 @@ documenting hardware, see [CREATING_PROJECTS.md](./CREATING_PROJECTS.md).
 
 ```
 vuesp/
-├── src/              # C++ firmware source
-│   ├── const/        # Constants and struct definitions
-│   ├── include/      # Header files
-│   └── *.cpp         # Implementation files
-├── vue/              # Vue 3 web frontend
+├── vuesp.config.yaml       # single user-facing project configuration
+├── config/
+│   └── modules/            # module descriptors and generated catalog
+├── src/                    # C++ firmware source
+│   ├── const/              # constants and wire protocol
+│   ├── generated/          # generated C++ config/manifests
+│   └── *.cpp               # implementation files
+├── vue/                    # Vue 3 web frontend
 │   ├── src/
-│   │   ├── pages/    # Page components
+│   │   ├── pages/          # page components
 │   │   ├── components/
-│   │   ├── stores/   # Pinia state management
+│   │   ├── stores/         # Pinia state management
 │   │   ├── composables/
+│   │   ├── generated/      # generated web config/manifests
 │   │   └── assets/
-│   └── public/       # Static assets (default.json with struct)
+│   └── public/             # static assets (default.json)
 ├── data/
-│   └── www/          # Built web files (LittleFS)
-├── firmware/         # Compiled firmware binaries
-├── platformio.ini    # PlatformIO configuration
-└── vite.config.ts    # Vite build configuration
+│   └── www/                # built web files (LittleFS)
+├── firmware/               # compiled firmware binaries
+├── platformio.ini          # PlatformIO shell
+├── platformio.generated.ini # generated default env and build filter
+└── vite.config.ts          # Vite build configuration
 ```
 
 ## Frontend Development
@@ -43,6 +48,20 @@ vuesp/
 cd vue
 npm install
 ```
+
+### Project Configuration
+
+Edit [`vuesp.config.yaml`](./vuesp.config.yaml), then regenerate:
+
+```bash
+npm run config
+npm run config:check
+npm run config:preview
+```
+
+`npm run dev` runs `config` automatically. Do not edit files under
+`src/generated` or `vue/src/generated`; they are overwritten by the generator.
+See [CONFIGURATION.md](./CONFIGURATION.md) for the full reference.
 
 ### Environment Configuration
 
@@ -129,7 +148,8 @@ npm run screen -- --base-url=http://192.168.1.100
 ```
 
 The mock data is generated from `public/default.json`, so run
-`npm run struct-and-json` first if the firmware struct changed.
+`npm run config && npm run protocol` first if the project config or firmware
+struct changed.
 
 The same tool can capture screenshots for a device project. Run it from the
 device's `vue/` directory and point `VUESP_SCREEN_ROOT` at that directory:
@@ -140,8 +160,8 @@ VUESP_SCREEN_ROOT="$PWD" \
   node ../../../vuesp/vue/scripts/screen/capture.mjs --out=../github/images/screen
 ```
 
-The mock reads the firmware version from the project's `platformio.ini`, so the
-captured status panel matches the device version. For BMS projects it also
+The mock reads the firmware version from the project's `vuesp.config.yaml`, so
+the captured status panel matches the device version. For BMS projects it also
 fills realistic voltage, cell, temperature and capacity values.
 
 The mock can also be started standalone for UI work:

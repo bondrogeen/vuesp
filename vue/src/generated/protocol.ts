@@ -7,14 +7,18 @@ export const ENUMS = {
   CMD: { NONE: 0, GET: 1, SET: 2, GET_ALL: 3, CHANGE: 4, RESTORE: 5, READ: 6, WRITE: 7, SAVE: 254 },
   SCRIPTACT: { STATUS: 0, RUN: 1, STOP: 2, STOP_ALL: 3, REMOVE: 4, SAVE: 5 },
   SCRIPTRES: { OK: 0, NOT_FOUND: 1, INVALID: 2, BUSY: 3, IO: 4, CRC: 5, VERIFY: 6, NO_SPACE: 7, NO_CACHE: 8 },
+  SCRIPT: { STATE_ACTIVE: 1, STATE_LOADED: 2, STATE_ERROR: 4, STATE_BOOT: 8 },
   PORT: { NONE: 0, INPUT: 1, INPUT_PULLUP: 2, OUTPUT: 4, OUTPUT_OPEN_DRAIN: 8, PWM: 16, ONEWIRE: 32, ADC: 64, DAC: 128 },
+  MODBUS: { DEVICES_MAX: 8, POINTS_MAX: 64, VARS_MAX: 32 },
 } as const;
 
 export const KEY = ENUMS.KEY;
 export const CMD = ENUMS.CMD;
 export const SCRIPTACT = ENUMS.SCRIPTACT;
 export const SCRIPTRES = ENUMS.SCRIPTRES;
+export const SCRIPT = ENUMS.SCRIPT;
 export const PORT = ENUMS.PORT;
+export const MODBUS = ENUMS.MODBUS;
 
 export type TKey = keyof typeof KEY;
 export type TCommand = typeof CMD[keyof typeof CMD];

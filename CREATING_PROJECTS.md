@@ -42,9 +42,13 @@ npm run sync
 
 ```text
 vuesp.<board>/
+├── vuesp.config.yaml  # плата, модули, сеть, лимиты, web-композиция
+├── config/
+│   └── modules/       # дескрипторы модулей
 ├── src/
 │   ├── config/        # ConfigStore
-│   ├── const/         # define.h, protocol.h
+│   ├── const/         # protocol.h и общие константы
+│   ├── generated/     # generated config/manifests
 │   ├── device/        # платовые данные, I/O, ADC, датчики
 │   ├── diag/          # boot log и loop-метрики
 │   ├── discovery/     # UDP discovery
@@ -61,13 +65,14 @@ vuesp.<board>/
 │   ├── utils/
 │   ├── main.cpp
 ├── vue/
-│   ├── json/          # menu, dashboard, locales
+│   ├── json/          # dashboard и locales
 │   ├── scripts/       # protocol-and-json
-│   ├── src/           # pages, components, stores
+│   ├── src/           # pages, components, stores, generated
 │   └── public/
 ├── data/              # LittleFS: www, tmp
 ├── github/            # скриншоты и изображения
-├── platformio.ini
+├── platformio.ini     # shell
+├── platformio.generated.ini # default_envs, [common], build_src_filter
 ├── package.json
 ├── README.md
 ├── DOCS.md
@@ -76,32 +81,45 @@ vuesp.<board>/
 
 Не добавлять в git `build/`, `data/www`, `node_modules`, `*.tsbuildinfo`, локальные `docs/` и `AGENTS.md`, если они исключены.
 
-## 3. Плата и PlatformIO
+## 3. Плата, модули и PlatformIO
 
-В `platformio.ini`:
+Плата и модули задаются в `vuesp.config.yaml`:
 
-- заполнить `[common]`:
+```yaml
+project:
+  board: esp32
 
-```ini
-[common]
-firmware_version = '{5, 0, 0}'
-device_name = '"vuesp.<board>"'
+features:
+  script: true
+  modbus: true
+  serial: false
+  discovery: true
+  dashboard: true
 ```
 
-- оставить только реальные env платы; не тащить `esp8266`/`esp32-c3`/`pico32`, если проект собирается только под ESP32;
+`project.board` выбирает `default_envs` в `platformio.generated.ini`. Команда
+`pio run` без `-e` собирает выбранную плату; `pio run -e <env>` переопределяет.
+
+`platformio.ini` остаётся shell-файлом:
+
+- оставить только реальные env платы;
 - указать `board`, `board_build.filesystem`, `lib_deps`, `build_flags`;
+- `[common]` (`firmware_version`, `device_name`), `default_envs` и
+  `build_src_filter` генерируются из YAML;
 - для OTA проверить размер app-слота и запас flash;
 - CI-матрицу синхронизировать со списком env.
 
-Платовые пины и константы — в `src/const/define.h`:
+Платовые пины:
 
-- I2C/SPI/UART;
-- Ethernet PHY: MDC, MDIO, CLK, PHY address, POWER;
-- реле/MOSFET/PCF8574;
-- ADC, кнопки, светодиоды;
-- `DEF_BOARD`, `DEF_DEVICE_NAME`, `DEF_DEVICE_FIRMWARE`.
+- штатные таблицы портов платы — в `src/gpio/gpio.cpp`;
+- переопределения — `hardware.pins` в `vuesp.config.yaml`;
+- overrides применяются до чтения `ConfigStore`, сохранённые настройки портов
+  имеют приоритет;
+- I2C/SPI/UART, Ethernet PHY, реле/MOSFET/PCF8574, ADC и кнопки, которых нет в
+  таблице платы, по-прежнему задаются в коде платы.
 
-Не смешивать пины разных ревизий платы. Если есть R/C/N-варианты, зафиксировать в `DOCS.md`, для какой именно ревизии проект.
+Не смешивать пины разных ревизий платы. Если есть R/C/N-варианты, зафиксировать
+в `DOCS.md`, для какой именно ревизии проект.
 
 ## 4. Протокол
 
@@ -211,9 +229,10 @@ npm run build
 
 - файловый роутинг: `vue/src/pages/`;
 - device-страницы: `vue/src/pages/device/[page].vue`;
-- меню: `vue/json/menu.json`;
-- локали: `vue/json/locales/en.json`, `ru.json`;
-- dashboard: `vue/json/dashboard.json` и seed `data/tmp/dashboard.json`.
+- меню: генерируется из `vuesp.config.yaml` (`web.menu`) в `vue/json/menu.json`;
+- локали: `vue/json/locales/en.json`, `ru.json`; состав языков — `web.locales`;
+- dashboard: доступные типы — `web.dashboard.cards`, экземпляры —
+  `vue/json/dashboard.json`.
 
 ### Dashboard
 
@@ -276,19 +295,40 @@ npm run protocol
 
 `protocol-and-json.js` собирает `vue/json/*.json` в `vue/public/default.json`, откуда suggestions читает веб-интерфейс. Без этого шага изменения не попадут в сборку.
 
-Стартовые примеры для пользователя лежат в `vue/public/scripts.txt` и после `build-web` попадают на LittleFS как `/www/scripts.txt`:
+Стартовые примеры лежат в `vue/src/lib/script/examples.ts`. После `build-web`
+они доступны в студии `/script/`, а пользовательский pack сохраняется в
+LittleFS как `/www/scripts.bc`.
 
-- формат строки — `id:name:body`;
-- `id` от `0` до `14`, `id=0` запускается при старте;
-- имя без `:`, тело короче 256 символов;
-- комментариев нет, строки только в одинарных кавычках;
-- `call(id)` запускает другой скрипт, `on('event')` регистрирует обработчик;
-- в `boot` не включать выходы и реле: только `log` и регистрация обработчиков;
-- примеры лучше делать с разными именами (`input_scan`, `output_walk`, `relay_toggle`), чтобы пользователь видел назначение в списке.
+События и внешние функции описываются в `vuesp.config.yaml`:
 
-Полярность и индексы фиксировать в `DOCS.md` проекта. Например, у A6 `output(0,0)` включает реле, а у A16 `output(1,1)` включает выход — одинаковый код на разных платах ведёт себя по-разному.
+```yaml
+script:
+  events:
+    - id: 6
+      name: time
+      args: [hours, minutes]
+  functions:
+    - id: 6
+      name: temp
+      minArgs: 0
+      maxArgs: 0
+      ret: float
+```
 
-Количество внешних функций ограничено `MAX_EXTERNAL_FUNCTIONS` в `src/runner/ScriptRunner.h`. Если зарегистрировать больше, лишние `registerFunction()` молча вернут `false`, а вызовы из скрипта — `unknown cmd`. В шаблоне лимит 16; при добавлении экранных, Modbus- и сетевых функций проверяйте, что все они реально попали в `_extFuncs`.
+После правки:
+
+```bash
+cd vue
+npm run config
+npm run build-web
+```
+
+Эмиттер события и реализацию внешней функции всё равно нужно написать в
+прошивке. Лимит внешних функций — `script.maxExternalFunctions` в YAML.
+
+Полярность и индексы фиксировать в `DOCS.md` проекта. Например, у A6
+`output(0,0)` включает реле, а у A16 `output(1,1)` включает выход — одинаковый
+код на разных платах ведёт себя по-разному.
 
 ### UI-правила
 
@@ -363,7 +403,7 @@ npm run screen
 - не коммитить `build/`, `data/www`, `node_modules`, секреты и локальные заметки;
 - коммит и пуш делает пользователь, если не попросил иное;
 - CI: frontend (typecheck/lint/build), firmware (актуальные env), ScriptRunner tests, артефакты;
-- версия в `platformio.ini` и `vue/package.json` должна совпадать;
+- версия в `vuesp.config.yaml` (`project.firmwareVersion`) и `vue/package.json` должна совпадать;
 - тег/релиз — только по команде пользователя.
 
 ## 10. Чек-лист нового проекта
@@ -371,16 +411,16 @@ npm run screen
 - [ ] Проект создан через `vuesp-create` или чистую копию `vuesp`.
 - [ ] Имя `vuesp.<board>`, версия 5.0.0.
 - [ ] В `platformio.ini` только реальные env.
-- [ ] Пины и ревизия платы зафиксированы в `define.h` и `DOCS.md`.
+- [ ] Пины и ревизия платы зафиксированы в `hardware.pins`/`gpio.cpp` и `DOCS.md`.
 - [ ] `protocol.h` обновлён, `npm run protocol` выполнен.
 - [ ] `ConfigStore`/`Settings` версии подняты.
 - [ ] Платовые порты и устройство не конфликтуют с display/SD/touch/сетью.
 - [ ] Dashboard отражает все пользовательские I/O и ADC.
 - [ ] `vue/json/suggestions.json` содержит только платовые функции и события, без глобальных `fade`/`udp`/`http`.
-- [ ] `npm run protocol` выполнен после правки suggestions и скриптов.
-- [ ] `vue/public/scripts.txt` содержит рабочие примеры с корректной полярностью.
+- [ ] `npm run config:check` и `npm run protocol` выполнены после правки YAML и suggestions.
+- [ ] `vue/src/lib/script/examples.ts` содержит рабочие примеры с корректной полярностью.
 - [ ] Ethernet/Modbus/RS485 проверены, если есть.
-- [ ] `npm ci`, typecheck, lint, build-web, pio run, buildfs — успешно.
+- [ ] `npm ci`, config:check, typecheck, lint, build-web, pio run, buildfs — успешно.
 - [ ] Прошивка и FS залиты, железо проверено.
 - [ ] README/DOCS актуальны, секреты не добавлены.
 - [ ] Старый проект/резервная копия сохранены.

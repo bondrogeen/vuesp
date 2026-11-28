@@ -14,8 +14,11 @@ namespace bytecode {
 //   TOC: count * 25 bytes
 //   code blobs
 static constexpr uint8_t kPackVersion = 1;
-static constexpr uint8_t kPackMaxEntries = 15;
+static constexpr uint8_t kPackMaxEntries = VBC_MAX_SAVED_SCRIPTS;
 static constexpr uint8_t kPackNameLen = 16;
+// Format-level limit: a 512 build must still parse a pack written by a 1024
+// build so oversized scripts can be listed and removed.
+static constexpr uint16_t kPackMaxCodeLen = 1024;
 static constexpr uint8_t kPackEntrySize = 25;
 static constexpr uint8_t kPackHeaderSize = 14;
 static constexpr uint8_t kPackFlagEnabled = 0x01;

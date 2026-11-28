@@ -1,22 +1,16 @@
 #ifndef VUESP_FEATURES_H
 #define VUESP_FEATURES_H
 
-// Флаги необязательных возможностей шаблона.
-//
-// Исходники выключенной возможности остаются в репозитории; из сборки она
-// просто исключается, поэтому не занимает ни flash, ни RAM. Включать лучше
-// построчно для нужного env:
-//
-//   build_flags = -D VUESP_MODBUS=1
+#include "../generated/vuespConfig.h"
 
-// Modbus RTU (src/modbus). Профиль, входящий профиль и буферы приёма занимают
-// около 21 КБ статической RAM: на ESP8266 это больше половины свободного heap
-// и web UI падает с OOM. Поэтому по умолчанию возможность не компилируется.
-#ifndef VUESP_MODBUS
-#define VUESP_MODBUS 0
-#endif
+// Feature flags come from vuesp.config.yaml through the generated header.
+// A build flag such as -DVUESP_MODBUS=1 can still override the generated value.
+//
+// Sources of disabled features remain in the repository; the feature is either
+// excluded from the build or guarded by #if VUESP_*.
 
-// Осознанное разрешение Modbus на ESP8266 (например, для отладки без web UI).
+// Explicit permission to enable Modbus on ESP8266 (for debug builds without
+// the web UI). Modbus needs about 21 KB of static RAM.
 #ifndef VUESP_MODBUS_ALLOW_ESP8266
 #define VUESP_MODBUS_ALLOW_ESP8266 0
 #endif

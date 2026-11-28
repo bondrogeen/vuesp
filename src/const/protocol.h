@@ -63,11 +63,14 @@ enum scriptRes : uint8_t {
   SCRIPTRES_END
 };
 
-#define SCRIPT_STATE_ACTIVE 0x01
-#define SCRIPT_STATE_LOADED 0x02
-#define SCRIPT_STATE_ERROR 0x04
-#define SCRIPT_STATE_BOOT 0x08
+enum scriptState : uint8_t {
+  SCRIPT_STATE_ACTIVE = 0x01,
+  SCRIPT_STATE_LOADED = 0x02,
+  SCRIPT_STATE_ERROR = 0x04,
+  SCRIPT_STATE_BOOT = 0x08
+};
 
+// Firmware-only flag: the web triggers a run with the HTTP query run=1.
 #define SCRIPT_FLAG_RUN 0x01
 
 enum portMode : uint16_t {
@@ -82,9 +85,11 @@ enum portMode : uint16_t {
   PORT_DAC = 1 << 7
 };
 
-#define MODBUS_DEVICES_MAX 8
-#define MODBUS_POINTS_MAX 64
-#define MODBUS_VARS_MAX 32
+enum modbusLimits : uint16_t {
+  MODBUS_DEVICES_MAX = 8,
+  MODBUS_POINTS_MAX = 64,
+  MODBUS_VARS_MAX = 32
+};
 
 #pragma pack(push, 1)
 
@@ -298,9 +303,9 @@ struct ModbusProfile {
   uint8_t pointCount;
   uint8_t varCount;
   uint8_t reserved;
-  ModbusDevice devices[8];
-  ModbusPoint points[64];
-  ModbusVar vars[32];
+  ModbusDevice devices[MODBUS_DEVICES_MAX];
+  ModbusPoint points[MODBUS_POINTS_MAX];
+  ModbusVar vars[MODBUS_VARS_MAX];
 };
 
 struct ModbusRaw {
@@ -346,7 +351,7 @@ struct Modbus {
   uint8_t pad[2];
   double value;
   char text[16];
-  ModbusVarValue vars[32];
+  ModbusVarValue vars[MODBUS_VARS_MAX];
 };
 
 // vuesp-struct matches KEY_SCRIPTCMD to the struct name case-insensitively,

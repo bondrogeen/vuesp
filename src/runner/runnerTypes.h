@@ -3,23 +3,10 @@
 
 #include <stdint.h>
 
+#include "../generated/vuespConfig.h"
+
 // Shared value/context types and provider contracts used by both the bytecode
 // VM and the firmware integrations (GPIO, device data, discovery, Modbus).
-
-#define MAX_UINT_VARS 10
-#define MAX_INT_VARS 10
-#define MAX_FLOAT_VARS 5
-#define MAX_STRING_VARS 2
-#define MAX_ARRAY_VARS 5
-#define MAX_ARRAY_SIZE 64
-#define MAX_STRING_LEN 32
-
-#define MAX_PWM_VALUE 255
-
-#define MAX_EXTERNAL_FUNCTIONS 16
-#define MAX_FUNCTION_PARAMS 5
-#define MAX_CALL_PARAMS 4
-#define MAX_EVENT_PARAMS 4
 
 #define PORT_READ 0
 #define PORT_WRITE 1
@@ -57,9 +44,6 @@ struct ScriptContext {
   char stringVars[MAX_STRING_VARS][MAX_STRING_LEN];
   uint8_t arrayVars[MAX_ARRAY_VARS][MAX_ARRAY_SIZE];
   uint8_t arrayLen[MAX_ARRAY_VARS];
-
-  int32_t eventParams[MAX_EVENT_PARAMS];
-  uint8_t eventParamCount;
 };
 
 struct Value {

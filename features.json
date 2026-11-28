@@ -1,12 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-27",
+  "updatedAt": "2026-11-28",
   "base": {
     "label": "Vuesp base",
     "always": true,
     "firmware": [
       "src/main.cpp",
       "src/config",
+      "src/generated",
       "src/const",
       "src/device",
       "src/diag",
@@ -48,7 +49,7 @@
       "summary": "Local bytecode scripting: studio, script pack, logs and execution.",
       "firmware": [
         "src/runner",
-        "src/const/bytecode.h"
+        "src/generated/scriptManifest.h"
       ],
       "web": [
         "vue/src/pages/script",
@@ -80,7 +81,7 @@
         "src/gpio/gpio.cpp, src/device/device.cpp, src/discovery/discovery.cpp: VM providers and events"
       ],
       "remove": [
-        "delete src/runner and the setupRunner()/bytecodeService/scriptProtocol calls from src/main.cpp",
+        "delete src/runner and src/generated/scriptManifest.h, remove the setupRunner()/bytecodeService/scriptProtocol calls from src/main.cpp",
         "remove the /vm/* routes and KEY_SCRIPTCMD dispatch from src/webserver",
         "delete vue/src/pages/script, vue/src/lib/script, vue/src/components/script-studio, vue/src/components/BytecodeEditor.vue, vue/src/composables/script, vue/src/utils/scriptStudio.ts, vue/src/types/scriptStudio.ts",
         "remove menu.script from vue/json/menu.json",

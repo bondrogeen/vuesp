@@ -14,7 +14,7 @@
 
     <VDragDrop :items="dashboard" class="grid grid-cols-[repeat(auto-fill,_minmax(130px,_1fr))] gap-4" @update:items="dashboard = $event">
       <template #default="{ item }">
-        <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)" @edit="onDialog(getState(item))" @clone="onClone(item)" @update="onUpdate">
+        <component v-if="getComponent(item)" :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)" @edit="onDialog(getState(item))" @clone="onClone(item)" @update="onUpdate">
           <template #icon="{ icon, value }">
             <div class="size-full" :class="value ? 'animate-shake' : ''">
               <VIcons :name="icon" />
@@ -33,7 +33,7 @@
         </template>
 
         <template #default="{ item }">
-          <component :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)">
+          <component v-if="getComponent(item)" :is="getComponent(item)" v-bind="getState(item)" @setState="setState(item, $event)">
             <template #icon="{ icon, value }">
               <div class="size-full" :class="value ? 'animate-shake' : ''">
                 <VIcons :name="icon" />
@@ -51,7 +51,7 @@ import type { IListItem, IDashboardItem, TMessage } from '@/types';
 import type { Ref } from 'vue';
 
 import { ref } from 'vue';
-import { setStateItem, getStateItem, dashboardCards } from 'vuesp-components/dashboard';
+import { setStateItem, getStateItem } from 'vuesp-components/dashboard';
 import { randomString } from 'vuesp-components/helpers';
 import { useFetch } from '@vueuse/core';
 
@@ -61,12 +61,12 @@ import { CMD, PORT } from '@/generated/protocol';
 import { useConnection } from '@/composables/useConnection';
 import { pathListDef } from '@/utils/const';
 
-import { ICON_NAMES, CardButton, CardDate, CardDimmer, CardInfo, CardInput, CardList, ItemEdit, VIcon, VDragDrop } from 'vuesp-components/components';
+import { ICON_NAMES, ItemEdit, VIcon, VDragDrop } from 'vuesp-components/components';
 
 import { useLocale } from '@/composables/useLocale';
 
-import CardChart from '@/components/dashboard/CardChart.vue';
 import VIcons from '@/components/ui/icons/VIcons.vue';
+import { DASHBOARD_CARDS, DASHBOARD_CARD_TYPES } from '@/generated/dashboardCards';
 import { localIconNames } from '@/icons';
 
 const { $t } = useLocale();
@@ -81,16 +81,8 @@ const { dashboard, main, onSend } = useConnection((send) => {
 const dialogItem = ref(false);
 const item: Ref<IDashboardItem | null> = ref(null);
 
-const getComponent = ({ type = 'info' }) => {
-  if (type === 'date') return CardDate;
-  if (type === 'button') return CardButton;
-  if (type === 'dimmer') return CardDimmer;
-  if (type === 'input') return CardInput;
-  if (type === 'info') return CardInfo;
-  if (type === 'list') return CardList;
-  if (type === 'chart') return CardChart;
-  return ``;
-};
+const getComponent = ({ type = 'info' }: IDashboardItem) =>
+  DASHBOARD_CARDS[type as keyof typeof DASHBOARD_CARDS] ?? null;
 
 const onUpdate = () => {
   onSend(KEY.BUFFER);
@@ -172,7 +164,7 @@ const setState = (item: IDashboardItem, value: unknown) => {
 
 const icons = [...ICON_NAMES, ...localIconNames];
 
-const cards = [...(dashboardCards || []), 'chart'];
+const cards = DASHBOARD_CARD_TYPES;
 
 const listIcons: IListItem<string>[] = icons.map((item, i) => ({ id: ++i, name: item, value: item }));
 const listDashboard: IListItem<string>[] = cards.map((item, i) => ({ id: ++i, name: item, value: item }));

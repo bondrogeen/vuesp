@@ -16,7 +16,10 @@ echo "outdir: $outdir"
 if [ "$1" = "build" ]
 then
     echo 'Building...'
-    
+
+    echo 'Generating project config...'
+    node ./scripts/config/generate.mjs
+
     # Run PlatformIO build and filesystem build
     ~/.platformio/penv/bin/pio run && \
     ~/.platformio/penv/bin/pio run --target buildfs

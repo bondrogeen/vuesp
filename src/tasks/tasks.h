@@ -4,8 +4,11 @@
 #include "./eeprom/eeprom.h"
 #include "./files/files.h"
 #include "./init/init.h"
+#include "./const/features.h"
 #include "./webserver/webserver.h"
+#if VUESP_DISCOVERY
 #include "./discovery/discovery.h"
+#endif
 
 #define MESSAGE_TYPE_LOG 0
 #define MESSAGE_TYPE_NOTIFICATION 1

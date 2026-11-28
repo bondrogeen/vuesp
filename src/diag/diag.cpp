@@ -4,10 +4,15 @@
 
 #include <Arduino.h>
 
+#include "../const/features.h"
 #include "../const/protocol.h"
+#if VUESP_DISCOVERY
 #include "../discovery/discovery.h"
+#endif
 #include "../init/init.h"
+#if VUESP_SCRIPT
 #include "../runner/bytecode/BytecodeService.h"
+#endif
 #include "../webserver/webserver.h"
 
 #define DIAG_SAMPLES 64
@@ -140,8 +145,16 @@ void diagFillInfo(Info& info) {
   info.fragmentation = fragmentation;
   info.stackFree = stackFree;
   info.clients = wsClientCount();
+#if VUESP_SCRIPT
   info.scripts = bytecodeService.savedCount();
+#else
+  info.scripts = 0;
+#endif
+#if VUESP_DISCOVERY
   info.peers = (uint8_t)protocol.getPeerCount();
+#else
+  info.peers = 0;
+#endif
   info.wifi = isConnected;
   info.diagnostics = enabled ? 1 : 0;
 

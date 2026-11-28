@@ -30,8 +30,9 @@ import type {
   Stmt,
   StringExpr,
   VarSlot,
+  OnParam,
 } from './types.ts';
-import { DEFAULT_MANIFEST, decodeVar } from './types.ts';
+import { DEFAULT_MANIFEST, decodeVar, getEventArgNames } from './types.ts';
 
 export interface DecompileOptions {
   readonly manifest?: CapabilityManifest;
@@ -114,6 +115,7 @@ class Decompiler {
   private readonly manifest: CapabilityManifest;
   private readonly blocksByStart = new Map<number, BlockEntry[]>();
   private readonly sortedBlocks: BlockEntry[];
+  private handlerArgNames: readonly string[] = [];
 
   constructor(container: BytecodeContainer, manifest: CapabilityManifest) {
     this.container = container;
@@ -133,11 +135,17 @@ class Decompiler {
     const handlers: Stmt[] = [];
     for (const handler of this.container.handlers) {
       const end = handler.end > handler.entry ? handler.end - 1 : handler.entry;
+      const event = constantAsString(this.container, handler.nameConst);
+      const argNames = getEventArgNames(event);
+      this.handlerArgNames = argNames;
       const body = [...this.decompileStatements(handler.entry, end)];
+      this.handlerArgNames = [];
       while (body.length > 0 && body[body.length - 1].kind === 'return') body.pop();
+      const params: OnParam[] = argNames.map((name) => ({ name, pos: this.pos(handler.entry) }));
       handlers.push({
         kind: 'on',
-        event: constantAsString(this.container, handler.nameConst),
+        event,
+        params,
         body,
         pos: this.pos(handler.entry),
       });
@@ -660,7 +668,13 @@ class Decompiler {
 
   private varExpr(varid: number, offset: number): Expr {
     const slot = this.varSlot(varid);
-    return { kind: 'var', name: `$${slot.type}${slot.index}`, slot, pos: this.pos(offset) };
+    const argName = slot.type === 'e' ? this.handlerArgNames[slot.index] : undefined;
+    return {
+      kind: 'var',
+      name: argName ?? `$${slot.type}${slot.index}`,
+      slot,
+      pos: this.pos(offset),
+    };
   }
 
   private portExpr(index: number, offset: number): Expr {
@@ -675,7 +689,13 @@ class Decompiler {
 
   private varLValue(varid: number, offset: number): LValue {
     const slot = this.varSlot(varid);
-    return { kind: 'var', name: `$${slot.type}${slot.index}`, slot, pos: this.pos(offset) };
+    const argName = slot.type === 'e' ? this.handlerArgNames[slot.index] : undefined;
+    return {
+      kind: 'var',
+      name: argName ?? `$${slot.type}${slot.index}`,
+      slot,
+      pos: this.pos(offset),
+    };
   }
 
   private number(value: number, isFloat: boolean, offset: number): NumberExpr {

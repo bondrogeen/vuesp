@@ -1,0 +1,20 @@
+id: discovery
+version: 1
+
+label:
+  ru: Discovery
+  en: Discovery
+description:
+  ru: Поиск устройств Vuesp в локальной сети.
+  en: Vuesp device discovery in the local network.
+
+category: firmware
+default: true
+removable: true
+
+firmware:
+  files:
+    - src/discovery
+  srcFilter:
+    exclude:
+      - discovery/*

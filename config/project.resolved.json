@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "project": {
+    "name": "vuesp.",
+    "board": "esp8266",
+    "buildProfile": "standard",
+    "firmwareVersion": "5.0.13",
+    "deviceName": "vuesp.",
+    "defaultEnv": "esp8266"
+  },
+  "features": {
+    "dashboard": true,
+    "discovery": true,
+    "modbus": false,
+    "script": true,
+    "serial": true
+  },
+  "enabledModules": [
+    "dashboard",
+    "discovery",
+    "script",
+    "serial"
+  ],
+  "firmware": {
+    "files": [
+      "src/discovery",
+      "src/runner"
+    ],
+    "srcFilter": "+<*> -<tests/*> -<modbus/*>"
+  },
+  "web": {
+    "pages": {
+      "gpio": true,
+      "settings": true,
+      "storage": true
+    },
+    "menu": [
+      {
+        "name": "menu.home",
+        "icon": "home",
+        "path": "/"
+      },
+      {
+        "name": "menu.dashboard",
+        "icon": "dashboard",
+        "path": "/dashboard/"
+      },
+      {
+        "name": "menu.script",
+        "icon": "script",
+        "path": "/script/"
+      },
+      {
+        "name": "menu.settings",
+        "icon": "settings",
+        "path": "/device/settings/"
+      },
+      {
+        "name": "menu.fs",
+        "icon": "storage",
+        "path": "/device/storage/"
+      },
+      {
+        "name": "menu.gpio",
+        "icon": "gpio",
+        "path": "/device/gpio/"
+      },
+      {
+        "name": "menu.serial",
+        "icon": "plug",
+        "path": "/serial/"
+      }
+    ],
+    "servicePages": [
+      "settings",
+      "storage",
+      "gpio"
+    ],
+    "dashboardCards": [
+      "button",
+      "date",
+      "dimmer",
+      "info",
+      "input",
+      "list",
+      "chart"
+    ],
+    "locales": [
+      "ru",
+      "en"
+    ],
+    "disabledPages": [],
+    "droppedLocaleSections": [
+      "modbus"
+    ]
+  },
+  "warnings": []
+}

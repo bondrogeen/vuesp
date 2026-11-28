@@ -6,11 +6,7 @@ import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/AppStore';
 
 import { getPageTitle } from 'vuesp-components/helpers';
-
-import ServiceGPIO from '@/components/service/ServiceGPIO.vue';
-import ServiceStorage from '@/components/service/ServiceStorage.vue';
-import ServiceSettings from '@/components/service/ServiceSettings.vue';
-import ServiceModbus from '@/components/service/ServiceModbus.vue';
+import { SERVICE_PAGES } from '@/generated/servicePages';
 
 const appStore = useAppStore();
 const { menu } = storeToRefs(appStore);
@@ -19,10 +15,14 @@ const route = useRoute();
 
 const show = ref(false);
 
-const title = computed(() => getPageTitle(menu.value, route.fullPath)?.name);
-const page = computed(() => route.params.page);
-
-const isPage = (value: string) => page.value === value;
+const page = computed(() => String(route.params.page ?? ''));
+const servicePage = computed(() => {
+  const key = page.value;
+  return Object.prototype.hasOwnProperty.call(SERVICE_PAGES, key)
+    ? SERVICE_PAGES[key as keyof typeof SERVICE_PAGES]
+    : null;
+});
+const title = computed(() => getPageTitle(menu.value, route.fullPath)?.name ?? 'message.pageNotFound');
 
 onMounted(() => {
   setTimeout(() => {
@@ -34,19 +34,15 @@ onMounted(() => {
 <template>
   <div>
     <div class="mb-6 flex items-center justify-between">
-      <h1>{{ $t(title || '') }}</h1>
+      <h1>{{ $t(title) }}</h1>
 
       <div id="device-slot"></div>
     </div>
 
     <template v-if="show">
-      <ServiceSettings v-if="isPage('settings')" />
+      <component :is="servicePage" v-if="servicePage" />
 
-      <ServiceStorage v-if="isPage('storage')" />
-
-      <ServiceGPIO v-if="isPage('gpio')" />
-
-      <ServiceModbus v-if="isPage('modbus')" />
+      <p v-else class="text-sm text-gray-dark-25 dark:text-gray-main">{{ $t('message.pageNotFound') }}</p>
     </template>
   </div>
 </template>

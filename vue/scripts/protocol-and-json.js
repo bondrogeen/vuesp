@@ -11,6 +11,8 @@ const pathJson = normalize(join(cwd, 'json'));
 const pathDefaultJson = normalize(join(cwd, 'public/default.json'));
 const pathTs = normalize(join(cwd, 'src/generated/protocol.ts'));
 const pathHeader = normalize(join(cwd, '../src/const/protocol.generated.h'));
+const pathLocaleSections = normalize(join(cwd, 'src/generated/localeSections.json'));
+const pathDashboardTypes = normalize(join(cwd, 'src/generated/dashboardTypes.json'));
 
 const mergeJsonFiles = async (path) => {
   const items = await fs.readdir(path);
@@ -155,10 +157,37 @@ const writeOrCheck = async (path, content) => {
   return false;
 };
 
+const filterLocales = async (data) => {
+  try {
+    const raw = await fs.readFile(pathLocaleSections, 'utf8');
+    const { drop = [] } = JSON.parse(raw);
+    if (!Array.isArray(drop) || !data.locales) return;
+    for (const locale of Object.values(data.locales)) {
+      if (!locale || typeof locale !== 'object') continue;
+      for (const key of drop) delete locale[key];
+    }
+  } catch {
+    // No generated filter: keep every locale section.
+  }
+};
+
+const filterDashboard = async (data) => {
+  try {
+    const raw = await fs.readFile(pathDashboardTypes, 'utf8');
+    const { types = [] } = JSON.parse(raw);
+    if (!Array.isArray(types) || !Array.isArray(data.dashboard)) return;
+    data.dashboard = data.dashboard.filter((item) => item && types.includes(item.type ?? 'info'));
+  } catch {
+    // No generated filter: keep the dashboard as is.
+  }
+};
+
 const run = async () => {
   const source = await fs.readFile(pathProtocol, 'utf8');
   const protocol = parseProtocol(source, { file: 'src/const/protocol.h' });
   const dataJson = await mergeJsonFiles(pathJson);
+  await filterLocales(dataJson);
+  await filterDashboard(dataJson);
 
   const ts = renderTs(protocol);
   const header = renderHeader(protocol);
@@ -166,7 +195,7 @@ const run = async () => {
   const staleProtocolPath = normalize(join(cwd, 'public/protocol.json'));
 
   const results = await Promise.all([
-    writeOrCheck(pathDefaultJson, JSON.stringify(merged)),
+    writeOrCheck(pathDefaultJson, `${JSON.stringify(merged)}\n`),
     writeOrCheck(pathTs, ts),
     writeOrCheck(pathHeader, header),
   ]);

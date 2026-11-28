@@ -1,0 +1,34 @@
+id: modbus
+version: 1
+
+label:
+  ru: Modbus RTU
+  en: Modbus RTU
+description:
+  ru: Профиль, master/slave и регистры Modbus.
+  en: Profile, master/slave and Modbus registers.
+
+category: integration
+default: false
+removable: true
+
+requires:
+  board:
+    - esp32
+    - pico32
+    - esp32-c3-devkitm-1
+
+firmware:
+  files:
+    - src/modbus
+  srcFilter:
+    exclude:
+      - modbus/*
+  defines:
+    VUESP_MODBUS: 1
+
+web:
+  servicePages:
+    - modbus
+  locales:
+    - modbus

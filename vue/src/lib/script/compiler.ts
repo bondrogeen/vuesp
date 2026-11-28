@@ -81,6 +81,10 @@ interface BuildResult {
 }
 
 const BUILTIN_NAMES = new Set(['log', 'wait', 'call', 'set', 'get', 'len', 'chr', 'ord']);
+const RESERVED_HANDLER_PARAMS = new Set([
+  ...BUILTIN_NAMES,
+  'if', 'else', 'while', 'on', 'return', 'break', 'continue', 'true', 'false',
+]);
 const MAX_LITERAL_STRING = 255;
 
 function djb2(text: string): number {
@@ -224,8 +228,16 @@ export class BytecodeCompiler {
       blocks: this.blocks,
       handlers: this.handlers,
     };
+    const bytecode = writeContainer(container);
+    if (bytecode.length > this.manifest.maxCodeBytes) {
+      throw new ScriptError(
+        'E_CODE_SIZE',
+        `container is ${bytecode.length} bytes, limit is ${this.manifest.maxCodeBytes}`,
+        { line: 1, column: 1, offset: 0 },
+      );
+    }
     return {
-      bytecode: writeContainer(container),
+      bytecode,
       stats: {
         codeBytes: this.code.length,
         constCount: this.constants.count,
@@ -263,6 +275,29 @@ export class BytecodeCompiler {
         const event = this.findEvent(stmt.event);
         if (!event) {
           throw new ScriptError('E_UNKNOWN_EVENT', `unknown event '${stmt.event}'`, stmt.pos);
+        }
+        const maxParams = Math.min(event.params, this.manifest.vars.e);
+        if (stmt.params.length > maxParams) {
+          throw new ScriptError(
+            'E_EVENT_ARITY',
+            `event '${stmt.event}' accepts at most ${maxParams} parameters`,
+            stmt.pos,
+          );
+        }
+        const paramNames = new Set<string>();
+        for (const param of stmt.params) {
+          if (paramNames.has(param.name)) {
+            throw new ScriptError('E_DUPLICATE_PARAM', `duplicate parameter '${param.name}'`, param.pos);
+          }
+          paramNames.add(param.name);
+          if (
+            param.name.startsWith('$') ||
+            RESERVED_HANDLER_PARAMS.has(param.name) ||
+            this.manifest.functions.some((fn) => fn.name === param.name) ||
+            this.manifest.events.some((item) => item.name === param.name)
+          ) {
+            throw new ScriptError('E_PARAM_NAME', `parameter name '${param.name}' is reserved`, param.pos);
+          }
         }
         ctx.events.add(stmt.event);
         for (const child of stmt.body) {

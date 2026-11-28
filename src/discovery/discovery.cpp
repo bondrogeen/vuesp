@@ -1,6 +1,9 @@
 #include "./discovery.h"
 
+#include "../const/features.h"
+#if VUESP_SCRIPT
 #include "../runner/bytecode/BytecodeService.h"
+#endif
 
 #define UDP_PACKETS_PER_LOOP 4
 
@@ -53,6 +56,7 @@ void sendPeer(const PeerInfo& peer) {
   wsSendAll((uint8_t*)&discovery, sizeof(discovery));
 }
 
+#if VUESP_SCRIPT
 bool udpHandler(uint8_t paramCount, const Value* params, Value& result, void* userData) {
   if (paramCount < 2) return false;
 
@@ -63,6 +67,7 @@ bool udpHandler(uint8_t paramCount, const Value* params, Value& result, void* us
   result.intVal = protocol.sendText(device, text);
   return true;
 }
+#endif
 
 void setupDiscovery() {
   if (!settings.discovery) return;
@@ -97,7 +102,9 @@ void setupDiscovery() {
     // for (size_t i = 0; i < len; i++) Serial.printf("%02X ", data[i]);
     // Serial.println();
   });
+#if VUESP_SCRIPT
   bytecodeService.vm().registerFunction(2, udpHandler);
+#endif
 }
 
 void commDiscovery() {

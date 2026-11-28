@@ -1,0 +1,654 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vuesp project configuration",
+  "description": "Единый файл настроек проекта Vuesp.",
+  "type": "object",
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Версия формата конфигурации."
+    },
+    "project": {
+      "type": "object",
+      "title": "Проект",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "vuesp."
+        },
+        "board": {
+          "enum": [
+            "esp8266",
+            "esp32",
+            "pico32",
+            "esp32-c3-devkitm-1"
+          ],
+          "default": "esp8266",
+          "enumDescriptions": [
+            "ESP8266",
+            "ESP32",
+            "ESP32 Pico32",
+            "ESP32-C3"
+          ],
+          "description": "Выбирает default_envs PlatformIO; pio run -e <env> переопределяет."
+        },
+        "buildProfile": {
+          "enum": [
+            "basic",
+            "standard",
+            "pro"
+          ],
+          "default": "standard",
+          "enumDescriptions": [
+            "256 байт × 12 слотов",
+            "512 байт × 6 слотов",
+            "1024 байта × 3 слота"
+          ]
+        },
+        "firmwareVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "deviceName": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "features": {
+      "type": "object",
+      "title": "Модули",
+      "description": "Включение модулей прошивки и веб-части.",
+      "properties": {
+        "dashboard": {
+          "type": "boolean",
+          "default": true,
+          "title": "Dashboard",
+          "description": "Панель с карточками устройств.",
+          "x-vuesp": {
+            "category": "web",
+            "removable": true,
+            "requires": {},
+            "conflicts": {}
+          }
+        },
+        "discovery": {
+          "type": "boolean",
+          "default": true,
+          "title": "Discovery",
+          "description": "Поиск устройств Vuesp в локальной сети.",
+          "x-vuesp": {
+            "category": "firmware",
+            "removable": true,
+            "requires": {},
+            "conflicts": {}
+          }
+        },
+        "modbus": {
+          "type": "boolean",
+          "default": false,
+          "title": "Modbus RTU",
+          "description": "Профиль, master/slave и регистры Modbus.",
+          "x-vuesp": {
+            "category": "integration",
+            "removable": true,
+            "requires": {
+              "board": [
+                "esp32",
+                "pico32",
+                "esp32-c3-devkitm-1"
+              ]
+            },
+            "conflicts": {}
+          }
+        },
+        "script": {
+          "type": "boolean",
+          "default": true,
+          "title": "Bytecode ScriptRunner",
+          "description": "Локальные сценарии, пакет скриптов и выполнение на VM.",
+          "x-vuesp": {
+            "category": "firmware",
+            "removable": true,
+            "requires": {},
+            "conflicts": {}
+          }
+        },
+        "serial": {
+          "type": "boolean",
+          "default": true,
+          "title": "SERIAL example",
+          "description": "Пример страницы последовательной консоли.",
+          "x-vuesp": {
+            "category": "example",
+            "removable": true,
+            "requires": {},
+            "conflicts": {}
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "hardware": {
+      "type": "object",
+      "title": "Железо",
+      "properties": {
+        "pins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "gpio": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 48
+              },
+              "mode": {
+                "enum": [
+                  "input",
+                  "input_pullup",
+                  "output",
+                  "output_open_drain",
+                  "pwm",
+                  "onewire",
+                  "adc",
+                  "dac"
+                ]
+              },
+              "value": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "interrupt": {
+                "enum": [
+                  "off",
+                  "rising",
+                  "falling",
+                  "change"
+                ]
+              },
+              "disabled": {
+                "type": "boolean",
+                "default": false
+              },
+              "button": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": [
+              "id",
+              "gpio",
+              "mode"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "buses": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "network": {
+      "type": "object",
+      "title": "Сеть",
+      "properties": {
+        "wifi": {
+          "type": "object",
+          "properties": {
+            "dhcp": {
+              "type": "boolean",
+              "default": true
+            },
+            "ip": {
+              "type": "string",
+              "default": "192.168.1.12"
+            },
+            "subnet": {
+              "type": "string",
+              "default": "255.255.255.0"
+            },
+            "gateway": {
+              "type": "string",
+              "default": "192.168.1.1"
+            },
+            "dns": {
+              "type": "string",
+              "default": "8.8.8.8"
+            },
+            "ssid": {
+              "type": "string",
+              "default": ""
+            },
+            "password": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "additionalProperties": true
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "login": {
+              "type": "string",
+              "default": "admin"
+            },
+            "password": {
+              "type": "string",
+              "default": "admin"
+            }
+          },
+          "additionalProperties": true
+        },
+        "discovery": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "interval": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 255,
+              "default": 5
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "default": 12345
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "logging": {
+      "type": "object",
+      "title": "Логи",
+      "properties": {
+        "level": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "default": 3,
+          "enumDescriptions": [
+            "0 — тихо",
+            "1 — ошибки и boot",
+            "2 — события и жизненный цикл",
+            "3 — подробно"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "script": {
+      "type": "object",
+      "title": "ScriptRunner",
+      "properties": {
+        "maxCodeBytes": {
+          "enum": [
+            256,
+            512,
+            1024
+          ],
+          "default": 512
+        },
+        "cacheSlots": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15,
+          "default": 6
+        },
+        "maxSavedScripts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "default": 15
+        },
+        "maxScripts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "default": 15
+        },
+        "maxContexts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "default": 15
+        },
+        "stackSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 64
+        },
+        "scratchBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 256
+        },
+        "maxCallDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15,
+          "default": 4
+        },
+        "vars": {
+          "type": "object",
+          "properties": {
+            "u": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 10
+            },
+            "i": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 10
+            },
+            "f": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 5
+            },
+            "s": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 2
+            },
+            "a": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 5
+            },
+            "p": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64,
+              "default": 40
+            },
+            "e": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 4
+            },
+            "c": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 40,
+              "default": 4
+            }
+          },
+          "additionalProperties": false
+        },
+        "maxStringLen": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "default": 32
+        },
+        "maxArrayLen": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "default": 64
+        },
+        "maxPwmValue": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 255
+        },
+        "maxExternalFunctions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "default": 16
+        },
+        "maxFunctionParams": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 15,
+          "default": 5
+        },
+        "maxCallParams": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15,
+          "default": 4
+        },
+        "maxEventParams": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4,
+          "default": 4
+        },
+        "instrPerTick": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 32
+        },
+        "usPerTick": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 300
+        },
+        "updateBudgetUs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 3000
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 255
+              },
+              "name": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "description": {
+                "type": "string"
+              },
+              "requires": {
+                "enum": [
+                  "modbus"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 255
+              },
+              "name": {
+                "type": "string"
+              },
+              "minArgs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "maxArgs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "ret": {
+                "enum": [
+                  "int",
+                  "uint",
+                  "float",
+                  "string",
+                  "array",
+                  "none"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "requires": {
+                "enum": [
+                  "modbus"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "web": {
+      "type": "object",
+      "title": "Веб-часть",
+      "properties": {
+        "menu": {
+          "type": "object",
+          "properties": {
+            "auto": {
+              "type": "boolean",
+              "default": true
+            },
+            "extra": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^/"
+                  }
+                },
+                "required": [
+                  "name",
+                  "path"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "pages": {
+          "type": "object",
+          "title": "Базовые страницы",
+          "properties": {
+            "gpio": {
+              "type": "boolean",
+              "default": true,
+              "title": "gpio"
+            },
+            "settings": {
+              "type": "boolean",
+              "default": true,
+              "title": "settings"
+            },
+            "storage": {
+              "type": "boolean",
+              "default": true,
+              "title": "storage"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dashboard": {
+          "type": "object",
+          "properties": {
+            "cards": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "button",
+                  "date",
+                  "dimmer",
+                  "info",
+                  "input",
+                  "list",
+                  "chart"
+                ]
+              },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "locales": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "en",
+              "ru"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

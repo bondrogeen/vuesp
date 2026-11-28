@@ -1,0 +1,27 @@
+id: script
+version: 1
+
+label:
+  ru: Bytecode ScriptRunner
+  en: Bytecode ScriptRunner
+description:
+  ru: Локальные сценарии, пакет скриптов и выполнение на VM.
+  en: Local scripts, script pack and VM execution.
+
+category: firmware
+default: true
+removable: true
+
+firmware:
+  files:
+    - src/runner
+  srcFilter:
+    exclude:
+      - runner/*
+
+web:
+  pages:
+    - script
+  locales:
+    - script
+    - scriptStudio

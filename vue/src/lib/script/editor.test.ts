@@ -159,3 +159,31 @@ test('suggestions extend highlighting', () => {
   const html = highlightBytecode('custom(1);', manifest, [], deviceSuggestions);
   assert.match(html, /text-blue-600/);
 });
+
+test('handler arguments are highlighted as local variables', () => {
+  const html = highlightBytecode("on('btn_c', (gpio, value, count) => {\n  log(gpio);\n});", manifest);
+  assert.match(html, /text-cyan-dark-30/);
+});
+
+test('handler arguments are offered inside the callback', () => {
+  const source = "on('btn_c', (gpio, value, count) => {\n  gp";
+  const result = getCompletions(source, source.length, manifest, scripts);
+  assert.ok(result);
+  assert.ok(result.items.some((item) => item.label === 'gpio' && item.kind === 'slot'));
+});
+
+test('event completion inserts named handler arguments', () => {
+  const result = getCompletions('o', 1, manifest, scripts);
+  assert.ok(result);
+  const item = result.items.find((entry) => entry.label === "on('btn_c')");
+  assert.ok(item);
+  assert.match(item.insert, /on\('btn_c', \(gpio, value, count\) =>/);
+});
+
+test('time event completion inserts hours and minutes', () => {
+  const result = getCompletions('ti', 2, manifest, scripts);
+  assert.ok(result);
+  const item = result.items.find((entry) => entry.label === "on('time')");
+  assert.ok(item);
+  assert.match(item.insert, /on\('time', \(hours, minutes\) =>/);
+});

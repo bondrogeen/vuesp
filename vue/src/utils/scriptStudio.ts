@@ -1,10 +1,11 @@
+import { SCRIPT } from '@/generated/protocol';
 import type { IStatusMeta, IScriptListItem, ITranslator, TLogMode, TStatusTone } from '@/types';
 
 export const SCRIPT_STATE = {
-  ACTIVE: 0x01,
-  LOADED: 0x02,
-  ERROR: 0x04,
-  BOOT: 0x08,
+  ACTIVE: SCRIPT.STATE_ACTIVE,
+  LOADED: SCRIPT.STATE_LOADED,
+  ERROR: SCRIPT.STATE_ERROR,
+  BOOT: SCRIPT.STATE_BOOT,
 } as const;
 
 const BYTES_PER_HEX_LINE = 16;

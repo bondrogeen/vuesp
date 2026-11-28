@@ -1,0 +1,20 @@
+id: dashboard
+version: 1
+
+label:
+  ru: Dashboard
+  en: Dashboard
+description:
+  ru: Панель с карточками устройств.
+  en: Device dashboard with cards.
+
+category: web
+default: true
+removable: true
+
+firmware:
+  files: []
+
+web:
+  pages:
+    - dashboard

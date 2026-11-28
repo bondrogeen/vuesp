@@ -25,7 +25,7 @@ static const EventSpec kEvents[] = {
 
 static const Capabilities kCaps = {
     1,
-    1024,
+    VBC_MAX_CODE_BYTES,
     64,
     {10, 10, 5, 2, 5, 40, 4, 4},
     32,
@@ -417,6 +417,21 @@ static void testVmPortWide() {
   expect(vm.getUintVar(0) == 255, "port 17 read");
 }
 
+static void testVmTwoEvents() {
+  BytecodeVM vm;
+  setupVm(vm);
+  resetVmState();
+  const fixtures::Vector* fixture = findFixture("two_events");
+  expect(fixture != nullptr, "two_events fixture");
+  if (!fixture) return;
+  expect(vm.loadScript(1, fixture->data, fixture->size), "two_events loads");
+  vm.emitEvent("btn", 2, 4, 1);
+  vm.emitEvent("btn_c", 3, 5, 1, 7);
+  for (uint8_t i = 0; i < 8; i++) vm.update(stub_millis);
+  expect(g_ports[13] == 4, "btn handler keeps its args");
+  expect(g_ports[14] == 7, "btn_c handler keeps its args");
+}
+
 static void testVmDataRead() {
   BytecodeVM vm;
   setupVm(vm);
@@ -616,6 +631,7 @@ int main() {
   testVmCallee();
   testVmPortRead();
   testVmPortWide();
+  testVmTwoEvents();
   testVmDataRead();
   testVmHandlerReturn();
   testVmHandler();

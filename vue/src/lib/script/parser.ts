@@ -8,6 +8,7 @@ import type {
   IfStmt,
   LValue,
   NumberExpr,
+  OnParam,
   OnStmt,
   Program,
   Stmt,
@@ -60,6 +61,7 @@ function parseSlot(name: string): VarSlot | null {
 export class Parser {
   private readonly tokens: Token[];
   private index = 0;
+  private handlerScope: Map<string, number> | null = null;
 
   constructor(source: string) {
     this.tokens = lex(source);
@@ -206,10 +208,34 @@ export class Parser {
     const start = this.expectKeyword('on').pos;
     this.expect('(');
     const event = this.expectKind('string');
+
+    if (this.eat(',')) {
+      this.expect('(');
+      const params: OnParam[] = [];
+      if (!this.at(')')) {
+        do {
+          const name = this.expectKind('identifier');
+          params.push({ name: name.value, pos: name.pos });
+        } while (this.eat(','));
+      }
+      this.expect(')');
+      this.expect('=>');
+
+      const scope = new Map<string, number>();
+      for (let i = 0; i < params.length; i++) scope.set(params[i].name, i);
+      const previous = this.handlerScope;
+      this.handlerScope = scope;
+      const body = this.parseBlock();
+      this.handlerScope = previous;
+      this.expect(')');
+      this.skipSemicolons();
+      return { kind: 'on', event: event.value, params, body, pos: start };
+    }
+
     this.expect(')');
     const body = this.parseBlock();
     this.skipSemicolons();
-    return { kind: 'on', event: event.value, body, pos: start };
+    return { kind: 'on', event: event.value, params: [], body, pos: start };
   }
 
   private parseReturn(): Stmt {
@@ -343,6 +369,16 @@ export class Parser {
 
     if (token.kind === 'identifier') {
       this.next();
+      const paramIndex = this.handlerScope?.get(token.value);
+      if (paramIndex !== undefined) {
+        const varExpr: VarExpr = {
+          kind: 'var',
+          name: token.value,
+          slot: makeVarSlot('e', paramIndex),
+          pos: token.pos,
+        };
+        return varExpr;
+      }
       if (token.value.startsWith('$')) {
         const slot = parseSlot(token.value);
         if (slot) {

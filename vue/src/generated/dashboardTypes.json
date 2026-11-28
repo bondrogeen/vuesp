@@ -1,0 +1,11 @@
+{
+  "types": [
+    "button",
+    "date",
+    "dimmer",
+    "info",
+    "input",
+    "list",
+    "chart"
+  ]
+}

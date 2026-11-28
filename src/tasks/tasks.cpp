@@ -30,9 +30,11 @@ void onWsEventTasks(void* arg, uint8_t* data, size_t len, uint32_t clientId, uin
   if (task == KEY_PORT && info->len == sizeof(port)) {
     memcpy(&port, data, sizeof(port));
   }
+#if VUESP_DISCOVERY
   if (task == KEY_DISCOVERY && info->len == sizeof(discovery)) {
     memcpy(&discovery, data, sizeof(discovery));
   }
+#endif
   if (task == KEY_INFO && info->len == sizeof(infoFS)) {
     diagSetDiagnostics(data[offsetof(Info, diagnostics)]);
   }
@@ -230,8 +232,10 @@ void loopTask(uint32_t now) {
     scanWiFiStart();
   }
   scanWiFiPoll();
+#if VUESP_DISCOVERY
   if (tasks[KEY_DISCOVERY]) {
     tasks[KEY_DISCOVERY] = false;
     commDiscovery();
   }
+#endif
 }

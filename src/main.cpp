@@ -1,19 +1,22 @@
 #include "./config/ConfigStore.h"
-#include "./const/bytecode.h"
 #include "./const/features.h"
 #include "./diag/bootlog.h"
 #include "./diag/diag.h"
 #include "./device/device.h"
+#if VUESP_DISCOVERY
 #include "./discovery/discovery.h"
+#endif
 #include "./files/files.h"
 #include "./gpio/gpio.h"
 #include "./init/init.h"
+#if VUESP_SCRIPT
 #include "./runner/bytecode/BytecodeService.h"
 #include "./runner/bytecode/ScriptProtocol.h"
+#include "./runner/runner.h"
+#endif
 #if VUESP_MODBUS
 #include "./modbus/modbus.h"
 #endif
-#include "./runner/runner.h"
 #include "./setup/serialSetup.h"
 #include "./tasks/tasks.h"
 #include "./webserver/webserver.h"
@@ -65,10 +68,14 @@ void setupDelay() {
   setupModbus();
 #endif
   setupServer();
+#if VUESP_DISCOVERY
   setupDiscovery();
+#endif
+#if VUESP_SCRIPT
   setupRunner();
   bytecodeService.begin();
   scriptProtocol.begin();
+#endif
 }
 
 void loop() {
@@ -85,7 +92,9 @@ void loop() {
   }
 
   if (isSetup) {
+#if VUESP_DISCOVERY
     loopDiscovery(now);
+#endif
     loopServer(now);
     loopTask(now);
     loopGPIO(now);
@@ -94,8 +103,10 @@ void loop() {
     loopModbus(now);
 #endif
     loopWiFi(now);
+#if VUESP_SCRIPT
     bytecodeService.loop(now);
     scriptProtocol.loop();
+#endif
     loopSerialSetup();
   }
 
@@ -111,6 +122,14 @@ void loop() {
   if (now - lastTimeMain > 1000) {
     lastTimeMain = now;
     infoFS.uptime++;
+#if VUESP_SCRIPT
+    if (isSetup) {
+      const uint32_t seconds = (uint32_t)infoFS.uptime;
+      const int32_t hours = (int32_t)((seconds / 3600) % 24);
+      const int32_t minutes = (int32_t)((seconds / 60) % 60);
+      bytecodeService.vm().emitEvent("time", 2, hours, minutes);
+    }
+#endif
   }
   diagLoopEnd();
 

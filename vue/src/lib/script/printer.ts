@@ -184,8 +184,13 @@ function printStmt(stmt: Stmt, level: number): string {
       return `${printIf(stmt, level)}\n`;
     case 'while':
       return `${indent(level)}while (${printExpr(stmt.cond)}) ${printBlock(stmt.body, level)}\n`;
-    case 'on':
+    case 'on': {
+      if (stmt.params.length > 0) {
+        const args = stmt.params.map((param) => param.name).join(', ');
+        return `${indent(level)}on(${escapeString(stmt.event)}, (${args}) => ${printBlock(stmt.body, level)});\n`;
+      }
       return `${indent(level)}on(${escapeString(stmt.event)}) ${printBlock(stmt.body, level)}\n`;
+    }
     case 'return':
       return `${indent(level)}return;\n`;
     case 'break':

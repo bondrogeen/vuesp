@@ -1,16 +1,20 @@
 #include "./webserver.h"
 
-#include "../runner/bytecode/BytecodeService.h"
 #include "../const/features.h"
+#if VUESP_SCRIPT
+#include "../runner/bytecode/BytecodeService.h"
 #include "../runner/bytecode/BytecodePack.h"
 #include "../runner/bytecode/ScriptProtocol.h"
+#endif
 
 #if VUESP_MODBUS
 #include "../modbus/modbus.h"
 #include "../modbus/modbus_raw.h"
 #endif
 
+#if VUESP_SCRIPT
 using namespace vuesp::bytecode;
+#endif
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/esp");
@@ -157,12 +161,14 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventTyp
     }
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
+#if VUESP_SCRIPT
     if (info->opcode == WS_BINARY && info->final && info->index == 0 &&
         info->len == len && len == sizeof(ScriptCmd) &&
         data[0] == KEY_SCRIPTCMD) {
       scriptProtocol.onWsCommand(data, len, clientID);
       return;
     }
+#endif
 #if VUESP_MODBUS
     if (info->opcode == WS_BINARY) {
       handleWsFragment(info, data, len, clientID);
@@ -335,6 +341,7 @@ void onRedirectHome(AsyncWebServerRequest* request) {
   request->redirect("/");
 }
 
+#if VUESP_SCRIPT
 static const char kUploadTmp[] = "/tmp/upload.vbc";
 static const char kDownloadTmp[] = "/tmp/download.vbc";
 static File g_uploadFile;
@@ -560,6 +567,7 @@ static void onBytecodeCapabilities(AsyncWebServerRequest* request) {
 static void onBytecodeList(AsyncWebServerRequest* request) {
   request->send(200, RES_TYPE_JSON, bytecodeService.listJson());
 }
+#endif
 
 void setupServer() {
 
@@ -575,10 +583,12 @@ void setupServer() {
   server.on("/update", HTTP_POST, onReqUpdate, onUpdate);
   server.on("/recovery", HTTP_GET, onRecovery);
 
+#if VUESP_SCRIPT
   server.on("/vm/bytecode", HTTP_POST, onBytecodePost, nullptr, onBytecodeBody);
   server.on("/vm/bytecode", HTTP_GET, onBytecodeGet);
   server.on("/vm/capabilities", HTTP_GET, onBytecodeCapabilities);
   server.on("/vm/list", HTTP_GET, onBytecodeList);
+#endif
 
   server.on("*", HTTP_ANY, onRoot);
 

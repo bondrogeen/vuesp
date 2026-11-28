@@ -18,29 +18,6 @@ namespace {
 const char kPackPath[] = "/www/scripts.bc";
 const uint16_t kIoChunk = 64;
 
-const FunctionSpec kFunctions[] = {
-    {1, "fade", 3, 3, VALUE_INT},
-    {2, "udp", 1, 2, VALUE_INT},
-    {3, "http", 2, 5, VALUE_INT},
-#if VUESP_MODBUS
-    {4, "var", 1, 2, VALUE_INT},
-    {5, "modbus", 2, 3, VALUE_INT},
-#endif
-};
-
-const EventSpec kEvents[] = {
-    {1, "btn", 2},
-    {2, "btn_c", 3},
-    {3, "btn_l", 2},
-    {4, "btn_r", 2},
-#if VUESP_MODBUS
-    {5, "modbus", 0},
-#endif
-};
-
-const uint8_t kFunctionCount = (uint8_t)(sizeof(kFunctions) / sizeof(kFunctions[0]));
-const uint8_t kEventCount = (uint8_t)(sizeof(kEvents) / sizeof(kEvents[0]));
-
 const char* valueKindName(uint8_t kind) {
   switch (kind) {
     case VALUE_INT:
@@ -60,18 +37,20 @@ const char* valueKindName(uint8_t kind) {
 
 const Capabilities kCaps = {
     1,
-    VBC_MAX_CODE_BYTES,
-    VBC_STACK_SIZE,
-    {10, 10, 5, 2, 5, 40, 4, 4},
-    VBC_MAX_STRING_LEN,
-    VBC_MAX_ARRAY_LEN,
-    32,
-    300,
-    3000,
-    kFunctions,
-    kFunctionCount,
-    kEvents,
-    kEventCount,
+    (uint16_t)kScriptLimits.maxCodeBytes,
+    (uint16_t)kScriptLimits.stackSize,
+    {kScriptLimits.vars[0], kScriptLimits.vars[1], kScriptLimits.vars[2],
+     kScriptLimits.vars[3], kScriptLimits.vars[4], kScriptLimits.vars[5],
+     kScriptLimits.vars[6], kScriptLimits.vars[7]},
+    kScriptLimits.maxStringLen,
+    kScriptLimits.maxArrayLen,
+    kScriptLimits.instrPerTick,
+    kScriptLimits.usPerTick,
+    kScriptLimits.updateBudgetUs,
+    kScriptFunctions,
+    kScriptFunctionCount,
+    kScriptEvents,
+    kScriptEventCount,
 };
 
 bool readFull(File& file, uint8_t* buffer, uint16_t len) {
@@ -677,9 +656,9 @@ void BytecodeService::stopAll() { _vm.stopAll(); }
 bool BytecodeService::emitEvent(const char* name, uint8_t count,
                                 const int32_t* params) {
   if (!name) return false;
-  for (uint8_t i = 0; i < sizeof(kEvents) / sizeof(kEvents[0]); i++) {
-    if (strcmp(kEvents[i].name, name) == 0) {
-      return _vm.emitEvent(kEvents[i].id, count, params);
+  for (uint8_t i = 0; i < kScriptEventCount; i++) {
+    if (strcmp(kScriptEvents[i].name, name) == 0) {
+      return _vm.emitEvent(kScriptEvents[i].id, count, params);
     }
   }
   return false;
@@ -746,9 +725,9 @@ String BytecodeService::capabilitiesJson() const {
   String json = "{\"vm\":";
   json += (unsigned)caps.vmVersion;
   json += ",\"maxScripts\":";
-  json += (unsigned)kPackMaxEntries;
+  json += (unsigned)kScriptLimits.maxSavedScripts;
   json += ",\"cacheSlots\":";
-  json += (unsigned)VBC_CACHE_SLOTS;
+  json += (unsigned)kScriptLimits.cacheSlots;
   json += ",\"maxCodeBytes\":";
   json += (unsigned)caps.maxCodeBytes;
   json += ",\"maxStack\":";

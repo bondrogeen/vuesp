@@ -57,12 +57,19 @@ writing an input does not change its mode.
 ## Events
 
 ```js
-on('btn_c') {
-  log('gpio', $e0, 'value', $e1, 'count', $e2);
-}
+on('btn_c', (gpio, value, count) => {
+  log('gpio', gpio, 'value', value, 'count', count);
+});
 ```
 
-Events: `btn`, `btn_c`, `btn_l`, `btn_r`. `$e0…$e3` are read-only event parameters.
+Events: `btn`, `btn_c`, `btn_l`, `btn_r`, `time`; `modbus` is available when
+enabled. Prefer named handler parameters:
+`on('btn_c', (gpio, value, count) => { ... })`. They are local to that handler
+and read-only. The low-level `on('btn_c') { ... $e0 ... }` form is still
+supported. `time` passes `hours, minutes` from the device uptime clock.
+
+The event and function list is generated from `vuesp.config.yaml` into `src/generated/scriptManifest.h`;
+`/vm/capabilities` is authoritative for a running device.
 
 ## Control Structures
 
@@ -148,10 +155,10 @@ $p13 = 0;
 
 ```js
 // button
-on('btn_c') {
-  log('click', $e0, $e1, $e2);
-  $p13 = $e1 ? 255 : 0;
-}
+on('btn_c', (gpio, value, count) => {
+  log('click', gpio, value, count);
+  $p13 = value ? 255 : 0;
+});
 ```
 
 ```js
@@ -164,8 +171,8 @@ call('display');
 
 ## Limitations
 
-- up to 15 saved scripts, 3 RAM cache slots (`VBC_CACHE_SLOTS`);
-- up to 1024 bytes of code per script;
+- up to 15 saved scripts, 6 RAM cache slots by default (`VBC_CACHE_SLOTS`);
+- up to 512 bytes per script container by default (`VBC_MAX_CODE_BYTES`; profiles 256/512/1024);
 - stack up to 64 values;
 - up to 4 `call()` arguments, call depth 4;
 - 32 instructions or 300 µs per script per pass, 3 ms total budget;
@@ -180,6 +187,6 @@ $s0 = 'ok';
 log($s0, $u0);
 if ($u0 > 0) { ... } else { ... }
 while ($u0 < 5) { $u0 = $u0 + 1; wait(100ms); }
-on('btn_c') { log($e0, $e1, $e2); }
+on('btn_c', (gpio, value, count) => { log(gpio, value, count); });
 call('other');
 ```

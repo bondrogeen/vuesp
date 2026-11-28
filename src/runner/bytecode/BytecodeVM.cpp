@@ -247,6 +247,8 @@ void BytecodeVM::releaseContext(Context& ctx) {
   ctx.ancestorCount = 0;
   memset(ctx.ancestors, 0, sizeof(ctx.ancestors));
   memset(ctx.callParams, 0, sizeof(ctx.callParams));
+  memset(ctx.eventParams, 0, sizeof(ctx.eventParams));
+  ctx.eventParamCount = 0;
   if (!wasHandler && _completeCallback) {
     _completeCallback(contextIndex, scriptId);
   }
@@ -296,6 +298,8 @@ bool BytecodeVM::startContext(int8_t scriptIndex, uint16_t entry, int8_t handler
     }
   }
   memset(ctx.callParams, 0, sizeof(ctx.callParams));
+  memset(ctx.eventParams, 0, sizeof(ctx.eventParams));
+  ctx.eventParamCount = 0;
   contextIndex = freeContext;
   return true;
 }
@@ -718,7 +722,7 @@ bool BytecodeVM::readVar(Context& ctx, uint8_t varid, Value& out) {
     }
     case 6:
       if (index >= MAX_EVENT_PARAMS) return false;
-      out = makeInt(_ctx.eventParams[index]);
+      out = makeInt(ctx.eventParams[index]);
       return true;
     case 7:
       if (index >= MAX_CALL_PARAMS) return false;
@@ -1546,12 +1550,16 @@ bool BytecodeVM::emitToHandler(int8_t scriptIndex, uint8_t handlerIndex, uint8_t
   if (scriptIndex < 0 || scriptIndex >= kMaxScripts || !_scripts[scriptIndex].used) return false;
   HandlerRef handler;
   if (!getHandler(_scripts[scriptIndex].view, handlerIndex, handler)) return false;
-  for (uint8_t i = 0; i < MAX_EVENT_PARAMS; i++) {
-    _ctx.eventParams[i] = (i < paramCount && params) ? params[i] : 0;
-  }
-  _ctx.eventParamCount = paramCount > MAX_EVENT_PARAMS ? MAX_EVENT_PARAMS : paramCount;
   int8_t contextIndex = -1;
-  return startContext(scriptIndex, handler.entry, (int8_t)handlerIndex, contextIndex);
+  if (!startContext(scriptIndex, handler.entry, (int8_t)handlerIndex, contextIndex)) {
+    return false;
+  }
+  Context& ctx = _contexts[contextIndex];
+  for (uint8_t i = 0; i < MAX_EVENT_PARAMS; i++) {
+    ctx.eventParams[i] = (i < paramCount && params) ? params[i] : 0;
+  }
+  ctx.eventParamCount = paramCount > MAX_EVENT_PARAMS ? MAX_EVENT_PARAMS : paramCount;
+  return true;
 }
 
 bool BytecodeVM::emitEvent(uint8_t eventId, uint8_t paramCount, const int32_t* params) {

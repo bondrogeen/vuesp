@@ -347,7 +347,7 @@ static void testCorruption() {
   expect(error == PackError::CODE_LEN, "zero code length error");
 
   len = makeValid(pack, sizeof(pack));
-  writeU16(pack + kPackHeaderSize + 19, kMaxCodeBytes + 1);
+  writeU16(pack + kPackHeaderSize + 19, kPackMaxCodeLen + 1);
   fixTocCrc(pack);
   expect(!parsePack(pack, len, view, error), "code length over max");
   expect(error == PackError::CODE_LEN, "code length over max error");

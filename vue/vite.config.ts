@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, URL } from 'node:url';
 import { Buffer } from 'node:buffer';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { parse as parseYaml } from 'yaml';
 import VueRouter from 'unplugin-vue-router/vite';
 import { compression } from 'vite-plugin-compression2';
 import pkg from '../vue/package.json';
@@ -12,6 +13,17 @@ import pkg from '../vue/package.json';
 import Components from 'unplugin-vue-components/vite';
 
 const path = fileURLToPath(new URL('./src', import.meta.url));
+
+const disabledPagePatterns = (() => {
+  const configPath = fileURLToPath(new URL('./src/generated/pages.json', import.meta.url));
+  if (!existsSync(configPath)) return [];
+  try {
+    const parsed = JSON.parse(readFileSync(configPath, 'utf8')) as { disabled?: string[] };
+    return Array.isArray(parsed.disabled) ? parsed.disabled : [];
+  } catch {
+    return [];
+  }
+})();
 
 type PackageMeta = typeof pkg & {
   author?: string;
@@ -70,9 +82,15 @@ const info = {
   bugs,
 };
 
-const parseFirmwareVersion = (text: string): [number, number, number] => {
-  const match = /firmware_version\s*=\s*'\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}'/.exec(text);
-  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : [4, 0, 0];
+const parseFirmwareVersion = (): [number, number, number] => {
+  try {
+    const path = fileURLToPath(new URL('../vuesp.config.yaml', import.meta.url));
+    const config = parseYaml(readFileSync(path, 'utf8')) as { project?: { firmwareVersion?: string } };
+    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(config?.project?.firmwareVersion ?? '');
+    return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : [4, 0, 0];
+  } catch {
+    return [4, 0, 0];
+  }
 };
 
 export default defineConfig(({ mode }) => {
@@ -81,7 +99,7 @@ export default defineConfig(({ mode }) => {
     ? {
         defaultJson: readFileSync('public/default.json', 'utf8'),
         dashboardJson: readFileSync('json/dashboard.json', 'utf8'),
-        firmwareVersion: parseFirmwareVersion(readFileSync('../platformio.ini', 'utf8')),
+        firmwareVersion: parseFirmwareVersion(),
       }
     : null;
   const authLogin = env.VITE_AUTH_LOGIN;
@@ -107,7 +125,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
-      VueRouter(),
+      VueRouter({ routesFolder: 'src/pages', exclude: disabledPagePatterns }),
       vue(),
       tailwindcss(),
       compression({

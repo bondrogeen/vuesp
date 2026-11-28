@@ -31,6 +31,7 @@ The CLI clones this template with its git history, keeps the selected board, set
 - 🚀 Full-stack Arduino projects with web UI
 - 🎨 Glass UI with light/dark themes and shared `vuesp-components@5`
 - 🧠 Bytecode script studio with syntax highlighting, autocomplete and device hints
+- ⚙️ YAML project configuration for board, modules, limits, pins and web UI
 - 📜 Starter bytecode examples for variables, loops, arrays and button events
 - 🖥️ Browser demo with a mock device — no hardware required
 - 🔒 Optional HTTP Basic Authentication
@@ -82,8 +83,33 @@ The CLI clones this template with its git history, keeps the selected board, set
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) for complete setup and development workflow.
 
+## Project Configuration
+
+All project settings live in [`vuesp.config.yaml`](./vuesp.config.yaml) in the repository root:
+
+- board, firmware version and device name;
+- enabled modules (`script`, `modbus`, `serial`, `discovery`, `dashboard`);
+- Wi-Fi, auth and discovery defaults;
+- script limits, events and external functions;
+- pin overrides;
+- menu, pages, dashboard card types and locales.
+
+Edit the YAML, then regenerate:
+
+```bash
+cd vue
+npm run config
+npm run config:check
+npm run config:preview
+```
+
+`npm run build-web` and `npm run build` run the generator automatically. Generated files under `src/generated` and `vue/src/generated` must not be edited by hand.
+
+See [CONFIGURATION.md](./CONFIGURATION.md) for the full reference and step-by-step guide.
+
 ## Documentation
 
+- **[CONFIGURATION.md](./CONFIGURATION.md)** - Project configuration and module reference
 - **[DOCS.md](./DOCS.md)** - Detailed project documentation for the catalog
 - **[CREATING_PROJECTS.md](./CREATING_PROJECTS.md)** - How to create and maintain a device project based on Vuesp
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Complete development guide
@@ -94,19 +120,23 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) for complete setup and development workfl
 
 ```
 vuesp/
-├── src/              # C++ firmware source
-│   ├── const/        # Constants and struct definitions
-│   ├── include/      # Header files
-│   └── *.cpp         # Implementation files
-├── vue/              # Vue 3 web frontend
-│   ├── src/          # Vue components and pages
-│   └── public/       # Static assets
-│   └── vite.config.ts    # Vite build configuration
-├── data/             # LittleFS data
-│   └── www/          # Built web UI
-├── firmware/         # Compiled firmware binaries
-├── scripts/          # Build and utility scripts
-├── platformio.ini    # PlatformIO configuration
+├── vuesp.config.yaml       # single user-facing project configuration
+├── config/
+│   └── modules/            # module descriptors and generated catalog
+├── src/                    # C++ firmware source
+│   ├── const/              # constants and wire protocol
+│   ├── generated/          # generated C++ config/manifests
+│   └── *.cpp               # implementation files
+├── vue/                    # Vue 3 web frontend
+│   ├── src/                # pages, components, generated web config
+│   ├── public/             # static assets
+│   └── vite.config.ts      # Vite build configuration
+├── data/                   # LittleFS data
+│   └── www/                # built web UI
+├── firmware/               # compiled firmware binaries
+├── scripts/                # build, config and utility scripts
+├── platformio.ini          # PlatformIO shell
+└── platformio.generated.ini # generated default env and build filter
 ```
 
 ## Development
@@ -131,6 +161,10 @@ Open http://localhost:3000/ in your browser.
 ### Available npm Scripts
 
 - `npm run dev` - Start development server
+- `npm run config` - Generate firmware and web config from `vuesp.config.yaml`
+- `npm run config:check` - Verify generated config is up to date
+- `npm run config:preview` - Print resolved project configuration
+- `npm run manifest` - Generate the web script manifest
 - `npm run build-web` - Build web UI
 - `npm run typecheck` - Type check TypeScript
 - `npm run lint` - Run ESLint
@@ -152,9 +186,9 @@ npm run build
 
 This will:
 
-1. Generate struct/json files from C headers
+1. Generate project config and struct/json files
 2. Build and optimize Vue web UI
-3. Compile and upload firmware to device
+3. Compile firmware for the selected board
 
 ## Security
 
@@ -201,12 +235,13 @@ The template ships example sources in [`vue/src/lib/script/examples.ts`](./vue/s
 
 - `boot` — logs a message and sets a port;
 - `blink` — `while` loop with `wait()`;
-- `button` — `on('btn_c')` with `$e0/$e1/$e2`;
+- `button` — `on('btn_c', (gpio, value, count) => ...)`;
+- `time` — `on('time', (hours, minutes) => ...)`;
 - `expressions` — arithmetic, strings and `len()`;
 - `array` — `len()`, `get()` and `set()`;
 - `chain` — `call('name')` between scripts.
 
-Device projects add board-specific hints in `vue/json/suggestions.json`; functions and events available to the compiler come from `/vm/capabilities`.
+Device projects add board-specific hints in `vue/json/suggestions.json`. Events, external functions and limits are declared once in [`vuesp.config.yaml`](./vuesp.config.yaml); `cd vue && npm run config` generates the firmware headers and the studio manifest, and `/vm/capabilities` is authoritative for a running device.
 
 ## Документация / Documentation ScriptRunner
 
@@ -262,7 +297,7 @@ Device projects add board-specific hints in `vue/json/suggestions.json`; functio
 
 **Прошивка**
 - Поддержка ESP32, ESP32-C3 и ESP8266.
-- Бинарный WebSocket, LittleFS, `default.json`, `dashboard.json` и `scripts.txt`.
+- Бинарный WebSocket, LittleFS, `default.json`, `dashboard.json` и `scripts.bc`.
 - Обновлены зависимости, PlatformIO-сборка, CI и release-артефакты.
 - Добавлена сборка demo-бандла из актуальных данных прошивки.
 

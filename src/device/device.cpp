@@ -1,7 +1,10 @@
 #include "./device.h"
 
 #include "../config/ConfigStore.h"
+#include "../const/features.h"
+#if VUESP_SCRIPT
 #include "../runner/bytecode/BytecodeService.h"
+#endif
 
 Buffer myBuffer = {KEY_BUFFER};
 
@@ -43,6 +46,7 @@ void deviceGPIO(Port* port, uint8_t type) {
 
 static char displayBuffer[64] = "5";
 
+#if VUESP_SCRIPT
 bool dataProvider(const char* id, DataKind kind, DataValue& value, bool write) {
 #if VUESP_LOG_LEVEL >= 3
   Serial.print(id);
@@ -135,6 +139,7 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
   result.intVal = 200;
   return true;
 }
+#endif
 
 // void sendNotification(const char* text) {
 //   message.type = MESSAGE_TYPE_NOTIFICATION;
@@ -144,8 +149,10 @@ bool httpHandler(uint8_t paramCount, const Value* params, Value& result, void* u
 // }
 
 void setupDevice() {
+#if VUESP_SCRIPT
   bytecodeService.vm().setDataProvider(dataProvider);
   bytecodeService.vm().registerFunction(3, httpHandler);
+#endif
 }
 
 void setupFirstDevice() {

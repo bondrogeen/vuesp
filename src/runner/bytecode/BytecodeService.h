@@ -1,7 +1,7 @@
 #ifndef VUESP_BYTECODE_SERVICE_H
 #define VUESP_BYTECODE_SERVICE_H
 
-#include "../../const/bytecode.h"
+#include "../../generated/scriptManifest.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -17,6 +17,10 @@
 
 static_assert(VBC_CACHE_SLOTS >= 1 && VBC_CACHE_SLOTS <= 15,
               "VBC_CACHE_SLOTS must be between 1 and 15");
+static_assert(VBC_MAX_CODE_BYTES >= 64 && VBC_MAX_CODE_BYTES <= 1024,
+              "VBC_MAX_CODE_BYTES must be between 64 and 1024");
+static_assert((uint32_t)VBC_CACHE_SLOTS * VBC_MAX_CODE_BYTES <= 12 * 1024,
+              "script code cache must not exceed 12 KiB");
 
 class BytecodeService {
  public:

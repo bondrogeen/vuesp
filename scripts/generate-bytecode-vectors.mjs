@@ -38,6 +38,7 @@ const fixtures = [
   { name: 'callee', source: '$u0 = $c0 + $c1;' },
   { name: 'port_read', source: '$p2 = 255; $u0 = $p2;' },
   { name: 'port_wide', source: '$p17 = 255; $u0 = $p17;' },
+  { name: 'two_events', source: "on('btn', (gpio, value) => { $p13 = gpio; }); on('btn_c', (gpio, value, count) => { $p14 = count; });" },
   { name: 'data_read', source: "$display = 'hi'; $s0 = $display;" },
   { name: 'handler_return', source: "on('btn') { $p2 = 1; return; $p2 = 2; }" },
   { name: 'div_zero', source: '$u0 = 1 / 0;' },
